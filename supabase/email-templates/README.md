@@ -72,6 +72,7 @@ delete what's there, paste the file's full contents, and **Save**.
 
 | Supabase template | Paste this file |
 |---|---|
+| **Magic Link** (used at every sign-in) | `magic-link.html` |
 | **Confirm signup** | `confirm-signup.html` |
 | **Invite user** | `invite-rep.html` |
 
