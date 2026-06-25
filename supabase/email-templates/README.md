@@ -40,7 +40,35 @@ mail server so email comes **from ConsumerDirect**.
 Open: <https://app.supabase.com/project/zbgimoasdqqprymbykqb/auth/templates>
 → **SMTP Settings** (toggle **Enable Custom SMTP**), then fill in:
 
-### ConsumerDirect uses Microsoft 365 — use these exact values
+### Option A — Personal Gmail (fastest, no IT needed)
+
+Send via `philiphamb@gmail.com`. Good for launch/testing. Limit ~500 emails/day.
+
+**Step 1 — turn on 2-Step Verification** (required before you can make an app password):
+<https://myaccount.google.com/signinoptions/two-step-verification>
+
+**Step 2 — create an App Password:**
+<https://myaccount.google.com/apppasswords> → app name `BDR OS` → **Create** →
+copy the 16-character code (remove the spaces).
+
+**Step 3 — enter in Supabase SMTP Settings:**
+
+| Supabase field | Value |
+|---|---|
+| Sender email | `philiphamb@gmail.com` |
+| Sender name | `ConsumerDirect BDR OS` |
+| Host | `smtp.gmail.com` |
+| Port | `587` |
+| Username | `philiphamb@gmail.com` |
+| Password | the 16-char **app password** (NOT your normal Gmail password) |
+| Minimum interval | `60` |
+
+> Note: emails will visibly come **from philiphamb@gmail.com** — Gmail won't let
+> you show a different address. Fine for launch; switch to Option B (M365 /
+> `onboarding@consumerdirect.com`) when you want a branded company sender.
+
+### Option B — Microsoft 365 (`onboarding@consumerdirect.com`)
+ConsumerDirect uses Microsoft 365 — use these exact values
 
 | Supabase field | Value |
 |---|---|
