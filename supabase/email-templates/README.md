@@ -40,20 +40,39 @@ mail server so email comes **from ConsumerDirect**.
 Open: <https://app.supabase.com/project/zbgimoasdqqprymbykqb/auth/templates>
 → **SMTP Settings** (toggle **Enable Custom SMTP**), then fill in:
 
-| Field | What to enter | Example |
-|---|---|---|
-| Sender email | the "from" address reps see | `onboarding@consumerdirect.com` |
-| Sender name | the display name | `ConsumerDirect BDR OS` |
-| Host | your mail provider's SMTP host | `smtp.sendgrid.net` |
-| Port | usually `587` | `587` |
-| Username | SMTP username | (from provider) |
-| Password | SMTP password / API key | (from provider) |
+### ConsumerDirect uses Microsoft 365 — use these exact values
 
-**You need to get these 6 values** from whoever runs ConsumerDirect email.
-Most companies use one of: SendGrid, Amazon SES, Postmark, Mailgun, or
-Google Workspace SMTP. Any of them works — you just need the host, port,
-username, and password from that provider, plus a from-address you're
-allowed to send from.
+| Supabase field | Value |
+|---|---|
+| Sender email | `onboarding@consumerdirect.com` (a real M365 mailbox you control) |
+| Sender name | `ConsumerDirect BDR OS` |
+| Host | `smtp.office365.com` |
+| Port | `587` |
+| Username | the full mailbox address, e.g. `onboarding@consumerdirect.com` |
+| Password | that mailbox's password — or an **app password** if MFA is on (it almost always is) |
+| Minimum interval | `60` seconds (leave default) |
+
+**Two things IT must enable first** (otherwise login fails with an auth error):
+
+1. **Turn on Authenticated SMTP for that mailbox.**
+   M365 Admin Center → Users → the mailbox → **Mail** tab → **Manage email apps**
+   → check **Authenticated SMTP** → Save.
+   (PowerShell equivalent: `Set-CASMailbox -Identity onboarding@consumerdirect.com -SmtpClientAuthenticationDisabled $false`)
+
+2. **Create an app password** (because Microsoft blocks basic password login when MFA is on).
+   The mailbox owner: <https://mysignins.microsoft.com/security-info> → Add sign-in method
+   → **App password** → name it "BDR OS" → copy the generated password → use THAT as the
+   Supabase password. If "App password" isn't offered, IT needs to allow it
+   (Entra ID → per-user MFA, or disable Security Defaults for that account).
+
+**Deliverability:** your domain already has SPF for Outlook. Ask IT to also turn on
+**DKIM** for `consumerdirect.com` (Microsoft Defender → Email & collaboration →
+Policies → DKIM) so messages don't land in spam.
+
+> Heads-up: Microsoft 365 SMTP works fine for onboarding volumes, but it uses
+> basic auth (being phased out) and has per-day send limits. If IT prefers not to
+> enable SMTP AUTH, the robust alternative is a free dedicated sender — SendGrid
+> or Amazon SES — host `smtp.sendgrid.net` / port `587`, same Supabase fields.
 
 > Important: the sender domain must be verified with your email provider
 > (SPF/DKIM records), or messages land in spam. The provider walks you
