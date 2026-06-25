@@ -1,0 +1,223 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ── CSS Custom Properties (Design System Tokens) ─────────────────────────── */
+:root {
+  --color-navy:       #003087;
+  --color-navy-dark:  #001855;
+  --color-navy-mid:   #0A4BA8;
+  --color-teal:       #00C2B2;
+  --color-teal-dark:  #009E8B;
+  --color-mint:       #00C97A;
+  --color-gold:       #F5A623;
+  --color-bg:         #F0F5FA;
+  --color-card:       #FFFFFF;
+  --color-border:     #E4ECF2;
+  --color-dark:       #0D1B2A;
+  --color-mid:        #374151;
+  --color-gray:       #64748B;
+  --color-success:    #16A34A;
+  --color-error:      #DC2626;
+  --font-sans:        'Inter', system-ui, sans-serif;
+}
+
+/* ── Base Resets ──────────────────────────────────────────────────────────── */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  -webkit-tap-highlight-color: transparent;
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: var(--font-sans);
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--color-dark);
+  background-color: var(--color-bg);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ── Touch targets (minimum 44x44px, iOS HIG) ───────────────────────────── */
+button, a, [role="button"] {
+  min-height: 44px;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+/* ── Focus styles ────────────────────────────────────────────────────────── */
+:focus-visible {
+  outline: 2px solid var(--color-teal);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* ── Scrollbar ───────────────────────────────────────────────────────────── */
+::-webkit-scrollbar         { width: 4px; height: 4px; }
+::-webkit-scrollbar-track   { background: transparent; }
+::-webkit-scrollbar-thumb   { background: var(--color-border); border-radius: 2px; }
+::-webkit-scrollbar-thumb:hover { background: var(--color-gray); }
+
+/* ── Selection ───────────────────────────────────────────────────────────── */
+::selection {
+  background-color: rgba(0, 194, 178, 0.2);
+  color: var(--color-navy);
+}
+
+/* ── Utility classes not in Tailwind ──────────────────────────────────────── */
+@layer components {
+  /* Primary gradient button */
+  .btn-primary {
+    @apply inline-flex items-center justify-center gap-2
+           h-[50px] px-6 rounded-pill
+           bg-gradient-primary text-white font-[800] text-[14px]
+           shadow-button
+           transition-all duration-micro
+           hover:opacity-90 hover:shadow-button hover:-translate-y-px
+           active:scale-95 active:shadow-none
+           disabled:bg-border disabled:text-gray disabled:shadow-none disabled:cursor-not-allowed disabled:translate-y-0;
+  }
+
+  /* Secondary button */
+  .btn-secondary {
+    @apply inline-flex items-center justify-center gap-2
+           h-[50px] px-6 rounded-pill
+           bg-navy text-white font-[800] text-[14px]
+           transition-all duration-micro
+           hover:bg-navy-dark hover:-translate-y-px
+           active:scale-95
+           disabled:bg-border disabled:text-gray disabled:cursor-not-allowed disabled:translate-y-0;
+  }
+
+  /* Ghost button */
+  .btn-ghost {
+    @apply inline-flex items-center justify-center gap-2
+           h-[50px] px-6 rounded-pill
+           bg-transparent border-2 border-navy text-navy font-[800] text-[14px]
+           transition-all duration-micro
+           hover:bg-navy/5 hover:-translate-y-px
+           active:scale-95;
+  }
+
+  /* Destructive button */
+  .btn-destructive {
+    @apply inline-flex items-center justify-center gap-2
+           h-[50px] px-6 rounded-pill
+           bg-transparent border-2 border-error text-error font-[800] text-[14px]
+           transition-all duration-micro
+           hover:bg-error/5
+           active:scale-95;
+  }
+
+  /* Standard card */
+  .card {
+    @apply bg-card rounded-md border border-border shadow-card;
+  }
+
+  /* Active/selected card */
+  .card-active {
+    @apply bg-card rounded-md border border-teal shadow-card;
+    background-color: rgba(0, 194, 178, 0.03);
+  }
+
+  /* Completed card */
+  .card-completed {
+    @apply bg-card rounded-md border border-success shadow-card;
+    background-color: rgba(22, 163, 74, 0.03);
+  }
+
+  /* Label text */
+  .label {
+    @apply text-[11px] font-[700] uppercase tracking-[0.07em] text-gray;
+  }
+
+  /* Hero card */
+  .card-hero {
+    @apply bg-gradient-hero rounded-xl text-white p-xl shadow-modal;
+  }
+
+  /* Shimmer skeleton */
+  .skeleton {
+    @apply rounded-md bg-gradient-to-r from-border via-light to-border;
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite linear;
+  }
+
+  /* Tip callout */
+  .callout-tip {
+    @apply rounded-md border-l-4 border-teal p-md;
+    background-color: rgba(0, 194, 178, 0.06);
+  }
+
+  /* Warning callout */
+  .callout-warn {
+    @apply rounded-md border-l-4 border-gold p-md;
+    background-color: rgba(245, 166, 35, 0.07);
+  }
+
+  /* Navigation item (active) */
+  .nav-item-active {
+    @apply text-teal;
+  }
+
+  /* Navigation item (default) */
+  .nav-item {
+    @apply text-gray hover:text-navy transition-colors duration-micro;
+  }
+}
+
+/* ── Safe area insets for iPhone notch / home indicator ──────────────────── */
+.pb-safe {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+.pt-safe {
+  padding-top: env(safe-area-inset-top, 0px);
+}
+
+/* ── Reduced motion ──────────────────────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* ─── Gamification Animations ─────────────────────────── */
+
+@keyframes belt-confetti {
+  0%   { transform: translateY(0) rotateZ(0deg); opacity: 1; }
+  100% { transform: translateY(110vh) rotateZ(720deg); opacity: 0; }
+}
+
+.animate-belt-confetti {
+  animation: belt-confetti linear forwards;
+}
+
+@keyframes check-draw {
+  from { stroke-dasharray: 0 100; }
+  to   { stroke-dasharray: 100 0; }
+}
+
+.animate-check-draw {
+  animation: check-draw 0.3s ease-out forwards;
+}
+
+@keyframes xp-float {
+  0%   { opacity: 1;   transform: translateX(-50%) translateY(0); }
+  60%  { opacity: 1;   transform: translateX(-50%) translateY(-24px); }
+  100% { opacity: 0;   transform: translateX(-50%) translateY(-32px); }
+}
+
+.animate-xp-float {
+  animation: xp-float 1.2s ease-out forwards;
+}

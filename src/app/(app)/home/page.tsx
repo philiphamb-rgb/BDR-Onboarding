@@ -1,0 +1,181 @@
+// @ts-nocheck
+'use client'
+
+import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
+import { createClient } from '@/lib/supabase/client'
+import { useProgress } from '@/lib/hooks/useProgress'
+import { Card, ProgressBar, Badge, Skeleton } from '@/components/ui'
+import { FlameIcon, TrophyIcon, XpIcon, BeltIcon, ChartRisingIcon, PhoneIcon, ChecklistIcon, TargetIcon, ArrowRightIcon, LightningIcon } from '@/components/icons'
+import { cn, formatXP, pluralize } from '@/lib/utils'
+import Link from 'next/link'
+
+const BELT_STYLES: Record<string, { bg: string; bar: string; label: string }> = {
+  white:  { bg: 'bg-gray-100',   bar: '#9CA3AF', label: 'White Belt' },
+  yellow: { bg: 'bg-yellow-50',  bar: '#FBBF24', label: 'Yellow Belt' },
+  orange: { bg: 'bg-orange-50',  bar: '#F97316', label: 'Orange Belt' },
+  green:  { bg: 'bg-green-50',   bar: '#22C55E', label: 'Green Belt' },
+  blue:   { bg: 'bg-blue-50',    bar: '#3B82F6', label: 'Blue Belt' },
+  purple: { bg: 'bg-purple-50',  bar: '#9333EA', label: 'Purple Belt' },
+  black:  { bg: 'bg-gray-900',   bar: '#111827', label: 'Black Belt' },
+}
+
+export default function HomePage() {
+  const supabase = createClient()
+  const router = useRouter()
+  const [userId, setUserId] = useState<string>()
+  const [userName, setUserName] = useState('')
+  const [leaderboard, setLeaderboard] = useState<{ user_id: string; name: string; total_xp: number }[]>([])
+  const { progress, loading } = useProgress(userId)
+
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (!user) { router.push('/login'); return }
+      setUserId(user.id)
+      supabase.from('users').select('name').eq('id', user.id).single().then(({ data }) => {
+        if (data?.name) setUserName(data.name.split(' ')[0])
+      })
+      supabase.from('user_progress').select('user_id, total_xp, users!inner(name)')
+        .order('total_xp', { ascending: false }).limit(5)
+        .then(({ data }) => {
+          setLeaderboard((data ?? []).map((r: { user_id: string; total_xp: number; users: { name: string } }) => ({
+            user_id: r.user_id,
+            name: (r.users?.name ?? '').split(' ')[0],
+            total_xp: r.total_xp ?? 0,
+          })))
+        })
+    })
+  }, [])
+
+  const belt = progress?.belt_rank ?? 'white'
+  const style = BELT_STYLES[belt] ?? BELT_STYLES.white
+  const isBlack = belt === 'black'
+  const greeting = () => { const h = new Date().getHours(); return h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : 'Good evening' }
+  const userRank = leaderboard.findIndex(l => l.user_id === userId) + 1
+
+  if (loading) return (
+    <div className="space-y-4">
+      <Skeleton className="h-36 rounded-2xl" />
+      <Skeleton className="h-24 rounded-2xl" />
+      <Skeleton className="h-40 rounded-2xl" />
+    </div>
+  )
+
+  return (
+    <div className="space-y-4">
+      {/* Header */}
+      <div className="flex items-center justify-between mb-2">
+        <div>
+          <p className="text-sm text-gray-500">{greeting()},</p>
+          <h1 className="text-h1 text-gray-900">{userName || 'BDR'}</h1>
+        </div>
+        <Link href="/notifications" className="p-2 relative">
+          <svg className="w-6 h-6 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+          </svg>
+        </Link>
+      </div>
+
+      {/* Belt Card */}
+      <div className={cn('rounded-2xl p-5 shadow-card', style.bg)}>
+        <div className="flex items-start justify-between mb-4">
+          <div>
+            <div className={cn('text-label mb-1', isBlack ? 'text-white/60' : 'text-gray-500')}>{style.label}</div>
+            <div className={cn('text-h1 font-bold', isBlack ? 'text-white' : 'text-gray-900')}>Day {progress?.belt_day ?? 0}</div>
+          </div>
+          <BeltIcon className={cn('w-12 h-12', isBlack ? 'text-white/80' : 'text-gray-400')} />
+        </div>
+        {progress?.nextBelt && (
+          <div className="mb-3">
+            <div className="flex justify-between mb-2">
+              <span className={cn('text-xs font-medium', isBlack ? 'text-white/70' : 'text-gray-600')}>
+                To {progress.nextBelt.charAt(0).toUpperCase() + progress.nextBelt.slice(1)} Belt
+              </span>
+              <span className={cn('text-xs', isBlack ? 'text-white/50' : 'text-gray-500')}>
+                {pluralize(progress.daysUntilNextBelt ?? 0, 'day')} left
+              </span>
+            </div>
+            <ProgressBar value={progress.beltProgressPercent} max={100} color={style.bar} className="h-2" />
+          </div>
+        )}
+        <div className="flex items-center gap-4 pt-2 border-t border-black/10">
+          <div className="flex items-center gap-1.5">
+            <XpIcon className={cn('w-4 h-4', isBlack ? 'text-gold' : 'text-navy')} />
+            <span className={cn('text-sm font-semibold', isBlack ? 'text-white' : 'text-gray-900')}>{formatXP(progress?.total_xp ?? 0)}</span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <FlameIcon className="w-4 h-4 text-orange-500" />
+            <span className={cn('text-sm font-medium', isBlack ? 'text-white/80' : 'text-gray-700')}>{progress?.current_streak ?? 0} day streak</span>
+          </div>
+          {progress?.streakStatus === 'at-risk' && <Badge color="warning" className="ml-auto text-xs">Streak at risk!</Badge>}
+        </div>
+      </div>
+
+      {/* Today Summary */}
+      <Card>
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="text-h3 text-gray-900">Today</h2>
+          <Link href="/today" className="text-sm text-navy font-medium flex items-center gap-1">View all<ArrowRightIcon className="w-4 h-4" /></Link>
+        </div>
+        <div className="grid grid-cols-3 gap-3">
+          {[
+            { icon: <ChecklistIcon className="text-teal" />, label: 'Habits', value: `${progress?.todayStats.habitsCompleted ?? 0}/${progress?.todayStats.habitsTotal ?? 0}`, done: (progress?.todayStats.habitsCompleted ?? 0) >= (progress?.todayStats.habitsTotal ?? 1) },
+            { icon: <PhoneIcon className="text-navy" />, label: 'Calls', value: String(progress?.todayStats.callsLogged ?? 0), done: false },
+            { icon: <LightningIcon className="text-gold" />, label: 'XP Today', value: formatXP(progress?.todayStats.xpEarnedToday ?? 0), done: false },
+          ].map(s => (
+            <div key={s.label} className={cn('p-3 rounded-xl border text-center', s.done ? 'border-teal/30 bg-teal/5' : 'border-border bg-gray-50')}>
+              <div className="flex justify-center mb-1">{s.icon}</div>
+              <div className="text-sm font-bold text-gray-900">{s.value}</div>
+              <div className="text-xs text-gray-500">{s.label}</div>
+            </div>
+          ))}
+        </div>
+      </Card>
+
+      {/* Quick Actions */}
+      <div className="grid grid-cols-2 gap-3">
+        {[
+          { href: '/today',          icon: '✅', label: 'Check In',  sub: 'Log today\'s habits',     gradient: 'from-teal to-teal-dark' },
+          { href: '/wins?action=new', icon: '🏆', label: 'Log Win',   sub: 'Call · Demo · Deal',      gradient: 'from-navy to-navy-dark' },
+          { href: '/train',           icon: '📚', label: 'Train',     sub: 'Continue learning',       gradient: 'from-purple-600 to-purple-800' },
+          { href: '/coach',           icon: '🎯', label: 'Coach AI',  sub: 'Get personalized tips',   gradient: 'from-gold to-orange-500' },
+        ].map(a => (
+          <Link key={a.href} href={a.href}
+            className={cn('bg-gradient-to-br rounded-2xl p-4 flex flex-col gap-2 shadow-card active:scale-95 transition-transform', a.gradient)}>
+            <div className="w-8 h-8 bg-white/20 rounded-xl flex items-center justify-center text-lg">{a.icon}</div>
+            <div>
+              <div className="text-sm font-bold text-white">{a.label}</div>
+              <div className="text-xs text-white/70">{a.sub}</div>
+            </div>
+          </Link>
+        ))}
+      </div>
+
+      {/* Leaderboard preview */}
+      {leaderboard.length > 0 && (
+        <Card>
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-h3 text-gray-900">Leaderboard</h2>
+            <Link href="/leaderboard" className="text-sm text-navy font-medium flex items-center gap-1">Full board<ArrowRightIcon className="w-4 h-4" /></Link>
+          </div>
+          {userRank > 0 && (
+            <div className="mb-3 px-3 py-2 bg-teal/10 rounded-xl flex items-center gap-2">
+              <TrophyIcon className="w-4 h-4 text-teal" />
+              <span className="text-sm text-teal font-medium">You&apos;re ranked #{userRank}</span>
+            </div>
+          )}
+          <div className="space-y-2">
+            {leaderboard.slice(0, 3).map((entry, i) => (
+              <div key={entry.user_id}
+                className={cn('flex items-center gap-3 px-3 py-2 rounded-xl', entry.user_id === userId ? 'bg-navy/5 border border-navy/10' : 'bg-gray-50')}>
+                <span className={cn('w-6 text-sm font-bold text-center', i === 0 ? 'text-gold' : 'text-gray-500')}>{i + 1}</span>
+                <span className="flex-1 text-sm font-medium text-gray-900 truncate">{entry.name}</span>
+                <span className="text-xs text-gray-500">{formatXP(entry.total_xp)}</span>
+              </div>
+            ))}
+          </div>
+        </Card>
+      )}
+    </div>
+  )
+}
