@@ -112,6 +112,12 @@ Once saved, send yourself a test signup to confirm it arrives from your address.
 
 ## 3. Make the emails beautiful (paste the templates)
 
+> ⚠️ **Order matters.** These templates link to `/auth/confirm` (the token-hash
+> sign-in flow that works from mobile mail apps). That route must be **deployed
+> to the live site first**, otherwise the links 404. Deploy the code that adds
+> `src/app/auth/confirm/route.ts`, confirm the site is live, *then* paste these
+> templates.
+
 Open: <https://app.supabase.com/project/zbgimoasdqqprymbykqb/auth/templates>
 
 For each template below: select it, switch the editor to **HTML / source**,
