@@ -51,20 +51,27 @@ export default function LoginPage() {
     setVerifying(true)
     setError('')
 
-    const { error: verifyError } = await supabase.auth.verifyOtp({
-      email: email.trim().toLowerCase(),
-      token,
-      type: 'email',
-    })
+    // Verify server-side so the session cookie is set on the response before
+    // we navigate — a browser-side verify races the redirect and bounces back
+    // to this screen.
+    let data: { ok?: boolean; next?: string } = {}
+    try {
+      const res = await fetch('/auth/verify-otp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: email.trim().toLowerCase(), token }),
+      })
+      data = await res.json()
+    } catch {
+      data = {}
+    }
 
-    setVerifying(false)
-
-    if (verifyError) {
+    if (!data.ok) {
+      setVerifying(false)
       setError('That code is incorrect or expired. Request a new one.')
     } else {
-      // Full reload so the server picks up the new session cookie and the
-      // middleware routes us to /onboarding or /home.
-      window.location.href = '/home'
+      // Full navigation so middleware reads the freshly-set session cookie.
+      window.location.href = data.next || '/home'
     }
   }
 
