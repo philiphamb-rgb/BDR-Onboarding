@@ -29,6 +29,7 @@ const TOOLS = [
   { name: 'Onit', purpose: 'Order forms & e-signature (opened from the HubSpot deal)', url: 'https://onit.com', contact: 'Sales Ops · orderform@consumerdirect.com', Icon: DocumentIcon, tint: 'bg-navy/5 text-navy' },
   { name: 'Nextiva', purpose: 'Voice & communications', url: 'https://nextiva.com', contact: '#partner_support-and-sales_team', Icon: PhoneIcon, tint: 'bg-blue-50 text-blue-600' },
   { name: 'PartnerHub', purpose: 'Partner management dashboard', url: 'https://partnerhub.consumerdirect.com', contact: 'Chris Peery · #partnerhub-client-manager-issues', Icon: HubIcon, tint: 'bg-teal-50 text-teal' },
+  { name: 'Developer Docs', purpose: 'Partner API reference & integration guides', url: 'https://developer.consumerdirect.io', contact: 'partnerintegration@consumerdirect.com', Icon: LightningIcon, tint: 'bg-navy/5 text-navy' },
   { name: 'Dropbox', purpose: 'File sharing & storage', url: 'https://dropbox.com', contact: 'Nikka Gerodias', Icon: DatabaseIcon, tint: 'bg-sky-50 text-sky-600' },
   { name: 'Slack', purpose: 'Team communication', url: 'https://consumerdirect.slack.com', contact: 'Nikka Gerodias', Icon: SlackIcon, tint: 'bg-purple-50 text-purple-600' },
   { name: 'JIRA', purpose: 'Project tracking & requests', url: 'https://jira.com', contact: '#jira', Icon: PipelineIcon, tint: 'bg-indigo-50 text-indigo-600' },
@@ -41,7 +42,7 @@ const PEOPLE = [
   { name: 'Nikka Gerodias', role: 'HR Contact', detail: 'Payroll, benefits & general HR — DM for sensitive topics', slack: '@Nikka Gerodias' },
   { name: 'Anthony Medina', role: 'Sales Operations', detail: 'HubSpot & process questions', slack: '@Anthony Medina' },
   { name: 'Chris Peery', role: 'Partner Support', detail: 'PartnerHub issues', slack: '@Chris Peery' },
-  { name: 'Partner Integration', role: 'Integrations', detail: 'API & partner integration questions', slack: 'partnerintegration@consumerdirect.com' },
+  { name: 'John O’Neill', role: 'Integrations', detail: 'API & partner integration questions (mailbox preferred)', slack: 'partnerintegration@consumerdirect.com' },
   { name: 'Order Form Desk', role: 'Sales Ops', detail: 'Standard partnership order forms', slack: 'orderform@consumerdirect.com' },
   { name: 'IT Support', role: 'Technical Setup', detail: 'Setup & troubleshooting', slack: '#it-service-management' },
 ]
