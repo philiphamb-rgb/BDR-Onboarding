@@ -5,7 +5,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { useProgress } from '@/lib/hooks/useProgress'
-import { Card, ProgressBar, Badge, Skeleton } from '@/components/ui'
+import { Card, ProgressBar, Badge, Skeleton, Button } from '@/components/ui'
 import { FlameIcon, TrophyIcon, XpIcon, BeltIcon, ChartRisingIcon, PhoneIcon, ChecklistIcon, TargetIcon, ArrowRightIcon, LightningIcon, BookIcon, CoachIcon } from '@/components/icons'
 import { cn, formatXP, pluralize } from '@/lib/utils'
 import Link from 'next/link'
@@ -26,12 +26,14 @@ export default function HomePage() {
   const [userId, setUserId] = useState<string>()
   const [userName, setUserName] = useState('')
   const [leaderboard, setLeaderboard] = useState<{ user_id: string; name: string; total_xp: number }[]>([])
+  const [nextStep, setNextStep] = useState<{ type: 'lesson' | 'quiz' | 'done'; moduleOrder?: number; moduleTitle?: string; href?: string; title?: string } | null>(null)
   const { progress, loading } = useProgress(userId)
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => {
       if (!user) { router.push('/login'); return }
       setUserId(user.id)
+      fetchNextStep(user.id)
       supabase.from('users').select('name').eq('id', user.id).single().then(({ data }) => {
         if (data?.name) setUserName(data.name.split(' ')[0])
       })
@@ -46,6 +48,35 @@ export default function HomePage() {
         })
     })
   }, [])
+
+  // Compute the single next best action across the curriculum: the first
+  // incomplete lesson in module order, else the first unpassed module quiz,
+  // else "done" (curriculum complete → keep practicing).
+  const fetchNextStep = async (uid: string) => {
+    const [{ data: mods }, { data: lessons }, { data: prog }, { data: attempts }, { data: quizQs }] = await Promise.all([
+      supabase.from('modules').select('id, title, order_index').order('order_index'),
+      supabase.from('lessons').select('id, module_id, order_index, title').eq('is_published', true).order('order_index'),
+      supabase.from('user_progress').select('completed_lessons').eq('user_id', uid).single(),
+      supabase.from('quiz_attempts').select('module_id, percentage').eq('user_id', uid),
+      supabase.from('quiz_questions').select('module_id'),
+    ])
+    const done = new Set<string>(prog?.completed_lessons ?? [])
+    const passed = new Set<string>((attempts ?? []).filter(a => (a.percentage ?? 0) >= 70).map(a => a.module_id))
+    const hasQuiz = new Set<string>((quizQs ?? []).map(q => q.module_id))
+    for (const m of mods ?? []) {
+      const ml = (lessons ?? []).filter(l => l.module_id === m.id)
+      const nextLesson = ml.find(l => !done.has(l.id))
+      if (nextLesson) {
+        setNextStep({ type: 'lesson', moduleOrder: m.order_index, moduleTitle: m.title, title: nextLesson.title, href: `/train/${m.id}/${nextLesson.id}` })
+        return
+      }
+      if (hasQuiz.has(m.id) && !passed.has(m.id)) {
+        setNextStep({ type: 'quiz', moduleOrder: m.order_index, moduleTitle: m.title, title: `${m.title} Quiz`, href: `/train/${m.id}/quiz` })
+        return
+      }
+    }
+    setNextStep({ type: 'done' })
+  }
 
   const belt = progress?.belt_rank ?? 'white'
   const style = BELT_STYLES[belt] ?? BELT_STYLES.white
@@ -110,6 +141,35 @@ export default function HomePage() {
           {progress?.streakStatus === 'at-risk' && <Badge variant="gold" className="ml-auto text-xs">Streak at risk!</Badge>}
         </div>
       </div>
+
+      {/* Continue your path — the single next best action */}
+      {nextStep && (
+        <Card variant={nextStep.type === 'done' ? 'completed' : 'active'}>
+          <div className="flex items-center gap-2 mb-1">
+            <LightningIcon size={15} className="text-teal" />
+            <span className="text-label text-teal">{nextStep.type === 'done' ? 'Curriculum complete' : 'Continue your path'}</span>
+          </div>
+          {nextStep.type === 'done' ? (
+            <>
+              <p className="text-[14px] font-[700] text-dark-text">You've finished every module. Outstanding.</p>
+              <p className="text-[12px] text-gray mt-0.5 mb-3">Keep your edge sharp — rehearse objections live in the Drill.</p>
+              <Link href="/drill"><Button variant="conversion" fullWidth icon={<TargetIcon size={18} />} iconPosition="right">Practice in the Drill</Button></Link>
+            </>
+          ) : (
+            <>
+              <p className="text-[12px] text-gray">Module {nextStep.moduleOrder} · {nextStep.moduleTitle}</p>
+              <p className="text-[15px] font-[800] text-dark-text mt-0.5 mb-3">
+                {nextStep.type === 'quiz' ? 'Take the ' : ''}{nextStep.title}
+              </p>
+              <Link href={nextStep.href}>
+                <Button variant="conversion" fullWidth icon={<ArrowRightIcon size={18} />} iconPosition="right">
+                  {nextStep.type === 'quiz' ? 'Start quiz' : 'Continue learning'}
+                </Button>
+              </Link>
+            </>
+          )}
+        </Card>
+      )}
 
       {/* Today Summary */}
       <Card>
