@@ -5,7 +5,7 @@ import { useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Card, Button, Badge } from '@/components/ui'
-import { CheckIcon, ArrowRightIcon, BackIcon, XpIcon } from '@/components/icons'
+import { CheckIcon, ArrowRightIcon, BackIcon, XpIcon, ExternalLinkIcon, CopyIcon } from '@/components/icons'
 import { cn } from '@/lib/utils'
 import { toast } from '@/components/ui'
 
@@ -13,7 +13,16 @@ interface LessonRow {
   id: string; module_id: string; title: string; duration_minutes: number | null;
   difficulty: string; content: ContentBlock[]; sources: unknown[]
 }
-interface ContentBlock { type: 'intro' | 'list' | 'tip' | 'warn' | 'screenshot' | 'quote'; text?: string; items?: { text: string; source?: string }[]; src?: string; caption?: string; cite?: string }
+interface LinkItem { text: string; url?: string; sub?: string }
+interface ContentBlock {
+  type: 'intro' | 'list' | 'tip' | 'warn' | 'screenshot' | 'quote' | 'heading' | 'steps' | 'links' | 'template'
+  text?: string
+  items?: { text: string; source?: string; url?: string }[]
+  links?: LinkItem[]
+  src?: string
+  caption?: string
+  cite?: string
+}
 
 export default function LessonPage() {
   const { moduleId, lessonId } = useParams<{ moduleId: string; lessonId: string }>()
@@ -69,30 +78,91 @@ export default function LessonPage() {
     } finally { setCompleting(false) }
   }
 
+  // Lightweight inline emphasis: **bold** -> <strong>
+  const rich = (t?: string) => {
+    if (!t) return null
+    return t.split(/(\*\*[^*]+\*\*)/g).map((part, k) =>
+      part.startsWith('**') && part.endsWith('**')
+        ? <strong key={k} className="font-[800] text-dark-text">{part.slice(2, -2)}</strong>
+        : <span key={k}>{part}</span>
+    )
+  }
+
   const renderBlock = (block: ContentBlock, i: number) => {
     if (block.type === 'intro') return (
-      <p key={i} className="text-gray-700 leading-relaxed">{block.text}</p>
+      <p key={i} className="text-gray-700 leading-relaxed text-sm">{rich(block.text)}</p>
     )
     if (block.type === 'list') return (
       <ul key={i} className="space-y-2">
         {block.items?.map((item, j) => (
           <li key={j} className="flex items-start gap-2 text-gray-700">
             <div className="w-1.5 h-1.5 bg-navy rounded-full mt-2 flex-shrink-0" />
-            <span className="text-sm">{item.text}</span>
+            {item.url ? (
+              <a href={item.url} target="_blank" rel="noopener noreferrer" className="text-sm text-navy font-medium underline decoration-navy/30 hover:decoration-navy inline-flex items-center gap-1">
+                {item.text}<ExternalLinkIcon size={12} />
+              </a>
+            ) : (
+              <span className="text-sm">{rich(item.text)}</span>
+            )}
           </li>
         ))}
       </ul>
     )
+    if (block.type === 'heading') return (
+      <h2 key={i} className="text-base font-[800] text-dark-text pt-2">{block.text}</h2>
+    )
+    if (block.type === 'steps') return (
+      <ol key={i} className="space-y-3">
+        {block.items?.map((item, j) => (
+          <li key={j} className="flex items-start gap-3">
+            <span className="w-6 h-6 rounded-full bg-navy text-white text-xs font-[800] flex items-center justify-center shrink-0">{j + 1}</span>
+            <span className="text-sm text-gray-700 pt-0.5">
+              {item.url ? (
+                <a href={item.url} target="_blank" rel="noopener noreferrer" className="text-navy font-medium underline decoration-navy/30 hover:decoration-navy inline-flex items-center gap-1">{item.text}<ExternalLinkIcon size={12} /></a>
+              ) : rich(item.text)}
+            </span>
+          </li>
+        ))}
+      </ol>
+    )
+    if (block.type === 'links') return (
+      <div key={i} className="space-y-2">
+        {block.links?.map((lnk, j) => (
+          <a key={j} href={lnk.url ?? '#'} target="_blank" rel="noopener noreferrer"
+             className="flex items-center justify-between gap-3 rounded-xl border border-border px-3 py-2.5 hover:border-teal transition-colors group">
+            <div className="min-w-0">
+              <div className="text-sm font-[700] text-dark-text truncate">{lnk.text}</div>
+              {lnk.sub && <div className="text-xs text-gray truncate">{lnk.sub}</div>}
+            </div>
+            <ExternalLinkIcon size={15} className="text-gray group-hover:text-teal shrink-0" />
+          </a>
+        ))}
+      </div>
+    )
+    if (block.type === 'template') return (
+      <div key={i} className="rounded-xl border border-border bg-bdrbg overflow-hidden">
+        <div className="flex items-center justify-between px-3 py-2 border-b border-border bg-white">
+          <span className="text-[11px] font-[800] uppercase tracking-wide text-gray">{block.caption ?? 'Copy & paste'}</span>
+          <button
+            onClick={() => { navigator.clipboard?.writeText(block.text ?? ''); toast.success?.('Copied to clipboard') }}
+            className="flex items-center gap-1 text-[11px] font-[700] text-teal hover:text-teal-dark"
+          >
+            <CopyIcon size={13} /> Copy
+          </button>
+        </div>
+        <pre className="px-3 py-3 text-xs text-gray-700 whitespace-pre-wrap font-sans leading-relaxed">{block.text}</pre>
+      </div>
+    )
     if (block.type === 'tip') return (
       <div key={i} className="border-l-4 border-teal bg-teal/5 rounded-r-xl px-4 py-3">
         <div className="text-xs font-bold text-teal mb-1 uppercase tracking-wide">Pro Tip</div>
-        <p className="text-sm text-gray-700">{block.text}</p>
+        <p className="text-sm text-gray-700">{rich(block.text)}</p>
       </div>
     )
     if (block.type === 'warn') return (
       <div key={i} className="border-l-4 border-gold bg-gold/5 rounded-r-xl px-4 py-3">
         <div className="text-xs font-bold text-gold mb-1 uppercase tracking-wide">Important</div>
-        <p className="text-sm text-gray-700">{block.text}</p>
+        <p className="text-sm text-gray-700">{rich(block.text)}</p>
       </div>
     )
     if (block.type === 'quote') return (
