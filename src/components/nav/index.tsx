@@ -21,6 +21,7 @@ import {
   BookIcon,
   GrowIcon,
   TargetIcon,
+  MedalIcon,
 } from '@/components/icons'
 import type { User } from '@/types/database'
 import { Avatar } from '@/components/ui'
@@ -189,6 +190,7 @@ export function Sidebar({ user, unreadCount = 0 }: SidebarProps) {
             { href: '/resources',  label: 'Resources',   icon: BookIcon },
             { href: '/leaderboard', label: 'Leaderboard', icon: LeaderboardIcon },
             { href: '/grow',        label: 'Grow',         icon: GrowIcon },
+            { href: '/certificate', label: 'Certificate',  icon: MedalIcon },
           ]}
           pathname={pathname}
         />

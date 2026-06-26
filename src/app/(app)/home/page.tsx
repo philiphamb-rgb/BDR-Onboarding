@@ -152,8 +152,11 @@ export default function HomePage() {
           {nextStep.type === 'done' ? (
             <>
               <p className="text-[14px] font-[700] text-dark-text">You've finished every module. Outstanding.</p>
-              <p className="text-[12px] text-gray mt-0.5 mb-3">Keep your edge sharp — rehearse objections live in the Drill.</p>
-              <Link href="/drill"><Button variant="conversion" fullWidth icon={<TargetIcon size={18} />} iconPosition="right">Practice in the Drill</Button></Link>
+              <p className="text-[12px] text-gray mt-0.5 mb-3">Claim your certificate, then keep your edge sharp in the Drill.</p>
+              <div className="flex gap-2">
+                <Link href="/certificate" className="flex-1"><Button variant="conversion" fullWidth icon={<TrophyIcon size={18} />} iconPosition="right">Certificate</Button></Link>
+                <Link href="/drill" className="flex-1"><Button variant="ghost" fullWidth icon={<TargetIcon size={18} />} iconPosition="right">Drill</Button></Link>
+              </div>
             </>
           ) : (
             <>

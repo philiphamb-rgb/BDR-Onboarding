@@ -16,6 +16,7 @@ import {
   TrainIcon,
   CoachIcon,
   ArrowRightIcon,
+  MedalIcon,
 } from '@/components/icons'
 import { cn, formatXP } from '@/lib/utils'
 
@@ -140,6 +141,20 @@ export default function GrowPage() {
               <ProgressBar value={progress?.beltProgressPercent ?? 0} color={nextBelt.color} />
             </Card>
           )}
+
+          {/* Certificate */}
+          <Link href="/certificate">
+            <Card className="flex items-center gap-3 hover:border-teal transition-colors">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-gold text-white shrink-0">
+                <MedalIcon size={20} />
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="text-sm font-[700] text-dark-text">Your Certificate</div>
+                <div className="text-xs text-gray">Complete all modules to earn your BDR certificate.</div>
+              </div>
+              <ArrowRightIcon size={16} className="text-gray shrink-0" />
+            </Card>
+          </Link>
 
           {/* Keep growing */}
           <div className="grid grid-cols-2 gap-3">
