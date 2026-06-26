@@ -118,7 +118,8 @@ COACHING STYLE:
 - Ground advice in ConsumerDirect's partner/credit sales reality and the Sandler method.
 - When the rep wants to practice, suggest the Objection Drill.`
 
-    const response = await anthropic.messages.create({
+    // Stream the coach reply token-by-token for a live typing experience.
+    const stream = anthropic.messages.stream({
       model: 'claude-sonnet-4-6',
       max_tokens: 500,
       system: systemPrompt,
@@ -127,8 +128,25 @@ COACHING STYLE:
         { role: 'user', content: message },
       ],
     })
-    const responseText = response.content.find((c) => c.type === 'text')?.text ?? "I couldn't generate a response. Please try again."
-    return NextResponse.json({ response: responseText })
+    const encoder = new TextEncoder()
+    const readable = new ReadableStream({
+      async start(controller) {
+        try {
+          for await (const event of stream) {
+            if (event.type === 'content_block_delta' && event.delta?.type === 'text_delta') {
+              controller.enqueue(encoder.encode(event.delta.text))
+            }
+          }
+        } catch {
+          controller.enqueue(encoder.encode("\n\n(Connection interrupted — please try again.)"))
+        } finally {
+          controller.close()
+        }
+      },
+    })
+    return new Response(readable, {
+      headers: { 'Content-Type': 'text/plain; charset=utf-8', 'Cache-Control': 'no-cache' },
+    })
   } catch (error) {
     console.error('Coach API error:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })

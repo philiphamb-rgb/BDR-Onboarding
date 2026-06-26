@@ -73,16 +73,20 @@ export default function CoachPage() {
         }),
       })
 
-      if (!res.ok) throw new Error('Failed to get response')
-      const data = await res.json()
+      if (!res.ok || !res.body) throw new Error('Failed to get response')
 
-      const aiMsg: Message = {
-        id: (Date.now() + 1).toString(),
-        role: 'assistant',
-        content: data.response,
-        timestamp: new Date(),
+      // Stream the reply in as it arrives.
+      const aiId = (Date.now() + 1).toString()
+      setMessages((prev) => [...prev, { id: aiId, role: 'assistant', content: '', timestamp: new Date() }])
+      const reader = res.body.getReader()
+      const decoder = new TextDecoder()
+      let acc = ''
+      while (true) {
+        const { done, value } = await reader.read()
+        if (done) break
+        acc += decoder.decode(value, { stream: true })
+        setMessages((prev) => prev.map((m) => (m.id === aiId ? { ...m, content: acc } : m)))
       }
-      setMessages((prev) => [...prev, aiMsg])
     } catch {
       setMessages((prev) => [
         ...prev,
@@ -192,7 +196,7 @@ export default function CoachPage() {
               </div>
             ))}
 
-            {loading && (
+            {loading && messages[messages.length - 1]?.role !== 'assistant' && (
               <div className="flex gap-3">
                 <div className="w-7 h-7 bg-gold/10 rounded-full flex items-center justify-center flex-shrink-0">
                   <TargetIcon size={14} className="text-gold" />
