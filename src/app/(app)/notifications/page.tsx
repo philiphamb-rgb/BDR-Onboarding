@@ -3,7 +3,7 @@
 
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import { Card } from '@/components/ui'
+import { Card, SkeletonList } from '@/components/ui'
 import { BellIcon, BeltIcon, TrophyIcon, ClockIcon, TargetIcon, SuccessIcon, BookIcon, FlameIcon } from '@/components/icons'
 import { cn, formatRelativeTime } from '@/lib/utils'
 
@@ -40,18 +40,18 @@ export default function NotificationsPage() {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h1 className="text-h1 text-gray-900">Notifications</h1>
+        <h1 className="text-h1 text-dark-text">Notifications</h1>
         {notifs.filter(n => !n.is_read).length > 0 && (
-          <span className="text-xs text-gray-500">{notifs.filter(n => !n.is_read).length} unread</span>
+          <span className="text-xs text-gray">{notifs.filter(n => !n.is_read).length} unread</span>
         )}
       </div>
 
       {loading ? (
-        <div className="space-y-2">{[1,2,3].map(i => <div key={i} className="h-16 bg-gray-200 rounded-xl animate-pulse" />)}</div>
+        <SkeletonList count={3} />
       ) : notifs.length === 0 ? (
         <div className="text-center py-12">
-          <BellIcon className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-          <p className="text-gray-500">No notifications yet</p>
+          <BellIcon className="w-12 h-12 text-border mx-auto mb-3" />
+          <p className="text-gray">No notifications yet</p>
         </div>
       ) : (
         <div className="space-y-2">
@@ -60,9 +60,9 @@ export default function NotificationsPage() {
               <div className="flex items-start gap-3">
                 {(() => { const Ic = TYPE_ICON[n.type] ?? BellIcon; return <Ic size={20} className={cn('flex-shrink-0 mt-0.5', TYPE_TINT[n.type] ?? 'text-gray')} /> })()}
                 <div className="flex-1 min-w-0">
-                  <p className={cn('text-sm', !n.is_read ? 'font-semibold text-gray-900' : 'font-medium text-gray-700')}>{n.title}</p>
-                  {n.body && <p className="text-xs text-gray-500 mt-0.5">{n.body}</p>}
-                  <p className="text-xs text-gray-400 mt-0.5">{formatRelativeTime(n.created_at)}</p>
+                  <p className={cn('text-sm', !n.is_read ? 'font-semibold text-dark-text' : 'font-medium text-mid-text')}>{n.title}</p>
+                  {n.body && <p className="text-xs text-gray mt-0.5">{n.body}</p>}
+                  <p className="text-xs text-gray mt-0.5">{formatRelativeTime(n.created_at)}</p>
                 </div>
                 {!n.is_read && <div className="w-2 h-2 bg-teal rounded-full flex-shrink-0 mt-1.5" />}
               </div>

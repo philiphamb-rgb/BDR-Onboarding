@@ -4,8 +4,8 @@
 import { useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import { Card, Button, Badge } from '@/components/ui'
-import { CheckIcon, ArrowRightIcon, BackIcon, XpIcon, ExternalLinkIcon, CopyIcon } from '@/components/icons'
+import { Card, Button, Badge, SkeletonCard, EmptyState } from '@/components/ui'
+import { BackIcon, XpIcon, ExternalLinkIcon, CopyIcon, BookIcon } from '@/components/icons'
 import { cn } from '@/lib/utils'
 import { toast } from '@/components/ui'
 
@@ -70,7 +70,7 @@ export default function LessonPage() {
         })
         if (res.ok) {
           const { xp_earned } = await res.json()
-          toast.xp(`+${xp_earned} XP — Lesson complete!`)
+          toast.xp(xp_earned ?? 0, 'Lesson complete!')
         }
       }
       setAlreadyDone(true)
@@ -93,12 +93,12 @@ export default function LessonPage() {
 
   const renderBlock = (block: ContentBlock, i: number) => {
     if (block.type === 'intro') return (
-      <p key={i} className="text-gray-700 leading-relaxed text-sm">{rich(block.text)}</p>
+      <p key={i} className="text-mid-text leading-relaxed text-sm">{rich(block.text)}</p>
     )
     if (block.type === 'list') return (
       <ul key={i} className="space-y-2">
         {block.items?.map((item, j) => (
-          <li key={j} className="flex items-start gap-2 text-gray-700">
+          <li key={j} className="flex items-start gap-2 text-mid-text">
             <div className="w-1.5 h-1.5 bg-navy rounded-full mt-2 flex-shrink-0" />
             {item.url ? (
               <a href={item.url} target="_blank" rel="noopener noreferrer" className="text-sm text-navy font-medium underline decoration-navy/30 hover:decoration-navy inline-flex items-center gap-1">
@@ -119,7 +119,7 @@ export default function LessonPage() {
         {block.items?.map((item, j) => (
           <li key={j} className="flex items-start gap-3">
             <span className="w-6 h-6 rounded-full bg-navy text-white text-xs font-[800] flex items-center justify-center shrink-0">{j + 1}</span>
-            <span className="text-sm text-gray-700 pt-0.5">
+            <span className="text-sm text-mid-text pt-0.5">
               {item.url ? (
                 <a href={item.url} target="_blank" rel="noopener noreferrer" className="text-navy font-medium underline decoration-navy/30 hover:decoration-navy inline-flex items-center gap-1">{item.text}<ExternalLinkIcon size={12} /></a>
               ) : rich(item.text)}
@@ -164,25 +164,25 @@ export default function LessonPage() {
             <CopyIcon size={13} /> Copy
           </button>
         </div>
-        <pre className="px-3 py-3 text-xs text-gray-700 whitespace-pre-wrap break-words font-sans leading-relaxed max-w-full overflow-x-auto">{block.text}</pre>
+        <pre className="px-3 py-3 text-xs text-mid-text whitespace-pre-wrap break-words font-sans leading-relaxed max-w-full overflow-x-auto">{block.text}</pre>
       </div>
     )
     if (block.type === 'tip') return (
       <div key={i} className="border-l-4 border-teal bg-teal/5 rounded-r-xl px-4 py-3">
         <div className="text-xs font-bold text-teal mb-1 uppercase tracking-wide">Pro Tip</div>
-        <p className="text-sm text-gray-700">{rich(block.text)}</p>
+        <p className="text-sm text-mid-text">{rich(block.text)}</p>
       </div>
     )
     if (block.type === 'warn') return (
       <div key={i} className="border-l-4 border-gold bg-gold/5 rounded-r-xl px-4 py-3">
         <div className="text-xs font-bold text-gold mb-1 uppercase tracking-wide">Important</div>
-        <p className="text-sm text-gray-700">{rich(block.text)}</p>
+        <p className="text-sm text-mid-text">{rich(block.text)}</p>
       </div>
     )
     if (block.type === 'quote') return (
-      <blockquote key={i} className="border-l-4 border-gray-300 pl-4 italic text-gray-600 text-sm">
+      <blockquote key={i} className="border-l-4 border-border pl-4 italic text-gray text-sm">
         {block.text}
-        {block.cite && <cite className="block mt-1 text-xs not-italic text-gray-400">— {block.cite}</cite>}
+        {block.cite && <cite className="block mt-1 text-xs not-italic text-gray">— {block.cite}</cite>}
       </blockquote>
     )
     if (block.type === 'screenshot') return (
@@ -196,24 +196,31 @@ export default function LessonPage() {
     return null
   }
 
-  if (loading) return <div className="animate-pulse space-y-4"><div className="h-40 bg-gray-200 rounded-2xl" /></div>
-  if (!lesson) return <div className="text-center py-12 text-gray-500">Lesson not found</div>
+  if (loading) return <div className="space-y-4"><SkeletonCard /></div>
+  if (!lesson) return (
+    <EmptyState
+      icon={<BookIcon size={28} />}
+      title="Lesson not found"
+      description="This lesson may have moved or isn't available yet. Head back to the module to keep going."
+      action={{ label: 'Back to module', onClick: () => router.push(`/train/${moduleId}`) }}
+    />
+  )
 
   const content = Array.isArray(lesson.content) ? lesson.content : []
 
   return (
     <div className="space-y-4">
-      <button onClick={() => router.back()} className="flex items-center gap-2 text-sm text-gray-600 hover:text-gray-900">
+      <button onClick={() => router.back()} className="flex items-center gap-2 text-sm text-gray hover:text-dark-text">
         <BackIcon className="w-4 h-4" />Back
       </button>
 
       <div>
         <div className="flex items-center gap-2 mb-1">
           <Badge className="text-xs capitalize">{lesson.difficulty}</Badge>
-          {lesson.duration_minutes && <span className="text-xs text-gray-400">{lesson.duration_minutes} min read</span>}
+          {lesson.duration_minutes && <span className="text-xs text-gray">{lesson.duration_minutes} min read</span>}
           {alreadyDone && <Badge color="success" className="text-xs">Completed</Badge>}
         </div>
-        <h1 className="text-h1 text-gray-900">{lesson.title}</h1>
+        <h1 className="text-h1 text-dark-text">{lesson.title}</h1>
       </div>
 
       {content.length > 0 ? (
@@ -222,13 +229,21 @@ export default function LessonPage() {
         </Card>
       ) : (
         <Card>
-          <p className="text-gray-500 text-sm">Content coming soon.</p>
+          <p className="text-gray text-sm">Content coming soon.</p>
         </Card>
       )}
 
-      <Button onClick={markComplete} loading={completing} disabled={alreadyDone} className="w-full" size="lg">
+      <Button
+        onClick={markComplete}
+        loading={completing}
+        disabled={alreadyDone}
+        variant={alreadyDone ? 'secondary' : 'conversion'}
+        fullWidth
+        size="lg"
+        icon={!alreadyDone ? <XpIcon size={18} /> : undefined}
+        iconPosition="right"
+      >
         {alreadyDone ? 'Lesson Complete' : 'Mark Complete & Earn XP'}
-        {!alreadyDone && <XpIcon className="ml-2 text-gold" />}
       </Button>
     </div>
   )

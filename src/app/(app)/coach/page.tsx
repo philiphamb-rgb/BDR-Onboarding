@@ -112,8 +112,8 @@ export default function CoachPage() {
           <TargetIcon className="text-gold" />
         </div>
         <div>
-          <h1 className="text-h2 text-gray-900">Coach AI</h1>
-          <p className="text-xs text-gray-500">Your personal performance coach</p>
+          <h1 className="text-h2 text-dark-text">Coach AI</h1>
+          <p className="text-xs text-gray">Your personal performance coach</p>
         </div>
       </div>
 
@@ -124,26 +124,26 @@ export default function CoachPage() {
             {/* Welcome */}
             <Card className="text-center py-6">
               <div className="mb-3 flex justify-center"><TargetIcon size={36} className="text-gold" /></div>
-              <h2 className="text-base font-semibold text-gray-900 mb-2">
+              <h2 className="text-base font-semibold text-dark-text mb-2">
                 Hey{userName ? `, ${userName}` : ''}! I&apos;m your Coach.
               </h2>
-              <p className="text-sm text-gray-500">
+              <p className="text-sm text-gray">
                 Ask me anything about sales techniques, handling objections, improving your metrics, or setting goals.
               </p>
             </Card>
 
             {/* Quick prompts */}
             <div>
-              <p className="text-xs text-gray-400 mb-2 font-medium">QUICK START</p>
+              <p className="text-xs text-gray mb-2 font-medium">QUICK START</p>
               <div className="grid grid-cols-1 gap-2">
                 {QUICK_PROMPTS.map((prompt) => (
                   <button
                     key={prompt}
                     onClick={() => sendMessage(prompt)}
-                    className="text-left px-4 py-3 bg-white rounded-xl border border-border hover:border-navy/40 hover:bg-navy/5 transition-all text-sm text-gray-700 flex items-center justify-between gap-2"
+                    className="text-left px-4 py-3 bg-white rounded-xl border border-border hover:border-navy/40 hover:bg-navy/5 transition-all text-sm text-mid-text flex items-center justify-between gap-2"
                   >
                     {prompt}
-                    <ArrowRightIcon className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                    <ArrowRightIcon className="w-4 h-4 text-gray flex-shrink-0" />
                   </button>
                 ))}
               </div>
@@ -166,11 +166,11 @@ export default function CoachPage() {
                     'max-w-[80%] px-4 py-3 rounded-2xl text-sm leading-relaxed',
                     msg.role === 'user'
                       ? 'bg-navy text-white rounded-tr-sm'
-                      : 'bg-white border border-border text-gray-800 rounded-tl-sm shadow-card'
+                      : 'bg-white border border-border text-dark-text rounded-tl-sm shadow-card'
                   )}
                 >
                   <p className="whitespace-pre-wrap">{msg.content}</p>
-                  <p className={cn('text-xs mt-1', msg.role === 'user' ? 'text-white/50' : 'text-gray-400')}>
+                  <p className={cn('text-xs mt-1', msg.role === 'user' ? 'text-white/50' : 'text-gray')}>
                     {formatRelativeTime(msg.timestamp)}
                   </p>
                 </div>
@@ -222,7 +222,7 @@ export default function CoachPage() {
             disabled={!input.trim() || loading}
             className={cn(
               'w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 transition-colors',
-              input.trim() && !loading ? 'bg-navy text-white hover:bg-navy-dark' : 'bg-gray-100 text-gray-400'
+              input.trim() && !loading ? 'bg-navy text-white hover:bg-navy-dark' : 'bg-bdrbg text-gray'
             )}
           >
             <ArrowRightIcon className="w-4 h-4" />

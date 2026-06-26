@@ -11,7 +11,7 @@ import { cn, formatXP, pluralize } from '@/lib/utils'
 import Link from 'next/link'
 
 const BELT_STYLES: Record<string, { bg: string; bar: string; label: string }> = {
-  white:  { bg: 'bg-gray-100',   bar: '#9CA3AF', label: 'White Belt' },
+  white:  { bg: 'bg-bdrbg',   bar: '#9CA3AF', label: 'White Belt' },
   yellow: { bg: 'bg-yellow-50',  bar: '#FBBF24', label: 'Yellow Belt' },
   orange: { bg: 'bg-orange-50',  bar: '#F97316', label: 'Orange Belt' },
   green:  { bg: 'bg-green-50',   bar: '#22C55E', label: 'Green Belt' },
@@ -66,11 +66,11 @@ export default function HomePage() {
       {/* Header */}
       <div className="flex items-center justify-between mb-2">
         <div>
-          <p className="text-sm text-gray-500">{greeting()},</p>
-          <h1 className="text-h1 text-gray-900">{userName || 'BDR'}</h1>
+          <p className="text-sm text-gray">{greeting()},</p>
+          <h1 className="text-h1 text-dark-text">{userName || 'BDR'}</h1>
         </div>
         <Link href="/notifications" className="p-2 relative">
-          <svg className="w-6 h-6 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <svg className="w-6 h-6 text-gray" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
           </svg>
         </Link>
@@ -80,18 +80,18 @@ export default function HomePage() {
       <div className={cn('rounded-2xl p-5 shadow-card', style.bg)}>
         <div className="flex items-start justify-between mb-4">
           <div>
-            <div className={cn('text-label mb-1', isBlack ? 'text-white/60' : 'text-gray-500')}>{style.label}</div>
-            <div className={cn('text-h1 font-bold', isBlack ? 'text-white' : 'text-gray-900')}>Day {progress?.belt_day ?? 0}</div>
+            <div className={cn('text-label mb-1', isBlack ? 'text-white/60' : 'text-gray')}>{style.label}</div>
+            <div className={cn('text-h1 font-bold', isBlack ? 'text-white' : 'text-dark-text')}>Day {progress?.belt_day ?? 0}</div>
           </div>
-          <BeltIcon className={cn('w-12 h-12', isBlack ? 'text-white/80' : 'text-gray-400')} />
+          <BeltIcon className={cn('w-12 h-12', isBlack ? 'text-white/80' : 'text-gray')} />
         </div>
         {progress?.nextBelt && (
           <div className="mb-3">
             <div className="flex justify-between mb-2">
-              <span className={cn('text-xs font-medium', isBlack ? 'text-white/70' : 'text-gray-600')}>
+              <span className={cn('text-xs font-medium', isBlack ? 'text-white/70' : 'text-gray')}>
                 To {progress.nextBelt.charAt(0).toUpperCase() + progress.nextBelt.slice(1)} Belt
               </span>
-              <span className={cn('text-xs', isBlack ? 'text-white/50' : 'text-gray-500')}>
+              <span className={cn('text-xs', isBlack ? 'text-white/50' : 'text-gray')}>
                 {pluralize(progress.daysUntilNextBelt ?? 0, 'day')} left
               </span>
             </div>
@@ -101,11 +101,11 @@ export default function HomePage() {
         <div className="flex items-center gap-4 pt-2 border-t border-black/10">
           <div className="flex items-center gap-1.5">
             <XpIcon className={cn('w-4 h-4', isBlack ? 'text-gold' : 'text-navy')} />
-            <span className={cn('text-sm font-semibold', isBlack ? 'text-white' : 'text-gray-900')}>{formatXP(progress?.total_xp ?? 0)}</span>
+            <span className={cn('text-sm font-semibold', isBlack ? 'text-white' : 'text-dark-text')}>{formatXP(progress?.total_xp ?? 0)}</span>
           </div>
           <div className="flex items-center gap-1.5">
             <FlameIcon className="w-4 h-4 text-orange-500" />
-            <span className={cn('text-sm font-medium', isBlack ? 'text-white/80' : 'text-gray-700')}>{progress?.current_streak ?? 0} day streak</span>
+            <span className={cn('text-sm font-medium', isBlack ? 'text-white/80' : 'text-mid-text')}>{progress?.current_streak ?? 0} day streak</span>
           </div>
           {progress?.streakStatus === 'at-risk' && <Badge color="warning" className="ml-auto text-xs">Streak at risk!</Badge>}
         </div>
@@ -114,7 +114,7 @@ export default function HomePage() {
       {/* Today Summary */}
       <Card>
         <div className="flex items-center justify-between mb-3">
-          <h2 className="text-h3 text-gray-900">Today</h2>
+          <h2 className="text-h3 text-dark-text">Today</h2>
           <Link href="/today" className="text-sm text-navy font-medium flex items-center gap-1">View all<ArrowRightIcon className="w-4 h-4" /></Link>
         </div>
         <div className="grid grid-cols-3 gap-3">
@@ -123,10 +123,10 @@ export default function HomePage() {
             { icon: <PhoneIcon className="text-navy" />, label: 'Calls', value: String(progress?.todayStats.callsLogged ?? 0), done: false },
             { icon: <LightningIcon className="text-gold" />, label: 'XP Today', value: formatXP(progress?.todayStats.xpEarnedToday ?? 0), done: false },
           ].map(s => (
-            <div key={s.label} className={cn('p-3 rounded-xl border text-center', s.done ? 'border-teal/30 bg-teal/5' : 'border-border bg-gray-50')}>
+            <div key={s.label} className={cn('p-3 rounded-xl border text-center', s.done ? 'border-teal/30 bg-teal/5' : 'border-border bg-bdrbg')}>
               <div className="flex justify-center mb-1">{s.icon}</div>
-              <div className="text-sm font-bold text-gray-900">{s.value}</div>
-              <div className="text-xs text-gray-500">{s.label}</div>
+              <div className="text-sm font-bold text-dark-text">{s.value}</div>
+              <div className="text-xs text-gray">{s.label}</div>
             </div>
           ))}
         </div>
@@ -155,7 +155,7 @@ export default function HomePage() {
       {leaderboard.length > 0 && (
         <Card>
           <div className="flex items-center justify-between mb-3">
-            <h2 className="text-h3 text-gray-900">Leaderboard</h2>
+            <h2 className="text-h3 text-dark-text">Leaderboard</h2>
             <Link href="/leaderboard" className="text-sm text-navy font-medium flex items-center gap-1">Full board<ArrowRightIcon className="w-4 h-4" /></Link>
           </div>
           {userRank > 0 && (
@@ -167,17 +167,17 @@ export default function HomePage() {
           <div className="space-y-2">
             {leaderboard.slice(0, 3).map((entry, i) => (
               <div key={entry.user_id}
-                className={cn('flex items-center gap-3 px-3 py-2 rounded-xl', entry.user_id === userId ? 'bg-navy/5 border border-navy/10' : 'bg-gray-50')}>
-                <span className={cn('w-6 text-sm font-bold text-center', i === 0 ? 'text-gold' : 'text-gray-500')}>{i + 1}</span>
-                <span className="flex-1 text-sm font-medium text-gray-900 truncate">{entry.name}</span>
-                <span className="text-xs text-gray-500">{formatXP(entry.total_xp)}</span>
+                className={cn('flex items-center gap-3 px-3 py-2 rounded-xl', entry.user_id === userId ? 'bg-navy/5 border border-navy/10' : 'bg-bdrbg')}>
+                <span className={cn('w-6 text-sm font-bold text-center', i === 0 ? 'text-gold' : 'text-gray')}>{i + 1}</span>
+                <span className="flex-1 text-sm font-medium text-dark-text truncate">{entry.name}</span>
+                <span className="text-xs text-gray">{formatXP(entry.total_xp)}</span>
               </div>
             ))}
           </div>
         </Card>
       )}
 
-      <p className="text-center text-[11px] text-gray-400 pt-2">
+      <p className="text-center text-[11px] text-gray pt-2">
         BDR Onboarding Tool · Version 2.0.0
       </p>
     </div>

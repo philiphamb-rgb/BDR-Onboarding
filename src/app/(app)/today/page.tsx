@@ -4,7 +4,7 @@
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useProgress, useHabits } from '@/lib/hooks/useProgress'
-import { Card, Button, ProgressBar } from '@/components/ui'
+import { Card, Button, ProgressBar, Skeleton } from '@/components/ui'
 import { CheckIcon, FlameIcon, XpIcon, PhoneIcon, TargetIcon, HandshakeIcon } from '@/components/icons'
 import { cn, formatXP, formatDateShort } from '@/lib/utils'
 import { toast } from '@/components/ui'
@@ -44,7 +44,7 @@ export default function TodayPage() {
       )
       if (res.ok) {
         const { xp_earned } = await res.json()
-        toast.xp(`+${xp_earned} XP — "${habitLabel}" done!`)
+        toast.xp(xp_earned ?? 0, `"${habitLabel}" done!`)
         await Promise.all([refreshHabits(), refreshProgress()])
       }
     } finally { setCompleting(null) }
@@ -64,7 +64,7 @@ export default function TodayPage() {
     )
     if (res.ok) {
       const { xp_earned } = await res.json()
-      toast.xp(`+${xp_earned} XP — ${type} logged!`)
+      toast.xp(xp_earned ?? 0, `${type[0].toUpperCase()}${type.slice(1)} logged!`)
       refreshProgress()
     }
   }
@@ -77,8 +77,8 @@ export default function TodayPage() {
   return (
     <div className="space-y-4">
       <div>
-        <h1 className="text-h1 text-gray-900">Today</h1>
-        <p className="text-sm text-gray-500">{formatDateShort(new Date())}</p>
+        <h1 className="text-h1 text-dark-text">Today</h1>
+        <p className="text-sm text-gray">{formatDateShort(new Date())}</p>
       </div>
 
       {/* Streak banner */}
@@ -99,15 +99,15 @@ export default function TodayPage() {
       <Card variant={allDone ? 'completed' : 'default'}>
         <div className="flex items-center justify-between mb-3">
           <div>
-            <h2 className="text-h3 text-gray-900">Daily Habits</h2>
-            <p className="text-sm text-gray-500">{completedCount} of {totalCount} complete</p>
+            <h2 className="text-h3 text-dark-text">Daily Habits</h2>
+            <p className="text-sm text-gray">{completedCount} of {totalCount} complete</p>
           </div>
           {allDone && <span className="text-sm font-medium text-teal flex items-center gap-1"><CheckIcon className="w-4 h-4" />All done!</span>}
         </div>
         <ProgressBar value={completionPct} max={100} className="mb-4" />
 
         {habitsLoading ? (
-          <div className="space-y-2">{[1,2,3].map(i => <div key={i} className="h-12 bg-gray-100 rounded-xl animate-pulse" />)}</div>
+          <div className="space-y-2">{[1,2,3].map(i => <Skeleton key={i} height={48} className="w-full rounded-xl" />)}</div>
         ) : (
           <div className="space-y-2">
             {habits.map(habit => (
@@ -116,17 +116,17 @@ export default function TodayPage() {
                 disabled={habit.completed_today || completing === habit.id}
                 className={cn('w-full flex items-center gap-3 p-3 rounded-xl border transition-all text-left',
                   habit.completed_today ? 'bg-teal/5 border-teal/30 opacity-80'
-                    : 'bg-gray-50 border-border hover:border-teal/50 hover:bg-teal/5 active:scale-[0.98]')}>
+                    : 'bg-bdrbg border-border hover:border-teal/50 hover:bg-teal/5 active:scale-[0.98]')}>
                 <div className={cn('w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 border-2 transition-all',
                   habit.completed_today ? 'bg-teal border-teal'
-                    : completing === habit.id ? 'border-teal animate-pulse' : 'border-gray-300')}>
+                    : completing === habit.id ? 'border-teal animate-pulse' : 'border-border')}>
                   {habit.completed_today && <CheckIcon className="w-3 h-3 text-white" />}
                 </div>
-                <span className={cn('text-sm font-medium flex-1', habit.completed_today ? 'text-gray-500 line-through' : 'text-gray-900')}>
+                <span className={cn('text-sm font-medium flex-1', habit.completed_today ? 'text-gray line-through' : 'text-dark-text')}>
                   {habit.label}
                 </span>
                 {!habit.completed_today && (
-                  <span className="text-xs text-gray-400 flex items-center gap-1"><XpIcon className="w-3 h-3" />+5</span>
+                  <span className="text-xs text-gray flex items-center gap-1"><XpIcon className="w-3 h-3" />+5</span>
                 )}
               </button>
             ))}
@@ -136,7 +136,7 @@ export default function TodayPage() {
 
       {/* Quick Log */}
       <Card>
-        <h2 className="text-h3 text-gray-900 mb-3">Quick Log</h2>
+        <h2 className="text-h3 text-dark-text mb-3">Quick Log</h2>
         <div className="grid grid-cols-3 gap-2">
           {[
             { type: 'call' as const,  label: 'Call',  Icon: PhoneIcon,     xp: 10 },
@@ -144,10 +144,10 @@ export default function TodayPage() {
             { type: 'deal' as const,  label: 'Deal',  Icon: HandshakeIcon, xp: 100 },
           ].map(item => (
             <button key={item.type} onClick={() => logActivity(item.type)}
-              className="flex flex-col items-center gap-1 p-3 bg-gray-50 hover:bg-gray-100 active:scale-95 rounded-xl border border-border transition-all">
+              className="flex flex-col items-center gap-1 p-3 bg-bdrbg hover:bg-bdrbg active:scale-95 rounded-xl border border-border transition-all">
               <item.Icon size={24} className="text-navy" />
-              <span className="text-xs font-semibold text-gray-900">{item.label}</span>
-              <span className="text-xs text-gray-500">+{item.xp} XP</span>
+              <span className="text-xs font-semibold text-dark-text">{item.label}</span>
+              <span className="text-xs text-gray">+{item.xp} XP</span>
             </button>
           ))}
         </div>
@@ -161,8 +161,8 @@ export default function TodayPage() {
               <XpIcon className="text-gold" />
             </div>
             <div>
-              <div className="text-sm text-gray-500">XP earned today</div>
-              <div className="text-h3 font-bold text-gray-900">{formatXP(progress?.todayStats.xpEarnedToday ?? 0)}</div>
+              <div className="text-sm text-gray">XP earned today</div>
+              <div className="text-h3 font-bold text-dark-text">{formatXP(progress?.todayStats.xpEarnedToday ?? 0)}</div>
             </div>
           </div>
         </Card>

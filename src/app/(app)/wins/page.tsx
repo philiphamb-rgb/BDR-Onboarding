@@ -4,7 +4,7 @@
 import { useState, useEffect, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import { Card, Button, Modal, Badge } from '@/components/ui'
+import { Card, Button, Modal, Badge, EmptyState, SkeletonList } from '@/components/ui'
 import { TrophyIcon, PlusIcon, XpIcon, PhoneIcon, TargetIcon, HandshakeIcon, LightningIcon, StarFilledIcon } from '@/components/icons'
 import { cn, formatXP, formatRelativeTime } from '@/lib/utils'
 import { toast } from '@/components/ui'
@@ -81,7 +81,7 @@ function WinsContent() {
         }
       )
       const xpData = res.ok ? await res.json() : { xp_earned: 0 }
-      toast.xp(`+${xpData.xp_earned} XP — ${WIN_TYPES.find(t => t.type === selectedType)?.label} logged!`)
+      toast.xp(xpData.xp_earned ?? 0, `${WIN_TYPES.find(t => t.type === selectedType)?.label} logged!`)
       setDescription(''); setAmount(''); setShowModal(false); fetchWins(userId)
     } finally { setSubmitting(false) }
   }
@@ -92,8 +92,8 @@ function WinsContent() {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-h1 text-gray-900">Wins</h1>
-          <p className="text-sm text-gray-500">Track every victory</p>
+          <h1 className="text-h1 text-dark-text">Wins</h1>
+          <p className="text-sm text-gray">Track every victory</p>
         </div>
         <Button onClick={() => setShowModal(true)} size="sm">
           <PlusIcon className="mr-1.5 w-4 h-4" />Log Win
@@ -107,8 +107,8 @@ function WinsContent() {
           return (
             <div key={wt.type} className="bg-white rounded-xl border border-border p-3 text-center shadow-card">
               <div className="mb-1 flex justify-center"><wt.Icon size={20} className="text-navy" /></div>
-              <div className="text-h3 font-bold text-gray-900">{count}</div>
-              <div className="text-xs text-gray-500">{wt.label}s</div>
+              <div className="text-h3 font-bold text-dark-text">{count}</div>
+              <div className="text-xs text-gray">{wt.label}s</div>
             </div>
           )
         })}
@@ -119,7 +119,7 @@ function WinsContent() {
         {['all', ...WIN_TYPES.map(t => t.type)].map(f => (
           <button key={f} onClick={() => setFilter(f)}
             className={cn('px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-colors',
-              filter === f ? 'bg-navy text-white' : 'bg-white border border-border text-gray-600 hover:bg-gray-50')}>
+              filter === f ? 'bg-navy text-white' : 'bg-white border border-border text-gray hover:bg-bdrbg')}>
             {f === 'all' ? 'All' : WIN_TYPES.find(t => t.type === f)?.label}
           </button>
         ))}
@@ -127,12 +127,16 @@ function WinsContent() {
 
       {/* List */}
       {loading ? (
-        <div className="space-y-2">{[1,2,3].map(i => <div key={i} className="h-16 bg-white rounded-xl animate-pulse border border-border" />)}</div>
+        <SkeletonList count={3} />
       ) : filtered.length === 0 ? (
-        <div className="text-center py-12">
-          <TrophyIcon className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-          <p className="text-gray-500">No wins yet — log your first one!</p>
-        </div>
+        <EmptyState
+          icon={<TrophyIcon size={28} />}
+          title={filter === 'all' ? 'No wins logged yet' : 'No wins of this type yet'}
+          description={filter === 'all'
+            ? 'Every call, demo, and deal you log shows up here and earns XP. Log your first win to get the streak going.'
+            : 'Switch filters or log a new win of this type to see it here.'}
+          action={{ label: 'Log a win', onClick: () => setShowModal(true) }}
+        />
       ) : (
         <div className="space-y-2">
           {filtered.map(win => {
@@ -149,8 +153,8 @@ function WinsContent() {
                       {win.amount && <span className="text-xs font-medium text-green-600">${Number(win.amount).toLocaleString()}</span>}
                       {win.xp_earned > 0 && <span className="text-xs text-gold font-medium ml-auto flex items-center gap-0.5"><XpIcon className="w-3 h-3" />+{win.xp_earned}</span>}
                     </div>
-                    <p className="text-sm text-gray-700 truncate">{win.description}</p>
-                    <p className="text-xs text-gray-400 mt-0.5">{formatRelativeTime(win.logged_at)}</p>
+                    <p className="text-sm text-mid-text truncate">{win.description}</p>
+                    <p className="text-xs text-gray mt-0.5">{formatRelativeTime(win.logged_at)}</p>
                   </div>
                 </div>
               </Card>
@@ -166,23 +170,23 @@ function WinsContent() {
             {WIN_TYPES.map(wt => (
               <button key={wt.type} onClick={() => setSelectedType(wt.type)}
                 className={cn('flex items-center gap-2 p-3 rounded-xl border transition-all text-left',
-                  selectedType === wt.type ? 'border-navy bg-navy/5' : 'border-border bg-gray-50 hover:bg-gray-100')}>
+                  selectedType === wt.type ? 'border-navy bg-navy/5' : 'border-border bg-bdrbg hover:bg-bdrbg')}>
                 <wt.Icon size={20} className="text-navy" />
                 <div>
-                  <div className="text-sm font-medium text-gray-900">{wt.label}</div>
-                  <div className="text-xs text-gray-500 flex items-center gap-1"><XpIcon className="w-3 h-3" />+{wt.xp}</div>
+                  <div className="text-sm font-medium text-dark-text">{wt.label}</div>
+                  <div className="text-xs text-gray flex items-center gap-1"><XpIcon className="w-3 h-3" />+{wt.xp}</div>
                 </div>
               </button>
             ))}
           </div>
           <div>
-            <label className="text-label text-gray-700 mb-1 block">Description <span className="text-gray-400 font-normal">(min 10 chars)</span></label>
+            <label className="text-label text-mid-text mb-1 block">Description <span className="text-gray font-normal">(min 10 chars)</span></label>
             <textarea value={description} onChange={e => setDescription(e.target.value)} placeholder="Describe this win..." rows={3}
               className="w-full px-4 py-3 rounded-xl border border-border text-sm focus:outline-none focus:ring-2 focus:ring-navy resize-none" />
           </div>
           {selectedType === 'deal' && (
             <div>
-              <label className="text-label text-gray-700 mb-1 block">Deal Amount (optional)</label>
+              <label className="text-label text-mid-text mb-1 block">Deal Amount (optional)</label>
               <input type="number" value={amount} onChange={e => setAmount(e.target.value)} placeholder="0.00"
                 className="w-full px-4 py-3 rounded-xl border border-border text-sm focus:outline-none focus:ring-2 focus:ring-navy" />
             </div>
@@ -198,7 +202,7 @@ function WinsContent() {
 
 export default function WinsPage() {
   return (
-    <Suspense fallback={<div className="animate-pulse space-y-4"><div className="h-10 bg-gray-200 rounded-xl" /></div>}>
+    <Suspense fallback={<SkeletonList count={3} />}>
       <WinsContent />
     </Suspense>
   )

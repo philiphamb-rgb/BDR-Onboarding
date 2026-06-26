@@ -77,8 +77,8 @@ export default function TrainPage() {
   return (
     <div className="space-y-4">
       <div>
-        <h1 className="text-h1 text-gray-900">Training</h1>
-        <p className="text-sm text-gray-500">{completedModules} of {modules.length} modules complete</p>
+        <h1 className="text-h1 text-dark-text">Training</h1>
+        <p className="text-sm text-gray">{completedModules} of {modules.length} modules complete</p>
       </div>
 
       <Card className="bg-gradient-primary !p-4">
@@ -103,26 +103,26 @@ export default function TrainPage() {
             <Card variant={fullyDone ? 'completed' : 'default'} className={cn(locked && 'opacity-70')}>
               <div className="flex items-start gap-4">
                 <div className={cn('w-12 h-12 rounded-2xl flex items-center justify-center flex-shrink-0',
-                  locked ? 'bg-gray-100' : fullyDone ? 'bg-teal/10' : 'bg-navy/5')}>
-                  <Icon size={locked ? 20 : 24} className={locked ? 'text-gray-400' : fullyDone ? 'text-teal' : 'text-navy'} />
+                  locked ? 'bg-bdrbg' : fullyDone ? 'bg-teal/10' : 'bg-navy/5')}>
+                  <Icon size={locked ? 20 : 24} className={locked ? 'text-gray' : fullyDone ? 'text-teal' : 'text-navy'} />
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-start justify-between gap-2 mb-1">
                     <div>
-                      <div className="text-xs text-gray-400 font-medium">Module {mod.order_index}</div>
-                      <h3 className={cn('text-sm font-semibold leading-tight', locked ? 'text-gray-400' : 'text-gray-900')}>{mod.title}</h3>
+                      <div className="text-xs text-gray font-medium">Module {mod.order_index}</div>
+                      <h3 className={cn('text-sm font-semibold leading-tight', locked ? 'text-gray' : 'text-dark-text')}>{mod.title}</h3>
                     </div>
                     {locked
-                      ? <LockIcon size={15} className="text-gray-300 flex-shrink-0 mt-1" />
-                      : <ArrowRightIcon className="w-4 h-4 text-gray-400 flex-shrink-0 mt-1" />}
+                      ? <LockIcon size={15} className="text-border flex-shrink-0 mt-1" />
+                      : <ArrowRightIcon className="w-4 h-4 text-gray flex-shrink-0 mt-1" />}
                   </div>
                   {locked ? (
-                    <div className="text-xs text-gray-400 flex items-center gap-1"><LockIcon size={12} />Pass Module {prev?.order_index} quiz to unlock</div>
+                    <div className="text-xs text-gray flex items-center gap-1"><LockIcon size={12} />Pass Module {prev?.order_index} quiz to unlock</div>
                   ) : (
                     <>
                       <div className="flex items-center justify-between mb-2">
-                        <span className="text-xs text-gray-500">{mod.completed_lessons}/{mod.lessons_count} lessons{mod.quiz_passed ? ' · Quiz passed' : ''}</span>
-                        <span className="text-xs text-gray-500 flex items-center gap-0.5"><XpIcon className="w-3 h-3 text-gold" />+{mod.xp_quiz} XP</span>
+                        <span className="text-xs text-gray">{mod.completed_lessons}/{mod.lessons_count} lessons{mod.quiz_passed ? ' · Quiz passed' : ''}</span>
+                        <span className="text-xs text-gray flex items-center gap-0.5"><XpIcon className="w-3 h-3 text-gold" />+{mod.xp_quiz} XP</span>
                       </div>
                       {mod.lessons_count > 0 && (
                         <ProgressBar value={pct} max={100} color={fullyDone ? '#00C2B2' : '#003087'} className="h-1.5" />

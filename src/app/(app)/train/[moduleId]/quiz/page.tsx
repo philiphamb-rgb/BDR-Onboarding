@@ -4,7 +4,7 @@
 import { useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import { Card, Button, Badge } from '@/components/ui'
+import { Card, Button, Badge, SkeletonCard, EmptyState } from '@/components/ui'
 import { ArrowRightIcon, BackIcon, XpIcon, CheckIcon, ChecklistIcon, TrophyIcon, BookIcon, CloseIcon } from '@/components/icons'
 import { cn } from '@/lib/utils'
 import { toast } from '@/components/ui'
@@ -120,30 +120,32 @@ export default function ModuleQuizPage() {
     } finally { setSubmitting(false) }
   }
 
-  if (loading) return <div className="animate-pulse h-40 bg-gray-200 rounded-2xl" />
+  if (loading) return <div className="space-y-4"><SkeletonCard /></div>
 
   if (questions.length === 0) return (
-    <div className="text-center py-12 text-gray-500">
-      <p>No quiz questions available yet.</p>
-      <Button onClick={() => router.back()} variant="ghost" className="mt-4">Go Back</Button>
-    </div>
+    <EmptyState
+      icon={<ChecklistIcon size={28} />}
+      title="No quiz yet"
+      description="This module doesn't have a quiz available yet. Finish the lessons and check back."
+      action={{ label: 'Back to module', onClick: () => router.back() }}
+    />
   )
 
   // Intro
   if (phase === 'intro') return (
     <div className="space-y-4">
-      <button onClick={() => router.back()} className="flex items-center gap-2 text-sm text-gray-600">
+      <button onClick={() => router.back()} className="flex items-center gap-2 text-sm text-gray">
         <BackIcon className="w-4 h-4" />Back
       </button>
       <Card>
         <div className="text-center py-4">
           <div className="mb-3 flex justify-center"><ChecklistIcon size={36} className="text-navy" /></div>
-          <h1 className="text-h2 text-gray-900 mb-2">{moduleName} Quiz</h1>
-          <p className="text-sm text-gray-500 mb-1">{questions.length} questions · Pass at 70%</p>
-          {prevBest > 0 && <p className="text-xs text-gray-400">Your best: {prevBest}%</p>}
+          <h1 className="text-h2 text-dark-text mb-2">{moduleName} Quiz</h1>
+          <p className="text-sm text-gray mb-1">{questions.length} questions · Pass at 70%</p>
+          {prevBest > 0 && <p className="text-xs text-gray">Your best: {prevBest}%</p>}
         </div>
       </Card>
-      <Button onClick={() => setPhase('taking')} className="w-full" size="lg">Start Quiz<ArrowRightIcon className="ml-2" /></Button>
+      <Button onClick={() => setPhase('taking')} variant="conversion" fullWidth size="lg" icon={<ArrowRightIcon size={18} />} iconPosition="right">Start Quiz</Button>
     </div>
   )
 
@@ -158,7 +160,7 @@ export default function ModuleQuizPage() {
         {/* Progress bar */}
         <div>
           <div className="flex items-center justify-between mb-2">
-            <span className="text-sm text-gray-500">Question {currentIdx + 1} of {questions.length}</span>
+            <span className="text-sm text-gray">Question {currentIdx + 1} of {questions.length}</span>
             <div className="flex gap-1">
               {questions.map((_, i) => (
                 <div key={i} className={cn('w-2 h-2 rounded-full',
@@ -172,21 +174,21 @@ export default function ModuleQuizPage() {
         </div>
 
         <Card>
-          <h2 className="text-sm font-semibold text-gray-900 mb-4 leading-relaxed">{q.question}</h2>
+          <h2 className="text-sm font-semibold text-dark-text mb-4 leading-relaxed">{q.question}</h2>
           <div className="space-y-2">
             {q.options.map((opt, idx) => {
-              let cls = 'border-border bg-gray-50 hover:bg-gray-100 text-gray-700'
+              let cls = 'border-border bg-bdrbg hover:bg-bdrbg text-mid-text'
               if (isAnswered) {
                 if (idx === q.correct_answer) cls = 'border-teal bg-teal/5 text-teal font-medium'
-                else if (idx === userAnswer) cls = 'border-red-400 bg-red-50 text-red-700'
-                else cls = 'border-border bg-gray-50 opacity-40 text-gray-500'
+                else if (idx === userAnswer) cls = 'border-red-400 bg-red-50 text-error'
+                else cls = 'border-border bg-bdrbg opacity-40 text-gray'
               } else if (idx === userAnswer) {
                 cls = 'border-navy bg-navy/5 text-navy'
               }
               return (
                 <button key={idx} onClick={() => selectAnswer(q.id, idx)}
                   className={cn('w-full text-left px-4 py-3 rounded-xl border text-sm transition-all', cls)}>
-                  <span className="text-gray-400 mr-2">{String.fromCharCode(65 + idx)}.</span>{opt}
+                  <span className="text-gray mr-2">{String.fromCharCode(65 + idx)}.</span>{opt}
                 </button>
               )
             })}
@@ -195,12 +197,12 @@ export default function ModuleQuizPage() {
           {isAnswered && (
             <div className={cn('mt-4 p-3 rounded-xl border', userAnswer === q.correct_answer
               ? 'bg-teal/5 border-teal/30' : 'bg-red-50 border-red-200')}>
-              <div className={cn('text-xs font-bold mb-1', userAnswer === q.correct_answer ? 'text-teal' : 'text-red-600')}>
+              <div className={cn('text-xs font-bold mb-1', userAnswer === q.correct_answer ? 'text-teal' : 'text-error')}>
                 {userAnswer === q.correct_answer ? 'Correct!' : 'Incorrect'}
               </div>
-              <p className="text-sm text-gray-700">{q.explanation}</p>
+              <p className="text-sm text-mid-text">{q.explanation}</p>
               {q.source?.document && (
-                <p className="text-xs text-gray-400 mt-1">Source: {q.source.document}{q.source.page ? `, p. ${q.source.page}` : ''}</p>
+                <p className="text-xs text-gray mt-1">Source: {q.source.document}{q.source.page ? `, p. ${q.source.page}` : ''}</p>
               )}
             </div>
           )}
@@ -221,9 +223,9 @@ export default function ModuleQuizPage() {
     <div className="space-y-4">
       <Card className={cn('text-center py-8', result.passed ? 'border-teal/30 bg-teal/5' : 'border-red-200 bg-red-50')}>
         <div className="mb-3 flex justify-center">{result.passed ? <TrophyIcon size={44} className="text-gold" /> : <BookIcon size={44} className="text-navy" />}</div>
-        <h2 className="text-h2 text-gray-900 mb-2">{result.passed ? 'Passed!' : 'Keep studying'}</h2>
-        <div className="text-4xl font-bold text-gray-900 mb-1">{result.pct}%</div>
-        <p className="text-sm text-gray-500 mb-4">{result.correct} of {result.total} correct</p>
+        <h2 className="text-h2 text-dark-text mb-2">{result.passed ? 'Passed!' : 'Keep studying'}</h2>
+        <div className="text-4xl font-bold text-dark-text mb-1">{result.pct}%</div>
+        <p className="text-sm text-gray mb-4">{result.correct} of {result.total} correct</p>
         {result.xpEarned > 0 && (
           <div className="flex items-center gap-2 justify-center text-gold font-bold text-lg">
             <XpIcon className="w-5 h-5" />+{result.xpEarned} XP
@@ -233,7 +235,7 @@ export default function ModuleQuizPage() {
 
       {/* Answer review */}
       <Card>
-        <h3 className="text-h3 text-gray-900 mb-3">Review</h3>
+        <h3 className="text-h3 text-dark-text mb-3">Review</h3>
         <div className="space-y-3">
           {questions.map((q, i) => {
             const ans = answers[q.id]
@@ -243,11 +245,11 @@ export default function ModuleQuizPage() {
                 <div className="flex items-start gap-2">
                   <div className={cn('w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5',
                     isCorrect ? 'bg-teal/20' : 'bg-red-200')}>
-                    {isCorrect ? <CheckIcon className="w-3 h-3 text-teal" /> : <CloseIcon className="w-3 h-3 text-red-600" />}
+                    {isCorrect ? <CheckIcon className="w-3 h-3 text-teal" /> : <CloseIcon className="w-3 h-3 text-error" />}
                   </div>
                   <div>
-                    <p className="text-gray-900 font-medium mb-1">{i + 1}. {q.question.slice(0, 80)}{q.question.length > 80 ? '…' : ''}</p>
-                    {!isCorrect && <p className="text-xs text-gray-600">Correct: <span className="font-medium">{q.options[q.correct_answer]}</span></p>}
+                    <p className="text-dark-text font-medium mb-1">{i + 1}. {q.question.slice(0, 80)}{q.question.length > 80 ? '…' : ''}</p>
+                    {!isCorrect && <p className="text-xs text-gray">Correct: <span className="font-medium">{q.options[q.correct_answer]}</span></p>}
                   </div>
                 </div>
               </div>

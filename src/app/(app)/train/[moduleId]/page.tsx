@@ -4,8 +4,8 @@
 import { useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import { Card, Badge, ProgressBar, Button } from '@/components/ui'
-import { CheckIcon, ArrowRightIcon, BackIcon, XpIcon, LockIcon, TrophyIcon } from '@/components/icons'
+import { Card, Badge, ProgressBar, Button, SkeletonCard, EmptyState } from '@/components/ui'
+import { CheckIcon, ArrowRightIcon, BackIcon, XpIcon, LockIcon, TrophyIcon, BookIcon } from '@/components/icons'
 import { cn, percentage } from '@/lib/utils'
 import Link from 'next/link'
 
@@ -55,12 +55,19 @@ export default function ModulePage() {
   const moduleComplete = allLessonsDone && (!hasQuiz || quizPassed)
   const perLessonXp = lessons.length ? Math.round((module?.xp_lessons ?? 0) / lessons.length) : 0
 
-  if (loading) return <div className="animate-pulse space-y-4"><div className="h-32 bg-gray-200 rounded-2xl" /></div>
-  if (!module) return <div className="text-center py-12 text-gray-500">Module not found</div>
+  if (loading) return <div className="space-y-4"><SkeletonCard /></div>
+  if (!module) return (
+    <EmptyState
+      icon={<BookIcon size={28} />}
+      title="Module not found"
+      description="This module may have moved or isn't available yet. Head back to your training catalog."
+      action={{ label: 'Back to Training', onClick: () => router.push('/train') }}
+    />
+  )
 
   return (
     <div className="space-y-4">
-      <button onClick={() => router.back()} className="flex items-center gap-2 text-sm text-gray-600 hover:text-gray-900">
+      <button onClick={() => router.back()} className="flex items-center gap-2 text-sm text-gray hover:text-dark-text">
         <BackIcon className="w-4 h-4" />Training
       </button>
 
@@ -102,7 +109,7 @@ export default function ModulePage() {
         </Link>
       )}
       {hasQuiz && !allLessonsDone && (
-        <div className="flex items-center justify-center gap-2 text-xs text-gray-400 py-1">
+        <div className="flex items-center justify-center gap-2 text-xs text-gray py-1">
           <LockIcon size={13} /> Finish all {lessons.length} lessons to unlock the quiz
         </div>
       )}
@@ -114,14 +121,14 @@ export default function ModulePage() {
             <Card className={cn('!p-3', !isLocked && !lesson.is_completed && 'hover:border-teal/40 transition-colors')}>
               <div className="flex items-center gap-3">
                 <div className={cn('w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0',
-                  lesson.is_completed ? 'bg-teal/10 text-teal' : isLocked ? 'bg-gray-100 text-gray-400' : 'bg-navy/10 text-navy')}>
+                  lesson.is_completed ? 'bg-teal/10 text-teal' : isLocked ? 'bg-bdrbg text-gray' : 'bg-navy/10 text-navy')}>
                   {lesson.is_completed ? <CheckIcon className="w-4 h-4" /> : isLocked ? <LockIcon size={14} /> : idx + 1}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <div className={cn('text-sm font-medium truncate', isLocked ? 'text-gray-400' : 'text-gray-900')}>{lesson.title}</div>
+                  <div className={cn('text-sm font-medium truncate', isLocked ? 'text-gray' : 'text-dark-text')}>{lesson.title}</div>
                   {isLocked
-                    ? <div className="text-xs text-gray-400">Finish the previous lesson to unlock</div>
-                    : <div className="text-xs text-gray-400 flex items-center gap-2">
+                    ? <div className="text-xs text-gray">Finish the previous lesson to unlock</div>
+                    : <div className="text-xs text-gray flex items-center gap-2">
                         {lesson.duration_minutes && <span>{lesson.duration_minutes} min</span>}
                         {!lesson.is_completed && perLessonXp > 0 && (
                           <span className="flex items-center gap-0.5 text-gold font-[700]"><XpIcon className="w-3 h-3" />+{perLessonXp}</span>
@@ -130,7 +137,7 @@ export default function ModulePage() {
                 </div>
                 {lesson.is_completed
                   ? <Badge color="success" className="text-xs">Done</Badge>
-                  : isLocked ? <LockIcon size={15} className="text-gray-300" /> : <ArrowRightIcon className="w-4 h-4 text-gray-400" />}
+                  : isLocked ? <LockIcon size={15} className="text-border" /> : <ArrowRightIcon className="w-4 h-4 text-gray" />}
               </div>
             </Card>
           )

@@ -83,15 +83,15 @@ export default function SettingsPage() {
 
   if (section === 'main') return (
     <div className="space-y-4">
-      <h1 className="text-h1 text-gray-900">Settings</h1>
+      <h1 className="text-h1 text-dark-text">Settings</h1>
       <Card>
         <div className="flex items-center gap-3">
           <div className="w-12 h-12 bg-gradient-primary rounded-2xl flex items-center justify-center text-white font-bold text-sm">
             {(user?.name ?? '?').split(' ').map((n: string) => n[0]).join('').slice(0,2)}
           </div>
           <div className="flex-1">
-            <div className="font-semibold text-gray-900">{user?.name}</div>
-            <div className="text-xs text-gray-500">{user?.email}</div>
+            <div className="font-semibold text-dark-text">{user?.name}</div>
+            <div className="text-xs text-gray">{user?.email}</div>
             <div className="text-xs text-teal capitalize font-medium">{user?.role}</div>
           </div>
           <button onClick={() => setSection('profile')} className="text-sm text-navy font-medium">Edit</button>
@@ -105,20 +105,20 @@ export default function SettingsPage() {
       ].map(item => (
         <button key={item.label} onClick={item.onPress} className="w-full text-left">
           <Card className="flex items-center gap-3 hover:border-navy/20 transition-colors">
-            <div className="w-9 h-9 bg-gray-50 rounded-xl flex items-center justify-center flex-shrink-0">{item.icon}</div>
+            <div className="w-9 h-9 bg-bdrbg rounded-xl flex items-center justify-center flex-shrink-0">{item.icon}</div>
             <div className="flex-1">
-              <div className="text-sm font-medium text-gray-900">{item.label}</div>
-              <div className="text-xs text-gray-500">{item.sub}</div>
+              <div className="text-sm font-medium text-dark-text">{item.label}</div>
+              <div className="text-xs text-gray">{item.sub}</div>
             </div>
-            <ChevronRightIcon className="text-gray-400 w-4 h-4" />
+            <ChevronRightIcon className="text-gray w-4 h-4" />
           </Card>
         </button>
       ))}
 
-      <p className="text-center text-xs text-gray-400">BDR Onboarding Tool · ConsumerDirect</p>
+      <p className="text-center text-xs text-gray">BDR Onboarding Tool · ConsumerDirect</p>
 
       <button onClick={async () => { await supabase.auth.signOut(); router.push('/login') }}
-        className="w-full flex items-center justify-center gap-2 p-4 bg-red-50 text-red-600 rounded-2xl border border-red-200 font-medium text-sm hover:bg-red-100 transition-colors">
+        className="w-full flex items-center justify-center gap-2 p-4 bg-error/5 text-error rounded-2xl border border-error/20 font-medium text-sm hover:bg-error/10 transition-colors">
         <LogoutIcon />Sign Out
       </button>
     </div>
@@ -127,19 +127,19 @@ export default function SettingsPage() {
   if (section === 'profile') return (
     <div className="space-y-4">
       <button onClick={() => setSection('main')} className="text-sm text-navy font-medium">← Back</button>
-      <h1 className="text-h1 text-gray-900">Edit Profile</h1>
+      <h1 className="text-h1 text-dark-text">Edit Profile</h1>
       <Card className="space-y-4">
         {[['Full Name','name','text'], ['Phone','phone','tel']].map(([label, key, type]) => (
           <div key={key}>
-            <label className="text-label text-gray-700 mb-1 block">{label}</label>
+            <label className="text-label text-mid-text mb-1 block">{label}</label>
             <input type={type} value={form[key]} onChange={e => setForm(p => ({ ...p, [key]: e.target.value }))}
               className="w-full px-4 py-3 rounded-xl border border-border text-sm focus:outline-none focus:ring-2 focus:ring-navy" />
           </div>
         ))}
         <div>
-          <label className="text-label text-gray-700 mb-1 block">Email</label>
-          <input disabled value={user?.email ?? ''} className="w-full px-4 py-3 rounded-xl border border-border text-sm bg-gray-50 text-gray-500" />
-          <p className="text-xs text-gray-400 mt-1">Email cannot be changed</p>
+          <label className="text-label text-mid-text mb-1 block">Email</label>
+          <input disabled value={user?.email ?? ''} className="w-full px-4 py-3 rounded-xl border border-border text-sm bg-bdrbg text-gray" />
+          <p className="text-xs text-gray mt-1">Email cannot be changed</p>
         </div>
         <Button onClick={saveProfile} loading={saving} className="w-full">Save Profile</Button>
       </Card>
@@ -149,26 +149,26 @@ export default function SettingsPage() {
   if (section === 'notifications') return (
     <div className="space-y-4">
       <button onClick={() => setSection('main')} className="text-sm text-navy font-medium">← Back</button>
-      <h1 className="text-h1 text-gray-900">Notifications</h1>
+      <h1 className="text-h1 text-dark-text">Notifications</h1>
 
       <Card>
         <div className="flex items-center justify-between">
           <div>
-            <div className="text-sm font-medium text-gray-900">Push Notifications</div>
-            <div className="text-xs text-gray-500">{subscribed ? 'Active' : 'Disabled'}</div>
+            <div className="text-sm font-medium text-dark-text">Push Notifications</div>
+            <div className="text-xs text-gray">{subscribed ? 'Active' : 'Disabled'}</div>
           </div>
           {supported ? (
             subscribed
-              ? <button onClick={unsubscribe} className="text-xs text-red-500 font-medium px-3 py-1 border border-red-200 rounded-lg">Disable</button>
+              ? <button onClick={unsubscribe} className="text-xs text-error font-medium px-3 py-1 border border-red-200 rounded-lg">Disable</button>
               : <button onClick={requestPermission} disabled={pushLoading} className="text-sm text-white font-medium bg-teal px-3 py-1 rounded-lg">
                   {pushLoading ? '…' : 'Enable'}
                 </button>
-          ) : <span className="text-xs text-gray-400">Not supported on this device</span>}
+          ) : <span className="text-xs text-gray">Not supported on this device</span>}
         </div>
       </Card>
 
       <Card>
-        <h2 className="text-h3 text-gray-900 mb-3">Alert Types</h2>
+        <h2 className="text-h3 text-dark-text mb-3">Alert Types</h2>
         <div className="space-y-3">
           {[
             { key: 'habit_reminder',  label: 'Habit Reminders',  desc: '3pm if habits not done' },
@@ -181,11 +181,11 @@ export default function SettingsPage() {
           ].map(({ key, label, desc }) => (
             <div key={key} className="flex items-center justify-between">
               <div>
-                <div className="text-sm font-medium text-gray-900">{label}</div>
-                <div className="text-xs text-gray-500">{desc}</div>
+                <div className="text-sm font-medium text-dark-text">{label}</div>
+                <div className="text-xs text-gray">{desc}</div>
               </div>
               <button onClick={() => setNotifPrefs(p => ({ ...p, [key]: !p[key] }))}
-                className={cn('w-12 h-6 rounded-full transition-colors relative flex-shrink-0', notifPrefs[key] ? 'bg-teal' : 'bg-gray-200')}>
+                className={cn('w-12 h-6 rounded-full transition-colors relative flex-shrink-0', notifPrefs[key] ? 'bg-teal' : 'bg-border')}>
                 <div className={cn('w-5 h-5 bg-white rounded-full shadow absolute top-0.5 transition-transform', notifPrefs[key] ? 'translate-x-6' : 'translate-x-0.5')} />
               </button>
             </div>
@@ -194,11 +194,11 @@ export default function SettingsPage() {
       </Card>
 
       <Card>
-        <h2 className="text-h3 text-gray-900 mb-3">Quiet Hours</h2>
+        <h2 className="text-h3 text-dark-text mb-3">Quiet Hours</h2>
         <div className="grid grid-cols-2 gap-3">
           {[['quiet_hours_start','Start'],['quiet_hours_end','End']].map(([key, label]) => (
             <div key={key}>
-              <label className="text-label text-gray-700 mb-1 block">{label}</label>
+              <label className="text-label text-mid-text mb-1 block">{label}</label>
               <input type="time" value={notifPrefs[key]} onChange={e => setNotifPrefs(p => ({ ...p, [key]: e.target.value }))}
                 className="w-full px-3 py-2 rounded-xl border border-border text-sm focus:outline-none focus:ring-2 focus:ring-navy" />
             </div>
@@ -212,17 +212,17 @@ export default function SettingsPage() {
   if (section === 'data') return (
     <div className="space-y-4">
       <button onClick={() => setSection('main')} className="text-sm text-navy font-medium">← Back</button>
-      <h1 className="text-h1 text-gray-900">My Data</h1>
+      <h1 className="text-h1 text-dark-text">My Data</h1>
       <Card>
-        <div className="text-sm font-semibold text-gray-900 mb-1">Export My Data</div>
-        <div className="text-xs text-gray-500 mb-3">Download all your activity, wins, and progress as JSON.</div>
+        <div className="text-sm font-semibold text-dark-text mb-1">Export My Data</div>
+        <div className="text-xs text-gray mb-3">Download all your activity, wins, and progress as JSON.</div>
         <Button onClick={exportData} variant="secondary" size="sm">Export Data</Button>
       </Card>
       <Card className="border-red-200">
-        <div className="text-sm font-semibold text-gray-900 mb-1">Delete Account</div>
-        <div className="text-xs text-gray-500 mb-3">Permanently delete your account. This cannot be undone.</div>
+        <div className="text-sm font-semibold text-dark-text mb-1">Delete Account</div>
+        <div className="text-xs text-gray mb-3">Permanently delete your account. This cannot be undone.</div>
         <button onClick={() => toast.error('Contact your manager to delete your account.')}
-          className="text-sm text-red-500 font-medium border border-red-200 px-3 py-1.5 rounded-lg hover:bg-red-50 transition-colors">
+          className="text-sm text-error font-medium border border-red-200 px-3 py-1.5 rounded-lg hover:bg-red-50 transition-colors">
           Delete Account
         </button>
       </Card>
@@ -232,19 +232,19 @@ export default function SettingsPage() {
   if (section === 'help') return (
     <div className="space-y-4">
       <button onClick={() => setSection('main')} className="text-sm text-navy font-medium">← Back</button>
-      <h1 className="text-h1 text-gray-900">Help & FAQ</h1>
+      <h1 className="text-h1 text-dark-text">Help & FAQ</h1>
       {FAQ_ITEMS.map((item, i) => (
         <Card key={i}>
           <button onClick={() => setExpandedFaq(expandedFaq === i ? null : i)}
             className="w-full flex items-start justify-between gap-3 text-left">
-            <span className="text-sm font-medium text-gray-900">{item.q}</span>
-            <span className="text-gray-400 text-lg leading-none flex-shrink-0">{expandedFaq === i ? '−' : '+'}</span>
+            <span className="text-sm font-medium text-dark-text">{item.q}</span>
+            <span className="text-gray text-lg leading-none flex-shrink-0">{expandedFaq === i ? '−' : '+'}</span>
           </button>
-          {expandedFaq === i && <p className="text-sm text-gray-600 mt-3 pt-3 border-t border-border">{item.a}</p>}
+          {expandedFaq === i && <p className="text-sm text-gray mt-3 pt-3 border-t border-border">{item.a}</p>}
         </Card>
       ))}
       <Card>
-        <div className="text-sm font-medium text-gray-900 mb-1">Contact Support</div>
+        <div className="text-sm font-medium text-dark-text mb-1">Contact Support</div>
         <a href="mailto:support@consumerdirect.com" className="text-sm text-teal font-medium">
           support@consumerdirect.com
         </a>
