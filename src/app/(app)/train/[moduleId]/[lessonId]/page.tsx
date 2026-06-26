@@ -224,7 +224,7 @@ export default function LessonPage() {
   return (
     <div className="space-y-4">
       {/* Reading progress */}
-      <div className="fixed top-0 left-0 right-0 z-[120] h-1 bg-transparent desktop:left-[240px]">
+      <div className="fixed top-0 left-0 right-0 z-[120] h-1 bg-transparent desktop:left-[240px]" aria-hidden="true">
         <div className="h-full bg-gradient-primary transition-[width] duration-150" style={{ width: `${readPct}%` }} />
       </div>
 

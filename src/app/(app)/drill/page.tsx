@@ -242,7 +242,7 @@ export default function DrillPage() {
               rows={1}
               className="max-h-32 flex-1 resize-none bg-transparent px-2 py-2 text-sm outline-none placeholder-gray"
             />
-            <button onClick={send} disabled={!input.trim() || loading}
+            <button onClick={send} disabled={!input.trim() || loading} aria-label="Send"
               className={cn('flex h-9 w-9 shrink-0 items-center justify-center rounded-xl transition-colors',
                 input.trim() && !loading ? 'bg-teal text-white hover:bg-teal-dark' : 'bg-bdrbg text-gray')}>
               <ArrowRightIcon size={16} />

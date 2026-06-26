@@ -250,6 +250,7 @@ export default function CoachPage() {
           <button
             onClick={() => sendMessage()}
             disabled={!input.trim() || loading}
+            aria-label="Send message"
             className={cn(
               'w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 transition-colors',
               input.trim() && !loading ? 'bg-navy text-white hover:bg-navy-dark' : 'bg-bdrbg text-gray'
