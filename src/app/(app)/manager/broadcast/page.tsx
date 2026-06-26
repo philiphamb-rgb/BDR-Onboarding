@@ -3,10 +3,10 @@
 
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import { Card, Button, Badge } from '@/components/ui'
+import { Card, Button, toast } from '@/components/ui'
+import { PageHeader } from '@/components/manager'
 import { BellIcon, TeamIcon } from '@/components/icons'
 import { cn, formatRelativeTime } from '@/lib/utils'
-import { toast } from '@/components/ui'
 
 interface Broadcast {
   id: string
@@ -19,7 +19,6 @@ interface Broadcast {
 export default function BroadcastPage() {
   const supabase = createClient()
   const [teamId, setTeamId] = useState<string>()
-  const [managerId, setManagerId] = useState<string>()
   const [title, setTitle] = useState('')
   const [body, setBody] = useState('')
   const [sending, setSending] = useState(false)
@@ -29,12 +28,11 @@ export default function BroadcastPage() {
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => {
       if (!user) return
-      setManagerId(user.id)
       supabase.from('users').select('team_id').eq('id', user.id).single().then(({ data }) => {
         if (data?.team_id) {
           setTeamId(data.team_id)
           loadTeamInfo(data.team_id)
-          loadBroadcasts(user.id)
+          loadBroadcasts()
         }
       })
     })
@@ -45,8 +43,7 @@ export default function BroadcastPage() {
     setTeamSize(data?.length ?? 0)
   }
 
-  const loadBroadcasts = async (uid: string) => {
-    // Load recent broadcasts from notifications sent by this manager
+  const loadBroadcasts = async () => {
     const { data } = await supabase
       .from('notifications')
       .select('id, title, body, created_at')
@@ -59,40 +56,21 @@ export default function BroadcastPage() {
   const sendBroadcast = async () => {
     if (!title.trim() || !body.trim() || !teamId) return
     setSending(true)
-
     try {
-      // Get all team reps
-      const { data: reps } = await supabase
-        .from('users')
-        .select('id')
-        .eq('team_id', teamId)
-        .eq('role', 'rep')
-
+      const { data: reps } = await supabase.from('users').select('id').eq('team_id', teamId).eq('role', 'rep')
       if (!reps || reps.length === 0) {
         toast.error('No team members to send to')
         return
       }
-
-      // Create notifications for all reps
       const notifications = reps.map(rep => ({
-        user_id: rep.id,
-        type: 'broadcast',
-        title: title.trim(),
-        body: body.trim(),
-        tier: 2,
+        user_id: rep.id, type: 'broadcast', title: title.trim(), body: body.trim(), tier: 2,
       }))
-
       const { error } = await supabase.from('notifications').insert(notifications)
-
       if (error) throw error
-
-      toast.success(`Message sent to ${reps.length} team members`)
+      toast.success(`Message sent to ${reps.length} team member${reps.length === 1 ? '' : 's'}`)
       setBroadcasts(prev => [{
-        id: Date.now().toString(),
-        title: title.trim(),
-        body: body.trim(),
-        created_at: new Date().toISOString(),
-        recipient_count: reps.length,
+        id: Date.now().toString(), title: title.trim(), body: body.trim(),
+        created_at: new Date().toISOString(), recipient_count: reps.length,
       }, ...prev])
       setTitle('')
       setBody('')
@@ -104,77 +82,72 @@ export default function BroadcastPage() {
   }
 
   const charsLeft = 200 - body.length
+  const canSend = title.trim() && body.trim() && teamSize > 0
 
   return (
-    <div className="space-y-4">
-      <div>
-        <h1 className="text-h1 text-gray-900">Broadcast</h1>
-        <p className="text-sm text-gray-500">Send a message to your entire team</p>
-      </div>
+    <div className="space-y-4 pb-4">
+      <PageHeader title="Broadcast" subtitle="Send an announcement to every rep on your team at once." />
 
-      {/* Compose */}
       <Card>
-        <div className="flex items-center gap-2 mb-4">
-          <div className="w-8 h-8 bg-navy/10 rounded-full flex items-center justify-center">
-            <TeamIcon className="w-4 h-4 text-navy" />
+        <div className="mb-4 flex items-center gap-3">
+          <div className="flex h-9 w-9 items-center justify-center rounded-full bg-navy/10">
+            <TeamIcon size={16} className="text-navy" />
           </div>
           <div>
-            <div className="text-sm font-medium text-gray-900">All team members</div>
-            <div className="text-xs text-gray-500">{teamSize} reps will receive this</div>
+            <div className="text-[14px] font-[600] text-dark-text">All team members</div>
+            <div className="text-[12px] text-gray">{teamSize} rep{teamSize === 1 ? '' : 's'} will receive this</div>
           </div>
         </div>
 
+        {teamSize === 0 && (
+          <div className="mb-4 rounded-md border border-gold/40 bg-gold/[0.06] px-3 py-2 text-[12px] font-[600] text-[#A06C00]">
+            You have no reps yet. Invite your team before sending a broadcast.
+          </div>
+        )}
+
         <div className="space-y-3">
           <div>
-            <label className="text-label text-gray-700 mb-1 block">Subject</label>
+            <label className="label mb-1 block">Subject</label>
             <input
               value={title}
               onChange={e => setTitle(e.target.value)}
-              placeholder="Announcement, challenge update, motivation..."
-              className="w-full px-4 py-3 rounded-xl border border-border text-sm focus:outline-none focus:ring-2 focus:ring-navy"
+              placeholder="Announcement, challenge update, motivation…"
+              className="w-full rounded-md border border-border px-4 py-3 text-sm text-dark-text focus:outline-none focus:ring-2 focus:ring-navy"
               maxLength={100}
             />
           </div>
           <div>
-            <label className="text-label text-gray-700 mb-1 block">Message</label>
+            <label className="label mb-1 block">Message</label>
             <textarea
               value={body}
               onChange={e => setBody(e.target.value.slice(0, 200))}
-              placeholder="Write your message here..."
+              placeholder="Write your message here…"
               rows={4}
-              className="w-full px-4 py-3 rounded-xl border border-border text-sm focus:outline-none focus:ring-2 focus:ring-navy resize-none"
+              className="w-full resize-none rounded-md border border-border px-4 py-3 text-sm text-dark-text focus:outline-none focus:ring-2 focus:ring-navy"
             />
-            <div className={cn('text-xs text-right mt-1', charsLeft < 20 ? 'text-red-500' : 'text-gray-400')}>
+            <div className={cn('mt-1 text-right text-[12px]', charsLeft < 20 ? 'text-error' : 'text-gray')}>
               {charsLeft} characters left
             </div>
           </div>
-          <Button
-            onClick={sendBroadcast}
-            loading={sending}
-            disabled={!title.trim() || !body.trim()}
-            className="w-full"
-            size="lg"
-          >
-            <BellIcon className="mr-2 w-4 h-4" />
+          <Button onClick={sendBroadcast} loading={sending} disabled={!canSend} fullWidth size="lg" icon={<BellIcon size={16} />}>
             Send to All ({teamSize})
           </Button>
         </div>
       </Card>
 
-      {/* Recent broadcasts */}
       {broadcasts.length > 0 && (
         <Card>
-          <h2 className="text-h3 text-gray-900 mb-3">Recent Messages</h2>
-          <div className="space-y-3">
+          <h2 className="text-h3 text-dark-text mb-3">Recent Messages</h2>
+          <div className="space-y-2">
             {broadcasts.map(b => (
-              <div key={b.id} className="p-3 bg-gray-50 rounded-xl border border-border">
-                <div className="flex items-start justify-between gap-2 mb-1">
-                  <span className="text-sm font-medium text-gray-900">{b.title}</span>
-                  <span className="text-xs text-gray-400 whitespace-nowrap">{formatRelativeTime(b.created_at)}</span>
+              <div key={b.id} className="rounded-md border border-border bg-bdrbg p-3">
+                <div className="mb-1 flex items-start justify-between gap-2">
+                  <span className="text-[14px] font-[600] text-dark-text">{b.title}</span>
+                  <span className="whitespace-nowrap text-[11px] text-gray">{formatRelativeTime(b.created_at)}</span>
                 </div>
-                <p className="text-xs text-gray-600 line-clamp-2">{b.body}</p>
+                <p className="line-clamp-2 text-[12px] text-mid-text">{b.body}</p>
                 {b.recipient_count > 0 && (
-                  <div className="text-xs text-gray-400 mt-1">Sent to {b.recipient_count} reps</div>
+                  <div className="mt-1 text-[11px] text-gray">Sent to {b.recipient_count} rep{b.recipient_count === 1 ? '' : 's'}</div>
                 )}
               </div>
             ))}

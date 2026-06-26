@@ -2,64 +2,139 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import { Card } from '@/components/ui'
-import { TrophyIcon, ChartRisingIcon, PhoneIcon, TargetIcon, FlameIcon } from '@/components/icons'
+import { Card, EmptyState, SkeletonList } from '@/components/ui'
+import { InsightRow, StatTile, MiniBar, PageHeader } from '@/components/manager'
+import {
+  TrophyIcon, ChartRisingIcon, PhoneIcon, TargetIcon, FlameIcon,
+  BarChartIcon, LightningIcon, BookIcon,
+} from '@/components/icons'
 import { formatXP } from '@/lib/utils'
+import { deriveTeamInsights } from '@/lib/insights'
 
 export default function AnalyticsPage() {
   const supabase = createClient()
-  const [stats, setStats] = useState({ totalTeamXP: 0, avgXP: 0, totalCalls: 0, totalDeals: 0, activeStreaks: 0, teamSize: 0 })
+  const router = useRouter()
+  const [members, setMembers] = useState([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => {
-      if (!user) return
+      if (!user) { setLoading(false); return }
       supabase.from('users').select('team_id').eq('id', user.id).single().then(({ data }) => {
         if (!data?.team_id) { setLoading(false); return }
-        supabase.from('users').select(`id, user_progress(total_xp, current_streak, total_calls, total_deals)`)
-          .eq('team_id', data.team_id).eq('role', 'rep').then(({ data: mems }) => {
-            if (!mems) { setLoading(false); return }
-            const progs = mems.flatMap((m: { user_progress: { total_xp: number; current_streak: number; total_calls: number; total_deals: number }[] }) => m.user_progress ?? [])
-            const totalXP = progs.reduce((s, p) => s + (p.total_xp ?? 0), 0)
-            setStats({
-              totalTeamXP: totalXP,
-              avgXP: progs.length ? Math.round(totalXP / progs.length) : 0,
-              totalCalls: progs.reduce((s, p) => s + (p.total_calls ?? 0), 0),
-              totalDeals: progs.reduce((s, p) => s + (p.total_deals ?? 0), 0),
-              activeStreaks: progs.filter(p => (p.current_streak ?? 0) > 0).length,
-              teamSize: mems.length,
-            })
+        supabase.from('users')
+          .select('id, name, user_progress(total_xp, current_streak, longest_streak, belt_day, total_calls, total_demos, total_deals, calls_this_week, demos_this_week, deals_this_month, completed_lessons, last_active_date)')
+          .eq('team_id', data.team_id).eq('role', 'rep')
+          .then(({ data: mems }) => {
+            setMembers((mems ?? []).map((m) => {
+              const p = m.user_progress?.[0] ?? {}
+              return {
+                id: m.id, name: m.name,
+                total_xp: p.total_xp ?? 0, current_streak: p.current_streak ?? 0, longest_streak: p.longest_streak ?? 0,
+                belt_day: p.belt_day ?? 0, total_calls: p.total_calls ?? 0, total_demos: p.total_demos ?? 0,
+                total_deals: p.total_deals ?? 0, calls_this_week: p.calls_this_week ?? 0, demos_this_week: p.demos_this_week ?? 0,
+                deals_this_month: p.deals_this_month ?? 0, lessons_completed: (p.completed_lessons ?? []).length,
+                last_active_date: p.last_active_date ?? null,
+              }
+            }))
             setLoading(false)
           })
       })
     })
   }, [])
 
+  const size = members.length
+  const totalXP = members.reduce((s, m) => s + m.total_xp, 0)
+  const totalCalls = members.reduce((s, m) => s + m.total_calls, 0)
+  const totalDemos = members.reduce((s, m) => s + m.total_demos, 0)
+  const totalDeals = members.reduce((s, m) => s + m.total_deals, 0)
+  const activeStreaks = members.filter(m => m.current_streak > 0).length
+  // Call→demo and demo→deal conversion are the funnel a manager actually coaches.
+  const callToDemo = totalCalls ? Math.round((totalDemos / totalCalls) * 100) : 0
+  const demoToDeal = totalDemos ? Math.round((totalDeals / totalDemos) * 100) : 0
+  const insights = deriveTeamInsights(members)
+  const maxXP = Math.max(1, ...members.map(m => m.total_xp))
+  const rankedXP = [...members].sort((a, b) => b.total_xp - a.total_xp)
+
   const metrics = [
-    { label: 'Total Team XP', value: formatXP(stats.totalTeamXP), sub: 'All time', icon: <TrophyIcon className="text-gold" /> },
-    { label: 'Avg XP / Rep',  value: formatXP(stats.avgXP), sub: 'All time', icon: <ChartRisingIcon className="text-navy" /> },
-    { label: 'Total Calls',   value: stats.totalCalls.toString(), sub: 'All time', icon: <PhoneIcon className="text-teal" /> },
-    { label: 'Total Deals',   value: stats.totalDeals.toString(), sub: 'All time', icon: <TargetIcon className="text-green-600" /> },
-    { label: 'Active Streaks',value: `${stats.activeStreaks}/${stats.teamSize}`, sub: 'Reps on streak', icon: <FlameIcon className="text-orange-500" /> },
+    { label: 'Total team XP', value: formatXP(totalXP).replace(' XP', ''), sub: 'All time', icon: <TrophyIcon size={18} />, accent: 'text-gold' },
+    { label: 'Avg XP / rep', value: formatXP(size ? Math.round(totalXP / size) : 0).replace(' XP', ''), sub: 'All time', icon: <ChartRisingIcon size={18} />, accent: 'text-navy' },
+    { label: 'Total calls', value: totalCalls, sub: 'All time', icon: <PhoneIcon size={18} />, accent: 'text-teal' },
+    { label: 'Total deals', value: totalDeals, sub: 'Closed-won', icon: <TargetIcon size={18} />, accent: 'text-success' },
   ]
 
   return (
-    <div className="space-y-4">
-      <h1 className="text-h1 text-gray-900">Analytics</h1>
+    <div className="space-y-5 pb-4">
+      <PageHeader title="Analytics" subtitle={loading || !size ? undefined : `Across ${size} rep${size === 1 ? '' : 's'}`} />
+
       {loading ? (
-        <div className="grid grid-cols-2 gap-3">{[1,2,3,4].map(i => <div key={i} className="h-24 bg-gray-200 rounded-2xl animate-pulse" />)}</div>
+        <SkeletonList count={2} />
+      ) : size === 0 ? (
+        <Card padding="none">
+          <EmptyState
+            icon={<BarChartIcon size={28} />}
+            title="No data to analyze yet"
+            description="Once reps join and start logging calls, demos, and training, you'll see team XP, an activity funnel, and AI coaching insights here."
+            action={{ label: 'Invite your team', onClick: () => router.push('/manager/invite') }}
+          />
+        </Card>
       ) : (
-        <div className="grid grid-cols-2 gap-3">
-          {metrics.map(m => (
-            <Card key={m.label} className="!p-4">
-              <div className="mb-2">{m.icon}</div>
-              <div className="text-xl font-bold text-gray-900">{m.value}</div>
-              <div className="text-xs text-gray-500">{m.label}</div>
-              <div className="text-xs text-gray-400">{m.sub}</div>
-            </Card>
-          ))}
-        </div>
+        <>
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+            {metrics.map(m => <StatTile key={m.label} {...m} />)}
+          </div>
+
+          {/* AI coaching insights */}
+          <Card>
+            <div className="mb-3 flex items-center gap-2">
+              <LightningIcon size={16} className="text-teal" />
+              <h2 className="text-h3 text-dark-text">AI Coaching Insights</h2>
+            </div>
+            {insights.length === 0 ? (
+              <p className="text-[13px] text-gray">No flags right now. As activity accumulates, prioritized coaching nudges surface here automatically.</p>
+            ) : (
+              <div className="space-y-2">{insights.map(i => <InsightRow key={i.id} insight={i} />)}</div>
+            )}
+          </Card>
+
+          {/* Activity funnel */}
+          <Card>
+            <h2 className="text-h3 text-dark-text mb-1">Activity Funnel</h2>
+            <p className="mb-4 text-[12px] text-gray">Team totals, all time. Conversion rates show where coaching moves the needle.</p>
+            <div className="space-y-3">
+              <MiniBar label="Calls" value={totalCalls} max={Math.max(1, totalCalls)} color="bg-teal" />
+              <MiniBar label="Demos" value={totalDemos} max={Math.max(1, totalCalls)} color="bg-navy" />
+              <MiniBar label="Deals" value={totalDeals} max={Math.max(1, totalCalls)} color="bg-success" />
+            </div>
+            <div className="mt-4 grid grid-cols-2 gap-3">
+              <div className="rounded-md border border-border bg-bdrbg p-3 text-center">
+                <div className="text-[20px] font-[800] text-dark-text">{callToDemo}%</div>
+                <div className="text-[11px] font-[600] text-gray">Call → Demo</div>
+              </div>
+              <div className="rounded-md border border-border bg-bdrbg p-3 text-center">
+                <div className="text-[20px] font-[800] text-dark-text">{demoToDeal}%</div>
+                <div className="text-[11px] font-[600] text-gray">Demo → Deal</div>
+              </div>
+            </div>
+          </Card>
+
+          {/* XP leaderboard viz */}
+          <Card>
+            <h2 className="text-h3 text-dark-text mb-3">XP by Rep</h2>
+            <div className="space-y-2.5">
+              {rankedXP.map(m => (
+                <MiniBar key={m.id} label={m.name} value={m.total_xp} max={maxXP} display={formatXP(m.total_xp).replace(' XP', '')} />
+              ))}
+            </div>
+          </Card>
+
+          <div className="grid grid-cols-2 gap-3">
+            <StatTile label="Reps on a streak" value={`${activeStreaks}/${size}`} icon={<FlameIcon size={18} />} accent="text-orange-500" />
+            <StatTile label="Total demos" value={totalDemos} icon={<BookIcon size={18} />} accent="text-navy" />
+          </div>
+        </>
       )}
     </div>
   )

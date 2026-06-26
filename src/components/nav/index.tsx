@@ -45,6 +45,7 @@ const MANAGER_EXTRA_NAV: NavItem[] = [
   { href: '/manager/dashboard',    label: 'Dashboard',    icon: DashboardIcon,  managerOnly: true },
   { href: '/manager/team',         label: 'Team',          icon: TeamIcon,       managerOnly: true },
   { href: '/manager/analytics',    label: 'Analytics',     icon: BarChartIcon,   managerOnly: true },
+  { href: '/manager/broadcast',    label: 'Broadcast',     icon: BellIcon,       managerOnly: true },
   { href: '/manager/resources',    label: 'Resources',     icon: BookIcon,       managerOnly: true },
   { href: '/manager/invite',       label: 'Invite',        icon: MailIcon,       managerOnly: true },
   { href: '/manager/gamification', label: 'XP Rules',      icon: XpIcon,         managerOnly: true },

@@ -3,9 +3,10 @@
 
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import { Card, Button, Badge } from '@/components/ui'
-import { MailIcon, PlusIcon, RefreshIcon, UserIcon } from '@/components/icons'
-import { cn, formatRelativeTime } from '@/lib/utils'
+import { Card, Button, Badge, EmptyState, Skeleton } from '@/components/ui'
+import { PageHeader } from '@/components/manager'
+import { MailIcon, RefreshIcon, UserIcon } from '@/components/icons'
+import { formatRelativeTime } from '@/lib/utils'
 import { toast } from '@/components/ui'
 
 interface PendingInvite {
@@ -98,68 +99,67 @@ export default function InvitePage() {
   }
 
   return (
-    <div className="space-y-4">
-      <div>
-        <h1 className="text-h1 text-gray-900">Invite Team Members</h1>
-        <p className="text-sm text-gray-500">Add reps to your team</p>
-      </div>
+    <div className="space-y-4 pb-4">
+      <PageHeader title="Invite Team" subtitle="Add BDRs to your team so their progress shows up across your manager views." />
 
       {/* Invite form */}
       <Card>
-        <h2 className="text-h3 text-gray-900 mb-3">Send Invite</h2>
+        <h2 className="text-h3 text-dark-text mb-3">Send Invite</h2>
         <div className="flex gap-2">
           <div className="relative flex-1">
-            <MailIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <MailIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray" />
             <input
               type="email"
               value={email}
               onChange={e => setEmail(e.target.value)}
               onKeyDown={e => e.key === 'Enter' && sendInvite()}
               placeholder="rep@consumerdirect.com"
-              className="w-full pl-9 pr-4 py-3 rounded-xl border border-border text-sm focus:outline-none focus:ring-2 focus:ring-navy"
+              className="w-full rounded-md border border-border py-3 pl-9 pr-4 text-sm text-dark-text focus:outline-none focus:ring-2 focus:ring-navy"
             />
           </div>
           <Button onClick={sendInvite} loading={loading} disabled={!email.includes('@')}>
             Invite
           </Button>
         </div>
-        <p className="text-xs text-gray-400 mt-2">
-          The rep will receive an email with a sign-in link to join your team.
+        <p className="mt-2 text-[12px] text-gray">
+          Existing ConsumerDirect users are added instantly. New emails join your team when they sign up.
         </p>
       </Card>
 
       {/* Pending invites */}
       <Card>
-        <div className="flex items-center justify-between mb-3">
-          <h2 className="text-h3 text-gray-900">Pending Invites</h2>
+        <div className="mb-3 flex items-center justify-between">
+          <h2 className="text-h3 text-dark-text">Pending Invites</h2>
           {teamId && (
-            <button onClick={() => fetchInvites(teamId)} className="text-sm text-navy font-medium">
-              <RefreshIcon className="w-4 h-4" />
+            <button onClick={() => fetchInvites(teamId)} className="flex items-center text-gray hover:text-navy" aria-label="Refresh">
+              <RefreshIcon className="h-4 w-4" />
             </button>
           )}
         </div>
 
         {fetching ? (
-          <div className="space-y-2">{[1,2].map(i => <div key={i} className="h-12 bg-gray-100 rounded-xl animate-pulse" />)}</div>
+          <div className="space-y-2">{[1, 2].map(i => <Skeleton key={i} height={48} className="w-full rounded-md" />)}</div>
         ) : invites.length === 0 ? (
-          <div className="text-center py-6 text-sm text-gray-500">
-            No pending invites
-          </div>
+          <EmptyState
+            icon={<MailIcon size={26} />}
+            title="No pending invites"
+            description="Invites you send appear here until the rep accepts and joins your team."
+          />
         ) : (
           <div className="space-y-2">
             {invites.map(invite => (
-              <div key={invite.id} className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl border border-border">
-                <div className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center">
-                  <UserIcon className="w-4 h-4 text-gray-500" />
+              <div key={invite.id} className="flex items-center gap-3 rounded-md border border-border bg-bdrbg p-3">
+                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-border">
+                  <UserIcon className="h-4 w-4 text-gray" />
                 </div>
-                <div className="flex-1 min-w-0">
-                  <div className="text-sm font-medium text-gray-900 truncate">{invite.email}</div>
-                  <div className="text-xs text-gray-400">{formatRelativeTime(invite.invited_at)}</div>
+                <div className="min-w-0 flex-1">
+                  <div className="truncate text-[14px] font-[600] text-dark-text">{invite.email}</div>
+                  <div className="text-[11px] text-gray">{formatRelativeTime(invite.invited_at)}</div>
                 </div>
-                <Badge color="warning" className="text-xs">Pending</Badge>
+                <Badge variant="gold">Pending</Badge>
                 <button
                   onClick={() => cancelInvite(invite.id)}
-                  className="text-xs text-red-500 hover:text-red-700 font-medium"
+                  className="text-[12px] font-[700] text-error hover:opacity-80"
                 >
                   Cancel
                 </button>

@@ -3,7 +3,8 @@
 
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import { Card, Button, Badge } from '@/components/ui'
+import { Card, SkeletonList } from '@/components/ui'
+import { PageHeader } from '@/components/manager'
 import { XpIcon, EditIcon, CheckIcon } from '@/components/icons'
 import { toast } from '@/components/ui'
 
@@ -109,27 +110,24 @@ export default function GamificationPage() {
   }, {} as Record<string, GamRule[]>)
 
   return (
-    <div className="space-y-4">
-      <div>
-        <h1 className="text-h1 text-gray-900">XP Rules</h1>
-        <p className="text-sm text-gray-500">Adjust XP values for your team</p>
-      </div>
+    <div className="space-y-4 pb-4">
+      <PageHeader title="XP Rules" subtitle="Tune how XP is awarded for your team. Changes apply immediately." />
 
       {loading ? (
-        <div className="space-y-3">{[1,2,3].map(i => <div key={i} className="h-48 bg-gray-200 rounded-2xl animate-pulse" />)}</div>
+        <SkeletonList count={3} />
       ) : (
         Object.entries(groups).map(([group, groupRules]) => groupRules.length > 0 && (
           <Card key={group}>
-            <h2 className="text-h3 text-gray-900 mb-3">{group}</h2>
+            <h2 className="text-h3 text-dark-text mb-3">{group}</h2>
             <div className="space-y-3">
               {groupRules.map(rule => {
                 const meta = RULE_LABELS[rule.rule_key]
                 const isEditing = editingId === rule.id
                 return (
-                  <div key={rule.id} className={`flex items-start gap-3 p-3 rounded-xl border ${rule.is_active ? 'border-border bg-gray-50' : 'border-dashed border-gray-200 opacity-60'}`}>
+                  <div key={rule.id} className={`flex items-start gap-3 p-3 rounded-md border ${rule.is_active ? 'border-border bg-bdrbg' : 'border-dashed border-border opacity-60'}`}>
                     <div className="flex-1 min-w-0">
-                      <div className="text-sm font-medium text-gray-900">{meta?.label ?? rule.rule_key}</div>
-                      <div className="text-xs text-gray-500">{meta?.desc}</div>
+                      <div className="text-[14px] font-[600] text-dark-text">{meta?.label ?? rule.rule_key}</div>
+                      <div className="text-[12px] text-gray">{meta?.desc}</div>
                     </div>
 
                     {isEditing ? (
@@ -140,33 +138,33 @@ export default function GamificationPage() {
                           onChange={e => setEditValue(e.target.value)}
                           onKeyDown={e => e.key === 'Enter' && saveEdit(rule.id)}
                           autoFocus
-                          className="w-20 px-2 py-1 rounded-lg border border-navy text-sm text-center focus:outline-none"
+                          className="w-20 px-2 py-1 rounded-md border border-navy text-sm text-center focus:outline-none"
                           min="0"
                           max="9999"
                         />
                         <button
                           onClick={() => saveEdit(rule.id)}
                           disabled={saving}
-                          className="w-7 h-7 bg-teal rounded-lg flex items-center justify-center"
+                          className="w-7 h-7 bg-teal rounded-md flex items-center justify-center"
                         >
                           <CheckIcon className="w-4 h-4 text-white" />
                         </button>
                       </div>
                     ) : (
                       <div className="flex items-center gap-2 flex-shrink-0">
-                        <div className="flex items-center gap-1 text-sm font-bold text-gray-900">
+                        <div className="flex items-center gap-1 text-[14px] font-[700] text-dark-text">
                           <XpIcon className="w-4 h-4 text-gold" />
                           {rule.xp_value}
                         </div>
                         <button
                           onClick={() => startEdit(rule)}
-                          className="w-7 h-7 bg-gray-100 hover:bg-gray-200 rounded-lg flex items-center justify-center transition-colors"
+                          className="w-7 h-7 bg-bdrbg hover:bg-border rounded-md flex items-center justify-center transition-colors"
                         >
-                          <EditIcon className="w-3.5 h-3.5 text-gray-500" />
+                          <EditIcon className="w-3.5 h-3.5 text-gray" />
                         </button>
                         <button
                           onClick={() => toggleActive(rule)}
-                          className={`w-7 h-7 rounded-lg flex items-center justify-center transition-colors text-xs font-bold ${rule.is_active ? 'bg-teal/10 text-teal' : 'bg-gray-100 text-gray-400'}`}
+                          className={`w-7 h-7 rounded-md flex items-center justify-center transition-colors text-xs font-bold ${rule.is_active ? 'bg-teal/10 text-teal' : 'bg-bdrbg text-gray'}`}
                         >
                           {rule.is_active ? 'ON' : 'OFF'}
                         </button>
@@ -180,8 +178,8 @@ export default function GamificationPage() {
         ))
       )}
 
-      <div className="text-xs text-gray-400 text-center px-4">
-        Changes take effect immediately. All XP calculations happen server-side and cannot be bypassed.
+      <div className="text-[12px] text-gray text-center px-4">
+        All XP calculations happen server-side and cannot be bypassed by reps.
       </div>
     </div>
   )

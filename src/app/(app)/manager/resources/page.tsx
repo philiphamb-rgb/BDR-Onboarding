@@ -3,8 +3,9 @@
 
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import { Card, Button, Modal } from '@/components/ui'
-import { PlusIcon, DocumentIcon, LinkIcon, VideoIcon, TrashIcon } from '@/components/icons'
+import { Card, Button, Modal, EmptyState, SkeletonList } from '@/components/ui'
+import { PageHeader } from '@/components/manager'
+import { PlusIcon, DocumentIcon, LinkIcon, VideoIcon, TrashIcon, BookIcon } from '@/components/icons'
 import { cn } from '@/lib/utils'
 import { toast } from '@/components/ui'
 
@@ -71,30 +72,38 @@ export default function ManagerResourcesPage() {
   }
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <h1 className="text-h1 text-gray-900">Resources</h1>
-        <Button size="sm" onClick={() => setShowModal(true)}><PlusIcon className="mr-1.5 w-4 h-4" />Add</Button>
-      </div>
+    <div className="space-y-4 pb-4">
+      <PageHeader
+        title="Team Resources"
+        subtitle="Share docs, links, and videos that show up in your reps' Resource Center."
+        action={<Button size="sm" onClick={() => setShowModal(true)} icon={<PlusIcon size={16} />}>Add</Button>}
+      />
 
       {loading ? (
-        <div className="space-y-2">{[1,2].map(i => <div key={i} className="h-14 bg-gray-200 rounded-xl animate-pulse" />)}</div>
+        <SkeletonList count={3} />
       ) : resources.length === 0 ? (
-        <div className="text-center py-12 text-gray-500">No resources yet</div>
+        <Card padding="none">
+          <EmptyState
+            icon={<BookIcon size={28} />}
+            title="No resources shared yet"
+            description="Add a battlecard, recording, or playbook link and it instantly appears for every rep on your team."
+            action={{ label: 'Add a resource', onClick: () => setShowModal(true) }}
+          />
+        </Card>
       ) : (
         <div className="space-y-2">
           {resources.map(r => (
             <Card key={r.id} className="!p-3">
               <div className="flex items-start gap-3">
-                <div>{TYPE_ICONS[r.type] ?? <DocumentIcon />}</div>
-                <div className="flex-1 min-w-0">
+                <div className="mt-0.5">{TYPE_ICONS[r.type] ?? <DocumentIcon />}</div>
+                <div className="min-w-0 flex-1">
                   {r.url
-                    ? <a href={r.url} target="_blank" rel="noopener noreferrer" className="text-sm font-medium text-navy hover:underline block truncate">{r.title}</a>
-                    : <span className="text-sm font-medium text-gray-900 block truncate">{r.title}</span>}
-                  {r.description && <p className="text-xs text-gray-500 mt-0.5">{r.description}</p>}
+                    ? <a href={r.url} target="_blank" rel="noopener noreferrer" className="block truncate text-[14px] font-[600] text-navy hover:underline">{r.title}</a>
+                    : <span className="block truncate text-[14px] font-[600] text-dark-text">{r.title}</span>}
+                  {r.description && <p className="mt-0.5 text-[12px] text-gray">{r.description}</p>}
                 </div>
-                <button onClick={() => deleteResource(r.id)} className="p-1 text-gray-400 hover:text-red-500 transition-colors">
-                  <TrashIcon className="w-4 h-4" />
+                <button onClick={() => deleteResource(r.id)} className="p-1 text-gray transition-colors hover:text-error" aria-label="Remove">
+                  <TrashIcon className="h-4 w-4" />
                 </button>
               </div>
             </Card>
@@ -107,8 +116,8 @@ export default function ManagerResourcesPage() {
           <div className="grid grid-cols-2 gap-2">
             {TYPES.map(t => (
               <button key={t.value} onClick={() => setForm(p => ({ ...p, type: t.value }))}
-                className={cn('flex items-center gap-2 p-3 rounded-xl border text-sm transition-all',
-                  form.type === t.value ? 'border-navy bg-navy/5 font-medium text-navy' : 'border-border text-gray-600 hover:bg-gray-50')}>
+                className={cn('flex items-center gap-2 p-3 rounded-md border text-sm transition-all',
+                  form.type === t.value ? 'border-navy bg-navy/5 font-[600] text-navy' : 'border-border text-mid-text hover:bg-bdrbg')}>
                 {TYPE_ICONS[t.value]}{t.label}
               </button>
             ))}
