@@ -33,12 +33,25 @@ export default function LessonPage() {
   const [loading, setLoading] = useState(true)
   const [completing, setCompleting] = useState(false)
   const [alreadyDone, setAlreadyDone] = useState(false)
+  const [readPct, setReadPct] = useState(0)
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => {
       if (user) { setUserId(user.id); fetchLesson(user.id) }
     })
   }, [lessonId])
+
+  // Reading-progress bar: how far through the page the rep has scrolled.
+  useEffect(() => {
+    const onScroll = () => {
+      const h = document.documentElement
+      const max = h.scrollHeight - h.clientHeight
+      setReadPct(max > 0 ? Math.min(100, Math.round((h.scrollTop / max) * 100)) : 100)
+    }
+    onScroll()
+    window.addEventListener('scroll', onScroll, { passive: true })
+    return () => window.removeEventListener('scroll', onScroll)
+  }, [lesson])
 
   const fetchLesson = async (uid: string) => {
     const [{ data: l }, { data: prog }] = await Promise.all([
@@ -210,6 +223,11 @@ export default function LessonPage() {
 
   return (
     <div className="space-y-4">
+      {/* Reading progress */}
+      <div className="fixed top-0 left-0 right-0 z-[120] h-1 bg-transparent desktop:left-[240px]">
+        <div className="h-full bg-gradient-primary transition-[width] duration-150" style={{ width: `${readPct}%` }} />
+      </div>
+
       <button onClick={() => router.back()} className="flex items-center gap-2 text-sm text-gray hover:text-dark-text">
         <BackIcon className="w-4 h-4" />Back
       </button>
