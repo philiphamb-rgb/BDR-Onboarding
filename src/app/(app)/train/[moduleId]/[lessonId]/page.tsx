@@ -74,6 +74,9 @@ export default function LessonPage() {
         }
       }
       setAlreadyDone(true)
+      // Let the XP reward toast land before navigating away (protects the
+      // positive-feedback loop from being cut off by the route change).
+      await new Promise((r) => setTimeout(r, 850))
       router.push(`/train/${moduleId}`)
     } finally { setCompleting(false) }
   }
@@ -181,6 +184,14 @@ export default function LessonPage() {
         {block.text}
         {block.cite && <cite className="block mt-1 text-xs not-italic text-gray-400">— {block.cite}</cite>}
       </blockquote>
+    )
+    if (block.type === 'screenshot') return (
+      <figure key={i} className="rounded-xl border border-border overflow-hidden bg-bdrbg">
+        {block.src
+          ? <img src={block.src} alt={block.caption ?? ''} className="w-full" />
+          : <div className="aspect-video flex items-center justify-center text-gray text-xs">Illustration</div>}
+        {block.caption && <figcaption className="px-3 py-2 text-xs text-gray border-t border-border bg-white">{block.caption}</figcaption>}
+      </figure>
     )
     return null
   }

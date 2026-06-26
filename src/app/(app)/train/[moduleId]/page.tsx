@@ -5,7 +5,7 @@ import { useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Card, Badge, ProgressBar, Button } from '@/components/ui'
-import { CheckIcon, ArrowRightIcon, BackIcon, XpIcon } from '@/components/icons'
+import { CheckIcon, ArrowRightIcon, BackIcon, XpIcon, LockIcon, TrophyIcon } from '@/components/icons'
 import { cn, percentage } from '@/lib/utils'
 import Link from 'next/link'
 
@@ -22,6 +22,7 @@ export default function ModulePage() {
   const [loading, setLoading] = useState(true)
   const [hasQuiz, setHasQuiz] = useState(false)
   const [quizPassed, setQuizPassed] = useState(false)
+  const [isManager, setIsManager] = useState(false)
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => {
@@ -37,6 +38,8 @@ export default function ModulePage() {
       supabase.from('quiz_questions').select('id').eq('module_id', moduleId).limit(1),
     ])
     setModule(mod)
+    const { data: me } = await supabase.from('users').select('role').eq('id', uid).single()
+    setIsManager(['manager', 'owner'].includes(me?.role ?? 'rep'))
     // Track completed lessons via user_progress.completed_lessons array
     const { data: prog } = await supabase.from('user_progress').select('completed_lessons').eq('user_id', uid).single()
     const completedIds = new Set<string>(prog?.completed_lessons ?? [])
@@ -48,6 +51,9 @@ export default function ModulePage() {
 
   const completedCount = lessons.filter(l => l.is_completed).length
   const nextLesson = lessons.find(l => !l.is_completed)
+  const allLessonsDone = lessons.length > 0 && completedCount === lessons.length
+  const moduleComplete = allLessonsDone && (!hasQuiz || quizPassed)
+  const perLessonXp = lessons.length ? Math.round((module?.xp_lessons ?? 0) / lessons.length) : 0
 
   if (loading) return <div className="animate-pulse space-y-4"><div className="h-32 bg-gray-200 rounded-2xl" /></div>
   if (!module) return <div className="text-center py-12 text-gray-500">Module not found</div>
@@ -58,54 +64,79 @@ export default function ModulePage() {
         <BackIcon className="w-4 h-4" />Training
       </button>
 
-      <Card className="bg-gradient-primary !p-5">
-        <div className="text-white/70 text-xs font-medium mb-1">MODULE {module.order_index}</div>
+      <Card className={cn('!p-5', moduleComplete ? 'bg-gradient-hero' : 'bg-gradient-primary')}>
+        <div className="flex items-center justify-between mb-1">
+          <div className="text-white/70 text-xs font-medium">MODULE {module.order_index}</div>
+          {moduleComplete && (
+            <span className="flex items-center gap-1 text-xs font-[800] text-white bg-white/15 rounded-full px-2 py-0.5">
+              <TrophyIcon size={13} className="text-gold" /> Module Complete
+            </span>
+          )}
+        </div>
         <h1 className="text-xl font-bold text-white mb-1">{module.title}</h1>
         {module.subtitle && <p className="text-white/70 text-sm mb-3">{module.subtitle}</p>}
         <div className="flex items-center justify-between mb-2">
           <span className="text-white/80 text-sm">{completedCount}/{lessons.length} lessons</span>
           <span className="text-white/80 text-sm flex items-center gap-1"><XpIcon className="w-4 h-4 text-gold" />+{module.xp_quiz} XP quiz</span>
         </div>
-        <ProgressBar value={percentage(completedCount, lessons.length)} max={100} color="#00C2B2" className="h-2" />
+        <ProgressBar value={percentage(completedCount, lessons.length)} max={100} color="#FFFFFF" className="h-2" />
       </Card>
 
-      {nextLesson && (
+      {/* Primary conversion action — one at a time */}
+      {nextLesson ? (
         <Link href={`/train/${moduleId}/${nextLesson.id}`}>
-          <Button className="w-full" size="lg">Continue Learning<ArrowRightIcon className="ml-2" /></Button>
-        </Link>
-      )}
-
-      {hasQuiz && completedCount > 0 && (
-        <Link href={`/train/${moduleId}/quiz`}>
-          <Button variant={quizPassed ? 'ghost' : 'secondary'} className="w-full">
-            {quizPassed ? 'Retake Quiz' : 'Take Module Quiz'}<ArrowRightIcon className="ml-2" />
+          <Button variant="conversion" className="w-full" size="lg">
+            {completedCount === 0 ? 'Start Learning' : 'Continue Learning'}<ArrowRightIcon className="ml-2" />
           </Button>
         </Link>
+      ) : hasQuiz && allLessonsDone && !quizPassed ? (
+        <Link href={`/train/${moduleId}/quiz`}>
+          <Button variant="conversion" className="w-full" size="lg">Take Module Quiz<ArrowRightIcon className="ml-2" /></Button>
+        </Link>
+      ) : null}
+
+      {/* Quiz becomes available only after ALL lessons are complete */}
+      {hasQuiz && allLessonsDone && quizPassed && (
+        <Link href={`/train/${moduleId}/quiz`}>
+          <Button variant="ghost" className="w-full">Retake Quiz<ArrowRightIcon className="ml-2" /></Button>
+        </Link>
+      )}
+      {hasQuiz && !allLessonsDone && (
+        <div className="flex items-center justify-center gap-2 text-xs text-gray-400 py-1">
+          <LockIcon size={13} /> Finish all {lessons.length} lessons to unlock the quiz
+        </div>
       )}
 
       <div className="space-y-2">
         {lessons.map((lesson, idx) => {
-          const isLocked = idx > 0 && !lessons[idx - 1].is_completed && !lesson.is_completed
-          return (
-            <Link key={lesson.id} href={isLocked ? '#' : `/train/${moduleId}/${lesson.id}`}
-              className={cn('block', isLocked && 'pointer-events-none opacity-60')}>
-              <Card className="!p-3">
-                <div className="flex items-center gap-3">
-                  <div className={cn('w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0',
-                    lesson.is_completed ? 'bg-teal/10 text-teal' : isLocked ? 'bg-gray-100 text-gray-400' : 'bg-navy/10 text-navy')}>
-                    {lesson.is_completed ? <CheckIcon className="w-4 h-4" /> : idx + 1}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="text-sm font-medium text-gray-900 truncate">{lesson.title}</div>
-                    {lesson.duration_minutes && <div className="text-xs text-gray-400">{lesson.duration_minutes} min</div>}
-                  </div>
-                  {lesson.is_completed
-                    ? <Badge color="success" className="text-xs">Done</Badge>
-                    : !isLocked && <ArrowRightIcon className="w-4 h-4 text-gray-400" />}
+          const isLocked = !isManager && idx > 0 && !lessons[idx - 1].is_completed && !lesson.is_completed
+          const row = (
+            <Card className={cn('!p-3', !isLocked && !lesson.is_completed && 'hover:border-teal/40 transition-colors')}>
+              <div className="flex items-center gap-3">
+                <div className={cn('w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0',
+                  lesson.is_completed ? 'bg-teal/10 text-teal' : isLocked ? 'bg-gray-100 text-gray-400' : 'bg-navy/10 text-navy')}>
+                  {lesson.is_completed ? <CheckIcon className="w-4 h-4" /> : isLocked ? <LockIcon size={14} /> : idx + 1}
                 </div>
-              </Card>
-            </Link>
+                <div className="flex-1 min-w-0">
+                  <div className={cn('text-sm font-medium truncate', isLocked ? 'text-gray-400' : 'text-gray-900')}>{lesson.title}</div>
+                  {isLocked
+                    ? <div className="text-xs text-gray-400">Finish the previous lesson to unlock</div>
+                    : <div className="text-xs text-gray-400 flex items-center gap-2">
+                        {lesson.duration_minutes && <span>{lesson.duration_minutes} min</span>}
+                        {!lesson.is_completed && perLessonXp > 0 && (
+                          <span className="flex items-center gap-0.5 text-gold font-[700]"><XpIcon className="w-3 h-3" />+{perLessonXp}</span>
+                        )}
+                      </div>}
+                </div>
+                {lesson.is_completed
+                  ? <Badge color="success" className="text-xs">Done</Badge>
+                  : isLocked ? <LockIcon size={15} className="text-gray-300" /> : <ArrowRightIcon className="w-4 h-4 text-gray-400" />}
+              </div>
+            </Card>
           )
+          return isLocked
+            ? <div key={lesson.id} aria-disabled className="block opacity-70">{row}</div>
+            : <Link key={lesson.id} href={`/train/${moduleId}/${lesson.id}`} className="block">{row}</Link>
         })}
       </div>
     </div>

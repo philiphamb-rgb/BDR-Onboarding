@@ -8,7 +8,7 @@ import {
   ArrowRightIcon, XpIcon, SuccessIcon, BookIcon,
   HubspotIcon, ChartRisingIcon, PipelineIcon, TeamIcon, DocumentSignIcon,
   HubIcon, CoinIcon, PhoneIcon, ChecklistIcon, IntegrationIcon,
-  ProductsIcon, OrgChartIcon, TargetIcon,
+  ProductsIcon, OrgChartIcon, TargetIcon, LockIcon,
 } from '@/components/icons'
 import { cn, percentage } from '@/lib/utils'
 import Link from 'next/link'
@@ -28,6 +28,7 @@ export default function TrainPage() {
   const supabase = createClient()
   const [userId, setUserId] = useState<string>()
   const [modules, setModules] = useState<(ModuleRow & { lessons_count: number; completed_lessons: number; quiz_passed: boolean })[]>([])
+  const [isManager, setIsManager] = useState(false)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -38,11 +39,13 @@ export default function TrainPage() {
 
   const fetchModules = async (uid: string) => {
     setLoading(true)
-    const [{ data: mods }, { data: prog }, { data: quizAttempts }] = await Promise.all([
+    const [{ data: mods }, { data: prog }, { data: quizAttempts }, { data: me }] = await Promise.all([
       supabase.from('modules').select('id, title, subtitle, order_index, xp_quiz, is_published, lessons(id)').eq('is_published', true).order('order_index'),
       supabase.from('user_progress').select('completed_lessons').eq('user_id', uid).single(),
       supabase.from('quiz_attempts').select('module_id, percentage').eq('user_id', uid),
+      supabase.from('users').select('role').eq('id', uid).single(),
     ])
+    setIsManager(['manager', 'owner'].includes(me?.role ?? 'rep'))
 
     const completedIds = new Set<string>(prog?.completed_lessons ?? [])
     const passedModules = new Set<string>(
@@ -91,37 +94,48 @@ export default function TrainPage() {
           const pct = mod.lessons_count > 0 ? percentage(mod.completed_lessons, mod.lessons_count) : 0
           const allLessonsDone = mod.completed_lessons === mod.lessons_count && mod.lessons_count > 0
           const fullyDone = allLessonsDone && mod.quiz_passed
-          return (
-            <Link key={mod.id} href={`/train/${mod.id}`} className="block active:scale-[0.98] transition-transform">
-              <Card variant={fullyDone ? 'completed' : 'default'}>
-                <div className="flex items-start gap-4">
-                  <div className={cn('w-12 h-12 rounded-2xl flex items-center justify-center flex-shrink-0',
-                    fullyDone ? 'bg-teal/10' : 'bg-navy/5')}>
-                    {(() => {
-                      const Icon = fullyDone ? SuccessIcon : (MODULE_ICONS[mod.order_index] ?? BookIcon)
-                      return <Icon size={24} className={fullyDone ? 'text-teal' : 'text-navy'} />
-                    })()}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-start justify-between gap-2 mb-1">
-                      <div>
-                        <div className="text-xs text-gray-400 font-medium">Module {mod.order_index}</div>
-                        <h3 className="text-sm font-semibold text-gray-900 leading-tight">{mod.title}</h3>
-                      </div>
-                      <ArrowRightIcon className="w-4 h-4 text-gray-400 flex-shrink-0 mt-1" />
-                    </div>
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-xs text-gray-500">{mod.completed_lessons}/{mod.lessons_count} lessons{mod.quiz_passed ? ' · Quiz passed' : ''}</span>
-                      <span className="text-xs text-gray-500 flex items-center gap-0.5"><XpIcon className="w-3 h-3 text-gold" />+{mod.xp_quiz} XP</span>
-                    </div>
-                    {mod.lessons_count > 0 && (
-                      <ProgressBar value={pct} max={100} color={fullyDone ? '#00C2B2' : '#003087'} className="h-1.5" />
-                    )}
-                  </div>
+          const prev = idx > 0 ? modules[idx - 1] : null
+          const prevDone = prev ? (prev.completed_lessons === prev.lessons_count && prev.quiz_passed) : true
+          const locked = !isManager && idx > 0 && !prevDone
+
+          const Icon = locked ? LockIcon : fullyDone ? SuccessIcon : (MODULE_ICONS[mod.order_index] ?? BookIcon)
+          const card = (
+            <Card variant={fullyDone ? 'completed' : 'default'} className={cn(locked && 'opacity-70')}>
+              <div className="flex items-start gap-4">
+                <div className={cn('w-12 h-12 rounded-2xl flex items-center justify-center flex-shrink-0',
+                  locked ? 'bg-gray-100' : fullyDone ? 'bg-teal/10' : 'bg-navy/5')}>
+                  <Icon size={locked ? 20 : 24} className={locked ? 'text-gray-400' : fullyDone ? 'text-teal' : 'text-navy'} />
                 </div>
-              </Card>
-            </Link>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-start justify-between gap-2 mb-1">
+                    <div>
+                      <div className="text-xs text-gray-400 font-medium">Module {mod.order_index}</div>
+                      <h3 className={cn('text-sm font-semibold leading-tight', locked ? 'text-gray-400' : 'text-gray-900')}>{mod.title}</h3>
+                    </div>
+                    {locked
+                      ? <LockIcon size={15} className="text-gray-300 flex-shrink-0 mt-1" />
+                      : <ArrowRightIcon className="w-4 h-4 text-gray-400 flex-shrink-0 mt-1" />}
+                  </div>
+                  {locked ? (
+                    <div className="text-xs text-gray-400 flex items-center gap-1"><LockIcon size={12} />Pass Module {prev?.order_index} quiz to unlock</div>
+                  ) : (
+                    <>
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-xs text-gray-500">{mod.completed_lessons}/{mod.lessons_count} lessons{mod.quiz_passed ? ' · Quiz passed' : ''}</span>
+                        <span className="text-xs text-gray-500 flex items-center gap-0.5"><XpIcon className="w-3 h-3 text-gold" />+{mod.xp_quiz} XP</span>
+                      </div>
+                      {mod.lessons_count > 0 && (
+                        <ProgressBar value={pct} max={100} color={fullyDone ? '#00C2B2' : '#003087'} className="h-1.5" />
+                      )}
+                    </>
+                  )}
+                </div>
+              </div>
+            </Card>
           )
+          return locked
+            ? <div key={mod.id} aria-disabled className="block">{card}</div>
+            : <Link key={mod.id} href={`/train/${mod.id}`} className="block active:scale-[0.98] transition-transform">{card}</Link>
         })}
       </div>
     </div>

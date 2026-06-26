@@ -18,7 +18,7 @@ export function cn(...args: (string | undefined | null | boolean)[]) {
 // BUTTON
 // ═══════════════════════════════════════════════════════════════════════════════
 
-type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'destructive'
+type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'destructive' | 'conversion'
 type ButtonSize = 'sm' | 'md' | 'lg'
 
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
@@ -35,6 +35,9 @@ const buttonVariants: Record<ButtonVariant, string> = {
   secondary:   'bg-navy text-white hover:bg-navy-dark hover:-translate-y-px',
   ghost:       'bg-transparent border-2 border-navy text-navy hover:bg-navy/5',
   destructive: 'bg-transparent border-2 border-error text-error hover:bg-error/5',
+  // Highest-attention conversion action (teal). Reserve for the single most
+  // important next step on a screen (Continue Learning / Mark Complete).
+  conversion:  'bg-teal text-white shadow-button hover:bg-teal-dark hover:-translate-y-px',
 }
 
 const buttonSizes: Record<ButtonSize, string> = {
