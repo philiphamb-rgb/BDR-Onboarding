@@ -1,9 +1,12 @@
 /** @type {import('next').NextConfig} */
 const withPWA = require('next-pwa')({
   dest: 'public',
-  register: true,
+  register: false,
   skipWaiting: true,
-  disable: process.env.NODE_ENV === 'development',
+  // Service worker disabled: its navigation caching broke the auth
+  // redirect/cookie hand-off. A self-unregistering public/sw.js removes it
+  // from browsers that already registered the old one.
+  disable: true,
   runtimeCaching: [
     {
       urlPattern: /^https:\/\/fonts\.(googleapis|gstatic)\.com\/.*/i,
