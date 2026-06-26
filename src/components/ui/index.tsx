@@ -645,12 +645,15 @@ const badgeVariants: Record<BadgeVariant, string> = {
 
 export function Badge({ variant, color, children, className }: BadgeProps) {
   const v = (variant ?? (color as BadgeVariant) ?? 'teal')
+  // Fall back to a safe variant if an unknown one is passed (prevents silent
+  // "no styling" / wrong-color regressions).
+  const variantClass = badgeVariants[v] ?? badgeVariants.gray
   return (
     <span
       className={cn(
         'inline-flex items-center px-2 py-0.5 rounded-full',
         'text-[11px] font-[700] uppercase tracking-[0.07em]',
-        badgeVariants[v],
+        variantClass,
         className
       )}
     >

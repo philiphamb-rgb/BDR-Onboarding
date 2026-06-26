@@ -8,6 +8,7 @@ import { Card, Button, Badge, SkeletonCard, EmptyState } from '@/components/ui'
 import { ArrowRightIcon, BackIcon, XpIcon, CheckIcon, ChecklistIcon, TrophyIcon, BookIcon, CloseIcon } from '@/components/icons'
 import { cn } from '@/lib/utils'
 import { toast } from '@/components/ui'
+import { Confetti } from '@/components/gamification'
 
 interface QuizQuestion {
   id: string
@@ -221,6 +222,7 @@ export default function ModuleQuizPage() {
   // Result
   if (phase === 'result' && result) return (
     <div className="space-y-4">
+      {result.passed && <Confetti />}
       <Card className={cn('text-center py-8', result.passed ? 'border-teal/30 bg-teal/5' : 'border-red-200 bg-red-50')}>
         <div className="mb-3 flex justify-center">{result.passed ? <TrophyIcon size={44} className="text-gold" /> : <BookIcon size={44} className="text-navy" />}</div>
         <h2 className="text-h2 text-dark-text mb-2">{result.passed ? 'Passed!' : 'Keep studying'}</h2>

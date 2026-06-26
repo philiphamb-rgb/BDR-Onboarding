@@ -209,6 +209,31 @@ export function BeltCelebration({ beltName, beltColor, xpEarned, onClose }: Belt
   )
 }
 
+// ─── Confetti Burst ───────────────────────────────────────────────────────────
+// A lightweight, self-removing full-screen confetti burst for moments of delight
+// (e.g. passing a module quiz). Render it conditionally; it cleans itself up.
+
+export function Confetti({ count = 36, duration = 2600 }: { count?: number; duration?: number }) {
+  const [show, setShow] = useState(true)
+  useEffect(() => {
+    const t = setTimeout(() => setShow(false), duration)
+    return () => clearTimeout(t)
+  }, [duration])
+  if (!show || typeof document === 'undefined') return null
+  const particles = Array.from({ length: count }, (_, i) => ({
+    id: i,
+    color: CONFETTI_COLORS[i % CONFETTI_COLORS.length],
+    delay: Math.random() * 500,
+    x: Math.random() * 100,
+  }))
+  return createPortal(
+    <div className="fixed inset-0 z-[450] overflow-hidden pointer-events-none" aria-hidden="true">
+      {particles.map(p => <Particle key={p.id} color={p.color} delay={p.delay} x={p.x} />)}
+    </div>,
+    document.body
+  )
+}
+
 // ─── Belt Watcher ─────────────────────────────────────────────────────────────
 // Mounted in the app shell. Detects a genuine belt advance (current belt, derived
 // from belt_day, has moved past the last belt we celebrated) and fires the
