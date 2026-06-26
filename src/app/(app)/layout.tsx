@@ -27,7 +27,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         .from('notifications')
         .select('id', { count: 'exact', head: true })
         .eq('user_id', authUser.id)
-        .eq('read', false),
+        .eq('is_read', false),
     ])
     user = profile ?? null
     unreadCount = count ?? 0

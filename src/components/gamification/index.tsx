@@ -259,12 +259,12 @@ export function BeltWatcher({ userId }: { userId?: string }) {
       const { data: notif } = await supabase
         .from('notifications')
         .select('id, title')
-        .eq('user_id', userId).eq('type', 'belt_advance').eq('read', false)
+        .eq('user_id', userId).eq('type', 'belt_advance').eq('is_read', false)
         .order('created_at', { ascending: false }).limit(1).maybeSingle()
       if (!notif || cancelled) return
       const label = (notif.title ?? '').replace('You just earned', '').trim() || 'New Belt'
       setCelebration({ name: label, color: BELT_COLOR[label] ?? '#00C2B2' })
-      await supabase.from('notifications').update({ read: true }).eq('id', notif.id)
+      await supabase.from('notifications').update({ is_read: true }).eq('id', notif.id)
     })()
     return () => { cancelled = true }
   }, [userId])
