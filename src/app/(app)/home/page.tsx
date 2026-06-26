@@ -176,6 +176,10 @@ export default function HomePage() {
           </div>
         </Card>
       )}
+
+      <p className="text-center text-[11px] text-gray-400 pt-2">
+        BDR Onboarding Tool · Version 2.0.0
+      </p>
     </div>
   )
 }

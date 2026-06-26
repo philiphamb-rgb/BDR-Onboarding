@@ -1,0 +1,15 @@
+<svg viewBox="0 0 150 120" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="ConsumerDirect">
+  <defs>
+    <style>.cd-arc{fill:none;stroke-linecap:round}</style>
+  </defs>
+  <!-- four rising arcs (gold, red, light blue, blue) -->
+  <path class="cd-arc" d="M14 104 Q86 104 132 50" stroke="#2C6FB0" stroke-width="12"/>
+  <path class="cd-arc" d="M18 86  Q80 88  118 40" stroke="#56C1E8" stroke-width="12"/>
+  <path class="cd-arc" d="M26 68  Q72 72  104 30" stroke="#E8472B" stroke-width="12"/>
+  <path class="cd-arc" d="M34 52  Q64 56  90  22" stroke="#F6A623" stroke-width="12"/>
+  <!-- arrowheads at each arc tip -->
+  <path d="M132 50 l-2 -20 l20 6 z" fill="#2C6FB0"/>
+  <path d="M118 40 l-2 -19 l19 6 z" fill="#56C1E8"/>
+  <path d="M104 30 l-2 -18 l18 6 z" fill="#E8472B"/>
+  <path d="M90 22  l-2 -17 l17 6 z" fill="#F6A623"/>
+</svg>

@@ -4,17 +4,17 @@ import { ToastContainer } from '@/components/ui'
 import { XpPopLayer } from '@/components/gamification'
 
 export const metadata: Metadata = {
-  title: 'BDR OS',
-  description: 'ConsumerDirect BDR Operating System',
+  title: 'BDR Onboarding Tool',
+  description: 'ConsumerDirect BDR Onboarding Tool',
   manifest: '/manifest.json',
   appleWebApp: {
     capable: true,
     statusBarStyle: 'black-translucent',
-    title: 'BDR OS',
+    title: 'BDR Onboarding Tool',
   },
   openGraph: {
-    title: 'BDR OS',
-    description: 'ConsumerDirect BDR Operating System',
+    title: 'BDR Onboarding Tool',
+    description: 'ConsumerDirect BDR Onboarding Tool',
     type: 'website',
   },
 }

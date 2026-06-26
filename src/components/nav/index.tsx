@@ -70,7 +70,9 @@ export function BottomNav({ user, unreadCount = 0 }: BottomNavProps) {
         'bg-card border-t border-border',
         'flex items-center justify-around',
         'px-2 pb-safe pt-1',
-        'h-[60px] pb-[max(8px,env(safe-area-inset-bottom))]'
+        'h-[60px] pb-[max(8px,env(safe-area-inset-bottom))]',
+        // Mobile only — desktop uses the side navigation
+        'desktop:hidden'
       )}
       aria-label="Main navigation"
     >
@@ -137,14 +139,13 @@ export function Sidebar({ user, unreadCount = 0 }: SidebarProps) {
       )}
     >
       {/* Logo / Brand */}
-      <div className="px-6 py-5 border-b border-border">
+      <div className="px-5 py-5 border-b border-border">
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-lg bg-gradient-hero flex items-center justify-center">
-            <span className="text-white font-[900] text-[14px]">B</span>
-          </div>
-          <div>
-            <span className="text-[16px] font-[900] text-navy">BDR OS</span>
-            <span className="block text-[11px] font-[700] text-gray uppercase tracking-[0.07em]">v2</span>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/consumerdirect-mark.svg" alt="ConsumerDirect" className="w-9 h-9 shrink-0" />
+          <div className="leading-tight">
+            <span className="block text-[15px] font-[900] text-navy">BDR Onboarding</span>
+            <span className="block text-[11px] font-[700] text-gray uppercase tracking-[0.08em]">ConsumerDirect</span>
           </div>
         </div>
       </div>

@@ -11,11 +11,12 @@ function LoginForm() {
     <div className="w-full max-w-sm">
       {/* Logo */}
       <div className="text-center mb-8">
-        <div className="w-16 h-16 bg-teal rounded-2xl mx-auto mb-4 flex items-center justify-center shadow-lg">
-          <span className="text-2xl font-bold text-white">B</span>
+        <div className="w-20 h-20 bg-white rounded-2xl mx-auto mb-4 flex items-center justify-center shadow-lg p-3">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/consumerdirect-mark.svg" alt="ConsumerDirect" className="w-full h-full" />
         </div>
-        <h1 className="text-2xl font-bold text-white">BDR OS</h1>
-        <p className="text-white/70 text-sm mt-1">ConsumerDirect Performance System</p>
+        <h1 className="text-2xl font-bold text-white">BDR Onboarding Tool</h1>
+        <p className="text-white/70 text-sm mt-1">ConsumerDirect</p>
       </div>
 
       {/* Card */}

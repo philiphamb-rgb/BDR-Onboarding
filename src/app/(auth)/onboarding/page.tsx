@@ -5,7 +5,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui'
-import { CheckIcon, ArrowRightIcon, ArrowLeftIcon } from '@/components/icons'
+import { CheckIcon, ArrowRightIcon, ArrowLeftIcon, TrophyIcon, SuccessIcon } from '@/components/icons'
 import { cn } from '@/lib/utils'
 
 const STEPS = 5
@@ -73,9 +73,9 @@ export default function OnboardingPage() {
         {step === 0 && (
           <div className="flex flex-col flex-1">
             <div className="flex-1">
-              <div className="text-5xl mb-4 text-center">🏆</div>
-              <h2 className="text-h2 text-gray-900 mb-3 text-center">Welcome to BDR OS</h2>
-              <p className="text-sm text-gray-600 mb-4 text-center">Your personal performance system for ConsumerDirect.</p>
+              <div className="mb-4 flex justify-center"><TrophyIcon size={48} className="text-gold" /></div>
+              <h2 className="text-h2 text-gray-900 mb-3 text-center">Welcome to the BDR Onboarding Tool</h2>
+              <p className="text-sm text-gray-600 mb-4 text-center">Your personal onboarding and performance hub for ConsumerDirect.</p>
               {['Daily habit tracking','XP & belt progression','Training & quizzes','Coach AI personalization'].map(item => (
                 <div key={item} className="flex items-center gap-3 py-2">
                   <div className="w-5 h-5 bg-teal/10 rounded-full flex items-center justify-center flex-shrink-0">
@@ -169,7 +169,7 @@ export default function OnboardingPage() {
         {step === 4 && (
           <div className="flex flex-col flex-1">
             <div className="flex-1 text-center py-4">
-              <div className="text-5xl mb-4">🎉</div>
+              <div className="mb-4 flex justify-center"><SuccessIcon size={48} className="text-teal" /></div>
               <h2 className="text-h2 text-gray-900 mb-3">You&apos;re ready, {form.name.split(' ')[0]}!</h2>
               <p className="text-sm text-gray-600 mb-6">Log activity, complete habits, and climb the belt ranks.</p>
               <div className="bg-gradient-primary rounded-xl p-4 text-white text-left">
@@ -184,7 +184,7 @@ export default function OnboardingPage() {
               </div>
             </div>
             <Button onClick={finish} loading={loading} className="w-full mt-6" size="lg">
-              Enter BDR OS<ArrowRightIcon className="ml-2" />
+              Enter the BDR Onboarding Tool<ArrowRightIcon className="ml-2" />
             </Button>
           </div>
         )}

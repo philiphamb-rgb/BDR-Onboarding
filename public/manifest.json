@@ -1,7 +1,7 @@
 {
-  "name": "BDR OS",
-  "short_name": "BDR OS",
-  "description": "ConsumerDirect BDR Operating System",
+  "name": "BDR Onboarding Tool",
+  "short_name": "BDR Onboarding",
+  "description": "ConsumerDirect BDR Onboarding Tool",
   "start_url": "/home",
   "display": "standalone",
   "background_color": "#003087",

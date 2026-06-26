@@ -115,7 +115,7 @@ export default function SettingsPage() {
         </button>
       ))}
 
-      <p className="text-center text-xs text-gray-400">BDR OS v2.0 · ConsumerDirect</p>
+      <p className="text-center text-xs text-gray-400">BDR Onboarding Tool · ConsumerDirect</p>
 
       <button onClick={async () => { await supabase.auth.signOut(); router.push('/login') }}
         className="w-full flex items-center justify-center gap-2 p-4 bg-red-50 text-red-600 rounded-2xl border border-red-200 font-medium text-sm hover:bg-red-100 transition-colors">
