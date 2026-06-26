@@ -183,6 +183,7 @@ export function Sidebar({ user, unreadCount = 0 }: SidebarProps) {
         </div>
         <NavSection
           items={[
+            { href: '/resources',  label: 'Resources',   icon: BookIcon },
             { href: '/leaderboard', label: 'Leaderboard', icon: LeaderboardIcon },
             { href: '/grow',        label: 'Grow',         icon: GrowIcon },
           ]}
