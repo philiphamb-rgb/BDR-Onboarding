@@ -8,7 +8,7 @@ import {
   ArrowRightIcon, XpIcon, SuccessIcon, BookIcon,
   HubspotIcon, ChartRisingIcon, PipelineIcon, TeamIcon, DocumentSignIcon,
   HubIcon, CoinIcon, PhoneIcon, ChecklistIcon, IntegrationIcon,
-  ProductsIcon, OrgChartIcon, TargetIcon, LockIcon,
+  ProductsIcon, OrgChartIcon, TargetIcon, LockIcon, SearchIcon, CloseIcon,
 } from '@/components/icons'
 import { cn, percentage } from '@/lib/utils'
 import Link from 'next/link'
@@ -28,8 +28,10 @@ export default function TrainPage() {
   const supabase = createClient()
   const [userId, setUserId] = useState<string>()
   const [modules, setModules] = useState<(ModuleRow & { lessons_count: number; completed_lessons: number; quiz_passed: boolean })[]>([])
+  const [allLessons, setAllLessons] = useState<{ id: string; title: string; module_id: string }[]>([])
   const [isManager, setIsManager] = useState(false)
   const [loading, setLoading] = useState(true)
+  const [query, setQuery] = useState('')
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => {
@@ -39,13 +41,15 @@ export default function TrainPage() {
 
   const fetchModules = async (uid: string) => {
     setLoading(true)
-    const [{ data: mods }, { data: prog }, { data: quizAttempts }, { data: me }] = await Promise.all([
+    const [{ data: mods }, { data: prog }, { data: quizAttempts }, { data: me }, { data: lessonList }] = await Promise.all([
       supabase.from('modules').select('id, title, subtitle, order_index, xp_quiz, is_published, lessons(id)').eq('is_published', true).order('order_index'),
       supabase.from('user_progress').select('completed_lessons').eq('user_id', uid).single(),
       supabase.from('quiz_attempts').select('module_id, percentage').eq('user_id', uid),
       supabase.from('users').select('role').eq('id', uid).single(),
+      supabase.from('lessons').select('id, title, module_id').eq('is_published', true).order('order_index'),
     ])
     setIsManager(['manager', 'owner'].includes(me?.role ?? 'rep'))
+    setAllLessons(lessonList ?? [])
 
     const completedIds = new Set<string>(prog?.completed_lessons ?? [])
     const passedModules = new Set<string>(
@@ -67,6 +71,18 @@ export default function TrainPage() {
 
   const completedModules = modules.filter(m => m.completed_lessons === m.lessons_count && m.quiz_passed).length
 
+  // Search across all lessons + module titles, respecting gating for reps.
+  const moduleMeta: Record<string, { order: number; title: string; unlocked: boolean }> = {}
+  modules.forEach((m, idx) => {
+    const prev = idx > 0 ? modules[idx - 1] : null
+    const prevDone = prev ? (prev.completed_lessons === prev.lessons_count && prev.quiz_passed) : true
+    moduleMeta[m.id] = { order: m.order_index, title: m.title, unlocked: isManager || idx === 0 || prevDone }
+  })
+  const q = query.trim().toLowerCase()
+  const lessonResults = q ? allLessons.filter(l => l.title.toLowerCase().includes(q) && moduleMeta[l.module_id]?.unlocked) : []
+  const moduleResults = q ? modules.filter(m => m.title.toLowerCase().includes(q)) : []
+  const hasResults = lessonResults.length > 0 || moduleResults.length > 0
+
   if (loading) return (
     <div className="space-y-4">
       <Skeleton className="h-10 rounded-xl" />
@@ -81,6 +97,60 @@ export default function TrainPage() {
         <p className="text-sm text-gray">{completedModules} of {modules.length} modules complete</p>
       </div>
 
+      {/* Search across all lessons */}
+      <div className="relative">
+        <SearchIcon size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray" />
+        <input
+          value={query}
+          onChange={e => setQuery(e.target.value)}
+          placeholder="Search lessons — e.g. order form, objection, PartnerHub…"
+          className="w-full rounded-pill border border-border bg-card py-2.5 pl-9 pr-9 text-sm text-dark-text shadow-card focus:outline-none focus:ring-2 focus:ring-teal"
+        />
+        {query && (
+          <button onClick={() => setQuery('')} aria-label="Clear search" className="absolute right-3 top-1/2 -translate-y-1/2 text-gray hover:text-dark-text">
+            <CloseIcon size={16} />
+          </button>
+        )}
+      </div>
+
+      {/* Search results */}
+      {q ? (
+        <div className="space-y-2">
+          {!hasResults ? (
+            <Card className="text-center !py-8">
+              <p className="text-sm text-gray">No lessons match "<span className="font-[700] text-dark-text">{query}</span>".</p>
+            </Card>
+          ) : (
+            <>
+              {moduleResults.map(m => (
+                <Link key={`m-${m.id}`} href={`/train/${m.id}`} className="block">
+                  <Card className="flex items-center gap-3 !p-3 hover:border-teal transition-colors">
+                    <BookIcon size={18} className="text-navy shrink-0" />
+                    <div className="min-w-0 flex-1">
+                      <div className="text-sm font-[700] text-dark-text truncate">{m.title}</div>
+                      <div className="text-[11px] text-gray">Module {m.order_index} · whole module</div>
+                    </div>
+                    <ArrowRightIcon size={16} className="text-gray shrink-0" />
+                  </Card>
+                </Link>
+              ))}
+              {lessonResults.map(l => (
+                <Link key={`l-${l.id}`} href={`/train/${l.module_id}/${l.id}`} className="block">
+                  <Card className="flex items-center gap-3 !p-3 hover:border-teal transition-colors">
+                    <ChecklistIcon size={18} className="text-teal shrink-0" />
+                    <div className="min-w-0 flex-1">
+                      <div className="text-sm font-[600] text-dark-text truncate">{l.title}</div>
+                      <div className="text-[11px] text-gray truncate">Module {moduleMeta[l.module_id]?.order} · {moduleMeta[l.module_id]?.title}</div>
+                    </div>
+                    <ArrowRightIcon size={16} className="text-gray shrink-0" />
+                  </Card>
+                </Link>
+              ))}
+            </>
+          )}
+        </div>
+      ) : (
+      <>
       <Card className="bg-gradient-primary !p-4">
         <div className="text-white/70 text-xs font-medium mb-1">OVERALL PROGRESS</div>
         <div className="flex items-end justify-between mb-3">
@@ -138,6 +208,8 @@ export default function TrainPage() {
             : <Link key={mod.id} href={`/train/${mod.id}`} className="block active:scale-[0.98] transition-transform">{card}</Link>
         })}
       </div>
+      </>
+      )}
     </div>
   )
 }
