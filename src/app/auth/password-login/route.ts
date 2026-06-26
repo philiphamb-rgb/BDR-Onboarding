@@ -3,26 +3,24 @@ import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
 /**
- * Email + password sign-in, verified server-side.
+ * Email + password sign-in via a native form POST.
  *
- * Cookies are bound to THIS response object (not the next/headers store) so the
- * Supabase session is guaranteed to be written onto the JSON response the
- * browser receives. The browser then navigates with the cookie already set,
- * so middleware sees an authenticated user instead of bouncing to /login.
+ * On success we issue a 303 redirect to the destination with the Supabase
+ * session cookies set on the redirect response itself. The browser follows the
+ * redirect as a top-level navigation and sends those cookies, so middleware
+ * sees an authenticated user. This avoids the fetch/service-worker cookie
+ * hand-off that was dropping the session.
  */
 export async function POST(request: NextRequest) {
-  let email: string | undefined
-  let password: string | undefined
-  try {
-    const body = await request.json()
-    email = body?.email
-    password = body?.password
-  } catch {
-    return NextResponse.json({ ok: false, error: 'Bad request' }, { status: 400 })
-  }
+  const form = await request.formData()
+  const email = String(form.get('email') || '').trim().toLowerCase()
+  const password = String(form.get('password') || '')
+
+  const redirectTo = (path: string) =>
+    NextResponse.redirect(new URL(path, request.url), { status: 303 })
 
   if (!email || !password) {
-    return NextResponse.json({ ok: false, error: 'Enter your email and password.' }, { status: 400 })
+    return redirectTo('/login?error=1')
   }
 
   const cookiesToSet: { name: string; value: string; options: any }[] = []
@@ -41,13 +39,9 @@ export async function POST(request: NextRequest) {
     }
   )
 
-  const { error } = await supabase.auth.signInWithPassword({
-    email: String(email).trim().toLowerCase(),
-    password: String(password),
-  })
-
+  const { error } = await supabase.auth.signInWithPassword({ email, password })
   if (error) {
-    return NextResponse.json({ ok: false, error: 'Incorrect email or password.' }, { status: 401 })
+    return redirectTo('/login?error=1')
   }
 
   let next = '/home'
@@ -63,7 +57,7 @@ export async function POST(request: NextRequest) {
     if (!userData?.onboarding_completed) next = '/onboarding'
   }
 
-  const res = NextResponse.json({ ok: true, next })
+  const res = redirectTo(next)
   cookiesToSet.forEach(({ name, value, options }) => res.cookies.set(name, value, options))
   return res
 }
