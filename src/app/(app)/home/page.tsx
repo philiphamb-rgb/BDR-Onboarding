@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { useProgress } from '@/lib/hooks/useProgress'
 import { Card, ProgressBar, Badge, Skeleton } from '@/components/ui'
-import { FlameIcon, TrophyIcon, XpIcon, BeltIcon, ChartRisingIcon, PhoneIcon, ChecklistIcon, TargetIcon, ArrowRightIcon, LightningIcon } from '@/components/icons'
+import { FlameIcon, TrophyIcon, XpIcon, BeltIcon, ChartRisingIcon, PhoneIcon, ChecklistIcon, TargetIcon, ArrowRightIcon, LightningIcon, BookIcon, CoachIcon } from '@/components/icons'
 import { cn, formatXP, pluralize } from '@/lib/utils'
 import Link from 'next/link'
 
@@ -135,14 +135,14 @@ export default function HomePage() {
       {/* Quick Actions */}
       <div className="grid grid-cols-2 gap-3">
         {[
-          { href: '/today',          icon: '✅', label: 'Check In',  sub: 'Log today\'s habits',     gradient: 'from-teal to-teal-dark' },
-          { href: '/wins?action=new', icon: '🏆', label: 'Log Win',   sub: 'Call · Demo · Deal',      gradient: 'from-navy to-navy-dark' },
-          { href: '/train',           icon: '📚', label: 'Train',     sub: 'Continue learning',       gradient: 'from-purple-600 to-purple-800' },
-          { href: '/coach',           icon: '🎯', label: 'Coach AI',  sub: 'Get personalized tips',   gradient: 'from-gold to-orange-500' },
+          { href: '/today',          Icon: ChecklistIcon, label: 'Check In',  sub: 'Log today\'s habits',     gradient: 'from-teal to-teal-dark' },
+          { href: '/wins?action=new', Icon: TrophyIcon,    label: 'Log Win',   sub: 'Call · Demo · Deal',      gradient: 'from-navy to-navy-dark' },
+          { href: '/train',           Icon: BookIcon,      label: 'Train',     sub: 'Continue learning',       gradient: 'from-purple-600 to-purple-800' },
+          { href: '/coach',           Icon: CoachIcon,     label: 'Coach AI',  sub: 'Get personalized tips',   gradient: 'from-gold to-orange-500' },
         ].map(a => (
           <Link key={a.href} href={a.href}
             className={cn('bg-gradient-to-br rounded-2xl p-4 flex flex-col gap-2 shadow-card active:scale-95 transition-transform', a.gradient)}>
-            <div className="w-8 h-8 bg-white/20 rounded-xl flex items-center justify-center text-lg">{a.icon}</div>
+            <div className="w-8 h-8 bg-white/20 rounded-xl flex items-center justify-center"><a.Icon size={18} className="text-white" /></div>
             <div>
               <div className="text-sm font-bold text-white">{a.label}</div>
               <div className="text-xs text-white/70">{a.sub}</div>

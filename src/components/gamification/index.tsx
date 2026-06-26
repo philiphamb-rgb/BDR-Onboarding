@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback } from 'react'
 import { createPortal } from 'react-dom'
 import { cn } from '@/lib/utils'
+import { BeltIcon } from '@/components/icons'
 
 // ─── XP Float Pop ────────────────────────────────────────────────────────────
 
@@ -179,7 +180,7 @@ export function BeltCelebration({ beltName, beltColor, xpEarned, onClose }: Belt
           style={{ backgroundColor: beltColor }}
         />
 
-        <div className="text-5xl mb-4">🥋</div>
+        <div className="mb-4 flex justify-center"><span style={{ color: beltColor }}><BeltIcon size={52} /></span></div>
 
         <h2 className="text-2xl font-bold text-gray-900 mb-2">Belt Earned!</h2>
         <p className="text-3xl font-black mb-1" style={{ color: beltColor }}>{beltName}</p>

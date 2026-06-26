@@ -76,7 +76,7 @@ export default function SettingsPage() {
     const exportObj = { exported_at: new Date().toISOString(), user, progress: prog, wins, habit_logs: habits }
     const blob = new Blob([JSON.stringify(exportObj, null, 2)], { type: 'application/json' })
     const url = URL.createObjectURL(blob)
-    const a = document.createElement('a'); a.href = url; a.download = `bdr-os-export-${Date.now()}.json`; a.click()
+    const a = document.createElement('a'); a.href = url; a.download = `bdr-onboarding-export-${Date.now()}.json`; a.click()
     URL.revokeObjectURL(url)
     toast.success('Data exported')
   }

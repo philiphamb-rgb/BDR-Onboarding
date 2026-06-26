@@ -4,14 +4,18 @@
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { Card } from '@/components/ui'
-import { BellIcon } from '@/components/icons'
+import { BellIcon, BeltIcon, TrophyIcon, ClockIcon, TargetIcon, SuccessIcon, BookIcon, FlameIcon } from '@/components/icons'
 import { cn, formatRelativeTime } from '@/lib/utils'
 
 interface NotifRow { id: string; type: string; title: string; body: string; is_read: boolean; created_at: string }
 
-const TYPE_EMOJI: Record<string, string> = {
-  belt_advance: '🥋', achievement: '🏆', reminder: '⏰', coaching: '🎯',
-  win: '🎉', system: '🔔', resource: '📚', streak: '🔥',
+const TYPE_ICON: Record<string, React.ComponentType<{ size?: number; className?: string }>> = {
+  belt_advance: BeltIcon, achievement: TrophyIcon, reminder: ClockIcon, coaching: TargetIcon,
+  win: SuccessIcon, system: BellIcon, resource: BookIcon, streak: FlameIcon,
+}
+const TYPE_TINT: Record<string, string> = {
+  belt_advance: 'text-navy', achievement: 'text-gold', reminder: 'text-gray', coaching: 'text-teal',
+  win: 'text-teal', system: 'text-gray', resource: 'text-navy', streak: 'text-orange-500',
 }
 
 export default function NotificationsPage() {
@@ -54,7 +58,7 @@ export default function NotificationsPage() {
           {notifs.map(n => (
             <Card key={n.id} className={cn('!p-3 transition-colors', !n.is_read && 'border-navy/20 bg-navy/5')}>
               <div className="flex items-start gap-3">
-                <span className="text-xl flex-shrink-0">{TYPE_EMOJI[n.type] ?? '🔔'}</span>
+                {(() => { const Ic = TYPE_ICON[n.type] ?? BellIcon; return <Ic size={20} className={cn('flex-shrink-0 mt-0.5', TYPE_TINT[n.type] ?? 'text-gray')} /> })()}
                 <div className="flex-1 min-w-0">
                   <p className={cn('text-sm', !n.is_read ? 'font-semibold text-gray-900' : 'font-medium text-gray-700')}>{n.title}</p>
                   {n.body && <p className="text-xs text-gray-500 mt-0.5">{n.body}</p>}

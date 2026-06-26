@@ -123,7 +123,7 @@ export default function CoachPage() {
           <div className="space-y-4">
             {/* Welcome */}
             <Card className="text-center py-6">
-              <div className="text-4xl mb-3">🎯</div>
+              <div className="mb-3 flex justify-center"><TargetIcon size={36} className="text-gold" /></div>
               <h2 className="text-base font-semibold text-gray-900 mb-2">
                 Hey{userName ? `, ${userName}` : ''}! I&apos;m your Coach.
               </h2>
@@ -158,7 +158,7 @@ export default function CoachPage() {
               >
                 {msg.role === 'assistant' && (
                   <div className="w-7 h-7 bg-gold/10 rounded-full flex items-center justify-center flex-shrink-0 mt-1">
-                    <span className="text-sm">🎯</span>
+                    <TargetIcon size={14} className="text-gold" />
                   </div>
                 )}
                 <div
@@ -180,7 +180,7 @@ export default function CoachPage() {
             {loading && (
               <div className="flex gap-3">
                 <div className="w-7 h-7 bg-gold/10 rounded-full flex items-center justify-center flex-shrink-0">
-                  <span className="text-sm">🎯</span>
+                  <TargetIcon size={14} className="text-gold" />
                 </div>
                 <div className="bg-white border border-border rounded-2xl rounded-tl-sm px-4 py-3 shadow-card">
                   <div className="flex gap-1 items-center h-4">

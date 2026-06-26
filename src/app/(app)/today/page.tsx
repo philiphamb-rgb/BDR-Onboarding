@@ -5,7 +5,7 @@ import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useProgress, useHabits } from '@/lib/hooks/useProgress'
 import { Card, Button, ProgressBar } from '@/components/ui'
-import { CheckIcon, FlameIcon, XpIcon } from '@/components/icons'
+import { CheckIcon, FlameIcon, XpIcon, PhoneIcon, TargetIcon, HandshakeIcon } from '@/components/icons'
 import { cn, formatXP, formatDateShort } from '@/lib/utils'
 import { toast } from '@/components/ui'
 
@@ -139,13 +139,13 @@ export default function TodayPage() {
         <h2 className="text-h3 text-gray-900 mb-3">Quick Log</h2>
         <div className="grid grid-cols-3 gap-2">
           {[
-            { type: 'call' as const,  label: 'Call',  emoji: '📞', xp: 10 },
-            { type: 'demo' as const,  label: 'Demo',  emoji: '🎯', xp: 25 },
-            { type: 'deal' as const,  label: 'Deal',  emoji: '🤝', xp: 100 },
+            { type: 'call' as const,  label: 'Call',  Icon: PhoneIcon,     xp: 10 },
+            { type: 'demo' as const,  label: 'Demo',  Icon: TargetIcon,    xp: 25 },
+            { type: 'deal' as const,  label: 'Deal',  Icon: HandshakeIcon, xp: 100 },
           ].map(item => (
             <button key={item.type} onClick={() => logActivity(item.type)}
               className="flex flex-col items-center gap-1 p-3 bg-gray-50 hover:bg-gray-100 active:scale-95 rounded-xl border border-border transition-all">
-              <span className="text-2xl">{item.emoji}</span>
+              <item.Icon size={24} className="text-navy" />
               <span className="text-xs font-semibold text-gray-900">{item.label}</span>
               <span className="text-xs text-gray-500">+{item.xp} XP</span>
             </button>

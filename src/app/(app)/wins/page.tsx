@@ -5,16 +5,16 @@ import { useState, useEffect, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Card, Button, Modal, Badge } from '@/components/ui'
-import { TrophyIcon, PlusIcon, XpIcon } from '@/components/icons'
+import { TrophyIcon, PlusIcon, XpIcon, PhoneIcon, TargetIcon, HandshakeIcon, LightningIcon, StarFilledIcon } from '@/components/icons'
 import { cn, formatXP, formatRelativeTime } from '@/lib/utils'
 import { toast } from '@/components/ui'
 
 const WIN_TYPES = [
-  { type: 'call',   label: 'Call',  emoji: '📞', xp: 10,  color: 'bg-blue-100 text-blue-700' },
-  { type: 'demo',   label: 'Demo',  emoji: '🎯', xp: 25,  color: 'bg-purple-100 text-purple-700' },
-  { type: 'deal',   label: 'Deal',  emoji: '🤝', xp: 100, color: 'bg-green-100 text-green-700' },
-  { type: 'post',   label: 'Post',  emoji: '📢', xp: 15,  color: 'bg-orange-100 text-orange-700' },
-  { type: 'client', label: 'Client',emoji: '⭐', xp: 15,  color: 'bg-yellow-100 text-yellow-700' },
+  { type: 'call',   label: 'Call',  Icon: PhoneIcon,      xp: 10,  color: 'bg-blue-100 text-blue-700' },
+  { type: 'demo',   label: 'Demo',  Icon: TargetIcon,     xp: 25,  color: 'bg-purple-100 text-purple-700' },
+  { type: 'deal',   label: 'Deal',  Icon: HandshakeIcon,  xp: 100, color: 'bg-green-100 text-green-700' },
+  { type: 'post',   label: 'Post',  Icon: LightningIcon,  xp: 15,  color: 'bg-orange-100 text-orange-700' },
+  { type: 'client', label: 'Client',Icon: StarFilledIcon, xp: 15,  color: 'bg-yellow-100 text-yellow-700' },
 ]
 
 interface WinRow {
@@ -106,7 +106,7 @@ function WinsContent() {
           const count = wins.filter(w => w.type === wt.type).length
           return (
             <div key={wt.type} className="bg-white rounded-xl border border-border p-3 text-center shadow-card">
-              <div className="text-xl mb-1">{wt.emoji}</div>
+              <div className="mb-1 flex justify-center"><wt.Icon size={20} className="text-navy" /></div>
               <div className="text-h3 font-bold text-gray-900">{count}</div>
               <div className="text-xs text-gray-500">{wt.label}s</div>
             </div>
@@ -140,8 +140,8 @@ function WinsContent() {
             return (
               <Card key={win.id} className="!p-3">
                 <div className="flex items-start gap-3">
-                  <div className={cn('w-9 h-9 rounded-xl flex items-center justify-center text-lg flex-shrink-0', wt.color)}>
-                    {wt.emoji}
+                  <div className={cn('w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0', wt.color)}>
+                    <wt.Icon size={18} />
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-0.5">
@@ -167,7 +167,7 @@ function WinsContent() {
               <button key={wt.type} onClick={() => setSelectedType(wt.type)}
                 className={cn('flex items-center gap-2 p-3 rounded-xl border transition-all text-left',
                   selectedType === wt.type ? 'border-navy bg-navy/5' : 'border-border bg-gray-50 hover:bg-gray-100')}>
-                <span className="text-xl">{wt.emoji}</span>
+                <wt.Icon size={20} className="text-navy" />
                 <div>
                   <div className="text-sm font-medium text-gray-900">{wt.label}</div>
                   <div className="text-xs text-gray-500 flex items-center gap-1"><XpIcon className="w-3 h-3" />+{wt.xp}</div>

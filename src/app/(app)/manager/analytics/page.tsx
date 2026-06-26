@@ -4,7 +4,7 @@
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { Card } from '@/components/ui'
-import { TrophyIcon, ChartRisingIcon, PhoneIcon, TargetIcon } from '@/components/icons'
+import { TrophyIcon, ChartRisingIcon, PhoneIcon, TargetIcon, FlameIcon } from '@/components/icons'
 import { formatXP } from '@/lib/utils'
 
 export default function AnalyticsPage() {
@@ -41,7 +41,7 @@ export default function AnalyticsPage() {
     { label: 'Avg XP / Rep',  value: formatXP(stats.avgXP), sub: 'All time', icon: <ChartRisingIcon className="text-navy" /> },
     { label: 'Total Calls',   value: stats.totalCalls.toString(), sub: 'All time', icon: <PhoneIcon className="text-teal" /> },
     { label: 'Total Deals',   value: stats.totalDeals.toString(), sub: 'All time', icon: <TargetIcon className="text-green-600" /> },
-    { label: 'Active Streaks',value: `${stats.activeStreaks}/${stats.teamSize}`, sub: 'Reps on streak', icon: <span className="text-xl">🔥</span> },
+    { label: 'Active Streaks',value: `${stats.activeStreaks}/${stats.teamSize}`, sub: 'Reps on streak', icon: <FlameIcon className="text-orange-500" /> },
   ]
 
   return (

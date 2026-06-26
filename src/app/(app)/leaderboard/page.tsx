@@ -4,7 +4,7 @@
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { Card, Badge } from '@/components/ui'
-import { TrophyIcon } from '@/components/icons'
+import { TrophyIcon, MedalIcon } from '@/components/icons'
 import { cn, formatXP } from '@/lib/utils'
 
 interface Leader { user_id: string; name: string; belt: string; total_xp: number; streak: number }
@@ -71,11 +71,11 @@ export default function LeaderboardPage() {
         <div className="flex items-end gap-2 justify-center mb-2">
           {[sorted[1], sorted[0], sorted[2]].map((entry, pos) => {
             const rank = pos === 0 ? 2 : pos === 1 ? 1 : 3
-            const medals = ['🥇', '🥈', '🥉']
+            const medalColors = ['text-gold', 'text-gray-400', 'text-orange-700']
             const heights = ['h-16', 'h-20', 'h-12']
             return (
               <div key={entry.user_id} className={cn('flex flex-col items-center flex-1 text-center', pos === 1 && 'order-2')}>
-                <span className="text-2xl mb-1">{medals[rank - 1]}</span>
+                <MedalIcon size={26} className={cn('mb-1', medalColors[rank - 1])} />
                 <div className={cn('w-10 h-10 rounded-full flex items-center justify-center text-xs font-bold text-white mx-auto mb-1', entry.user_id === userId ? 'bg-teal' : 'bg-navy')}>
                   {entry.name.split(' ').map((n: string) => n[0]).join('').slice(0, 2)}
                 </div>

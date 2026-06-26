@@ -127,16 +127,27 @@ export default function LessonPage() {
     )
     if (block.type === 'links') return (
       <div key={i} className="space-y-2">
-        {block.links?.map((lnk, j) => (
-          <a key={j} href={lnk.url ?? '#'} target="_blank" rel="noopener noreferrer"
-             className="flex items-center justify-between gap-3 rounded-xl border border-border px-3 py-2.5 hover:border-teal transition-colors group">
-            <div className="min-w-0">
-              <div className="text-sm font-[700] text-dark-text truncate">{lnk.text}</div>
-              {lnk.sub && <div className="text-xs text-gray truncate">{lnk.sub}</div>}
+        {block.links?.map((lnk, j) => {
+          const inner = (
+            <>
+              <div className="min-w-0">
+                <div className="text-sm font-[700] text-dark-text truncate">{lnk.text}</div>
+                {lnk.sub && <div className="text-xs text-gray truncate">{lnk.sub}</div>}
+              </div>
+              {lnk.url && <ExternalLinkIcon size={15} className="text-gray group-hover:text-teal shrink-0" />}
+            </>
+          )
+          return lnk.url ? (
+            <a key={j} href={lnk.url} target="_blank" rel="noopener noreferrer"
+               className="flex items-center justify-between gap-3 rounded-xl border border-border px-3 py-2.5 hover:border-teal transition-colors group">
+              {inner}
+            </a>
+          ) : (
+            <div key={j} className="flex items-center justify-between gap-3 rounded-xl border border-border px-3 py-2.5">
+              {inner}
             </div>
-            <ExternalLinkIcon size={15} className="text-gray group-hover:text-teal shrink-0" />
-          </a>
-        ))}
+          )
+        })}
       </div>
     )
     if (block.type === 'template') return (
@@ -150,7 +161,7 @@ export default function LessonPage() {
             <CopyIcon size={13} /> Copy
           </button>
         </div>
-        <pre className="px-3 py-3 text-xs text-gray-700 whitespace-pre-wrap font-sans leading-relaxed">{block.text}</pre>
+        <pre className="px-3 py-3 text-xs text-gray-700 whitespace-pre-wrap break-words font-sans leading-relaxed max-w-full overflow-x-auto">{block.text}</pre>
       </div>
     )
     if (block.type === 'tip') return (
