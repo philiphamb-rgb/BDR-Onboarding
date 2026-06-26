@@ -13,6 +13,16 @@ import { createClient } from '@/lib/supabase/server'
  * code_verifier cookie from the originating browser, so a link clicked from
  * the Gmail/Outlook mobile app verifies correctly.
  */
+/**
+ * Email link scanners (Microsoft 365 Safe Links, etc.) pre-fetch links with a
+ * HEAD request. Next.js would otherwise run the GET handler for HEAD, which
+ * would consume the one-time token before the user clicks. Answer HEAD with a
+ * bare 200 so the scanner never touches verifyOtp.
+ */
+export async function HEAD() {
+  return new NextResponse(null, { status: 200 })
+}
+
 export async function GET(request: NextRequest) {
   const { searchParams, origin } = new URL(request.url)
   const token_hash = searchParams.get('token_hash')
