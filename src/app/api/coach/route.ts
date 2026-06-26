@@ -90,8 +90,8 @@ Be honest but encouraging. No preamble, no closing.`
       .select('total_xp, current_streak, days_active, calls_this_week, demos_this_week, deals_this_month')
       .eq('user_id', userId).single()
     const { data: recentWins } = await supabase
-      .from('wins').select('win_type, description, created_at')
-      .eq('user_id', userId).order('created_at', { ascending: false }).limit(5)
+      .from('wins').select('type, description, logged_at')
+      .eq('user_id', userId).order('logged_at', { ascending: false }).limit(5)
 
     const firstName = userData?.first_name || (userData?.name ?? 'BDR').split(' ')[0]
     const days = progress?.days_active ?? 0
@@ -110,7 +110,7 @@ ABOUT THIS BDR:
 - Calls this week: ${progress?.calls_this_week ?? 0}
 - Demos this week: ${progress?.demos_this_week ?? 0}
 - Deals this month: ${progress?.deals_this_month ?? 0}
-${recentWins?.length ? `\nRECENT WINS:\n${recentWins.map((w) => `- ${w.win_type}: ${w.description}`).join('\n')}` : ''}
+${recentWins?.length ? `\nRECENT WINS:\n${recentWins.map((w) => `- ${w.type}: ${w.description}`).join('\n')}` : ''}
 
 COACHING STYLE:
 - Direct, practical, encouraging. Specific tips, not generic advice.
@@ -119,10 +119,11 @@ COACHING STYLE:
 - When the rep wants to practice, suggest the Objection Drill.`
 
     // Stream the coach reply token-by-token for a live typing experience.
-    const stream = anthropic.messages.stream({
+    const stream = await anthropic.messages.create({
       model: 'claude-sonnet-4-6',
       max_tokens: 500,
       system: systemPrompt,
+      stream: true,
       messages: [
         ...history.map((h) => ({ role: h.role, content: h.content })),
         { role: 'user', content: message },

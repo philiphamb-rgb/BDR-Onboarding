@@ -239,54 +239,32 @@ export function Confetti({ count = 36, duration = 2600 }: { count?: number; dura
 // from belt_day, has moved past the last belt we celebrated) and fires the
 // celebration exactly once, persisting the new belt so it never re-fires.
 
-const BELT_ORDER = ['white', 'yellow', 'orange', 'green', 'blue', 'purple', 'black']
-const BELT_TIER_DAYS = [
-  { name: 'black', minDays: 90 }, { name: 'purple', minDays: 70 }, { name: 'blue', minDays: 50 },
-  { name: 'green', minDays: 30 }, { name: 'orange', minDays: 14 }, { name: 'yellow', minDays: 7 },
-  { name: 'white', minDays: 0 },
-]
-const BELT_INFO: Record<string, { label: string; color: string }> = {
-  white: { label: 'White Belt', color: '#9CA3AF' }, yellow: { label: 'Yellow Belt', color: '#CA8A04' },
-  orange: { label: 'Orange Belt', color: '#C2410C' }, green: { label: 'Green Belt', color: '#059669' },
-  blue: { label: 'Blue Belt', color: '#1D4ED8' }, purple: { label: 'Purple Belt', color: '#6D28D9' },
-  black: { label: 'Black Belt', color: '#111827' },
-}
-function beltForDays(days: number) {
-  return (BELT_TIER_DAYS.find(b => days >= b.minDays) ?? BELT_TIER_DAYS[BELT_TIER_DAYS.length - 1]).name
+// Belt rank -> color, keyed by the LABEL form the DB stores ('White Belt', ...).
+const BELT_COLOR: Record<string, string> = {
+  'White Belt': '#9CA3AF', 'Yellow Belt': '#CA8A04', 'Orange Belt': '#C2410C',
+  'Green Belt': '#059669', 'Blue Belt': '#1D4ED8', 'Purple Belt': '#6D28D9', 'Black Belt': '#111827',
 }
 
 export function BeltWatcher({ userId }: { userId?: string }) {
   const supabase = createClient()
-  const [celebration, setCelebration] = useState<{ name: string; color: string; xp: number } | null>(null)
+  const [celebration, setCelebration] = useState<{ name: string; color: string } | null>(null)
 
   useEffect(() => {
     if (!userId) return
     let cancelled = false
     ;(async () => {
-      const { data: prog } = await supabase
-        .from('user_progress').select('belt_day, last_belt_name').eq('user_id', userId).single()
-      if (!prog || cancelled) return
-      const current = beltForDays(prog.belt_day ?? 0)
-      const lastIdx = prog.last_belt_name ? BELT_ORDER.indexOf(prog.last_belt_name) : -1
-      const curIdx = BELT_ORDER.indexOf(current)
-      if (lastIdx === -1) {
-        // First time we've seen this user — set a baseline, don't celebrate retroactively.
-        await supabase.from('user_progress').update({ last_belt_name: current }).eq('user_id', userId)
-        return
-      }
-      if (curIdx > lastIdx) {
-        let xp = 0
-        const { data: u } = await supabase.from('users').select('team_id').eq('id', userId).single()
-        if (u?.team_id) {
-          const { data: rule } = await supabase
-            .from('gamification_rules').select('xp_value')
-            .eq('team_id', u.team_id).eq('rule_key', 'belt_advance').maybeSingle()
-          xp = rule?.xp_value ?? 0
-        }
-        if (cancelled) return
-        setCelebration({ name: BELT_INFO[current].label, color: BELT_INFO[current].color, xp })
-        await supabase.from('user_progress').update({ last_belt_name: current }).eq('user_id', userId)
-      }
+      // Drive the celebration off the unread belt_advance notification that
+      // calculate-xp creates on a real advance. This avoids any belt-format
+      // mismatch and the race where calculate-xp updates last_belt_name first.
+      const { data: notif } = await supabase
+        .from('notifications')
+        .select('id, title')
+        .eq('user_id', userId).eq('type', 'belt_advance').eq('read', false)
+        .order('created_at', { ascending: false }).limit(1).maybeSingle()
+      if (!notif || cancelled) return
+      const label = (notif.title ?? '').replace('You just earned', '').trim() || 'New Belt'
+      setCelebration({ name: label, color: BELT_COLOR[label] ?? '#00C2B2' })
+      await supabase.from('notifications').update({ read: true }).eq('id', notif.id)
     })()
     return () => { cancelled = true }
   }, [userId])
@@ -296,7 +274,7 @@ export function BeltWatcher({ userId }: { userId?: string }) {
     <BeltCelebration
       beltName={celebration.name}
       beltColor={celebration.color}
-      xpEarned={celebration.xp}
+      xpEarned={0}
       onClose={() => setCelebration(null)}
     />
   )

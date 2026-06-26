@@ -80,7 +80,7 @@ export default function TrainPage() {
   })
   const q = query.trim().toLowerCase()
   const lessonResults = q ? allLessons.filter(l => l.title.toLowerCase().includes(q) && moduleMeta[l.module_id]?.unlocked) : []
-  const moduleResults = q ? modules.filter(m => m.title.toLowerCase().includes(q)) : []
+  const moduleResults = q ? modules.filter(m => m.title.toLowerCase().includes(q) && moduleMeta[m.id]?.unlocked) : []
   const hasResults = lessonResults.length > 0 || moduleResults.length > 0
 
   if (loading) return (

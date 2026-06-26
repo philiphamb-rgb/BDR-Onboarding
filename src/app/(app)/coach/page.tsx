@@ -15,6 +15,8 @@ interface Message {
   timestamp: Date
 }
 
+const uid = () => (typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(36).slice(2)}`)
+
 const QUICK_PROMPTS = [
   'How can I improve my close rate?',
   'Give me tips for handling objections',
@@ -52,7 +54,7 @@ export default function CoachPage() {
     if (!messageText || loading || !userId) return
 
     const userMsg: Message = {
-      id: Date.now().toString(),
+      id: uid(),
       role: 'user',
       content: messageText,
       timestamp: new Date(),
@@ -75,23 +77,32 @@ export default function CoachPage() {
 
       if (!res.ok || !res.body) throw new Error('Failed to get response')
 
-      // Stream the reply in as it arrives.
-      const aiId = (Date.now() + 1).toString()
-      setMessages((prev) => [...prev, { id: aiId, role: 'assistant', content: '', timestamp: new Date() }])
+      // Stream the reply in as it arrives. The assistant bubble is created on
+      // the first token, so the typing dots stay visible until then.
       const reader = res.body.getReader()
       const decoder = new TextDecoder()
       let acc = ''
+      let aiId: string | null = null
       while (true) {
         const { done, value } = await reader.read()
         if (done) break
         acc += decoder.decode(value, { stream: true })
-        setMessages((prev) => prev.map((m) => (m.id === aiId ? { ...m, content: acc } : m)))
+        if (!aiId) {
+          aiId = uid()
+          const id = aiId
+          setMessages((prev) => [...prev, { id, role: 'assistant', content: acc, timestamp: new Date() }])
+        } else {
+          setMessages((prev) => prev.map((m) => (m.id === aiId ? { ...m, content: acc } : m)))
+        }
+      }
+      if (!aiId) {
+        setMessages((prev) => [...prev, { id: uid(), role: 'assistant', content: "I couldn't generate a response. Please try again.", timestamp: new Date() }])
       }
     } catch {
       setMessages((prev) => [
         ...prev,
         {
-          id: (Date.now() + 1).toString(),
+          id: uid(),
           role: 'assistant',
           content: "I'm having trouble connecting right now. Please try again in a moment.",
           timestamp: new Date(),

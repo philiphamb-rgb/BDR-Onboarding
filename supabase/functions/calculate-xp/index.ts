@@ -1,4 +1,4 @@
-// calculate-xp — BDR OS v2 (hardened: tolerant field names, ledger-based dedupe, drill XP)
+// calculate-xp — BDR OS v3 (hardened: tolerant field names, ledger dedupe, drill XP, streak=all-habits)
 // Server-side XP calculation with anti-cheat verification. All XP is calculated
 // here — clients can never write XP directly. Deployed via Supabase Edge Functions.
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
@@ -133,17 +133,17 @@ serve(async (req: Request) => {
     const habitsToday = (progress.habits_completed_today ?? 0) + 1
     updates.habits_completed_today = habitsToday
     updates.last_habit_date = todayStr
-    if (habitsToday >= 7) {
+    // A streak day = completing ALL of today's active habits (not a hardcoded 7,
+    // which onboarding's 5-habit default could never reach). Count once per day.
+    const { count: activeHabits } = await supabaseAdmin.from('habits').select('*', { count: 'exact', head: true }).eq('user_id', user.id).eq('is_active', true)
+    const goal = Math.max(1, activeHabits ?? 0)
+    if (habitsToday >= goal && progress.last_streak_date !== todayStr) {
       const yesterday = new Date(); yesterday.setDate(yesterday.getDate() - 1)
       const yStr = yesterday.toISOString().split('T')[0]
-      if (progress.last_habit_date === yStr) {
-        const newStreak = (progress.current_streak ?? 0) + 1
-        updates.current_streak = newStreak
-        updates.longest_streak = Math.max(newStreak, progress.longest_streak ?? 0)
-        updates.last_streak_date = todayStr
-      } else if (!progress.last_habit_date || progress.last_habit_date < yStr) {
-        updates.current_streak = 1; updates.last_streak_date = todayStr
-      }
+      const newStreak = progress.last_streak_date === yStr ? (progress.current_streak ?? 0) + 1 : 1
+      updates.current_streak = newStreak
+      updates.longest_streak = Math.max(newStreak, progress.longest_streak ?? 0)
+      updates.last_streak_date = todayStr
     }
   }
 
