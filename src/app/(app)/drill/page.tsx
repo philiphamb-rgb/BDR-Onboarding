@@ -71,6 +71,24 @@ export default function DrillPage() {
   }, [])
   useEffect(() => { endRef.current?.scrollIntoView({ behavior: 'smooth' }) }, [messages, feedback])
 
+  // Reward a won drill through the server-side XP engine (capped at 5/day).
+  const awardDrillXp = async () => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session) return
+      const res = await fetch(`${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/calculate-xp`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}` },
+        body: JSON.stringify({ action: 'drill_complete' }),
+      })
+      if (res.ok) {
+        const d = await res.json()
+        if (d.awarded) toast.xp(d.xp_earned ?? 0, 'Drill won!')
+        else toast.success('Drill won — they agreed to a next step!')
+      }
+    } catch { /* non-blocking */ }
+  }
+
   const pick = (s) => { setScenario(s); setMessages([]); setComplete(false); setFeedback('') }
   const reset = () => { setScenario(null); setMessages([]); setComplete(false); setFeedback(''); setInput('') }
 
@@ -90,7 +108,7 @@ export default function DrillPage() {
       if (!res.ok) throw new Error()
       const data = await res.json()
       setMessages([...next, { role: 'assistant', content: data.response }])
-      if (data.complete) { setComplete(true); toast.success('Nice work — you earned the next step!') }
+      if (data.complete) { setComplete(true); awardDrillXp() }
     } catch {
       setMessages([...next, { role: 'assistant', content: '(The prospect went quiet — connection issue. Try again.)' }])
     } finally { setLoading(false) }
