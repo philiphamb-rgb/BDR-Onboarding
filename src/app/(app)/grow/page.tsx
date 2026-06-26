@@ -104,7 +104,7 @@ export default function GrowPage() {
                       <span className="text-xs text-gray ml-2">day {belt.day}+</span>
                     </div>
                     {isCurrent && <Badge variant="teal">You are here</Badge>}
-                    {reached && !isCurrent && <Badge variant="muted">Earned</Badge>}
+                    {reached && !isCurrent && <Badge variant="gray">Earned</Badge>}
                   </div>
                 )
               })}

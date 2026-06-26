@@ -20,15 +20,15 @@ function LoginForm() {
       </div>
 
       {/* Card */}
-      <div className="bg-white rounded-2xl shadow-card-hover p-6">
-        <h2 className="text-lg font-semibold text-gray-900 mb-1">Sign in</h2>
-        <p className="text-sm text-gray-500 mb-5">Enter your email and password.</p>
+      <div className="bg-white rounded-2xl shadow-modal p-6">
+        <h2 className="text-lg font-semibold text-dark-text mb-1">Sign in</h2>
+        <p className="text-sm text-gray mb-5">Enter your email and password.</p>
 
         {/* Native form POST → server sets the session cookie on a redirect.
             This avoids the fetch/service-worker cookie hand-off. */}
         <form action="/auth/password-login" method="post" className="space-y-4">
           <div>
-            <label htmlFor="email" className="text-label text-gray-700 mb-1 block">
+            <label htmlFor="email" className="text-label text-mid-text mb-1 block">
               Email
             </label>
             <input
@@ -44,7 +44,7 @@ function LoginForm() {
           </div>
 
           <div>
-            <label htmlFor="password" className="text-label text-gray-700 mb-1 block">
+            <label htmlFor="password" className="text-label text-mid-text mb-1 block">
               Password
             </label>
             <input
@@ -59,7 +59,7 @@ function LoginForm() {
           </div>
 
           {hasError && (
-            <p className="text-sm text-red-600 bg-red-50 rounded-lg px-3 py-2">
+            <p className="text-sm text-error bg-error/5 rounded-lg px-3 py-2">
               Incorrect email or password.
             </p>
           )}

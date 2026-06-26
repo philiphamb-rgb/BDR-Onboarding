@@ -201,7 +201,7 @@ export default function ResourcesPage() {
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between gap-2">
                     <h3 className="text-sm font-[800] text-dark-text truncate">{p.name}</h3>
-                    <Badge variant="muted">{p.role}</Badge>
+                    <Badge variant="gray">{p.role}</Badge>
                   </div>
                   <p className="text-xs text-gray mt-0.5">{p.detail}</p>
                   <p className="text-[11px] text-teal font-[700] mt-1">{p.slack}</p>
@@ -231,7 +231,7 @@ export default function ResourcesPage() {
                         <span className="text-sm text-dark-text truncate">{it.title}</span>
                       </div>
                       {it.status === 'soon' ? (
-                        <Badge variant="muted">Coming soon</Badge>
+                        <Badge variant="gray">Coming soon</Badge>
                       ) : (
                         <span className="text-[11px] text-gray whitespace-nowrap">{it.meta}</span>
                       )}

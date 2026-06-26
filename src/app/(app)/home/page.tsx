@@ -107,7 +107,7 @@ export default function HomePage() {
             <FlameIcon className="w-4 h-4 text-orange-500" />
             <span className={cn('text-sm font-medium', isBlack ? 'text-white/80' : 'text-mid-text')}>{progress?.current_streak ?? 0} day streak</span>
           </div>
-          {progress?.streakStatus === 'at-risk' && <Badge color="warning" className="ml-auto text-xs">Streak at risk!</Badge>}
+          {progress?.streakStatus === 'at-risk' && <Badge variant="gold" className="ml-auto text-xs">Streak at risk!</Badge>}
         </div>
       </div>
 
