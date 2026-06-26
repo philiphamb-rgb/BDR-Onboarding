@@ -4,7 +4,12 @@
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { Card, Badge, ProgressBar, Skeleton } from '@/components/ui'
-import { ArrowRightIcon, XpIcon } from '@/components/icons'
+import {
+  ArrowRightIcon, XpIcon, SuccessIcon, BookIcon,
+  HubspotIcon, ChartRisingIcon, PipelineIcon, TeamIcon, DocumentSignIcon,
+  HubIcon, CoinIcon, PhoneIcon, ChecklistIcon, IntegrationIcon,
+  ProductsIcon, OrgChartIcon, TargetIcon,
+} from '@/components/icons'
 import { cn, percentage } from '@/lib/utils'
 import Link from 'next/link'
 
@@ -13,10 +18,10 @@ interface ModuleRow {
   lessons: { id: string }[]
 }
 
-const MODULE_EMOJIS: Record<number, string> = {
-  1: '🏠', 2: '📊', 3: '🔄', 4: '🤝', 5: '📝',
-  6: '🌐', 7: '💰', 8: '📞', 9: '✅', 10: '⚙️',
-  11: '🛍️', 12: '👥', 13: '🎯',
+const MODULE_ICONS: Record<number, React.ComponentType<{ size?: number; className?: string }>> = {
+  1: HubspotIcon, 2: ChartRisingIcon, 3: PipelineIcon, 4: TeamIcon, 5: DocumentSignIcon,
+  6: HubIcon, 7: CoinIcon, 8: PhoneIcon, 9: ChecklistIcon, 10: IntegrationIcon,
+  11: ProductsIcon, 12: OrgChartIcon, 13: TargetIcon,
 }
 
 export default function TrainPage() {
@@ -90,9 +95,12 @@ export default function TrainPage() {
             <Link key={mod.id} href={`/train/${mod.id}`} className="block active:scale-[0.98] transition-transform">
               <Card variant={fullyDone ? 'completed' : 'default'}>
                 <div className="flex items-start gap-4">
-                  <div className={cn('w-12 h-12 rounded-2xl flex items-center justify-center text-2xl flex-shrink-0',
+                  <div className={cn('w-12 h-12 rounded-2xl flex items-center justify-center flex-shrink-0',
                     fullyDone ? 'bg-teal/10' : 'bg-navy/5')}>
-                    {fullyDone ? '✅' : MODULE_EMOJIS[idx + 1] ?? '📚'}
+                    {(() => {
+                      const Icon = fullyDone ? SuccessIcon : (MODULE_ICONS[mod.order_index] ?? BookIcon)
+                      return <Icon size={24} className={fullyDone ? 'text-teal' : 'text-navy'} />
+                    })()}
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-start justify-between gap-2 mb-1">
@@ -103,7 +111,7 @@ export default function TrainPage() {
                       <ArrowRightIcon className="w-4 h-4 text-gray-400 flex-shrink-0 mt-1" />
                     </div>
                     <div className="flex items-center justify-between mb-2">
-                      <span className="text-xs text-gray-500">{mod.completed_lessons}/{mod.lessons_count} lessons{mod.quiz_passed ? ' · Quiz ✓' : ''}</span>
+                      <span className="text-xs text-gray-500">{mod.completed_lessons}/{mod.lessons_count} lessons{mod.quiz_passed ? ' · Quiz passed' : ''}</span>
                       <span className="text-xs text-gray-500 flex items-center gap-0.5"><XpIcon className="w-3 h-3 text-gold" />+{mod.xp_quiz} XP</span>
                     </div>
                     {mod.lessons_count > 0 && (
