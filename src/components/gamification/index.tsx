@@ -1,9 +1,11 @@
+// @ts-nocheck
 'use client'
 
 import { useEffect, useState, useCallback } from 'react'
 import { createPortal } from 'react-dom'
 import { cn } from '@/lib/utils'
 import { BeltIcon } from '@/components/icons'
+import { createClient } from '@/lib/supabase/client'
 
 // ─── XP Float Pop ────────────────────────────────────────────────────────────
 
@@ -182,26 +184,96 @@ export function BeltCelebration({ beltName, beltColor, xpEarned, onClose }: Belt
 
         <div className="mb-4 flex justify-center"><span style={{ color: beltColor }}><BeltIcon size={52} /></span></div>
 
-        <h2 className="text-2xl font-bold text-gray-900 mb-2">Belt Earned!</h2>
+        <h2 className="text-2xl font-bold text-dark-text mb-2">Belt Earned!</h2>
         <p className="text-3xl font-black mb-1" style={{ color: beltColor }}>{beltName}</p>
-        <p className="text-sm text-gray-500 mb-6">You&apos;ve leveled up. Keep going.</p>
+        <p className="text-sm text-gray mb-6">You&apos;ve leveled up. Keep going.</p>
 
-        <div className="flex items-center justify-center gap-2 bg-gold/10 rounded-xl px-4 py-2 mb-6">
-          <svg className="w-5 h-5 text-gold" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
-          </svg>
-          <span className="text-gold font-bold text-lg">+{xpEarned} XP</span>
-        </div>
+        {xpEarned > 0 && (
+          <div className="flex items-center justify-center gap-2 bg-gold/10 rounded-xl px-4 py-2 mb-6">
+            <svg className="w-5 h-5 text-gold" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+            </svg>
+            <span className="text-gold font-bold text-lg">+{xpEarned} XP</span>
+          </div>
+        )}
 
         <button
           onClick={handleClose}
-          className="w-full py-3 bg-gradient-to-r from-teal to-teal-dark text-white font-bold rounded-2xl text-base shadow-button-teal active:scale-95 transition-transform"
+          className="w-full py-3 bg-gradient-to-r from-teal to-teal-dark text-white font-bold rounded-2xl text-base shadow-button active:scale-95 transition-transform"
         >
           Keep it up
         </button>
       </div>
     </div>,
     document.body
+  )
+}
+
+// ─── Belt Watcher ─────────────────────────────────────────────────────────────
+// Mounted in the app shell. Detects a genuine belt advance (current belt, derived
+// from belt_day, has moved past the last belt we celebrated) and fires the
+// celebration exactly once, persisting the new belt so it never re-fires.
+
+const BELT_ORDER = ['white', 'yellow', 'orange', 'green', 'blue', 'purple', 'black']
+const BELT_TIER_DAYS = [
+  { name: 'black', minDays: 90 }, { name: 'purple', minDays: 70 }, { name: 'blue', minDays: 50 },
+  { name: 'green', minDays: 30 }, { name: 'orange', minDays: 14 }, { name: 'yellow', minDays: 7 },
+  { name: 'white', minDays: 0 },
+]
+const BELT_INFO: Record<string, { label: string; color: string }> = {
+  white: { label: 'White Belt', color: '#9CA3AF' }, yellow: { label: 'Yellow Belt', color: '#CA8A04' },
+  orange: { label: 'Orange Belt', color: '#C2410C' }, green: { label: 'Green Belt', color: '#059669' },
+  blue: { label: 'Blue Belt', color: '#1D4ED8' }, purple: { label: 'Purple Belt', color: '#6D28D9' },
+  black: { label: 'Black Belt', color: '#111827' },
+}
+function beltForDays(days: number) {
+  return (BELT_TIER_DAYS.find(b => days >= b.minDays) ?? BELT_TIER_DAYS[BELT_TIER_DAYS.length - 1]).name
+}
+
+export function BeltWatcher({ userId }: { userId?: string }) {
+  const supabase = createClient()
+  const [celebration, setCelebration] = useState<{ name: string; color: string; xp: number } | null>(null)
+
+  useEffect(() => {
+    if (!userId) return
+    let cancelled = false
+    ;(async () => {
+      const { data: prog } = await supabase
+        .from('user_progress').select('belt_day, last_belt_name').eq('user_id', userId).single()
+      if (!prog || cancelled) return
+      const current = beltForDays(prog.belt_day ?? 0)
+      const lastIdx = prog.last_belt_name ? BELT_ORDER.indexOf(prog.last_belt_name) : -1
+      const curIdx = BELT_ORDER.indexOf(current)
+      if (lastIdx === -1) {
+        // First time we've seen this user — set a baseline, don't celebrate retroactively.
+        await supabase.from('user_progress').update({ last_belt_name: current }).eq('user_id', userId)
+        return
+      }
+      if (curIdx > lastIdx) {
+        let xp = 0
+        const { data: u } = await supabase.from('users').select('team_id').eq('id', userId).single()
+        if (u?.team_id) {
+          const { data: rule } = await supabase
+            .from('gamification_rules').select('xp_value')
+            .eq('team_id', u.team_id).eq('rule_key', 'belt_advance').maybeSingle()
+          xp = rule?.xp_value ?? 0
+        }
+        if (cancelled) return
+        setCelebration({ name: BELT_INFO[current].label, color: BELT_INFO[current].color, xp })
+        await supabase.from('user_progress').update({ last_belt_name: current }).eq('user_id', userId)
+      }
+    })()
+    return () => { cancelled = true }
+  }, [userId])
+
+  if (!celebration) return null
+  return (
+    <BeltCelebration
+      beltName={celebration.name}
+      beltColor={celebration.color}
+      xpEarned={celebration.xp}
+      onClose={() => setCelebration(null)}
+    />
   )
 }
 

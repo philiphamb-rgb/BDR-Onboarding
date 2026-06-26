@@ -1,5 +1,6 @@
 // @ts-nocheck
 import { BottomNav, Sidebar } from '@/components/nav'
+import { BeltWatcher } from '@/components/gamification'
 import { OfflineBanner } from '@/lib/hooks/OfflineBanner'
 import { createClient } from '@/lib/supabase/server'
 
@@ -48,6 +49,9 @@ export default async function AppLayout({ children }: { children: React.ReactNod
 
       {/* Mobile bottom navigation */}
       <BottomNav user={user} unreadCount={unreadCount} />
+
+      {/* Fires a confetti celebration on a genuine belt advance */}
+      <BeltWatcher userId={user?.id} />
     </div>
   )
 }
