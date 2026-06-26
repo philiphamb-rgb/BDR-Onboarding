@@ -2,6 +2,7 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
+import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import { Card, Button } from '@/components/ui'
 import { ArrowRightIcon, TargetIcon } from '@/components/icons'
@@ -132,6 +133,20 @@ export default function CoachPage() {
               </p>
             </Card>
 
+            {/* Practice CTA */}
+            <Link href="/drill">
+              <Card className="flex items-center gap-3 bg-gradient-hero text-white hover:-translate-y-0.5 transition-transform">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/15 shrink-0">
+                  <TargetIcon size={20} className="text-white" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="text-sm font-[800]">Objection Drill</div>
+                  <div className="text-[12px] text-white/70">Practice live against an AI prospect, then get Sandler feedback.</div>
+                </div>
+                <ArrowRightIcon size={18} className="text-white/80 shrink-0" />
+              </Card>
+            </Link>
+
             {/* Quick prompts */}
             <div>
               <p className="text-xs text-gray mb-2 font-medium">QUICK START</p>
@@ -187,7 +202,7 @@ export default function CoachPage() {
                     {[0, 1, 2].map((i) => (
                       <div
                         key={i}
-                        className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
+                        className="w-2 h-2 bg-gray rounded-full animate-bounce"
                         style={{ animationDelay: `${i * 0.15}s` }}
                       />
                     ))}
@@ -209,7 +224,7 @@ export default function CoachPage() {
             onKeyDown={handleKeyDown}
             placeholder="Ask your coach..."
             rows={1}
-            className="flex-1 resize-none border-none outline-none text-sm py-2 px-2 placeholder-gray-400 max-h-32 bg-transparent"
+            className="flex-1 resize-none border-none outline-none text-sm py-2 px-2 placeholder-gray max-h-32 bg-transparent"
             style={{ height: 'auto' }}
             onInput={(e) => {
               const el = e.currentTarget
