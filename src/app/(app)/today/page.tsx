@@ -55,6 +55,14 @@ export default function TodayPage() {
     if (!userId) return
     const { data: { session } } = await supabase.auth.getSession()
     if (!session) return
+    const label = `${type[0].toUpperCase()}${type.slice(1)}`
+    // One source of truth: a quick log creates the same `wins` record the Wins
+    // page reads — not a silent XP-only tally that diverges from logged wins.
+    await supabase.from('wins').insert({
+      user_id: userId,
+      type,
+      description: `${label} logged from Today`,
+    })
     const res = await fetch(
       `${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/calculate-xp`,
       {
@@ -65,7 +73,7 @@ export default function TodayPage() {
     )
     if (res.ok) {
       const { xp_earned } = await res.json()
-      toast.xp(xp_earned ?? 0, `${type[0].toUpperCase()}${type.slice(1)} logged!`)
+      toast.xp(xp_earned ?? 0, `${label} logged!`)
       refreshProgress()
     }
   }

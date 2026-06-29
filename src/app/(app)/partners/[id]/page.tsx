@@ -5,9 +5,10 @@ import { useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Card, Button, EmptyState, SkeletonCard, ConfirmDialog, toast } from '@/components/ui'
-import { BackIcon, CheckIcon, HandshakeIcon, TrashIcon } from '@/components/icons'
+import { BackIcon, CheckIcon, HandshakeIcon, TrashIcon, ExternalLinkIcon } from '@/components/icons'
 import { cn } from '@/lib/utils'
 import { PIPELINE_STAGES, CHECKLIST_TEMPLATE, mergeChecklist, completion, stageMeta, freshChecklist } from '@/lib/partnerChecklist'
+import { systemLink } from '@/lib/links'
 
 export default function PartnerDetailPage() {
   const { id } = useParams<{ id: string }>()
@@ -171,6 +172,15 @@ export default function PartnerDetailPage() {
                     <span className="shrink-0 rounded-full px-2 py-0.5 text-[10px] font-[700]" style={{ backgroundColor: `${s.color}1A`, color: s.color }}>{s.label}</span>
                   </div>
                   <p className="mt-0.5 text-[12px] text-gray">{item.desc}</p>
+                  {(() => {
+                    const sys = systemLink(item.link)
+                    return sys ? (
+                      <a href={sys.url} target="_blank" rel="noopener noreferrer"
+                        className="mt-1.5 inline-flex items-center gap-1 rounded-md bg-navy/5 px-2.5 py-1 text-[11px] font-[700] text-navy hover:bg-navy/10 transition-colors">
+                        Open {sys.label} <ExternalLinkIcon size={12} />
+                      </a>
+                    ) : null
+                  })()}
                   {openNote === item.key ? (
                     <textarea
                       autoFocus defaultValue={item.note} rows={2}

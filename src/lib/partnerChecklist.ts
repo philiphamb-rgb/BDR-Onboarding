@@ -8,6 +8,7 @@ export interface ChecklistTemplateItem {
   label: string
   desc: string
   stage: string // pipeline stage this task belongs to
+  link?: string // system key (see src/lib/links.ts) for a one-tap launch button
 }
 
 export interface ChecklistState {
@@ -36,12 +37,12 @@ export function stageIndex(key: string) {
 // supports. Ties directly to the training: Module 5 (order form), Module 6
 // (PartnerHub), Module 3 (pipeline).
 export const CHECKLIST_TEMPLATE: ChecklistTemplateItem[] = [
-  { key: 'confirm_business', label: 'Confirm Business Details', desc: 'Legal name, DBA if any, EIN, signer, contact, and tool used.', stage: 'new_lead' },
-  { key: 'welcome_email', label: 'Send PartnerHub Welcome Email', desc: 'Make sure they receive the email and can log in.', stage: 'interested' },
-  { key: 'stripe_setup', label: 'Complete Stripe Setup', desc: 'Verify business info, EIN, and bank account.', stage: 'interested' },
-  { key: 'send_order_form', label: 'Send Order Form', desc: 'Use the correct entity, signer, terms, and email.', stage: 'proposal_sent' },
-  { key: 'send_partner_link', label: 'Send Partner Link', desc: 'Tell them where to place it and not to change it.', stage: 'contract_signed' },
-  { key: 'confirm_first_use', label: 'Confirm First PartnerHub Use', desc: 'Follow up until the partner has used the PH link successfully.', stage: 'opportunity_won' },
+  { key: 'confirm_business', label: 'Confirm Business Details', desc: 'Legal name, DBA if any, EIN, signer, contact, and tool used.', stage: 'new_lead', link: 'hubspot' },
+  { key: 'welcome_email', label: 'Send PartnerHub Welcome Email', desc: 'Make sure they receive the email and can log in.', stage: 'interested', link: 'partnerhub' },
+  { key: 'stripe_setup', label: 'Complete Stripe Setup', desc: 'Verify business info, EIN, and bank account.', stage: 'interested', link: 'stripe' },
+  { key: 'send_order_form', label: 'Send Order Form', desc: 'Use the correct entity, signer, terms, and email.', stage: 'proposal_sent', link: 'onit' },
+  { key: 'send_partner_link', label: 'Send Partner Link', desc: 'Tell them where to place it and not to change it.', stage: 'contract_signed', link: 'partnerhub' },
+  { key: 'confirm_first_use', label: 'Confirm First PartnerHub Use', desc: 'Follow up until the partner has used the PH link successfully.', stage: 'opportunity_won', link: 'partnerhub' },
 ]
 
 // A fresh checklist (all tasks unchecked) for a new partner.
