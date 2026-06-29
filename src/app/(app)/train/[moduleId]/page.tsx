@@ -60,15 +60,15 @@ export default function ModulePage() {
     <EmptyState
       icon={<BookIcon size={28} />}
       title="Module not found"
-      description="This module may have moved or isn't available yet. Head back to your training catalog."
-      action={{ label: 'Back to Training', onClick: () => router.push('/train') }}
+      description="This module may have moved or isn't available yet. Head back to your Learning Center."
+      action={{ label: 'Back to Learning Center', onClick: () => router.push('/train') }}
     />
   )
 
   return (
     <div className="space-y-4">
       <button onClick={() => router.back()} className="flex items-center gap-2 text-sm text-gray hover:text-dark-text">
-        <BackIcon className="w-4 h-4" />Training
+        <BackIcon className="w-4 h-4" />Learning Center
       </button>
 
       <Card className={cn('!p-5', moduleComplete ? 'bg-gradient-hero' : 'bg-gradient-primary')}>
