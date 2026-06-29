@@ -184,14 +184,16 @@ export default function SchedulePage() {
                   {b.tip && <p className="mt-0.5 text-[12px] text-gray leading-relaxed">{b.tip}</p>}
                   {/* Actions — jump-to link + add note, aligned on one row */}
                   {(b.href || (!note && openNote !== String(i))) && (
-                    <div className="mt-1.5 flex flex-wrap items-center gap-x-4 gap-y-1">
+                    <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1.5">
                       {b.href && (
-                        <Link href={b.href} className="inline-flex items-center gap-1 text-[12px] font-[700] text-teal hover:text-teal-dark">
+                        <Link href={b.href} className="inline-flex items-center gap-1 rounded-md bg-teal/10 px-2.5 py-1 text-[12px] font-[700] text-teal hover:bg-teal/15">
                           {b.cta ?? 'Open'} <ArrowRightIcon size={13} />
                         </Link>
                       )}
                       {!note && openNote !== String(i) && (
-                        <button onClick={() => setOpenNote(String(i))} className="text-[12px] font-[700] text-teal hover:text-teal-dark">+ Add note</button>
+                        <button onClick={() => setOpenNote(String(i))} className="inline-flex items-center gap-1 rounded-md px-2.5 py-1 text-[12px] font-[700] text-gray hover:bg-bdrbg hover:text-navy">
+                          + Add note
+                        </button>
                       )}
                     </div>
                   )}
