@@ -10,7 +10,7 @@ import { ClockIcon, PhoneIcon, CheckIcon, ArrowRightIcon, CalendarIcon } from '@
 import { cn } from '@/lib/utils'
 import {
   SHIFT_OPTIONS, DEFAULT_SHIFT, OPTIMIZED_DAY, BLOCK_STYLE,
-  parseHM, fmtClock, fmtShift, fmtDuration, SELLING_MINUTES,
+  parseHM, fmtClock, fmtShift, fmtDuration, SELLING_MINUTES, currentBlock,
 } from '@/lib/schedule'
 import { Tour } from '@/components/tour'
 import { RHYTHM_TOUR } from '@/lib/tours'
@@ -23,7 +23,7 @@ export default function SchedulePage() {
   const [loading, setLoading] = useState(true)
   // Per-block overrides for today: start time, duration, and note. Empty = use
   // the OPTIMIZED_DAY template. Works fully offline; syncs to Outlook later.
-  const [over, setOver] = useState<Record<string, { start_min?: number; dur_min?: number; note?: string }>>({})
+  const [over, setOver] = useState<Record<string, { start_min?: number; dur_min?: number; note?: string; done?: boolean }>>({})
   const [openNote, setOpenNote] = useState<string | null>(null)
   const [editTime, setEditTime] = useState<string | null>(null)
   const [draft, setDraft] = useState<{ start: string; dur: string }>({ start: '', dur: '' })
@@ -39,23 +39,24 @@ export default function SchedulePage() {
         if (s.shift && SHIFT_OPTIONS.some(o => o.start === s.shift)) setShift(s.shift)
         setLoading(false)
       })
-      supabase.from('schedule_blocks').select('block_key, note, start_min, dur_min').eq('user_id', user.id).eq('day', today)
+      supabase.from('schedule_blocks').select('block_key, note, start_min, dur_min, done').eq('user_id', user.id).eq('day', today)
         .then(({ data }) => {
-          const map: Record<string, { start_min?: number; dur_min?: number; note?: string }> = {}
-          for (const r of data ?? []) map[r.block_key] = { start_min: r.start_min, dur_min: r.dur_min, note: r.note ?? undefined }
+          const map: Record<string, { start_min?: number; dur_min?: number; note?: string; done?: boolean }> = {}
+          for (const r of data ?? []) map[r.block_key] = { start_min: r.start_min, dur_min: r.dur_min, note: r.note ?? undefined, done: r.done ?? false }
           setOver(map)
         })
     })
   }, [])
 
   // Upsert a block override for today (start/dur/note), keyed user+day+block_key.
-  const saveBlock = async (i: number, block: typeof OPTIMIZED_DAY[number], patch: { start_min?: number; dur_min?: number; note?: string }) => {
+  const saveBlock = async (i: number, block: typeof OPTIMIZED_DAY[number], patch: { start_min?: number; dur_min?: number; note?: string; done?: boolean }) => {
     const key = String(i)
     const cur = over[key] ?? {}
     const merged = {
       start_min: patch.start_min ?? cur.start_min ?? (parseHM(shift) + block.off),
       dur_min: patch.dur_min ?? cur.dur_min ?? block.dur,
       note: patch.note !== undefined ? patch.note : cur.note,
+      done: patch.done !== undefined ? patch.done : (cur.done ?? false),
     }
     setOver(prev => ({ ...prev, [key]: merged }))
     if (!userId) return
@@ -63,8 +64,11 @@ export default function SchedulePage() {
       user_id: userId, day: today, block_key: key,
       label: block.label, type: block.type,
       start_min: merged.start_min, dur_min: merged.dur_min,
-      note: merged.note || null, updated_at: new Date().toISOString(),
+      note: merged.note || null, done: merged.done, updated_at: new Date().toISOString(),
     }, { onConflict: 'user_id,day,block_key' })
+  }
+  const toggleDone = (i: number, block: typeof OPTIMIZED_DAY[number]) => {
+    saveBlock(i, block, { done: !(over[String(i)]?.done) })
   }
 
   const saveNote = (i: number, block: typeof OPTIMIZED_DAY[number], value: string) => {
@@ -101,6 +105,15 @@ export default function SchedulePage() {
 
   const base = parseHM(shift)
   const chosen = SHIFT_OPTIONS.find(o => o.start === shift) ?? SHIFT_OPTIONS[0]
+
+  // Day progress + which block is in-progress / next (for live tracking).
+  const cur = shift ? currentBlock(shift) : null
+  const activeIdx = cur?.status === 'active' ? OPTIMIZED_DAY.indexOf(cur.block) : -1
+  const doneCount = OPTIMIZED_DAY.filter((_, i) => over[String(i)]?.done).length
+  let nextIdx = -1
+  for (let i = Math.max(0, cur?.status === 'before' ? 0 : activeIdx + 1); i < OPTIMIZED_DAY.length; i++) {
+    if (!over[String(i)]?.done) { nextIdx = i; break }
+  }
 
   if (loading) return <div className="space-y-4"><SkeletonCard /></div>
 
@@ -153,8 +166,9 @@ export default function SchedulePage() {
         <div className="mb-3 flex items-center gap-2">
           <ClockIcon size={16} className="text-navy" />
           <h2 className="text-h3 text-dark-text">Your day · {fmtShift(chosen)}</h2>
+          <span className="ml-auto rounded-full bg-bdrbg px-2 py-0.5 text-[11px] font-[800] text-mid-text tabular-nums">{doneCount}/{OPTIMIZED_DAY.length} done</span>
           {Object.keys(over).length > 0 && (
-            <button onClick={resetDay} className="ml-auto text-[11px] font-[700] text-gray hover:text-error">Reset</button>
+            <button onClick={resetDay} className="text-[11px] font-[700] text-gray hover:text-error">Reset</button>
           )}
         </div>
         <div className="space-y-2">
@@ -165,6 +179,9 @@ export default function SchedulePage() {
             const dur = o?.dur_min ?? b.dur
             const note = o?.note ?? ''
             const edited = o?.start_min != null && (o.start_min !== base + b.off || dur !== b.dur)
+            const isDone = !!o?.done
+            const isCurrent = i === activeIdx
+            const isNext = i === nextIdx
             return (
               <div key={i} className="flex gap-3">
                 <div className="w-[68px] shrink-0 pt-0.5 text-right">
@@ -172,13 +189,22 @@ export default function SchedulePage() {
                   <div className="text-[10px] text-gray">{fmtDuration(dur)}{edited && <span className="text-teal"> ·edited</span>}</div>
                 </div>
                 <div className="relative flex flex-col items-center">
-                  <span className="mt-1 h-3 w-3 rounded-full" style={{ backgroundColor: st.color }} />
+                  {/* Checkable status dot */}
+                  <button onClick={() => toggleDone(i, b)} aria-label={isDone ? 'Mark not done' : 'Mark done'}
+                    className={cn('mt-0.5 flex h-5 w-5 items-center justify-center rounded-full border-2 transition-all',
+                      isDone ? 'border-success bg-success text-white' : 'bg-card text-transparent hover:text-gray',
+                      isCurrent && !isDone && 'ring-2 ring-teal/40')}
+                    style={!isDone ? { borderColor: st.color } : undefined}>
+                    <CheckIcon size={12} />
+                  </button>
                   {i < OPTIMIZED_DAY.length - 1 && <span className="w-px flex-1 bg-border" />}
                 </div>
-                <div className="flex-1 pb-3">
+                <div className={cn('flex-1 pb-3', isDone && 'opacity-60')}>
                   <div className="flex items-center gap-2">
-                    <span className="text-[14px] font-[700] text-dark-text">{b.label}</span>
+                    <span className={cn('text-[14px] font-[700]', isDone ? 'text-gray line-through' : 'text-dark-text')}>{b.label}</span>
                     <span className="rounded-full px-1.5 py-0.5 text-[10px] font-[700]" style={{ backgroundColor: `${st.color}1A`, color: st.color }}>{st.label}</span>
+                    {!isDone && isCurrent && <span className="rounded-full bg-teal px-1.5 py-0.5 text-[10px] font-[800] text-white">In progress</span>}
+                    {!isDone && !isCurrent && isNext && <span className="rounded-full bg-navy/10 px-1.5 py-0.5 text-[10px] font-[800] text-navy">Next</span>}
                     <button onClick={() => openTimeEditor(i, start, dur)} className="ml-auto text-[11px] font-[700] text-gray hover:text-navy">Edit time</button>
                   </div>
                   {b.tip && <p className="mt-0.5 text-[12px] text-gray leading-relaxed">{b.tip}</p>}
