@@ -49,6 +49,16 @@ export default function CoachPage() {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
 
+  // Pick up a pre-seeded prompt handed off from another screen (e.g. the Drill's
+  // "Discuss with Coach") and send it once the user is known.
+  useEffect(() => {
+    if (!userId) return
+    let seed: string | null = null
+    try { seed = sessionStorage.getItem('coachSeed'); if (seed) sessionStorage.removeItem('coachSeed') } catch { /* ignore */ }
+    if (seed) sendMessage(seed)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userId])
+
   const sendMessage = async (text?: string) => {
     const messageText = text ?? input.trim()
     if (!messageText || loading || !userId) return

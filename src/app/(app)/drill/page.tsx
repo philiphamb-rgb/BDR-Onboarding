@@ -2,9 +2,10 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
+import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Card, Button, Badge, toast } from '@/components/ui'
-import { TargetIcon, ArrowRightIcon, BackIcon, LightningIcon, SuccessIcon, RefreshIcon } from '@/components/icons'
+import { TargetIcon, ArrowRightIcon, BackIcon, LightningIcon, SuccessIcon, RefreshIcon, CoachIcon } from '@/components/icons'
 import { cn } from '@/lib/utils'
 
 // Scenarios are drawn from the real objections taught in Module 3 and real
@@ -56,6 +57,7 @@ const DIFF_COLOR = { easy: 'success', medium: 'gold', hard: 'error' }
 
 export default function DrillPage() {
   const supabase = createClient()
+  const router = useRouter()
   const [userId, setUserId] = useState<string>()
   const [scenario, setScenario] = useState<typeof SCENARIOS[number] | null>(null)
   const [messages, setMessages] = useState<{ role: 'user' | 'assistant'; content: string }[]>([])
@@ -107,27 +109,37 @@ export default function DrillPage() {
       })
       if (!res.ok) throw new Error()
       const data = await res.json()
-      setMessages([...next, { role: 'assistant', content: data.response }])
-      if (data.complete) { setComplete(true); awardDrillXp() }
+      const full = [...next, { role: 'assistant', content: data.response }]
+      setMessages(full)
+      // On a won drill, surface coach feedback automatically — no extra tap.
+      if (data.complete) { setComplete(true); awardDrillXp(); getFeedback(full) }
     } catch {
       setMessages([...next, { role: 'assistant', content: '(The prospect went quiet — connection issue. Try again.)' }])
     } finally { setLoading(false) }
   }
 
-  const getFeedback = async () => {
-    if (feedbackLoading || messages.filter(m => m.role === 'user').length === 0) return
+  const getFeedback = async (hist = messages) => {
+    if (feedbackLoading || hist.filter(m => m.role === 'user').length === 0) return
     setFeedbackLoading(true)
     try {
       const res = await fetch('/api/coach', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ mode: 'feedback', userId, history: messages }),
+        body: JSON.stringify({ mode: 'feedback', userId, history: hist }),
       })
       const data = await res.json()
       setFeedback(data.response ?? 'Could not generate feedback.')
     } catch {
       setFeedback('Could not generate feedback right now. Try again in a moment.')
     } finally { setFeedbackLoading(false) }
+  }
+
+  // Bridge into Coach with the drill + feedback pre-loaded, so the rep can dig
+  // deeper without leaving and re-typing the context.
+  const discussWithCoach = () => {
+    const seed = `I just practiced the "${scenario?.title}" objection drill. Here's the coach feedback I got:\n\n${feedback}\n\nHelp me sharpen this — what should I focus on next?`
+    try { sessionStorage.setItem('coachSeed', seed) } catch { /* ignore */ }
+    router.push('/coach')
   }
 
   // ── Scenario picker ─────────────────────────────────────────────────────────
@@ -217,6 +229,9 @@ export default function DrillPage() {
           <Card className="!p-4 border-teal/40">
             <div className="mb-2 flex items-center gap-2"><LightningIcon size={16} className="text-teal" /><span className="text-h3 text-dark-text">Coach feedback</span></div>
             <p className="whitespace-pre-wrap text-[13px] leading-relaxed text-mid-text">{feedback}</p>
+            <Button variant="ghost" size="sm" onClick={discussWithCoach} className="mt-3" icon={<CoachIcon size={15} />}>
+              Discuss with Coach
+            </Button>
           </Card>
         )}
         <div ref={endRef} />
