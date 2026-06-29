@@ -47,7 +47,7 @@ export default function ManagerRhythmPage() {
 
   return (
     <div className="space-y-4 pb-4">
-      <PageHeader title="Team Rhythm" subtitle="Where every rep is in their day — live." />
+      <PageHeader title="Team Time Management" subtitle="Where every rep is in their day — live." />
 
       {loading ? (
         <SkeletonList count={4} />

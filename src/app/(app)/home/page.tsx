@@ -215,7 +215,7 @@ export default function HomePage() {
               {!shift ? (
                 <><div className="text-[14px] font-[700] text-dark-text">Set your shift</div><div className="text-[12px] text-gray">Pick your hours for a time-blocked day</div></>
               ) : (
-                <><div className="label text-gray">Daily Rhythm</div><div className="text-[14px] font-[700] text-dark-text">{rhythm?.status === 'before' ? `Your day starts at ${fmtClock(rhythm.startsAt)}` : 'Shift complete — nice work'}</div></>
+                <><div className="label text-gray">Daily Time Management</div><div className="text-[14px] font-[700] text-dark-text">{rhythm?.status === 'before' ? `Your day starts at ${fmtClock(rhythm.startsAt)}` : 'Shift complete — nice work'}</div></>
               )}
             </div>
             <span className="shrink-0 text-[12px] font-[700] text-teal">{!shift ? 'Set up' : 'View'} →</span>

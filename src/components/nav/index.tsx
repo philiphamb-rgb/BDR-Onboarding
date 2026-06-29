@@ -51,7 +51,7 @@ const REP_NAV: NavItem[] = [
 const TOOLS_NAV: NavItem[] = [
   { href: '/partners',    label: 'Partners',        icon: HandshakeIcon },
   { href: '/analytics',   label: 'Analytics',       icon: BarChartIcon },
-  { href: '/schedule',    label: 'Daily Rhythm',    icon: ClockIcon },
+  { href: '/schedule',    label: 'Daily Time Management', icon: ClockIcon },
   { href: '/drill',       label: 'Objection Drill', icon: TargetIcon },
   { href: '/resources',   label: 'Resources',       icon: BookIcon },
   { href: '/leaderboard', label: 'Leaderboard',     icon: LeaderboardIcon },
@@ -62,7 +62,7 @@ const MANAGER_EXTRA_NAV: NavItem[] = [
   { href: '/manager/dashboard',    label: 'Dashboard',    icon: DashboardIcon,  managerOnly: true },
   { href: '/manager/team',         label: 'Team',          icon: TeamIcon,       managerOnly: true },
   { href: '/manager/partners',     label: 'Team Partners', icon: HandshakeIcon,  managerOnly: true },
-  { href: '/manager/rhythm',       label: 'Team Rhythm',   icon: ClockIcon,      managerOnly: true },
+  { href: '/manager/rhythm',       label: 'Team Time Management', icon: ClockIcon, managerOnly: true },
   { href: '/manager/analytics',    label: 'Analytics',     icon: BarChartIcon,   managerOnly: true },
   { href: '/manager/broadcast',    label: 'Broadcast',     icon: BellIcon,       managerOnly: true },
   { href: '/manager/resources',    label: 'Resources',     icon: BookIcon,       managerOnly: true },
