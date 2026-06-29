@@ -162,7 +162,7 @@ export default function GrowPage() {
               <Card className="hover:border-teal transition-colors h-full">
                 <TrainIcon size={22} className="text-navy mb-2" />
                 <div className="text-sm font-[700] text-dark-text flex items-center gap-1">
-                  Keep training <ArrowRightIcon size={14} />
+                  Keep learning <ArrowRightIcon size={14} />
                 </div>
                 <p className="text-xs text-gray mt-1">Complete modules to earn XP and level up.</p>
               </Card>
