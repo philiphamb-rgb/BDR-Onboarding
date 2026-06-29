@@ -23,6 +23,7 @@ import {
   TargetIcon,
   MedalIcon,
   HandshakeIcon,
+  ClockIcon,
 } from '@/components/icons'
 import type { User } from '@/types/database'
 import { Avatar } from '@/components/ui'
@@ -188,6 +189,7 @@ export function Sidebar({ user, unreadCount = 0 }: SidebarProps) {
         <NavSection
           items={[
             { href: '/partners',    label: 'Partners',        icon: HandshakeIcon },
+            { href: '/schedule',    label: 'Daily Rhythm',    icon: ClockIcon },
             { href: '/drill',       label: 'Objection Drill', icon: TargetIcon },
             { href: '/resources',  label: 'Resources',   icon: BookIcon },
             { href: '/leaderboard', label: 'Leaderboard', icon: LeaderboardIcon },

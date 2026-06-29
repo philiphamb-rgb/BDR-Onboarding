@@ -2,10 +2,11 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import { useProgress, useHabits } from '@/lib/hooks/useProgress'
 import { Card, Button, ProgressBar, Skeleton } from '@/components/ui'
-import { CheckIcon, FlameIcon, XpIcon, PhoneIcon, TargetIcon, HandshakeIcon } from '@/components/icons'
+import { CheckIcon, FlameIcon, XpIcon, PhoneIcon, TargetIcon, HandshakeIcon, ClockIcon } from '@/components/icons'
 import { cn, formatXP, formatDateShort } from '@/lib/utils'
 import { toast } from '@/components/ui'
 
@@ -76,9 +77,14 @@ export default function TodayPage() {
 
   return (
     <div className="space-y-4">
-      <div>
-        <h1 className="text-h1 text-dark-text">Today</h1>
-        <p className="text-sm text-gray">{formatDateShort(new Date())}</p>
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <h1 className="text-h1 text-dark-text">Today</h1>
+          <p className="text-sm text-gray">{formatDateShort(new Date())}</p>
+        </div>
+        <Link href="/schedule" className="flex items-center gap-1.5 rounded-pill border border-border bg-card px-3 py-2 text-[12px] font-[700] text-navy shadow-card hover:border-navy/40">
+          <ClockIcon size={15} /> Daily Rhythm
+        </Link>
       </div>
 
       {/* Streak banner */}
