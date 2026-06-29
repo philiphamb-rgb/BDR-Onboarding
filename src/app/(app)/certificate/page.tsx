@@ -102,7 +102,7 @@ export default function CertificatePage() {
               <p className="text-[13px] text-gray">This certifies that</p>
               <p className="mt-1 text-[28px] font-[900] text-dark-text">{data.name}</p>
               <p className="mx-auto mt-2 max-w-[360px] text-[13px] leading-relaxed text-mid-text">
-                has successfully completed the <span className="font-[700] text-dark-text">BDR Onboarding Program</span> —
+                has successfully completed the <span className="font-[700] text-dark-text">BDR Hub Onboarding Program</span> —
                 all {data.total} modules and qualifying assessments.
               </p>
             </div>

@@ -1,7 +1,7 @@
 {
-  "name": "BDR Onboarding Tool",
-  "short_name": "BDR Onboarding",
-  "description": "ConsumerDirect BDR Onboarding Tool",
+  "name": "BDR Hub",
+  "short_name": "BDR Hub",
+  "description": "ConsumerDirect BDR Hub",
   "start_url": "/home",
   "display": "standalone",
   "background_color": "#003087",

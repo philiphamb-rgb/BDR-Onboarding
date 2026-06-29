@@ -236,7 +236,7 @@ export function Sidebar({ user, unreadCount = 0 }: SidebarProps) {
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src="/consumerdirect-mark.svg" alt="ConsumerDirect" className="w-9 h-9 shrink-0" />
           <div className="leading-tight">
-            <span className="block text-[15px] font-[900] text-navy">BDR Onboarding</span>
+            <span className="block text-[15px] font-[900] text-navy">BDR Hub</span>
             <span className="block text-[11px] font-[700] text-gray uppercase tracking-[0.08em]">ConsumerDirect</span>
           </div>
         </div>
@@ -245,7 +245,7 @@ export function Sidebar({ user, unreadCount = 0 }: SidebarProps) {
       {/* User info */}
       <div className="px-4 py-3 border-b border-border">
         <Link
-          href="/settings"
+          href="/settings/profile"
           className="flex items-center gap-3 p-2 rounded-lg hover:bg-bdrbg transition-colors group"
         >
           <Avatar src={user?.avatar_url ?? null} name={user?.name ?? ''} size={36} />

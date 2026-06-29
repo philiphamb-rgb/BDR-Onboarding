@@ -94,7 +94,7 @@ export default function SettingsPage() {
             <div className="text-xs text-gray">{user?.email}</div>
             <div className="text-xs text-teal capitalize font-medium">{user?.role}</div>
           </div>
-          <button onClick={() => setSection('profile')} className="text-sm text-navy font-medium">Edit</button>
+          <button onClick={() => router.push('/settings/profile')} className="text-sm text-navy font-medium">Edit</button>
         </div>
       </Card>
 
@@ -115,7 +115,7 @@ export default function SettingsPage() {
         </button>
       ))}
 
-      <p className="text-center text-xs text-gray">BDR Onboarding Tool · ConsumerDirect</p>
+      <p className="text-center text-xs text-gray">BDR Hub · ConsumerDirect</p>
 
       <button onClick={async () => { await supabase.auth.signOut(); router.push('/login') }}
         className="w-full flex items-center justify-center gap-2 p-4 bg-error/5 text-error rounded-2xl border border-error/20 font-medium text-sm hover:bg-error/10 transition-colors">

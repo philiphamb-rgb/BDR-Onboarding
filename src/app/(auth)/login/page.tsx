@@ -15,7 +15,7 @@ function LoginForm() {
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src="/consumerdirect-mark.svg" alt="ConsumerDirect" className="w-full h-full" />
         </div>
-        <h1 className="text-2xl font-bold text-white">BDR Onboarding Tool</h1>
+        <h1 className="text-2xl font-bold text-white">BDR Hub</h1>
         <p className="text-white/70 text-sm mt-1">ConsumerDirect</p>
       </div>
 

@@ -4,8 +4,8 @@ import { ToastContainer } from '@/components/ui'
 import { XpPopLayer } from '@/components/gamification'
 
 export const metadata: Metadata = {
-  title: 'BDR Onboarding Tool',
-  description: 'ConsumerDirect BDR Onboarding Tool',
+  title: 'BDR Hub',
+  description: 'ConsumerDirect BDR Hub',
   manifest: '/manifest.json',
   icons: {
     icon: [{ url: '/favicon-32x32.png', sizes: '32x32', type: 'image/png' }, { url: '/icons/icon-192x192.png', sizes: '192x192', type: 'image/png' }],
@@ -14,11 +14,11 @@ export const metadata: Metadata = {
   appleWebApp: {
     capable: true,
     statusBarStyle: 'black-translucent',
-    title: 'BDR Onboarding Tool',
+    title: 'BDR Hub',
   },
   openGraph: {
-    title: 'BDR Onboarding Tool',
-    description: 'ConsumerDirect BDR Onboarding Tool',
+    title: 'BDR Hub',
+    description: 'ConsumerDirect BDR Hub',
     type: 'website',
   },
 }

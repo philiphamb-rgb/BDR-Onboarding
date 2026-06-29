@@ -339,7 +339,7 @@ export default function HomePage() {
       )}
 
       <p className="text-center text-[11px] text-gray pt-2">
-        BDR Onboarding Tool · Version 2.0.0
+        BDR Hub · Version 2.0.0
       </p>
     </div>
   )
