@@ -12,6 +12,8 @@ import {
   SHIFT_OPTIONS, DEFAULT_SHIFT, OPTIMIZED_DAY, BLOCK_STYLE,
   parseHM, fmtClock, fmtShift, fmtDuration, SELLING_MINUTES,
 } from '@/lib/schedule'
+import { Tour } from '@/components/tour'
+import { RHYTHM_TOUR } from '@/lib/tours'
 
 export default function SchedulePage() {
   const supabase = createClient()
@@ -107,7 +109,7 @@ export default function SchedulePage() {
       <PageHeader title="Daily Rhythm" subtitle="Pick your shift, then run the optimized time-blocked day." />
 
       {/* Shift picker */}
-      <Card>
+      <Card data-tour="rhythm-shift">
         <div className="label mb-2">Choose your 8-hour shift</div>
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
           {SHIFT_OPTIONS.map(o => {
@@ -124,7 +126,7 @@ export default function SchedulePage() {
       </Card>
 
       {/* Selling-time highlight */}
-      <Card className="bg-gradient-hero text-white">
+      <Card data-tour="rhythm-selling" className="bg-gradient-hero text-white">
         <div className="flex items-center gap-3">
           <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/15 shrink-0"><PhoneIcon size={20} className="text-white" /></div>
           <div>
@@ -147,7 +149,7 @@ export default function SchedulePage() {
       </Card>
 
       {/* Timeline */}
-      <Card>
+      <Card data-tour="rhythm-timeline">
         <div className="mb-3 flex items-center gap-2">
           <ClockIcon size={16} className="text-navy" />
           <h2 className="text-h3 text-dark-text">Your day · {fmtShift(chosen)}</h2>
@@ -215,6 +217,8 @@ export default function SchedulePage() {
         </div>
         <p className="mt-2 text-[11px] text-gray">Optimized from a standard BDR day — adjust any block's time or add notes; changes save for today.</p>
       </Card>
+
+      <Tour tourKey="rhythm" steps={RHYTHM_TOUR} />
     </div>
   )
 }

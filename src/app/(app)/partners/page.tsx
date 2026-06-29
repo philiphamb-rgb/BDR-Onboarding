@@ -8,6 +8,8 @@ import { Card, Button, Modal, EmptyState, SkeletonList, ProgressBar, Badge, toas
 import { PageHeader } from '@/components/manager'
 import { HandshakeIcon, PlusIcon, ArrowRightIcon, ChecklistIcon, CheckIcon } from '@/components/icons'
 import { CHECKLIST_TEMPLATE, PIPELINE_STAGES, freshChecklist, completion, stageMeta } from '@/lib/partnerChecklist'
+import { Tour } from '@/components/tour'
+import { PARTNERS_TOUR } from '@/lib/tours'
 
 export default function PartnersPage() {
   const supabase = createClient()
@@ -68,7 +70,7 @@ export default function PartnersPage() {
         action={
           <div className="flex gap-2">
             <Button size="sm" variant="ghost" onClick={() => setShowTemplate(true)} icon={<ChecklistIcon size={16} />}>Template</Button>
-            <Button size="sm" onClick={() => setShowAdd(true)} icon={<PlusIcon size={16} />}>Add</Button>
+            <span data-tour="partners-add"><Button size="sm" onClick={() => setShowAdd(true)} icon={<PlusIcon size={16} />}>Add</Button></span>
           </div>
         }
       />
@@ -85,7 +87,7 @@ export default function PartnersPage() {
           />
         </Card>
       ) : (
-        <div className="space-y-3">
+        <div className="space-y-3" data-tour="partners-list">
           {partners.map(p => {
             const c = completion(p.checklist)
             const s = stageMeta(p.stage)
@@ -153,6 +155,8 @@ export default function PartnersPage() {
           })}
         </div>
       </Modal>
+
+      <Tour tourKey="partners" steps={PARTNERS_TOUR} />
     </div>
   )
 }

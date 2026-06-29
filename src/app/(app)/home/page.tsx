@@ -9,6 +9,8 @@ import { Card, ProgressBar, Badge, Skeleton, Button, toast } from '@/components/
 import { FlameIcon, TrophyIcon, XpIcon, BeltIcon, ChartRisingIcon, PhoneIcon, ChecklistIcon, TargetIcon, ArrowRightIcon, LightningIcon, BookIcon, CoachIcon, HandshakeIcon, ClockIcon, CheckIcon } from '@/components/icons'
 import { cn, formatXP, pluralize } from '@/lib/utils'
 import { currentBlock, fmtClock } from '@/lib/schedule'
+import { Tour } from '@/components/tour'
+import { HOME_TOUR } from '@/lib/tours'
 import Link from 'next/link'
 
 const BELT_STYLES: Record<string, { bg: string; bar: string; label: string }> = {
@@ -158,7 +160,7 @@ export default function HomePage() {
       </div>
 
       {/* Belt Card */}
-      <div className={cn('rounded-2xl p-5 shadow-card', style.bg)}>
+      <div data-tour="home-belt" className={cn('rounded-2xl p-5 shadow-card', style.bg)}>
         <div className="flex items-start justify-between mb-4">
           <div>
             <div className={cn('text-label mb-1', isBlack ? 'text-white/60' : 'text-gray')}>{style.label}</div>
@@ -195,7 +197,7 @@ export default function HomePage() {
       {/* Right now — current time block from the rep's Daily Rhythm */}
       {rhythm?.status === 'active' ? (
         <Link href={rhythm.block.href ?? '/schedule'}>
-          <Card hover className="flex items-center gap-3 border-teal/40 !p-3">
+          <Card hover data-tour="home-rhythm" className="flex items-center gap-3 border-teal/40 !p-3">
             <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-teal/10 text-teal"><ClockIcon size={18} /></div>
             <div className="min-w-0 flex-1">
               <div className="label text-teal">Right now · until {fmtClock(rhythm.endsAt)}</div>
@@ -207,7 +209,7 @@ export default function HomePage() {
         </Link>
       ) : (
         <Link href="/schedule">
-          <Card hover className="flex items-center gap-3 !p-3">
+          <Card hover data-tour="home-rhythm" className="flex items-center gap-3 !p-3">
             <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-navy/10 text-navy"><ClockIcon size={18} /></div>
             <div className="min-w-0 flex-1">
               {!shift ? (
@@ -223,7 +225,7 @@ export default function HomePage() {
 
       {/* Continue your path — the single next best action */}
       {nextStep && (
-        <Card variant={nextStep.type === 'done' ? 'completed' : 'active'}>
+        <Card data-tour="home-path" variant={nextStep.type === 'done' ? 'completed' : 'active'}>
           <div className="flex items-center gap-2 mb-1">
             <LightningIcon size={15} className="text-teal" />
             <span className="text-label text-teal">{nextStep.type === 'done' ? 'Curriculum complete' : 'Continue your path'}</span>
@@ -254,7 +256,7 @@ export default function HomePage() {
       )}
 
       {/* Today Summary */}
-      <Card>
+      <Card data-tour="home-today">
         <div className="flex items-center justify-between mb-3">
           <h2 className="text-h3 text-dark-text">Today</h2>
           <Link href="/today" className="text-sm text-navy font-medium flex items-center gap-1">View all<ArrowRightIcon className="w-4 h-4" /></Link>
@@ -341,6 +343,8 @@ export default function HomePage() {
       <p className="text-center text-[11px] text-gray pt-2">
         BDR Hub · Version 2.0.0
       </p>
+
+      <Tour tourKey="home" steps={HOME_TOUR} />
     </div>
   )
 }

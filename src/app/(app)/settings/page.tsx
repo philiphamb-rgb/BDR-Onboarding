@@ -182,9 +182,12 @@ export default function SettingsPage() {
                 <div className="text-sm font-medium text-dark-text">{label}</div>
                 <div className="text-xs text-gray">{desc}</div>
               </div>
-              <button onClick={() => setNotifPrefs(p => ({ ...p, [key]: !p[key] }))}
-                className={cn('w-12 h-6 rounded-full transition-colors relative flex-shrink-0', notifPrefs[key] ? 'bg-teal' : 'bg-border')}>
-                <div className={cn('w-5 h-5 bg-white rounded-full shadow absolute top-0.5 transition-transform', notifPrefs[key] ? 'translate-x-6' : 'translate-x-0.5')} />
+              <button role="switch" aria-checked={!!notifPrefs[key]} aria-label={label}
+                onClick={() => setNotifPrefs(p => ({ ...p, [key]: !p[key] }))}
+                className={cn('relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-navy/40',
+                  notifPrefs[key] ? 'bg-teal' : 'bg-gray-300')}>
+                <span className={cn('inline-block h-5 w-5 transform rounded-full bg-white shadow-sm transition-transform',
+                  notifPrefs[key] ? 'translate-x-[22px]' : 'translate-x-0.5')} />
               </button>
             </div>
           ))}

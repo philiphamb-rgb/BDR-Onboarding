@@ -100,10 +100,11 @@ export default function LeaderboardPage() {
           {sorted.map((entry, idx) => (
             <Card key={entry.user_id} variant={entry.user_id === userId ? 'active' : 'default'} className="!p-3">
               <div className="flex items-center gap-3">
-                <div className={cn('w-7 h-7 rounded-full flex items-center justify-center text-sm font-bold',
+                <div className={cn('w-7 h-7 rounded-full flex items-center justify-center text-sm font-bold shrink-0',
                   idx === 0 ? 'bg-gold text-white' : idx === 1 ? 'bg-gray-400 text-white' : idx === 2 ? 'bg-orange-400 text-white' : 'bg-bdrbg text-gray')}>
                   {idx + 1}
                 </div>
+                <Avatar src={entry.avatar_url} name={entry.name} size={28} />
                 <div className={cn('w-3 h-3 rounded-full flex-shrink-0', BELT_DOT[entry.belt])} />
                 <span className={cn('flex-1 text-sm font-medium truncate', entry.user_id === userId ? 'text-navy font-bold' : 'text-dark-text')}>
                   {entry.name}{entry.user_id === userId ? ' (you)' : ''}
