@@ -2,10 +2,11 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import { Card, SkeletonCard, toast } from '@/components/ui'
 import { PageHeader } from '@/components/manager'
-import { ClockIcon, PhoneIcon, CheckIcon } from '@/components/icons'
+import { ClockIcon, PhoneIcon, CheckIcon, ArrowRightIcon } from '@/components/icons'
 import { cn } from '@/lib/utils'
 import {
   SHIFT_OPTIONS, DEFAULT_SHIFT, OPTIMIZED_DAY, BLOCK_STYLE,
@@ -104,6 +105,11 @@ export default function SchedulePage() {
                     <span className="rounded-full px-1.5 py-0.5 text-[10px] font-[700]" style={{ backgroundColor: `${st.color}1A`, color: st.color }}>{st.label}</span>
                   </div>
                   {b.tip && <p className="mt-0.5 text-[12px] text-gray leading-relaxed">{b.tip}</p>}
+                  {b.href && (
+                    <Link href={b.href} className="mt-1.5 inline-flex items-center gap-1 text-[12px] font-[700] text-teal hover:text-teal-dark">
+                      {b.cta ?? 'Open'} <ArrowRightIcon size={13} />
+                    </Link>
+                  )}
                 </div>
               </div>
             )

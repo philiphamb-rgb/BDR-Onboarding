@@ -6,8 +6,9 @@ import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { useProgress } from '@/lib/hooks/useProgress'
 import { Card, ProgressBar, Badge, Skeleton, Button } from '@/components/ui'
-import { FlameIcon, TrophyIcon, XpIcon, BeltIcon, ChartRisingIcon, PhoneIcon, ChecklistIcon, TargetIcon, ArrowRightIcon, LightningIcon, BookIcon, CoachIcon, HandshakeIcon } from '@/components/icons'
+import { FlameIcon, TrophyIcon, XpIcon, BeltIcon, ChartRisingIcon, PhoneIcon, ChecklistIcon, TargetIcon, ArrowRightIcon, LightningIcon, BookIcon, CoachIcon, HandshakeIcon, ClockIcon } from '@/components/icons'
 import { cn, formatXP, pluralize } from '@/lib/utils'
+import { currentBlock, fmtClock } from '@/lib/schedule'
 import Link from 'next/link'
 
 const BELT_STYLES: Record<string, { bg: string; bar: string; label: string }> = {
@@ -27,6 +28,7 @@ export default function HomePage() {
   const [userName, setUserName] = useState('')
   const [leaderboard, setLeaderboard] = useState<{ user_id: string; name: string; total_xp: number }[]>([])
   const [nextStep, setNextStep] = useState<{ type: 'lesson' | 'quiz' | 'done'; moduleOrder?: number; moduleTitle?: string; href?: string; title?: string } | null>(null)
+  const [shift, setShift] = useState<string | null>(null)
   const { progress, loading } = useProgress(userId)
 
   useEffect(() => {
@@ -34,8 +36,9 @@ export default function HomePage() {
       if (!user) { router.push('/login'); return }
       setUserId(user.id)
       fetchNextStep(user.id)
-      supabase.from('users').select('name').eq('id', user.id).single().then(({ data }) => {
+      supabase.from('users').select('name, settings').eq('id', user.id).single().then(({ data }) => {
         if (data?.name) setUserName(data.name.split(' ')[0])
+        if (data?.settings?.shift) setShift(data.settings.shift)
       })
       supabase.from('user_progress').select('user_id, total_xp, users!inner(name)')
         .order('total_xp', { ascending: false }).limit(5)
@@ -83,6 +86,7 @@ export default function HomePage() {
   const isBlack = belt === 'black'
   const greeting = () => { const h = new Date().getHours(); return h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : 'Good evening' }
   const userRank = leaderboard.findIndex(l => l.user_id === userId) + 1
+  const rhythm = shift ? currentBlock(shift) : null
 
   if (loading) return (
     <div className="space-y-4">
@@ -141,6 +145,34 @@ export default function HomePage() {
           {progress?.streakStatus === 'at-risk' && <Badge variant="gold" className="ml-auto text-xs">Streak at risk!</Badge>}
         </div>
       </div>
+
+      {/* Right now — current time block from the rep's Daily Rhythm */}
+      {rhythm?.status === 'active' ? (
+        <Link href={rhythm.block.href ?? '/schedule'}>
+          <Card hover className="flex items-center gap-3 border-teal/40 !p-3">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-teal/10 text-teal"><ClockIcon size={18} /></div>
+            <div className="min-w-0 flex-1">
+              <div className="label text-teal">Right now · until {fmtClock(rhythm.endsAt)}</div>
+              <div className="truncate text-[14px] font-[700] text-dark-text">{rhythm.block.label}</div>
+            </div>
+            <span className="shrink-0 text-[12px] font-[700] text-teal">{rhythm.block.cta ?? 'Open'} →</span>
+          </Card>
+        </Link>
+      ) : (
+        <Link href="/schedule">
+          <Card hover className="flex items-center gap-3 !p-3">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-navy/10 text-navy"><ClockIcon size={18} /></div>
+            <div className="min-w-0 flex-1">
+              {!shift ? (
+                <><div className="text-[14px] font-[700] text-dark-text">Set your shift</div><div className="text-[12px] text-gray">Pick your hours for a time-blocked day</div></>
+              ) : (
+                <><div className="label text-gray">Daily Rhythm</div><div className="text-[14px] font-[700] text-dark-text">{rhythm?.status === 'before' ? `Your day starts at ${fmtClock(rhythm.startsAt)}` : 'Shift complete — nice work'}</div></>
+              )}
+            </div>
+            <span className="shrink-0 text-[12px] font-[700] text-teal">{!shift ? 'Set up' : 'View'} →</span>
+          </Card>
+        </Link>
+      )}
 
       {/* Continue your path — the single next best action */}
       {nextStep && (
