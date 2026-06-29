@@ -1,4 +1,4 @@
-// calculate-xp — BDR OS v3 (hardened: tolerant field names, ledger dedupe, drill XP, streak=all-habits)
+// calculate-xp — BDR OS v4 (tolerant fields, ledger dedupe, drill + partner XP, streak=all-habits)
 // Server-side XP calculation with anti-cheat verification. All XP is calculated
 // here — clients can never write XP directly. Deployed via Supabase Edge Functions.
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
@@ -39,7 +39,7 @@ serve(async (req: Request) => {
 
   // Normalize action + resolve a reference id from any of the field names clients use.
   const action = body.action === 'deal_logged' ? 'deal_closed' : body.action
-  const refId = body.reference_id ?? body.lesson_id ?? body.habit_id ?? body.module_id ?? body.win_id ?? null
+  const refId = body.reference_id ?? body.lesson_id ?? body.habit_id ?? body.module_id ?? body.win_id ?? body.partner_id ?? null
   const reference_type = body.reference_type ?? null
   const metadata = body.metadata ?? {}
   if (!action) return errorResponse('action is required')
@@ -97,6 +97,12 @@ serve(async (req: Request) => {
     const { count } = await supabaseAdmin.from('xp_ledger').select('*', { count: 'exact', head: true }).eq('user_id', user.id).eq('action', 'drill_complete').gte('created_at', startOfToday)
     if ((count ?? 0) >= 5) { shouldAward = false; reason = 'Daily drill XP cap reached' }
     else xpEarned = ruleMap['drill_complete'] ?? 15
+  } else if (action === 'partner_onboarded') {
+    if (!refId) return errorResponse('partner id required')
+    // Awarded once per partner when their onboarding checklist hits 100%.
+    const { data: led } = await supabaseAdmin.from('xp_ledger').select('id').eq('user_id', user.id).eq('action', 'partner_onboarded').eq('reference_id', refId).maybeSingle()
+    if (led) { shouldAward = false; reason = 'Already awarded for this partner' }
+    else xpEarned = ruleMap['partner_onboarded'] ?? 50
   } else if (action === 'module_complete') {
     if (!refId) return errorResponse('module id required')
     if ((progress.learning_done ?? []).includes(refId)) { shouldAward = false; reason = 'Already completed' }

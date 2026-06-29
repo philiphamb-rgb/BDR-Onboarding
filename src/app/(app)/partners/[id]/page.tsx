@@ -52,7 +52,28 @@ export default function PartnerDetailPage() {
     const wasComplete = completion(checklist).pct === 100
     const cur = checklist.find(c => c.key === key)
     const next = setItem(key, { done: !cur?.done })
-    if (!wasComplete && completion(next).pct === 100) {
+    if (!wasComplete && completion(next).pct === 100) awardOnboardingXp()
+  }
+
+  // Award XP the first time a partner's checklist hits 100% (deduped per partner
+  // server-side, so re-checking never double-awards).
+  const awardOnboardingXp = async () => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session) return
+      const res = await fetch(`${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/calculate-xp`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}` },
+        body: JSON.stringify({ action: 'partner_onboarded', reference_id: id }),
+      })
+      if (res.ok) {
+        const d = await res.json()
+        if (d.awarded) toast.xp(d.xp_earned ?? 0, 'Partner fully onboarded!')
+        else toast.success('Partner fully onboarded — every task complete!')
+      } else {
+        toast.success('Partner fully onboarded — every task complete!')
+      }
+    } catch {
       toast.success('Partner fully onboarded — every task complete!')
     }
   }

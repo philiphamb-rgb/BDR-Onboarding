@@ -22,6 +22,7 @@ const RULE_LABELS: Record<string, { label: string; desc: string; group: string }
   quiz_pass_90:      { label: 'Quiz Pass (90–100%)',        desc: 'First attempt, 90–100% score',        group: 'Learning' },
   resource_viewed:   { label: 'Resource Viewed',           desc: 'Viewed for 3+ minutes',               group: 'Learning' },
   drill_complete:    { label: 'Objection Drill Won',       desc: 'AI roleplay won · max 5/day',         group: 'Learning' },
+  partner_onboarded: { label: 'Partner Fully Onboarded',   desc: 'All checklist tasks complete · once per partner', group: 'Activity' },
   call_logged:       { label: 'Call Logged',               desc: 'Cross-referenced with HubSpot',       group: 'Activity' },
   demo_logged:       { label: 'Demo Logged',               desc: 'Cross-referenced with HubSpot',       group: 'Activity' },
   deal_closed:       { label: 'Deal Closed',               desc: 'Manager-auditable, HubSpot verified', group: 'Activity' },

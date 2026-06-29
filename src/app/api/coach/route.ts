@@ -2,6 +2,7 @@
 import { createClient } from '@/lib/supabase/server'
 import Anthropic from '@anthropic-ai/sdk'
 import { NextResponse } from 'next/server'
+import { completion, stageMeta } from '@/lib/partnerChecklist'
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 
@@ -95,6 +96,9 @@ Be honest but encouraging. No preamble, no closing.`
     const { data: recentWins } = await supabase
       .from('wins').select('type, description, logged_at')
       .eq('user_id', uid).order('logged_at', { ascending: false }).limit(5)
+    const { data: partners } = await supabase
+      .from('partner_onboarding').select('partner_name, stage, checklist')
+      .eq('user_id', uid).order('updated_at', { ascending: false }).limit(8)
 
     const firstName = userData?.first_name || (userData?.name ?? 'BDR').split(' ')[0]
     const days = progress?.days_active ?? 0
@@ -114,6 +118,7 @@ ABOUT THIS BDR:
 - Demos this week: ${progress?.demos_this_week ?? 0}
 - Deals this month: ${progress?.deals_this_month ?? 0}
 ${recentWins?.length ? `\nRECENT WINS:\n${recentWins.map((w) => `- ${w.type}: ${w.description}`).join('\n')}` : ''}
+${partners?.length ? `\nPARTNERS IN ONBOARDING (reference by name when relevant):\n${partners.map((p) => `- ${p.partner_name} — ${stageMeta(p.stage).label}, ${completion(p.checklist).done}/${completion(p.checklist).total} onboarding tasks done`).join('\n')}` : ''}
 
 COACHING STYLE:
 - Direct, practical, encouraging. Specific tips, not generic advice.
