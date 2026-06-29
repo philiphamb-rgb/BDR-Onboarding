@@ -17,7 +17,7 @@ async function buildUserContext(supabase, uid: string) {
       .eq('user_id', uid).single(),
     supabase.from('wins').select('type, description, logged_at')
       .eq('user_id', uid).order('logged_at', { ascending: false }).limit(5),
-    supabase.from('partner_onboarding').select('partner_name, stage, checklist')
+    supabase.from('partner_onboarding').select('partner_name, stage, checklist, temperature')
       .eq('user_id', uid).order('updated_at', { ascending: false }).limit(20),
   ])
 
@@ -32,13 +32,24 @@ async function buildUserContext(supabase, uid: string) {
   const funnel = PIPELINE_STAGES.map(s => `${s.label} ${counts[s.key] ?? 0}`).join(' · ')
   const shift = userData?.settings?.shift
 
+  // Conversion: warm vs cold lead mix + closing rates so the coach can advise on
+  // where to focus (e.g. lift cold close rate, or feed the warm pipeline).
+  const all = partners ?? []
+  const warm = all.filter(p => (p.temperature ?? 'cold') === 'warm')
+  const cold = all.filter(p => (p.temperature ?? 'cold') === 'cold')
+  const closeRate = (arr) => arr.length ? Math.round(arr.filter(p => p.stage === 'opportunity_won').length / arr.length * 100) : 0
+  const conversion = all.length
+    ? `${all.length} leads (${warm.length} warm · ${cold.length} cold) — closing rate overall ${closeRate(all)}%, warm ${closeRate(warm)}%, cold ${closeRate(cold)}%`
+    : 'no leads tracked yet'
+
   const block = `ABOUT THIS BDR:
 - Name: ${firstName}
 - Belt rank: ${belt} Belt (Day ${days})
 - Total XP: ${progress?.total_xp ?? 0}
 - Current streak: ${progress?.current_streak ?? 0} days
 - Calls this week: ${progress?.calls_this_week ?? 0} · Demos this week: ${progress?.demos_this_week ?? 0} · Deals this month: ${progress?.deals_this_month ?? 0}
-- Pipeline funnel: ${funnel}${shift ? `\n- Works a shift starting ${shift} with an optimized time-blocked day (~4h45m of protected selling time across three power blocks).` : ''}
+- Pipeline funnel: ${funnel}
+- Conversion: ${conversion}${shift ? `\n- Works a shift starting ${shift} with an optimized time-blocked day (~4h45m of protected selling time across three power blocks).` : ''}
 ${recentWins?.length ? `\nRECENT WINS:\n${recentWins.map((w) => `- ${w.type}: ${w.description}`).join('\n')}` : ''}
 ${partners?.length ? `\nPARTNERS IN ONBOARDING (reference by name when relevant):\n${partners.slice(0, 8).map((p) => `- ${p.partner_name} — ${stageMeta(p.stage).label}, ${completion(p.checklist).done}/${completion(p.checklist).total} onboarding tasks done`).join('\n')}` : ''}`
 
@@ -139,6 +150,7 @@ ${ctx.block}
 COACHING STYLE:
 - Direct, practical, encouraging. Specific tips, not generic advice.
 - Reference their metrics and pipeline funnel when relevant — call out bottlenecks (e.g. partners stuck at Proposal Sent) and name specific partners.
+- Use the conversion line to coach on closing: if cold close rate lags warm, push discovery/qualification on cold leads; if the warm pipeline is thin, push prospecting for referrals/inbound. Cite the actual percentages.
 - Keep it concise (2–4 short paragraphs, bullets for lists).
 - Ground advice in ConsumerDirect's partner/credit sales reality and the Sandler method.
 - When the rep wants to practice, suggest the Objection Drill.`
