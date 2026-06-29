@@ -182,10 +182,18 @@ export default function SchedulePage() {
                     <button onClick={() => openTimeEditor(i, start, dur)} className="ml-auto text-[11px] font-[700] text-gray hover:text-navy">Edit time</button>
                   </div>
                   {b.tip && <p className="mt-0.5 text-[12px] text-gray leading-relaxed">{b.tip}</p>}
-                  {b.href && (
-                    <Link href={b.href} className="mt-1.5 inline-flex items-center gap-1 text-[12px] font-[700] text-teal hover:text-teal-dark">
-                      {b.cta ?? 'Open'} <ArrowRightIcon size={13} />
-                    </Link>
+                  {/* Actions — jump-to link + add note, aligned on one row */}
+                  {(b.href || (!note && openNote !== String(i))) && (
+                    <div className="mt-1.5 flex flex-wrap items-center gap-x-4 gap-y-1">
+                      {b.href && (
+                        <Link href={b.href} className="inline-flex items-center gap-1 text-[12px] font-[700] text-teal hover:text-teal-dark">
+                          {b.cta ?? 'Open'} <ArrowRightIcon size={13} />
+                        </Link>
+                      )}
+                      {!note && openNote !== String(i) && (
+                        <button onClick={() => setOpenNote(String(i))} className="text-[12px] font-[700] text-teal hover:text-teal-dark">+ Add note</button>
+                      )}
+                    </div>
                   )}
                   {/* Inline time editor */}
                   {editTime === String(i) && (
@@ -198,7 +206,7 @@ export default function SchedulePage() {
                       <button onClick={() => setEditTime(null)} className="text-[11px] font-[700] text-gray">Cancel</button>
                     </div>
                   )}
-                  {/* Per-block note — editable in-tool, saved for today */}
+                  {/* Per-block note — full-width editor / saved note */}
                   {openNote === String(i) ? (
                     <textarea
                       autoFocus defaultValue={note} rows={2}
@@ -206,10 +214,8 @@ export default function SchedulePage() {
                       onBlur={e => saveNote(i, b, e.target.value.trim())}
                       className="mt-2 w-full resize-none rounded-md border border-border px-3 py-2 text-[12px] text-dark-text focus:outline-none focus:ring-2 focus:ring-navy" />
                   ) : note ? (
-                    <button onClick={() => setOpenNote(String(i))} className="mt-1.5 block w-full rounded-md bg-bdrbg px-3 py-1.5 text-left text-[12px] text-mid-text">{note}</button>
-                  ) : (
-                    <button onClick={() => setOpenNote(String(i))} className="mt-1 text-[11px] font-[700] text-teal hover:text-teal-dark">+ Add note</button>
-                  )}
+                    <button onClick={() => setOpenNote(String(i))} className="mt-1.5 block w-full rounded-md bg-bdrbg px-3 py-1.5 text-left text-[12px] text-mid-text hover:bg-border/40">{note}</button>
+                  ) : null}
                 </div>
               </div>
             )
