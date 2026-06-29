@@ -83,15 +83,18 @@ Be honest but encouraging. No preamble, no closing.`
     }
 
     // ── Default: personalized coach chat ─────────────────────────────────────
+    // Always use the server-verified identity, never a client-supplied userId,
+    // so a caller can't request another user's data as coaching context.
+    const uid = user.id
     const { data: userData } = await supabase
-      .from('users').select('name, first_name, start_date').eq('id', userId).single()
+      .from('users').select('name, first_name, start_date').eq('id', uid).single()
     const { data: progress } = await supabase
       .from('user_progress')
       .select('total_xp, current_streak, days_active, calls_this_week, demos_this_week, deals_this_month')
-      .eq('user_id', userId).single()
+      .eq('user_id', uid).single()
     const { data: recentWins } = await supabase
       .from('wins').select('type, description, logged_at')
-      .eq('user_id', userId).order('logged_at', { ascending: false }).limit(5)
+      .eq('user_id', uid).order('logged_at', { ascending: false }).limit(5)
 
     const firstName = userData?.first_name || (userData?.name ?? 'BDR').split(' ')[0]
     const days = progress?.days_active ?? 0
