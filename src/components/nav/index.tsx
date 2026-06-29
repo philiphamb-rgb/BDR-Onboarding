@@ -20,7 +20,6 @@ import {
   TeamIcon,
   BarChartIcon,
   BookIcon,
-  GrowIcon,
   TargetIcon,
   MedalIcon,
   HandshakeIcon,
@@ -55,7 +54,6 @@ const TOOLS_NAV: NavItem[] = [
   { href: '/drill',       label: 'Objection Drill', icon: TargetIcon },
   { href: '/resources',   label: 'Resources',       icon: BookIcon },
   { href: '/leaderboard', label: 'Leaderboard',     icon: LeaderboardIcon },
-  { href: '/grow',        label: 'Grow',            icon: GrowIcon },
   { href: '/certificate', label: 'Certificate',     icon: MedalIcon },
 ]
 

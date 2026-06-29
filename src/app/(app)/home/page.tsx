@@ -4,9 +4,9 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import { useProgress } from '@/lib/hooks/useProgress'
-import { Card, ProgressBar, Badge, Skeleton, Button } from '@/components/ui'
-import { FlameIcon, TrophyIcon, XpIcon, BeltIcon, ChartRisingIcon, PhoneIcon, ChecklistIcon, TargetIcon, ArrowRightIcon, LightningIcon, BookIcon, CoachIcon, HandshakeIcon, ClockIcon } from '@/components/icons'
+import { useProgress, useHabits } from '@/lib/hooks/useProgress'
+import { Card, ProgressBar, Badge, Skeleton, Button, toast } from '@/components/ui'
+import { FlameIcon, TrophyIcon, XpIcon, BeltIcon, ChartRisingIcon, PhoneIcon, ChecklistIcon, TargetIcon, ArrowRightIcon, LightningIcon, BookIcon, CoachIcon, HandshakeIcon, ClockIcon, CheckIcon } from '@/components/icons'
 import { cn, formatXP, pluralize } from '@/lib/utils'
 import { currentBlock, fmtClock } from '@/lib/schedule'
 import Link from 'next/link'
@@ -29,7 +29,9 @@ export default function HomePage() {
   const [leaderboard, setLeaderboard] = useState<{ user_id: string; name: string; total_xp: number }[]>([])
   const [nextStep, setNextStep] = useState<{ type: 'lesson' | 'quiz' | 'done'; moduleOrder?: number; moduleTitle?: string; href?: string; title?: string } | null>(null)
   const [shift, setShift] = useState<string | null>(null)
-  const { progress, loading } = useProgress(userId)
+  const [completing, setCompleting] = useState<string | null>(null)
+  const { progress, loading, refresh: refreshProgress } = useProgress(userId)
+  const { habits, refresh: refreshHabits } = useHabits(userId)
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => {
@@ -80,6 +82,31 @@ export default function HomePage() {
     }
     setNextStep({ type: 'done' })
   }
+
+  // Complete a habit inline from Home — the daily core loop, 1 tap from landing.
+  const completeHabit = async (habitId: string, habitLabel: string) => {
+    if (!userId || completing) return
+    setCompleting(habitId)
+    try {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session) return
+      const { error } = await supabase.from('habit_logs').insert({
+        user_id: userId, habit_id: habitId, date: new Date().toISOString().split('T')[0],
+      })
+      if (error) return // duplicate = already done
+      const res = await fetch(`${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/calculate-xp`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}` },
+        body: JSON.stringify({ action: 'habit_complete', user_id: userId, habit_id: habitId }),
+      })
+      if (res.ok) {
+        const { xp_earned } = await res.json()
+        toast.xp(xp_earned ?? 0, `"${habitLabel}" done!`)
+        await Promise.all([refreshHabits(), refreshProgress()])
+      }
+    } finally { setCompleting(null) }
+  }
+  const openHabits = habits.filter(h => !h.completed_today)
 
   const belt = progress?.belt_rank ?? 'white'
   const style = BELT_STYLES[belt] ?? BELT_STYLES.white
@@ -212,6 +239,24 @@ export default function HomePage() {
           <h2 className="text-h3 text-dark-text">Today</h2>
           <Link href="/today" className="text-sm text-navy font-medium flex items-center gap-1">View all<ArrowRightIcon className="w-4 h-4" /></Link>
         </div>
+        {/* Inline habit completion — tap to knock out the daily core loop here */}
+        {openHabits.length > 0 && (
+          <div className="mb-3 space-y-2">
+            {openHabits.slice(0, 3).map(habit => (
+              <button key={habit.id}
+                onClick={() => completeHabit(habit.id, habit.label)}
+                disabled={completing === habit.id}
+                className="flex w-full items-center gap-3 rounded-xl border border-border bg-bdrbg p-3 text-left transition-all hover:border-teal/50 hover:bg-teal/5 active:scale-[0.98]">
+                <span className={cn('flex h-6 w-6 shrink-0 items-center justify-center rounded-full border-2',
+                  completing === habit.id ? 'border-teal animate-pulse' : 'border-border')}>
+                  <CheckIcon className="h-3 w-3 text-transparent" />
+                </span>
+                <span className="flex-1 text-sm font-medium text-dark-text">{habit.label}</span>
+                <span className="flex items-center gap-1 text-xs text-gray"><XpIcon className="h-3 w-3" />+5</span>
+              </button>
+            ))}
+          </div>
+        )}
         <div className="grid grid-cols-3 gap-3">
           {[
             { icon: <ChecklistIcon className="text-teal" />, label: 'Habits', value: `${progress?.todayStats.habitsCompleted ?? 0}/${progress?.todayStats.habitsTotal ?? 0}`, done: (progress?.todayStats.habitsCompleted ?? 0) >= (progress?.todayStats.habitsTotal ?? 1) },

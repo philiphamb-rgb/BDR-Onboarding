@@ -4,10 +4,22 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import { Card, Button, SkeletonCard } from '@/components/ui'
-import { MedalIcon, LockIcon, BookIcon, DownloadIcon, ArrowRightIcon } from '@/components/icons'
-import { formatXP } from '@/lib/utils'
+import { Card, Button, Badge, SkeletonCard } from '@/components/ui'
+import { MedalIcon, LockIcon, BookIcon, DownloadIcon, ArrowRightIcon, BeltIcon } from '@/components/icons'
+import { cn, formatXP } from '@/lib/utils'
 import Link from 'next/link'
+
+// Belt ladder (thresholds mirror the XP engine) — the "your journey" view,
+// folded in from the retired Grow tab.
+const BELTS = [
+  { name: 'white', label: 'White', color: '#9CA3AF', day: 0 },
+  { name: 'yellow', label: 'Yellow', color: '#FBBF24', day: 7 },
+  { name: 'orange', label: 'Orange', color: '#F97316', day: 14 },
+  { name: 'green', label: 'Green', color: '#22C55E', day: 30 },
+  { name: 'blue', label: 'Blue', color: '#3B82F6', day: 50 },
+  { name: 'purple', label: 'Purple', color: '#9333EA', day: 70 },
+  { name: 'black', label: 'Black', color: '#111827', day: 90 },
+]
 
 export default function CertificatePage() {
   const supabase = createClient()
@@ -49,6 +61,8 @@ export default function CertificatePage() {
   if (loading) return <div className="space-y-4"><SkeletonCard /></div>
   const earned = data.completed >= data.total && data.total > 0
   const today = new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
+  const beltName = (data.belt || 'white').toLowerCase().replace(' belt', '')
+  const currentIdx = Math.max(0, BELTS.findIndex(b => b.name === beltName))
 
   return (
     <div className="space-y-5 pb-4">
@@ -127,6 +141,31 @@ export default function CertificatePage() {
           </div>
         </div>
       )}
+
+      {/* Belt journey — your development ladder (folded in from Grow) */}
+      <Card className="no-print">
+        <h2 className="text-h3 text-dark-text">Belt Journey</h2>
+        <div className="mt-4 space-y-3">
+          {BELTS.map((belt, i) => {
+            const reached = i <= currentIdx
+            const isCurrent = i === currentIdx
+            return (
+              <div key={belt.name} className="flex items-center gap-3">
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full"
+                  style={{ backgroundColor: reached ? belt.color : '#E4ECF2' }}>
+                  <BeltIcon size={16} className={reached ? 'text-white' : 'text-gray'} />
+                </div>
+                <div className="flex-1">
+                  <span className={cn('text-sm font-[700]', reached ? 'text-dark-text' : 'text-gray')}>{belt.label} Belt</span>
+                  <span className="ml-2 text-xs text-gray">day {belt.day}+</span>
+                </div>
+                {isCurrent && <Badge variant="teal">You are here</Badge>}
+                {reached && !isCurrent && <Badge variant="gray">Earned</Badge>}
+              </div>
+            )
+          })}
+        </div>
+      </Card>
     </div>
   )
 }
