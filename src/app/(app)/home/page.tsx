@@ -29,6 +29,7 @@ export default function HomePage() {
   const [leaderboard, setLeaderboard] = useState<{ user_id: string; name: string; total_xp: number }[]>([])
   const [nextStep, setNextStep] = useState<{ type: 'lesson' | 'quiz' | 'done'; moduleOrder?: number; moduleTitle?: string; href?: string; title?: string } | null>(null)
   const [shift, setShift] = useState<string | null>(null)
+  const [stuck, setStuck] = useState(0)
   const [completing, setCompleting] = useState<string | null>(null)
   const { progress, loading, refresh: refreshProgress } = useProgress(userId)
   const { habits, refresh: refreshHabits } = useHabits(userId)
@@ -41,6 +42,10 @@ export default function HomePage() {
       supabase.from('users').select('name, settings').eq('id', user.id).single().then(({ data }) => {
         if (data?.name) setUserName(data.name.split(' ')[0])
         if (data?.settings?.shift) setShift(data.settings.shift)
+      })
+      // Partners awaiting a next step — drives the proactive "Right now" nudge.
+      supabase.from('partner_onboarding').select('stage').eq('user_id', user.id).then(({ data }) => {
+        setStuck((data ?? []).filter(p => p.stage === 'proposal_sent' || p.stage === 'contract_signed').length)
       })
       supabase.from('user_progress').select('user_id, total_xp, users!inner(name)')
         .order('total_xp', { ascending: false }).limit(5)
@@ -115,6 +120,20 @@ export default function HomePage() {
   const userRank = leaderboard.findIndex(l => l.user_id === userId) + 1
   const rhythm = shift ? currentBlock(shift) : null
 
+  // Proactive, block-aware coaching nudge for the active time block.
+  const nudge = (() => {
+    if (rhythm?.status !== 'active') return null
+    const t = rhythm.block?.type
+    if (t === 'focus') return stuck > 0
+      ? `${stuck} partner${stuck > 1 ? 's' : ''} awaiting a next step — push them forward this block.`
+      : 'Power block — live conversations only, no admin.'
+    if (t === 'plan') return stuck > 0
+      ? `Plan first: ${stuck} partner${stuck > 1 ? 's' : ''} need follow-up today.`
+      : 'Set your top 3 and clear your tasks before calls start.'
+    if (t === 'admin') return 'Batch CRM hygiene and advance your onboarding checklists.'
+    return null
+  })()
+
   if (loading) return (
     <div className="space-y-4">
       <Skeleton className="h-36 rounded-2xl" />
@@ -181,6 +200,7 @@ export default function HomePage() {
             <div className="min-w-0 flex-1">
               <div className="label text-teal">Right now · until {fmtClock(rhythm.endsAt)}</div>
               <div className="truncate text-[14px] font-[700] text-dark-text">{rhythm.block.label}</div>
+              {nudge && <div className="mt-0.5 flex items-center gap-1 text-[11px] text-mid-text"><LightningIcon size={11} className="text-gold shrink-0" /><span className="line-clamp-2">{nudge}</span></div>}
             </div>
             <span className="shrink-0 text-[12px] font-[700] text-teal">{rhythm.block.cta ?? 'Open'} →</span>
           </Card>
