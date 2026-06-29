@@ -22,6 +22,7 @@ import {
   GrowIcon,
   TargetIcon,
   MedalIcon,
+  HandshakeIcon,
 } from '@/components/icons'
 import type { User } from '@/types/database'
 import { Avatar } from '@/components/ui'
@@ -186,6 +187,7 @@ export function Sidebar({ user, unreadCount = 0 }: SidebarProps) {
         </div>
         <NavSection
           items={[
+            { href: '/partners',    label: 'Partners',        icon: HandshakeIcon },
             { href: '/drill',       label: 'Objection Drill', icon: TargetIcon },
             { href: '/resources',  label: 'Resources',   icon: BookIcon },
             { href: '/leaderboard', label: 'Leaderboard', icon: LeaderboardIcon },
