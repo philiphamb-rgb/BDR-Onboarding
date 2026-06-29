@@ -22,6 +22,8 @@ import {
   LightningIcon,
 } from '@/components/icons'
 import { cn } from '@/lib/utils'
+import { Tour } from '@/components/tour'
+import { RESOURCES_TOUR } from '@/lib/tours'
 
 // ─── Tools & Access ──────────────────────────────────────────────────────────
 const TOOLS = [
@@ -180,7 +182,7 @@ export default function ResourcesPage() {
 
       {/* Tools & Access Hub */}
       {matchTools.length > 0 && (
-        <section>
+        <section data-tour="resources-tools">
           <h2 className="text-h3 text-dark-text mb-3">Tools &amp; Access</h2>
           <div className="grid grid-cols-1 desktop:grid-cols-2 gap-3">
             {matchTools.map((t) => (
@@ -267,6 +269,8 @@ export default function ResourcesPage() {
           </p>
         </section>
       )}
+
+      <Tour tourKey="resources" steps={RESOURCES_TOUR} />
     </div>
   )
 }

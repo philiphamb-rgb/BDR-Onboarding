@@ -1,34 +1,56 @@
-// Guided-tour step definitions, one set per screen. Keep copy tight: every word
-// should remove a question about how the screen works. Targets use [data-tour="…"].
+// Guided-tour scripts, one per screen. Every tour opens with a centered welcome
+// (no selector) for a strong hook, then spotlights each section. Copy is built to
+// excite and orient in as few words as possible — momentum over manuals.
 import type { TourStep } from '@/components/tour'
 
 export const HOME_TOUR: TourStep[] = [
-  { selector: '[data-tour="home-belt"]', title: 'Your rank & momentum', body: 'Your belt advances with your days here. XP and your daily streak live right here too.' },
-  { selector: '[data-tour="home-rhythm"]', title: 'What to do right now', body: 'This shows your current time block and the one next-best action — tap it to jump straight there.' },
-  { selector: '[data-tour="home-path"]', title: 'Continue your path', body: 'Always points to your next lesson or quiz, so you never wonder what to learn next.' },
-  { selector: '[data-tour="home-today"]', title: 'Knock out habits', body: 'Tap a habit to complete it right here — no extra screens. Your daily core loop.' },
+  { emoji: '🥋', title: 'Welcome to BDR Hub', body: 'Your command center — train, sell, and level up in one place. Take 30 seconds and you’ll own it.' },
+  { selector: '[data-tour="home-belt"]', emoji: '🥋', title: 'Your rank climbs daily', body: 'Every active day advances your belt. XP and your streak live here — your momentum at a glance.' },
+  { selector: '[data-tour="home-rhythm"]', emoji: '⏱️', title: 'Always know your next move', body: 'This card shows your live time block and the single best action. One tap and you’re there.' },
+  { selector: '[data-tour="home-path"]', emoji: '🎯', title: 'Never wonder what’s next', body: 'Your next lesson or quiz is queued automatically. Just keep pressing forward.' },
+  { selector: '[data-tour="home-today"]', emoji: '✅', title: 'Win the day in one tap', body: 'Knock out your daily habits right here — the streak that builds elite reps.' },
 ]
 
 export const PARTNERS_TOUR: TourStep[] = [
-  { selector: '[data-tour="partners-add"]', title: 'Add a partner', body: 'Start tracking any prospect here. Each one gets a stage and an onboarding checklist.' },
-  { selector: '[data-tour="partners-list"]', title: 'Your pipeline', body: 'See every partner with their stage and onboarding progress at a glance. Tap one to work it.' },
+  { emoji: '🤝', title: 'Your deal cockpit', body: 'Run every partner from first hello to signed — without ever leaving the Hub.' },
+  { selector: '[data-tour="partners-add"]', emoji: '➕', title: 'Add a partner', body: 'Drop in any prospect. Each one gets a pipeline stage and a guided onboarding checklist.' },
+  { selector: '[data-tour="partners-list"]', emoji: '📊', title: 'See your whole pipeline', body: 'Stage and onboarding progress for every partner at a glance. Tap one to work it.' },
 ]
 
 export const PARTNER_DETAIL_TOUR: TourStep[] = [
-  { selector: '[data-tour="pd-stage"]', title: 'Move the deal', body: 'Set the pipeline stage as the partner progresses — New Lead through Opportunity Won.' },
-  { selector: '[data-tour="pd-checklist"]', title: 'Onboarding checklist', body: 'Check off each step. Tap “Open …” to launch the right tool, and add notes per task. Finish all to earn XP.' },
+  { selector: '[data-tour="pd-stage"]', emoji: '🚦', title: 'Move the deal forward', body: 'Set the stage as they progress — New Lead → Opportunity Won. Hit 100% and you earn XP.' },
+  { selector: '[data-tour="pd-checklist"]', emoji: '✅', title: 'Launch, don’t leave', body: 'Each task has an “Open” button to the right tool, plus a notes field. Finish them all to onboard the partner.' },
 ]
 
 export const RHYTHM_TOUR: TourStep[] = [
-  { selector: '[data-tour="rhythm-shift"]', title: 'Pick your shift', body: 'Choose your hours once — the whole day re-times around it.' },
-  { selector: '[data-tour="rhythm-selling"]', title: 'Protected selling time', body: 'The point of the day: hours reserved for live conversations, not admin.' },
-  { selector: '[data-tour="rhythm-timeline"]', title: 'Make it yours', body: 'Edit any block’s time and add notes. Tap a block’s link to jump to where that work happens.' },
+  { emoji: '⏱️', title: 'Engineer your perfect day', body: 'A pro-optimized schedule built around your selling hours. Make it yours in seconds.' },
+  { selector: '[data-tour="rhythm-shift"]', emoji: '🕐', title: 'Pick your shift', body: 'Choose your hours once — the entire day re-times around you.' },
+  { selector: '[data-tour="rhythm-selling"]', emoji: '📞', title: 'Protect your selling time', body: 'These blocks are the point of the day: live conversations, zero admin.' },
+  { selector: '[data-tour="rhythm-timeline"]', emoji: '✏️', title: 'Yours to shape', body: 'Edit any block’s time, add notes, and jump straight to where that work happens.' },
 ]
 
 export const TRAIN_TOUR: TourStep[] = [
-  { selector: '[data-tour="train-list"]', title: 'Your curriculum', body: 'Work modules top to bottom. Each has short lessons and a quiz that earns XP.' },
+  { emoji: '📚', title: 'Go from new to closer', body: 'Bite-size lessons and quizzes that earn XP and unlock your certificate.' },
+  { selector: '[data-tour="train-list"]', emoji: '🎓', title: 'Work it top to bottom', body: 'Each module builds on the last. Short lessons, then a quiz to lock it in.' },
 ]
 
 export const DRILL_TOUR: TourStep[] = [
-  { selector: '[data-tour="drill-scenarios"]', title: 'Rehearse live', body: 'Pick a real objection and role-play against an AI prospect — then get instant Sandler feedback.' },
+  { emoji: '🎤', title: 'Practice makes closers', body: 'Rehearse real objections against an AI prospect — fail safely here, win for real.' },
+  { selector: '[data-tour="drill-scenarios"]', emoji: '🥊', title: 'Pick your fight', body: 'Choose an objection, role-play it live, then get instant Sandler-based feedback.' },
+]
+
+export const WINS_TOUR: TourStep[] = [
+  { emoji: '🏆', title: 'Log it. Earn it.', body: 'Every call, demo, and deal you log here fuels your XP and builds your record.' },
+  { selector: '[data-tour="wins-log"]', emoji: '➕', title: 'Log a win', body: 'Tap to log calls, demos, and deals — instant XP, instant momentum.' },
+  { selector: '[data-tour="wins-stats"]', emoji: '📈', title: 'Your track record', body: 'Your totals at a glance. Filter by type to see what’s driving your results.' },
+]
+
+export const COACH_TOUR: TourStep[] = [
+  { emoji: '🧠', title: 'Your AI sales coach', body: 'It already knows your numbers, pipeline, and belt — so every answer is built for you.' },
+  { selector: '[data-tour="coach-input"]', emoji: '💬', title: 'Ask anything', body: 'Stuck on an objection, or need a plan to hit your number? Ask — the advice is specific to you.' },
+]
+
+export const RESOURCES_TOUR: TourStep[] = [
+  { emoji: '🧭', title: 'Everything, one tap away', body: 'Tools, docs, and the right people to contact — no more hunting.' },
+  { selector: '[data-tour="resources-tools"]', emoji: '🛠️', title: 'Jump straight in', body: 'Tap any tool to open it. Your whole stack lives right here.' },
 ]

@@ -7,6 +7,8 @@ import { createClient } from '@/lib/supabase/client'
 import { Card, Button } from '@/components/ui'
 import { ArrowRightIcon, TargetIcon } from '@/components/icons'
 import { cn, formatRelativeTime } from '@/lib/utils'
+import { Tour } from '@/components/tour'
+import { COACH_TOUR } from '@/lib/tours'
 
 interface Message {
   id: string
@@ -241,7 +243,7 @@ export default function CoachPage() {
       </div>
 
       {/* Input */}
-      <div className="flex-shrink-0">
+      <div className="flex-shrink-0" data-tour="coach-input">
         <div className="flex gap-2 items-end bg-white rounded-2xl border border-border shadow-card p-2">
           <textarea
             value={input}
@@ -270,6 +272,8 @@ export default function CoachPage() {
           </button>
         </div>
       </div>
+
+      <Tour tourKey="coach" steps={COACH_TOUR} />
     </div>
   )
 }

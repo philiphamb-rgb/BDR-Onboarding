@@ -8,6 +8,8 @@ import { Card, Button, Modal, Badge, EmptyState, SkeletonList } from '@/componen
 import { TrophyIcon, PlusIcon, XpIcon, PhoneIcon, TargetIcon, HandshakeIcon, LightningIcon, StarFilledIcon } from '@/components/icons'
 import { cn, formatXP, formatRelativeTime } from '@/lib/utils'
 import { toast } from '@/components/ui'
+import { Tour } from '@/components/tour'
+import { WINS_TOUR } from '@/lib/tours'
 
 const WIN_TYPES = [
   { type: 'call',   label: 'Call',  Icon: PhoneIcon,      xp: 10,  color: 'bg-blue-100 text-blue-700' },
@@ -95,13 +97,13 @@ function WinsContent() {
           <h1 className="text-h1 text-dark-text">Wins</h1>
           <p className="text-sm text-gray">Track every victory</p>
         </div>
-        <Button onClick={() => setShowModal(true)} size="sm">
+        <span data-tour="wins-log"><Button onClick={() => setShowModal(true)} size="sm">
           <PlusIcon className="mr-1.5 w-4 h-4" />Log Win
-        </Button>
+        </Button></span>
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-3 gap-3">
+      <div className="grid grid-cols-3 gap-3" data-tour="wins-stats">
         {WIN_TYPES.slice(0, 3).map(wt => {
           const count = wins.filter(w => w.type === wt.type).length
           return (
@@ -196,6 +198,8 @@ function WinsContent() {
           </Button>
         </div>
       </Modal>
+
+      <Tour tourKey="wins" steps={WINS_TOUR} />
     </div>
   )
 }
