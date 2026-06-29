@@ -10,14 +10,14 @@ Branch: `claude/affectionate-volta-v1qqa6`. Active Supabase: `bdr-os-v2` (`zbgim
 4. **Home inline habits + Grow retired** — top incomplete habits completable in 1 tap on Home; Grow folded (belt-journey ladder moved to Certificate; route + nav entry removed).
 5. **AI-forward coaching** — shared `buildUserContext()` feeds all coach modes; coach prompt gains pipeline funnel + shift/day structure; drill feedback belt-calibrated; won drills auto-surface feedback; "Discuss with Coach" bridge pre-seeds Coach via sessionStorage.
 6. **Daily Rhythm notes + Outlook foundation** — `schedule_blocks` table (per-user/day, owner-RLS, `graph_event_id` hook) applied live; per-block notes editable in-tool (offline); "Connect Outlook — Soon" affordance.
+7. **Proactive Home nudge** — block + pipeline-aware one-liner in the "Right now" card.
+8. **Module → tool links + naming** — lesson `links` blocks render internal routes as same-tab SPA nav; added tool tie-ins (Modules 2→Today, 3→Partners, 3 L3 + 13→Drill, 5→Partners/Onit, 6→Partners, 8→Daily Rhythm/Nextiva); standardized "ONIT"→"Onit" across titles + content.
+9. **Editable block times** — per-block start/duration overrides on the Daily Rhythm (persisted to `schedule_blocks`), with "edited" marker + Reset.
 
 ## Remaining (next passes)
 ### Needs a focused build pass (no user input required)
-- **Editable block TIMES** on the schedule (start/duration overrides → `schedule_blocks`), seeded from `OPTIMIZED_DAY`, with reset. Notes foundation already in place.
-- **Proactive Home nudge** — an AI/deterministic one-liner inside the "Right now" card tied to the active block + pipeline (e.g. "3 partners at Proposal Sent — call Acme first"). Data already fetched server-side via `buildUserContext`.
-- **Module → tool in-app links** (DB lesson `content` jsonb edits): Module 5/6/3 → `/partners`; Module 3 L3 + Module 13 → `/drill`; Module 8 → `/schedule`; Module 2 → `/today`.
-- **Content dedup/naming** (DB): consolidate Module 5 ↔ Module 9 (5 is canonical order-form procedure; 9 is generic re-narration — merge or convert 9 to a cross-linked checklist); standardize "Onit/ONIT"; remove the "discovery beats objections" tip from 3 of its 4 lessons; make Module 4 L1 contacts defer to Module 12; reconcile pipeline stage names between Module 3 and `partnerChecklist.PIPELINE_STAGES`.
-- **Code cleanup**: `calculate-xp` should import helpers from `supabase/functions/_shared/cors.ts` (currently re-declares them); consolidate belt thresholds (duplicated in calculate-xp / insights / coach route — keep edge fn authoritative); merge `getDaysSince`/`daysSince`; finish or mark the `send-notification` web-push stub. (Edge redeploy via MCP.)
+- **Content dedup** (DB, judgment-heavy): consolidate Module 5 ↔ Module 9 (5 is the canonical order-form procedure; 9 is a generic re-narration — merge or convert 9 to a cross-linked checklist); remove the "discovery beats objections" tip from 3 of its 4 lessons; make Module 4 L1 contacts defer to Module 12; reconcile pipeline stage names between Module 3 and `partnerChecklist.PIPELINE_STAGES`.
+- **Code cleanup** (edge redeploy via MCP): `calculate-xp` should import helpers from `supabase/functions/_shared/cors.ts` (currently re-declares them); consolidate belt thresholds (duplicated in calculate-xp / insights / coach route — keep edge fn authoritative); merge `getDaysSince`/`daysSince`; finish or mark the `send-notification` web-push stub.
 
 ### Blocked on the user
 - **Outlook live sync** — Azure/Entra app: `MS_CLIENT_ID`, `MS_CLIENT_SECRET`, `MS_TENANT`; redirect URI `https://<app>/api/calendar/callback`; delegated scopes `Calendars.ReadWrite offline_access User.Read`. Then build `calendar_connections` table (token-encrypted, owner-RLS), `/api/calendar/{connect,callback,events,disconnect}`, refresh handling, block↔event mapping. (Full design in the reviewer notes / chat history.) Cannot be tested from this egress-restricted env.
