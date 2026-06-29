@@ -40,7 +40,7 @@ interface NavItem {
 const REP_NAV: NavItem[] = [
   { href: '/home',    label: 'Home',    icon: HomeIcon  },
   { href: '/today',   label: 'Today',   icon: TodayIcon },
-  { href: '/train',   label: 'Train',   icon: TrainIcon },
+  { href: '/train',   label: 'Learning Center',   icon: TrainIcon },
   { href: '/wins',    label: 'Wins',    icon: WinsIcon  },
   { href: '/coach',   label: 'Coach',   icon: CoachIcon },
 ]
