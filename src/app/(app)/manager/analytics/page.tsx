@@ -17,6 +17,7 @@ export default function AnalyticsPage() {
   const supabase = createClient()
   const router = useRouter()
   const [members, setMembers] = useState([])
+  const [leads, setLeads] = useState([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -24,6 +25,8 @@ export default function AnalyticsPage() {
       if (!user) { setLoading(false); return }
       supabase.from('users').select('team_id').eq('id', user.id).single().then(({ data }) => {
         if (!data?.team_id) { setLoading(false); return }
+        supabase.from('partner_onboarding').select('stage, temperature').eq('team_id', data.team_id)
+          .then(({ data: lds }) => setLeads(lds ?? []))
         supabase.from('users')
           .select('id, name, user_progress(total_xp, current_streak, longest_streak, belt_day, total_calls, total_demos, total_deals, calls_this_week, demos_this_week, deals_this_month, completed_lessons, last_active_date)')
           .eq('team_id', data.team_id).eq('role', 'rep')
@@ -54,6 +57,10 @@ export default function AnalyticsPage() {
   // Call→demo and demo→deal conversion are the funnel a manager actually coaches.
   const callToDemo = totalCalls ? Math.round((totalDemos / totalCalls) * 100) : 0
   const demoToDeal = totalDemos ? Math.round((totalDeals / totalDemos) * 100) : 0
+  // Lead pipeline + warm/cold closing across the team.
+  const wonRate = (arr) => arr.length ? Math.round(arr.filter(l => l.stage === 'opportunity_won').length / arr.length * 100) : 0
+  const warmLeads = leads.filter(l => (l.temperature ?? 'cold') === 'warm')
+  const coldLeads = leads.filter(l => (l.temperature ?? 'cold') === 'cold')
   const insights = deriveTeamInsights(members)
   const maxXP = Math.max(1, ...members.map(m => m.total_xp))
   const rankedXP = [...members].sort((a, b) => b.total_xp - a.total_xp)
@@ -98,6 +105,26 @@ export default function AnalyticsPage() {
               <div className="space-y-2">{insights.map(i => <InsightRow key={i.id} insight={i} />)}</div>
             )}
           </Card>
+
+          {/* Lead pipeline + warm/cold closing */}
+          {leads.length > 0 && (
+            <Card>
+              <h2 className="text-h3 text-dark-text mb-1">Lead Pipeline &amp; Closing</h2>
+              <p className="mb-4 text-[12px] text-gray">Across {leads.length} team lead{leads.length === 1 ? '' : 's'} · {warmLeads.length} warm · {coldLeads.length} cold.</p>
+              <div className="grid grid-cols-3 gap-3 text-center">
+                {[
+                  { l: 'Overall close', v: wonRate(leads), c: '#003087' },
+                  { l: '🔥 Warm close', v: wonRate(warmLeads), c: '#EA580C' },
+                  { l: '❄️ Cold close', v: wonRate(coldLeads), c: '#2563EB' },
+                ].map(x => (
+                  <div key={x.l} className="rounded-md border border-border bg-bdrbg p-3">
+                    <div className="text-[22px] font-[800] tabular-nums" style={{ color: x.c }}>{x.v}%</div>
+                    <div className="mt-0.5 text-[11px] text-gray">{x.l}</div>
+                  </div>
+                ))}
+              </div>
+            </Card>
+          )}
 
           {/* Activity funnel */}
           <Card>
