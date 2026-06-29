@@ -3,7 +3,7 @@
 
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import { Card, Badge, SkeletonList } from '@/components/ui'
+import { Card, Badge, SkeletonList, Avatar } from '@/components/ui'
 import { TrophyIcon, MedalIcon } from '@/components/icons'
 import { cn, formatXP } from '@/lib/utils'
 
@@ -33,12 +33,13 @@ export default function LeaderboardPage() {
   const fetchLeaders = async () => {
     const { data } = await supabase
       .from('user_progress')
-      .select('user_id, total_xp, current_streak, belt_day, users!inner(name)')
+      .select('user_id, total_xp, current_streak, belt_day, users!inner(name, avatar_url)')
       .order('total_xp', { ascending: false })
       .limit(20)
-    setLeaders((data ?? []).map((r: { user_id: string; total_xp: number; current_streak: number; belt_day: number; users: { name: string } }) => ({
+    setLeaders((data ?? []).map((r: { user_id: string; total_xp: number; current_streak: number; belt_day: number; users: { name: string; avatar_url: string | null } }) => ({
       user_id: r.user_id,
       name: r.users?.name ?? '—',
+      avatar_url: r.users?.avatar_url ?? null,
       belt: beltFromDays(r.belt_day ?? 0),
       total_xp: r.total_xp ?? 0,
       streak: r.current_streak ?? 0,
@@ -76,8 +77,8 @@ export default function LeaderboardPage() {
             return (
               <div key={entry.user_id} className={cn('flex flex-col items-center flex-1 text-center', pos === 1 && 'order-2')}>
                 <MedalIcon size={26} className={cn('mb-1', medalColors[rank - 1])} />
-                <div className={cn('w-10 h-10 rounded-full flex items-center justify-center text-xs font-bold text-white mx-auto mb-1', entry.user_id === userId ? 'bg-teal' : 'bg-navy')}>
-                  {entry.name.split(' ').map((n: string) => n[0]).join('').slice(0, 2)}
+                <div className={cn('mx-auto mb-1 rounded-full', entry.user_id === userId && 'ring-2 ring-teal')}>
+                  <Avatar src={entry.avatar_url} name={entry.name} size={40} />
                 </div>
                 <div className="text-xs font-medium text-dark-text truncate w-full">{entry.name.split(' ')[0]}</div>
                 <div className={cn('w-full rounded-t-xl mt-1 flex items-center justify-center py-2',

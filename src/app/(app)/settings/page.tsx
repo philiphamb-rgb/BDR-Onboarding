@@ -4,7 +4,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import { Card, Button } from '@/components/ui'
+import { Card, Button, Avatar } from '@/components/ui'
 import { BellIcon, LogoutIcon, ShieldIcon, DownloadIcon, ChevronRightIcon, UserIcon } from '@/components/icons'
 import { usePushNotifications } from '@/lib/push'
 import { cn } from '@/lib/utils'
@@ -41,7 +41,7 @@ export default function SettingsPage() {
   const loadUser = async () => {
     const { data: { user: auth } } = await supabase.auth.getUser()
     if (!auth) return
-    const { data } = await supabase.from('users').select('name, email, phone, role, notification_preferences').eq('id', auth.id).single()
+    const { data } = await supabase.from('users').select('name, email, phone, role, avatar_url, notification_preferences').eq('id', auth.id).single()
     if (data) {
       setUser(data)
       setForm({ name: data.name ?? '', phone: data.phone ?? '' })
@@ -86,9 +86,7 @@ export default function SettingsPage() {
       <h1 className="text-h1 text-dark-text">Settings</h1>
       <Card>
         <div className="flex items-center gap-3">
-          <div className="w-12 h-12 bg-gradient-primary rounded-2xl flex items-center justify-center text-white font-bold text-sm">
-            {(user?.name ?? '?').split(' ').map((n: string) => n[0]).join('').slice(0,2)}
-          </div>
+          <Avatar src={user?.avatar_url ?? null} name={user?.name ?? ''} size={48} />
           <div className="flex-1">
             <div className="font-semibold text-dark-text">{user?.name}</div>
             <div className="text-xs text-gray">{user?.email}</div>

@@ -35,13 +35,13 @@ export default function TeamPage() {
       supabase.from('users').select('team_id').eq('id', user.id).single().then(({ data }) => {
         if (!data?.team_id) { setLoading(false); return }
         supabase.from('users')
-          .select('id, name, email, user_progress(total_xp, current_streak, belt_day, total_calls, total_demos, total_deals, calls_this_week, completed_lessons, last_active_date)')
+          .select('id, name, email, avatar_url, user_progress(total_xp, current_streak, belt_day, total_calls, total_demos, total_deals, calls_this_week, completed_lessons, last_active_date)')
           .eq('team_id', data.team_id).eq('role', 'rep')
           .then(({ data: mems }) => {
             setMembers((mems ?? []).map((m) => {
               const p = m.user_progress?.[0] ?? {}
               return {
-                id: m.id, name: m.name, email: m.email,
+                id: m.id, name: m.name, email: m.email, avatar_url: m.avatar_url ?? null,
                 total_xp: p.total_xp ?? 0, current_streak: p.current_streak ?? 0, belt_day: p.belt_day ?? 0,
                 total_calls: p.total_calls ?? 0, total_demos: p.total_demos ?? 0, total_deals: p.total_deals ?? 0,
                 calls_this_week: p.calls_this_week ?? 0, lessons_completed: (p.completed_lessons ?? []).length,
@@ -85,7 +85,7 @@ export default function TeamPage() {
             return (
               <Card key={m.id}>
                 <div className="mb-3 flex items-start gap-3">
-                  <Avatar name={m.name} size={40} />
+                  <Avatar src={m.avatar_url} name={m.name} size={40} />
                   <div className="min-w-0 flex-1">
                     <div className="truncate text-[15px] font-[700] text-dark-text">{m.name}</div>
                     <div className="truncate text-[12px] text-gray">{m.email}</div>

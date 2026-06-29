@@ -51,6 +51,7 @@ export default function ProfilePage() {
       const { error: updErr } = await supabase.from('users').update({ avatar_url: url }).eq('id', userId)
       if (updErr) { toast.error('Could not save photo'); return }
       setAvatarUrl(url)
+      router.refresh() // re-render the server layout so the sidebar avatar updates
       toast.success('Profile photo updated')
     } finally {
       setUploading(false)
@@ -69,6 +70,7 @@ export default function ProfilePage() {
       .eq('id', userId)
     setSaving(false)
     if (error) { toast.error('Could not save changes'); return }
+    router.refresh() // reflect the new name in the server-rendered sidebar
     toast.success('Profile saved')
   }
 
