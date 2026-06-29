@@ -3,9 +3,10 @@
 
 import { useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
+import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import { Card, Button, Badge, SkeletonCard, EmptyState } from '@/components/ui'
-import { BackIcon, XpIcon, ExternalLinkIcon, CopyIcon, BookIcon } from '@/components/icons'
+import { BackIcon, XpIcon, ExternalLinkIcon, CopyIcon, BookIcon, ArrowRightIcon } from '@/components/icons'
 import { cn } from '@/lib/utils'
 import { toast } from '@/components/ui'
 
@@ -144,24 +145,27 @@ export default function LessonPage() {
     if (block.type === 'links') return (
       <div key={i} className="space-y-2">
         {block.links?.map((lnk, j) => {
+          const internal = lnk.url?.startsWith('/')
           const inner = (
             <>
               <div className="min-w-0">
                 <div className="text-sm font-[700] text-dark-text truncate">{lnk.text}</div>
                 {lnk.sub && <div className="text-xs text-gray truncate">{lnk.sub}</div>}
               </div>
-              {lnk.url && <ExternalLinkIcon size={15} className="text-gray group-hover:text-teal shrink-0" />}
+              {lnk.url && (internal
+                ? <ArrowRightIcon size={15} className="text-gray group-hover:text-teal shrink-0" />
+                : <ExternalLinkIcon size={15} className="text-gray group-hover:text-teal shrink-0" />)}
             </>
           )
-          return lnk.url ? (
-            <a key={j} href={lnk.url} target="_blank" rel="noopener noreferrer"
-               className="flex items-center justify-between gap-3 rounded-xl border border-border px-3 py-2.5 hover:border-teal transition-colors group">
-              {inner}
-            </a>
+          const cls = 'flex items-center justify-between gap-3 rounded-xl border border-border px-3 py-2.5 hover:border-teal transition-colors group'
+          if (!lnk.url) return (
+            <div key={j} className="flex items-center justify-between gap-3 rounded-xl border border-border px-3 py-2.5">{inner}</div>
+          )
+          // Internal app routes navigate in-app (same tab); external open a new tab.
+          return internal ? (
+            <Link key={j} href={lnk.url} className={cls}>{inner}</Link>
           ) : (
-            <div key={j} className="flex items-center justify-between gap-3 rounded-xl border border-border px-3 py-2.5">
-              {inner}
-            </div>
+            <a key={j} href={lnk.url} target="_blank" rel="noopener noreferrer" className={cls}>{inner}</a>
           )
         })}
       </div>
