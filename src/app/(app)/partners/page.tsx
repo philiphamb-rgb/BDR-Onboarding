@@ -8,6 +8,7 @@ import { Card, Button, Modal, EmptyState, SkeletonList, ProgressBar, Badge, toas
 import { PageHeader } from '@/components/manager'
 import { HandshakeIcon, PlusIcon, ArrowRightIcon, ChecklistIcon, CheckIcon } from '@/components/icons'
 import { CHECKLIST_TEMPLATE, PIPELINE_STAGES, freshChecklist, completion, stageMeta } from '@/lib/partnerChecklist'
+import { cn } from '@/lib/utils'
 import { Tour } from '@/components/tour'
 import { PARTNERS_TOUR } from '@/lib/tours'
 
@@ -19,7 +20,7 @@ export default function PartnersPage() {
   const [loading, setLoading] = useState(true)
   const [showAdd, setShowAdd] = useState(false)
   const [showTemplate, setShowTemplate] = useState(false)
-  const [form, setForm] = useState({ partner_name: '', company: '' })
+  const [form, setForm] = useState({ partner_name: '', company: '', temperature: 'cold' })
   const [saving, setSaving] = useState(false)
 
   useEffect(() => {
@@ -34,7 +35,7 @@ export default function PartnersPage() {
   const load = async (uid: string) => {
     const { data } = await supabase
       .from('partner_onboarding')
-      .select('id, partner_name, company, stage, checklist, updated_at')
+      .select('id, partner_name, company, stage, checklist, temperature, updated_at')
       .eq('user_id', uid).order('updated_at', { ascending: false })
     setPartners(data ?? [])
     setLoading(false)
@@ -46,12 +47,12 @@ export default function PartnersPage() {
     const { data, error } = await supabase.from('partner_onboarding').insert({
       user_id: userId, team_id: teamId ?? null,
       partner_name: form.partner_name.trim(), company: form.company.trim() || null,
-      stage: 'new_lead', checklist: freshChecklist(),
-    }).select('id, partner_name, company, stage, checklist, updated_at').single()
+      stage: 'new_lead', checklist: freshChecklist(), temperature: form.temperature,
+    }).select('id, partner_name, company, stage, checklist, temperature, updated_at').single()
     setSaving(false)
     if (!error && data) {
       setPartners(p => [data, ...p])
-      setForm({ partner_name: '', company: '' })
+      setForm({ partner_name: '', company: '', temperature: 'cold' })
       setShowAdd(false)
       toast.success('Partner added — start the checklist')
     } else {
@@ -131,6 +132,19 @@ export default function PartnersPage() {
             <input value={form.company} onChange={e => setForm(f => ({ ...f, company: e.target.value }))}
               placeholder="Apex Credit Solutions LLC"
               className="w-full rounded-md border border-border px-4 py-3 text-sm text-dark-text focus:outline-none focus:ring-2 focus:ring-navy" />
+          </div>
+          <div>
+            <label className="label mb-1 block">Lead temperature</label>
+            <div className="grid grid-cols-2 gap-2">
+              {[{ k: 'warm', l: '🔥 Warm', d: 'Referral / inbound / engaged' }, { k: 'cold', l: '❄️ Cold', d: 'Prospected / outbound' }].map(t => (
+                <button key={t.k} type="button" onClick={() => setForm(f => ({ ...f, temperature: t.k }))}
+                  className={cn('rounded-md border px-3 py-2 text-left transition-all',
+                    form.temperature === t.k ? 'border-navy bg-navy/5' : 'border-border hover:border-navy/40')}>
+                  <div className="text-[13px] font-[700] text-dark-text">{t.l}</div>
+                  <div className="text-[11px] text-gray">{t.d}</div>
+                </button>
+              ))}
+            </div>
           </div>
           <Button onClick={addPartner} loading={saving} disabled={!form.partner_name.trim()} fullWidth>Add partner</Button>
         </div>

@@ -92,6 +92,7 @@ export default function PartnerDetailPage() {
   }
 
   const changeStage = (s: string) => { setStage(s); persist({ stage: s }) }
+  const changeTemp = (t: string) => { setPartner((p: any) => ({ ...p, temperature: t })); persist({ temperature: t }) }
 
   const remove = async () => {
     await supabase.from('partner_onboarding').delete().eq('id', id)
@@ -121,6 +122,17 @@ export default function PartnerDetailPage() {
           <div className="min-w-0">
             <h1 className="text-h2 text-dark-text truncate">{partner.partner_name}</h1>
             {partner.company && <p className="text-[13px] text-gray truncate">{partner.company}</p>}
+            <div className="mt-1.5 flex gap-1.5">
+              {['warm', 'cold'].map(t => (
+                <button key={t} onClick={() => changeTemp(t)}
+                  className={cn('rounded-full border px-2 py-0.5 text-[11px] font-[700] transition-all',
+                    (partner.temperature ?? 'cold') === t
+                      ? (t === 'warm' ? 'border-orange-300 bg-orange-50 text-orange-600' : 'border-blue-200 bg-blue-50 text-blue-600')
+                      : 'border-border text-gray hover:border-navy/40')}>
+                  {t === 'warm' ? '🔥 Warm' : '❄️ Cold'}
+                </button>
+              ))}
+            </div>
           </div>
           <button onClick={() => setConfirmDelete(true)} aria-label="Remove partner" className="p-1.5 text-gray hover:text-error transition-colors">
             <TrashIcon size={16} />

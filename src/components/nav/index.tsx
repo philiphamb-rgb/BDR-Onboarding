@@ -50,6 +50,7 @@ const REP_NAV: NavItem[] = [
 // sheet so every route is reachable on phones (the primary PWA surface).
 const TOOLS_NAV: NavItem[] = [
   { href: '/partners',    label: 'Partners',        icon: HandshakeIcon },
+  { href: '/analytics',   label: 'Analytics',       icon: BarChartIcon },
   { href: '/schedule',    label: 'Daily Rhythm',    icon: ClockIcon },
   { href: '/drill',       label: 'Objection Drill', icon: TargetIcon },
   { href: '/resources',   label: 'Resources',       icon: BookIcon },
