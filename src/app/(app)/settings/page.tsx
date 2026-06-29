@@ -5,8 +5,9 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Card, Button, Avatar } from '@/components/ui'
-import { BellIcon, LogoutIcon, ShieldIcon, DownloadIcon, ChevronRightIcon, UserIcon } from '@/components/icons'
+import { BellIcon, LogoutIcon, ShieldIcon, DownloadIcon, ChevronRightIcon, UserIcon, CalendarIcon, SlackIcon, RefreshIcon } from '@/components/icons'
 import { usePushNotifications } from '@/lib/push'
+import { resetTours } from '@/components/tour'
 import { cn } from '@/lib/utils'
 import { toast } from '@/components/ui'
 
@@ -25,6 +26,7 @@ export default function SettingsPage() {
   const router = useRouter()
   const [section, setSection] = useState<Section>('main')
   const [user, setUser] = useState<any>(null)
+  const [authId, setAuthId] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
   const [form, setForm] = useState({ name: '', phone: '' })
   const { permission, subscribed, supported, loading: pushLoading, requestPermission, unsubscribe } = usePushNotifications()
@@ -41,6 +43,7 @@ export default function SettingsPage() {
   const loadUser = async () => {
     const { data: { user: auth } } = await supabase.auth.getUser()
     if (!auth) return
+    setAuthId(auth.id)
     const { data } = await supabase.from('users').select('name, email, phone, role, avatar_url, notification_preferences').eq('id', auth.id).single()
     if (data) {
       setUser(data)
@@ -95,6 +98,41 @@ export default function SettingsPage() {
           <button onClick={() => router.push('/settings/profile')} className="text-sm text-navy font-medium">Edit</button>
         </div>
       </Card>
+
+      {/* Connections — per-user integrations */}
+      <Card>
+        <h2 className="text-h3 text-dark-text mb-1">Connections</h2>
+        <p className="text-xs text-gray mb-3">Connect your accounts so the Hub can sync live data for you.</p>
+        <div className="space-y-2">
+          {[
+            { key: 'outlook', label: 'Outlook Calendar', desc: 'Two-way sync your Daily Rhythm blocks & notes', Icon: CalendarIcon, tint: 'bg-navy/10 text-navy' },
+            { key: 'slack', label: 'Slack', desc: 'Reach teammates & partner-support channels', Icon: SlackIcon, tint: 'bg-purple-50 text-purple-600' },
+          ].map(c => (
+            <div key={c.key} className="flex items-center gap-3 rounded-xl border border-border bg-bdrbg p-3">
+              <div className={cn('flex h-9 w-9 shrink-0 items-center justify-center rounded-xl', c.tint)}><c.Icon size={18} /></div>
+              <div className="min-w-0 flex-1">
+                <div className="text-sm font-[700] text-dark-text">{c.label}</div>
+                <div className="text-xs text-gray">{c.desc}</div>
+              </div>
+              <span className="shrink-0 rounded-full bg-card px-2.5 py-1 text-[11px] font-[700] text-gray">Not connected</span>
+              <button disabled title="Coming soon" className="shrink-0 rounded-md bg-navy/40 px-2.5 py-1 text-[11px] font-[700] text-white cursor-not-allowed">Connect</button>
+            </div>
+          ))}
+        </div>
+        <p className="mt-2 text-[11px] text-gray">Live connect is rolling out — your admin enables it once per workspace.</p>
+      </Card>
+
+      {/* Replay the guided tours */}
+      <button onClick={() => { if (authId) resetTours(authId); toast.success('Tutorials reset — they’ll show again as you visit each screen') }} className="w-full text-left">
+        <Card className="flex items-center gap-3 hover:border-navy/20 transition-colors">
+          <div className="w-9 h-9 bg-bdrbg rounded-xl flex items-center justify-center flex-shrink-0"><RefreshIcon className="text-teal w-5 h-5" /></div>
+          <div className="flex-1">
+            <div className="text-sm font-medium text-dark-text">Replay tutorials</div>
+            <div className="text-xs text-gray">See the guided walkthroughs again</div>
+          </div>
+          <ChevronRightIcon className="text-gray w-4 h-4" />
+        </Card>
+      </button>
 
       {[
         { icon: <BellIcon className="text-navy w-5 h-5" />, label: 'Notifications', sub: 'Reminders, quiet hours', onPress: () => setSection('notifications') },

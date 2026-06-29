@@ -9,6 +9,8 @@ import { BackIcon, CheckIcon, HandshakeIcon, TrashIcon, ExternalLinkIcon } from 
 import { cn } from '@/lib/utils'
 import { PIPELINE_STAGES, CHECKLIST_TEMPLATE, mergeChecklist, completion, stageMeta, freshChecklist } from '@/lib/partnerChecklist'
 import { systemLink } from '@/lib/links'
+import { Tour } from '@/components/tour'
+import { PARTNER_DETAIL_TOUR } from '@/lib/tours'
 
 export default function PartnerDetailPage() {
   const { id } = useParams<{ id: string }>()
@@ -135,7 +137,7 @@ export default function PartnerDetailPage() {
       </Card>
 
       {/* Pipeline stage selector */}
-      <Card>
+      <Card data-tour="pd-stage">
         <div className="label mb-2">Pipeline stage</div>
         <div className="flex flex-wrap gap-2">
           {PIPELINE_STAGES.map(s => {
@@ -154,7 +156,7 @@ export default function PartnerDetailPage() {
       </Card>
 
       {/* Checklist */}
-      <div className="space-y-2">
+      <div className="space-y-2" data-tour="pd-checklist">
         {merged.map((item, i) => {
           const s = stageMeta(item.stage)
           const stored = checklist.find(c2 => c2.key === item.key)
@@ -203,6 +205,8 @@ export default function PartnerDetailPage() {
         open={confirmDelete} onClose={() => setConfirmDelete(false)} onConfirm={remove}
         title="Remove this partner?" description="This deletes the partner and their checklist. This cannot be undone."
         confirmLabel="Remove" variant="destructive" />
+
+      <Tour tourKey="partner-detail" steps={PARTNER_DETAIL_TOUR} />
     </div>
   )
 }

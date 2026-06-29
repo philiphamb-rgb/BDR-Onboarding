@@ -11,6 +11,8 @@ import {
   ProductsIcon, OrgChartIcon, TargetIcon, LockIcon, SearchIcon, CloseIcon,
 } from '@/components/icons'
 import { cn, percentage } from '@/lib/utils'
+import { Tour } from '@/components/tour'
+import { TRAIN_TOUR } from '@/lib/tours'
 import Link from 'next/link'
 
 interface ModuleRow {
@@ -159,7 +161,7 @@ export default function TrainPage() {
         <ProgressBar value={percentage(completedModules, modules.length)} max={100} color="#00C2B2" className="h-2" />
       </Card>
 
-      <div className="space-y-3">
+      <div className="space-y-3" data-tour="train-list">
         {modules.map((mod, idx) => {
           const pct = mod.lessons_count > 0 ? percentage(mod.completed_lessons, mod.lessons_count) : 0
           const allLessonsDone = mod.completed_lessons === mod.lessons_count && mod.lessons_count > 0
@@ -210,6 +212,8 @@ export default function TrainPage() {
       </div>
       </>
       )}
+
+      <Tour tourKey="train" steps={TRAIN_TOUR} />
     </div>
   )
 }

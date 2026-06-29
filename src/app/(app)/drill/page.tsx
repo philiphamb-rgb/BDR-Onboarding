@@ -7,6 +7,8 @@ import { createClient } from '@/lib/supabase/client'
 import { Card, Button, Badge, toast } from '@/components/ui'
 import { TargetIcon, ArrowRightIcon, BackIcon, LightningIcon, SuccessIcon, RefreshIcon, CoachIcon } from '@/components/icons'
 import { cn } from '@/lib/utils'
+import { Tour } from '@/components/tour'
+import { DRILL_TOUR } from '@/lib/tours'
 
 // Scenarios are drawn from the real objections taught in Module 3 and real
 // ConsumerDirect partner personas. Each gives the AI a character to play.
@@ -155,7 +157,7 @@ export default function DrillPage() {
         </div>
       </div>
 
-      <div className="space-y-3">
+      <div className="space-y-3" data-tour="drill-scenarios">
         {SCENARIOS.map(s => (
           <button key={s.id} onClick={() => pick(s)}
             className="w-full text-left rounded-md border border-border bg-card p-4 shadow-card transition-all hover:-translate-y-0.5 hover:border-teal hover:shadow-modal">
@@ -171,6 +173,8 @@ export default function DrillPage() {
           </button>
         ))}
       </div>
+
+      <Tour tourKey="drill" steps={DRILL_TOUR} />
     </div>
   )
 
