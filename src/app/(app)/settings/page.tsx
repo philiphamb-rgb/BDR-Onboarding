@@ -15,7 +15,7 @@ type Section = 'main' | 'profile' | 'notifications' | 'data' | 'help'
 const FAQ_ITEMS = [
   { q: 'How is my belt rank calculated?', a: 'Your belt rank advances automatically based on days since your start date. White Belt: Day 0, Black Belt: Day 90.' },
   { q: 'Can I earn XP on the same habit twice?', a: 'No. Each habit can only be logged once per calendar day. The date is locked and cannot be backdated.' },
-  { q: 'How does the streak work?', a: 'A streak day requires at least 7 habits completed. Missing one day resets it to zero — no streak freezes, keeping it fair for everyone.' },
+  { q: 'How does the streak work?', a: 'A streak day means completing all of your active daily habits. Missing a day resets it to zero — no streak freezes, keeping it fair for everyone.' },
   { q: 'How is quiz XP calculated?', a: 'XP is awarded on your first attempt only: 45 XP (60–79%), 65 XP (80–89%), 75 XP (90–100%). Retakes are for learning only.' },
   { q: 'Who can see my data?', a: 'Your manager can see your activity and progress. Your wins, habits, and quiz scores are private to your team only. No other teams can see your data.' },
 ]
