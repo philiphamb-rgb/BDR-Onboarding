@@ -2,6 +2,7 @@
 'use client'
 
 import { useState } from 'react'
+import Link from 'next/link'
 import { Card, CardTitle, Badge } from '@/components/ui'
 import {
   SearchIcon,
@@ -136,6 +137,20 @@ export default function ResourcesPage() {
           </div>
         </div>
       </Card>
+
+      {/* Patent portfolio */}
+      <Link href="/resources/patents">
+        <Card hover className="flex items-center gap-3">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-navy/10 text-navy">
+            <ShieldIcon size={20} />
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="text-sm font-[800] text-dark-text">Patent Portfolio</div>
+            <div className="text-[12px] text-gray">The patented technology that makes ConsumerDirect defensible — your “why us” moat.</div>
+          </div>
+          <span className="shrink-0 text-[12px] font-[700] text-teal">View →</span>
+        </Card>
+      </Link>
 
       {/* Onboarding roadmap */}
       <Card>
