@@ -36,8 +36,10 @@ export default function SchedulePage() {
   const pickShift = async (start: string) => {
     setShift(start)
     if (!userId) return
-    const next = { ...settings, shift: start }
-    setSettings(next)
+    // Build from the latest settings so a rapid second tap (or any other
+    // settings writer) can't clobber unrelated keys.
+    let next: Record<string, unknown> = {}
+    setSettings(prev => { next = { ...prev, shift: start }; return next })
     const { error } = await supabase.from('users').update({ settings: next }).eq('id', userId)
     if (!error) toast.success('Shift saved')
   }

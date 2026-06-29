@@ -42,6 +42,9 @@ export const OPTIMIZED_DAY: ScheduleBlock[] = [
 
 // Which block is happening right now, given the rep's shift start and the
 // current local time. Used for the "Right now" card on Home.
+// NOTE: compares the device's local time to the bare "HH:MM" shift string, so
+// it assumes the rep's device clock is in the shift's intended timezone. Fine
+// for a single-timezone team; revisit (anchor to a fixed TZ) if reps span zones.
 export function currentBlock(shiftStart: string, now: Date = new Date()) {
   const base = parseHM(shiftStart)
   const cur = now.getHours() * 60 + now.getMinutes()

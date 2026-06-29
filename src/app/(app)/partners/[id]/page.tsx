@@ -38,21 +38,31 @@ export default function PartnerDetailPage() {
     await supabase.from('partner_onboarding').update(patch).eq('id', id)
   }
 
-  const setItem = (key: string, changes: Partial<{ done: boolean; note: string }>) => {
-    const next = CHECKLIST_TEMPLATE.map(t => {
-      const cur = checklist.find(c => c.key === t.key) ?? { key: t.key, done: false, note: '' }
+  // Rebuild the full checklist from a base array, applying changes to one key.
+  const applyChange = (base, key: string, changes: Partial<{ done: boolean; note: string }>) =>
+    CHECKLIST_TEMPLATE.map(t => {
+      const cur = base.find(c => c.key === t.key) ?? { key: t.key, done: false, note: '' }
       return t.key === key ? { ...cur, ...changes } : cur
     })
-    setChecklist(next)
-    persist({ checklist: next })
-    return next
+
+  // Functional updater so concurrent edits (note blur + a different toggle)
+  // build on the latest state and can't clobber each other.
+  const setItem = (key: string, changes: Partial<{ done: boolean; note: string }>) => {
+    setChecklist(prev => {
+      const next = applyChange(prev, key, changes)
+      persist({ checklist: next })
+      return next
+    })
   }
 
   const toggle = (key: string) => {
-    const wasComplete = completion(checklist).pct === 100
-    const cur = checklist.find(c => c.key === key)
-    const next = setItem(key, { done: !cur?.done })
-    if (!wasComplete && completion(next).pct === 100) awardOnboardingXp()
+    setChecklist(prev => {
+      const cur = prev.find(c => c.key === key)
+      const next = applyChange(prev, key, { done: !cur?.done })
+      persist({ checklist: next })
+      if (completion(prev).pct !== 100 && completion(next).pct === 100) awardOnboardingXp()
+      return next
+    })
   }
 
   // Award XP the first time a partner's checklist hits 100% (deduped per partner
