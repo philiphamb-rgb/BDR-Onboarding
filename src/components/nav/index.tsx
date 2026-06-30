@@ -26,6 +26,7 @@ import {
   ClockIcon,
   MoreIcon,
   CoinIcon,
+  ChecklistIcon,
 } from '@/components/icons'
 import type { User } from '@/types/database'
 import { Avatar } from '@/components/ui'
@@ -56,6 +57,7 @@ const TOOLS_NAV: NavItem[] = [
   { href: '/analytics',   label: 'Analytics',       icon: BarChartIcon },
   { href: '/calculator',  label: 'Income Calculator', icon: CoinIcon },
   { href: '/schedule',    label: 'Daily Time Management', icon: ClockIcon },
+  { href: '/tasks',       label: 'Tasks',           icon: ChecklistIcon },
   { href: '/drill',       label: 'Objection Drill', icon: TargetIcon },
   { href: '/resources',   label: 'Resources',       icon: BookIcon },
   { href: '/leaderboard', label: 'Leaderboard',     icon: LeaderboardIcon },

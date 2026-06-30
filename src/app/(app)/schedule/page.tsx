@@ -27,6 +27,7 @@ export default function SchedulePage() {
   const [openNote, setOpenNote] = useState<string | null>(null)
   const [editTime, setEditTime] = useState<string | null>(null)
   const [draft, setDraft] = useState<{ start: string; dur: string }>({ start: '', dur: '' })
+  const [blockTasks, setBlockTasks] = useState<Record<string, any[]>>({})
   const today = new Date().toISOString().split('T')[0]
 
   useEffect(() => {
@@ -45,8 +46,20 @@ export default function SchedulePage() {
           for (const r of data ?? []) map[r.block_key] = { start_min: r.start_min, dur_min: r.dur_min, note: r.note ?? undefined, done: r.done ?? false }
           setOver(map)
         })
+      // Tasks the rep assigned to today's blocks (from the Tasks manager).
+      supabase.from('tasks').select('id, title, done, scheduled_block').eq('user_id', user.id).eq('scheduled_day', today)
+        .then(({ data }) => {
+          const map: Record<string, any[]> = {}
+          for (const t of data ?? []) { (map[t.scheduled_block] ??= []).push(t) }
+          setBlockTasks(map)
+        })
     })
   }, [])
+
+  const toggleTask = async (id: string, key: string, done: boolean) => {
+    setBlockTasks(prev => ({ ...prev, [key]: (prev[key] ?? []).map(t => t.id === id ? { ...t, done } : t) }))
+    await supabase.from('tasks').update({ done, updated_at: new Date().toISOString() }).eq('id', id)
+  }
 
   // Upsert a block override for today (start/dur/note), keyed user+day+block_key.
   const saveBlock = async (i: number, block: typeof OPTIMIZED_DAY[number], patch: { start_min?: number; dur_min?: number; note?: string; done?: boolean }) => {
@@ -244,6 +257,20 @@ export default function SchedulePage() {
                   ) : note ? (
                     <button onClick={() => setOpenNote(String(i))} className="mt-1.5 block w-full rounded-md bg-bdrbg px-3 py-1.5 text-left text-[12px] text-mid-text hover:bg-border/40">{note}</button>
                   ) : null}
+                  {/* Tasks assigned to this block (from the Tasks manager) */}
+                  {(blockTasks[String(i)] ?? []).length > 0 && (
+                    <div className="mt-2 space-y-1">
+                      {blockTasks[String(i)].map(tk => (
+                        <div key={tk.id} className="flex items-center gap-2 rounded-md bg-bdrbg px-2.5 py-1.5">
+                          <button onClick={() => toggleTask(tk.id, String(i), !tk.done)}
+                            className={cn('flex h-4 w-4 shrink-0 items-center justify-center rounded-full border-2', tk.done ? 'border-success bg-success text-white' : 'border-border text-transparent')}>
+                            <CheckIcon size={10} />
+                          </button>
+                          <span className={cn('text-[12px]', tk.done ? 'text-gray line-through' : 'text-mid-text')}>{tk.title}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </div>
             )
