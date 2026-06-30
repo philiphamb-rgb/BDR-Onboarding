@@ -34,6 +34,7 @@ export default function HomePage() {
   const [nextStep, setNextStep] = useState<{ type: 'lesson' | 'quiz' | 'done'; moduleOrder?: number; moduleTitle?: string; href?: string; title?: string } | null>(null)
   const [shift, setShift] = useState<string | null>(null)
   const [stuck, setStuck] = useState(0)
+  const [unread, setUnread] = useState(0)
   const [autoWins, setAutoWins] = useState<any[]>([])
   const [completing, setCompleting] = useState<string | null>(null)
   const { progress, loading, refresh: refreshProgress } = useProgress(userId)
@@ -53,6 +54,8 @@ export default function HomePage() {
         setStuck((data ?? []).filter(p => p.stage === 'proposal_sent' || p.stage === 'contract_signed').length)
       })
       computeAutoWins(user.id)
+      supabase.from('notifications').select('id', { count: 'exact', head: true }).eq('user_id', user.id).eq('is_read', false)
+        .then(({ count }) => setUnread(count ?? 0))
       supabase.from('user_progress').select('user_id, total_xp, users!inner(name)')
         .order('total_xp', { ascending: false }).limit(5)
         .then(({ data }) => {
@@ -188,10 +191,13 @@ export default function HomePage() {
           <p className="text-sm text-gray">{greeting()},</p>
           <h1 className="text-h1 text-dark-text">{userName || 'BDR'}</h1>
         </div>
-        <Link href="/notifications" className="p-2 relative" aria-label="Notifications">
-          <svg className="w-6 h-6 text-gray" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+        <Link href="/notifications" className="relative p-2" aria-label={unread > 0 ? `${unread} unread notifications` : 'Notifications'}>
+          <svg className={cn('h-6 w-6', unread > 0 ? 'text-navy animate-ring' : 'text-gray')} fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
           </svg>
+          {unread > 0 && (
+            <span className="absolute right-1 top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-error px-1 text-[9px] font-[800] text-white">{unread > 9 ? '9+' : unread}</span>
+          )}
         </Link>
       </div>
 
@@ -202,7 +208,7 @@ export default function HomePage() {
             <div className={cn('text-label mb-1', isBlack ? 'text-white/60' : 'text-gray')}>{style.label}</div>
             <div className={cn('text-h1 font-bold', isBlack ? 'text-white' : 'text-dark-text')}>Day {progress?.belt_day ?? 0}</div>
           </div>
-          <Belt3D belt={belt} size={56} className="drop-shadow-sm" />
+          <Belt3D belt={belt} size={56} className="drop-shadow-sm animate-bob" />
         </div>
         {progress?.nextBelt && (
           <div className="mb-3">
