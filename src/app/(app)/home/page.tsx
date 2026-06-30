@@ -6,9 +6,9 @@ import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { useProgress, useHabits } from '@/lib/hooks/useProgress'
 import { Card, ProgressBar, Badge, Skeleton, Button, toast } from '@/components/ui'
-import { FlameIcon, TrophyIcon, XpIcon, BeltIcon, ChartRisingIcon, PhoneIcon, ChecklistIcon, TargetIcon, ArrowRightIcon, LightningIcon, BookIcon, CoachIcon, HandshakeIcon, ClockIcon, CheckIcon, CoinIcon } from '@/components/icons'
+import { FlameIcon, TrophyIcon, XpIcon, BeltIcon, ChartRisingIcon, PhoneIcon, ChecklistIcon, TargetIcon, ArrowRightIcon, LightningIcon, BookIcon, CoachIcon, HandshakeIcon, ClockIcon, CheckIcon, CoinIcon, PlusIcon, StarFilledIcon } from '@/components/icons'
 import { cn, formatXP, pluralize } from '@/lib/utils'
-import { currentBlock, fmtClock } from '@/lib/schedule'
+import { currentBlock, fmtClock, fmtShift, SHIFT_OPTIONS } from '@/lib/schedule'
 import { Tour } from '@/components/tour'
 import { HOME_TOUR } from '@/lib/tours'
 import { deriveAutoWins, monthPaceFraction } from '@/lib/winsEngine'
@@ -38,6 +38,10 @@ export default function HomePage() {
   const [unread, setUnread] = useState(0)
   const [autoWins, setAutoWins] = useState<any[]>([])
   const [completing, setCompleting] = useState<string | null>(null)
+  const [settings, setSettings] = useState<Record<string, any>>({})
+  const [tasks, setTasks] = useState<any[]>([])
+  const [useEveryDay, setUseEveryDay] = useState(false)
+  const [savingShift, setSavingShift] = useState(false)
   const { progress, loading, refresh: refreshProgress } = useProgress(userId)
   const { habits, refresh: refreshHabits } = useHabits(userId)
 
@@ -48,8 +52,17 @@ export default function HomePage() {
       fetchNextStep(user.id)
       supabase.from('users').select('name, settings').eq('id', user.id).single().then(({ data }) => {
         if (data?.name) setUserName(data.name.split(' ')[0])
-        if (data?.settings?.shift) setShift(data.settings.shift)
+        const s = data?.settings ?? {}
+        setSettings(s)
+        if (s.shift) setShift(s.shift)
+        setUseEveryDay(!!s.shiftDefault)
       })
+      // Top open tasks — surface task management right on Home.
+      supabase.from('tasks').select('id, title, priority, due_date')
+        .eq('user_id', user.id).eq('done', false).is('parent_id', null)
+        .order('priority', { ascending: false }).order('due_date', { ascending: true, nullsFirst: false })
+        .limit(3)
+        .then(({ data }) => setTasks(data ?? []))
       // Partners awaiting a next step — drives the proactive "Right now" nudge.
       supabase.from('partner_onboarding').select('stage').eq('user_id', user.id).then(({ data }) => {
         setStuck((data ?? []).filter(p => p.stage === 'proposal_sent' || p.stage === 'contract_signed').length)
@@ -132,6 +145,30 @@ export default function HomePage() {
     }, monthPaceFraction(now)))
   }
 
+  // Local (not UTC) date key so "today" matches the rep's calendar day.
+  const localToday = () => {
+    const d = new Date()
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+  }
+
+  // Confirm today's shift from Home. Optionally make it the daily default so the
+  // prompt never reappears (still adjustable on Time Blocking).
+  const confirmShift = async (start: string) => {
+    if (!userId || savingShift) return
+    setSavingShift(true)
+    const next = { ...settings, shift: start, shiftConfirmedDate: localToday(), shiftDefault: useEveryDay }
+    setSettings(next)
+    setShift(start)
+    await supabase.from('users').update({ settings: next }).eq('id', userId)
+    setSavingShift(false)
+  }
+
+  // Complete a task inline from Home.
+  const completeTask = async (id: string) => {
+    setTasks(prev => prev.filter(t => t.id !== id))
+    await supabase.from('tasks').update({ done: true, updated_at: new Date().toISOString() }).eq('id', id)
+  }
+
   // Complete a habit inline from Home — the daily core loop, 1 tap from landing.
   const completeHabit = async (habitId: string, habitLabel: string) => {
     if (!userId || completing) return
@@ -163,6 +200,11 @@ export default function HomePage() {
   const greeting = () => { const h = new Date().getHours(); return h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : 'Good evening' }
   const userRank = leaderboard.findIndex(l => l.user_id === userId) + 1
   const rhythm = shift ? currentBlock(shift) : null
+
+  // Shift prompt shows at the very top until the rep sets today's shift — unless
+  // they've made a shift their daily default (then it's applied automatically).
+  const hasDefault = !!settings.shiftDefault && !!settings.shift
+  const needsShift = !hasDefault && settings.shiftConfirmedDate !== localToday()
 
   // Proactive, block-aware coaching nudge for the active time block.
   const nudge = (() => {
@@ -204,39 +246,87 @@ export default function HomePage() {
         </Link>
       </div>
 
-      {/* Belt Card */}
-      <div data-tour="home-belt" className={cn('rounded-2xl p-5 shadow-card', style.bg)}>
-        <div className="flex items-start justify-between mb-4">
-          <div>
-            <div className={cn('text-label mb-1', isBlack ? 'text-white/60' : 'text-gray')}>{style.label}</div>
-            <div className={cn('text-h1 font-bold', isBlack ? 'text-white' : 'text-dark-text')}>Day {progress?.belt_day ?? 0}</div>
+      {/* Shift first — the very first thing each day, until it's set (or defaulted) */}
+      {needsShift && (
+        <Card className="border-teal/40 !p-4">
+          <div className="mb-1 flex items-center gap-2">
+            <ClockIcon size={16} className="text-teal" />
+            <span className="text-[15px] font-[800] text-dark-text">Start your day — pick today&apos;s shift</span>
           </div>
-          <Belt3D belt={belt} size={56} className="drop-shadow-sm animate-bob" />
-        </div>
-        {progress?.nextBelt && (
-          <div className="mb-3">
-            <div className="flex justify-between mb-2">
-              <span className={cn('text-xs font-medium', isBlack ? 'text-white/70' : 'text-gray')}>
-                To {progress.nextBelt.charAt(0).toUpperCase() + progress.nextBelt.slice(1)} Belt
-              </span>
-              <span className={cn('text-xs', isBlack ? 'text-white/50' : 'text-gray')}>
-                {pluralize(progress.daysUntilNextBelt ?? 0, 'day')} left
-              </span>
+          <p className="mb-3 text-[12px] text-gray">This sets up your time-blocked day and your &quot;Right now&quot; coaching. Takes one tap.</p>
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+            {SHIFT_OPTIONS.map(o => (
+              <button key={o.start} onClick={() => confirmShift(o.start)} disabled={savingShift}
+                className={cn('flex items-center justify-center gap-1.5 rounded-lg border px-3 py-2.5 text-[13px] font-[700] transition-all',
+                  shift === o.start ? 'border-navy bg-navy text-white' : 'border-border bg-bdrbg text-mid-text hover:border-navy/40')}>
+                {shift === o.start && <CheckIcon size={14} />}{fmtShift(o)}
+              </button>
+            ))}
+          </div>
+          <label className="mt-3 flex cursor-pointer items-center gap-2 text-[12px] font-[600] text-mid-text">
+            <input type="checkbox" checked={useEveryDay} onChange={e => setUseEveryDay(e.target.checked)} className="h-4 w-4 rounded border-border accent-teal" />
+            Use this shift every day (you can still adjust it anytime)
+          </label>
+        </Card>
+      )}
+
+      {/* Belt + next move — your rank and your next step, together */}
+      <div data-tour="home-belt" className="overflow-hidden rounded-2xl shadow-card">
+        <div className={cn('p-5', style.bg)}>
+          <div className="flex items-start justify-between mb-4">
+            <div>
+              <div className={cn('text-label mb-1', isBlack ? 'text-white/60' : 'text-gray')}>{style.label}</div>
+              <div className={cn('text-h1 font-bold', isBlack ? 'text-white' : 'text-dark-text')}>Day {progress?.belt_day ?? 0}</div>
             </div>
-            <ProgressBar value={progress.beltProgressPercent} max={100} color={style.bar} className="h-2" />
+            <Belt3D belt={belt} size={60} className="drop-shadow-sm animate-bob" />
           </div>
-        )}
-        <div className="flex items-center gap-4 pt-2 border-t border-black/10">
-          <div className="flex items-center gap-1.5">
-            <XpIcon className={cn('w-4 h-4', isBlack ? 'text-gold' : 'text-navy')} />
-            <span className={cn('text-sm font-semibold', isBlack ? 'text-white' : 'text-dark-text')}>{formatXP(progress?.total_xp ?? 0)}</span>
+          {progress?.nextBelt && (
+            <div className="mb-3">
+              <div className="flex justify-between mb-2">
+                <span className={cn('text-xs font-medium', isBlack ? 'text-white/70' : 'text-gray')}>
+                  To {progress.nextBelt.charAt(0).toUpperCase() + progress.nextBelt.slice(1)} Belt
+                </span>
+                <span className={cn('text-xs', isBlack ? 'text-white/50' : 'text-gray')}>
+                  {pluralize(progress.daysUntilNextBelt ?? 0, 'day')} left
+                </span>
+              </div>
+              <ProgressBar value={progress.beltProgressPercent} max={100} color={style.bar} className="h-2" />
+            </div>
+          )}
+          <div className="flex items-center gap-4 pt-2 border-t border-black/10">
+            <div className="flex items-center gap-1.5">
+              <XpIcon className={cn('w-4 h-4', isBlack ? 'text-gold' : 'text-navy')} />
+              <span className={cn('text-sm font-semibold', isBlack ? 'text-white' : 'text-dark-text')}>{formatXP(progress?.total_xp ?? 0)}</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <FlameIcon className="w-4 h-4 text-orange-500" />
+              <span className={cn('text-sm font-medium', isBlack ? 'text-white/80' : 'text-mid-text')}>{progress?.current_streak ?? 0} day streak</span>
+            </div>
+            {progress?.streakStatus === 'at-risk' && <Badge variant="gold" className="ml-auto text-xs">Streak at risk!</Badge>}
           </div>
-          <div className="flex items-center gap-1.5">
-            <FlameIcon className="w-4 h-4 text-orange-500" />
-            <span className={cn('text-sm font-medium', isBlack ? 'text-white/80' : 'text-mid-text')}>{progress?.current_streak ?? 0} day streak</span>
-          </div>
-          {progress?.streakStatus === 'at-risk' && <Badge variant="gold" className="ml-auto text-xs">Streak at risk!</Badge>}
         </div>
+
+        {/* Next move — paired with the belt so rank and progress live together */}
+        {nextStep && nextStep.type !== 'done' && (
+          <Link href={nextStep.href} data-tour="home-path" className="flex items-center gap-3 bg-gradient-hero px-5 py-3.5 text-white transition-transform active:scale-[0.99]">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white/15"><LightningIcon size={20} className="text-white" /></div>
+            <div className="min-w-0 flex-1">
+              <div className="text-[11px] font-[800] uppercase tracking-wide text-white/70">Next up · Module {nextStep.moduleOrder}</div>
+              <div className="truncate text-[15px] font-[800]">{nextStep.type === 'quiz' ? `${nextStep.moduleTitle} Quiz` : nextStep.title}</div>
+            </div>
+            <span className="flex shrink-0 items-center gap-1 rounded-full bg-white/20 px-3 py-1.5 text-[12px] font-[800]">{nextStep.type === 'quiz' ? 'Start' : 'Continue'} <ArrowRightIcon size={14} /></span>
+          </Link>
+        )}
+        {nextStep?.type === 'done' && (
+          <Link href="/certificate" data-tour="home-path" className="flex items-center gap-3 bg-gradient-hero px-5 py-3.5 text-white transition-transform active:scale-[0.99]">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white/15"><TrophyIcon size={20} className="text-white" /></div>
+            <div className="min-w-0 flex-1">
+              <div className="text-[11px] font-[800] uppercase tracking-wide text-white/70">Curriculum complete 🎓</div>
+              <div className="truncate text-[15px] font-[800]">Claim your certificate</div>
+            </div>
+            <span className="flex shrink-0 items-center gap-1 rounded-full bg-white/20 px-3 py-1.5 text-[12px] font-[800]">Open <ArrowRightIcon size={14} /></span>
+          </Link>
+        )}
       </div>
 
       {/* AI Coach — auto-detected wins & insights, each tappable to coach on it */}
@@ -296,38 +386,40 @@ export default function HomePage() {
         </Link>
       )}
 
-      {/* Continue your path — compressed to a single scannable row */}
-      {nextStep && nextStep.type !== 'done' && (
-        <Link href={nextStep.href}>
-          <Card hover data-tour="home-path" className="flex items-center gap-3 !p-3">
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-teal/10 text-teal"><LightningIcon size={18} /></div>
-            <div className="min-w-0 flex-1">
-              <div className="label text-teal">Next up · Module {nextStep.moduleOrder}</div>
-              <div className="truncate text-[14px] font-[700] text-dark-text">{nextStep.type === 'quiz' ? `${nextStep.moduleTitle} Quiz` : nextStep.title}</div>
-            </div>
-            <span className="shrink-0 text-[12px] font-[700] text-teal">{nextStep.type === 'quiz' ? 'Start' : 'Continue'} →</span>
-          </Card>
-        </Link>
-      )}
-      {nextStep?.type === 'done' && (
-        <Link href="/certificate">
-          <Card hover data-tour="home-path" variant="completed" className="flex items-center gap-3 !p-3">
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-success/10 text-success"><TrophyIcon size={18} /></div>
-            <div className="min-w-0 flex-1">
-              <div className="label text-success">Curriculum complete</div>
-              <div className="truncate text-[14px] font-[700] text-dark-text">Claim your certificate</div>
-            </div>
-            <span className="shrink-0 text-[12px] font-[700] text-teal">Open →</span>
-          </Card>
-        </Link>
-      )}
-
       {/* Today Summary */}
       <Card data-tour="home-today">
         <div className="flex items-center justify-between mb-3">
           <h2 className="text-h3 text-dark-text">Today</h2>
           <Link href="/today" className="text-sm text-navy font-medium flex items-center gap-1">View all<ArrowRightIcon className="w-4 h-4" /></Link>
         </div>
+
+        {/* Tasks — surfaced from the task manager, completable inline */}
+        <div className="mb-3">
+          <div className="mb-2 flex items-center justify-between">
+            <span className="label">My tasks</span>
+            <Link href="/tasks" className="text-[12px] font-[700] text-navy">{tasks.length > 0 ? 'All tasks →' : 'Add tasks →'}</Link>
+          </div>
+          {tasks.length === 0 ? (
+            <Link href="/tasks" className="flex items-center gap-3 rounded-xl border border-dashed border-border bg-bdrbg p-3 text-left transition-colors hover:border-navy/40">
+              <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border-2 border-border text-gray"><PlusIcon className="h-3.5 w-3.5" /></span>
+              <span className="flex-1 text-sm font-medium text-mid-text">Add your first task</span>
+            </Link>
+          ) : (
+            <div className="space-y-2">
+              {tasks.map(t => (
+                <div key={t.id} className="flex items-center gap-3 rounded-xl border border-border bg-bdrbg p-3">
+                  <button onClick={() => completeTask(t.id)} aria-label="Complete task"
+                    className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border-2 border-border transition-colors hover:border-teal hover:bg-teal/10">
+                    <CheckIcon className="h-3 w-3 text-transparent" />
+                  </button>
+                  <span className="flex-1 truncate text-sm font-medium text-dark-text">{t.title}</span>
+                  {t.priority && <StarFilledIcon className="h-4 w-4 shrink-0 text-gold" />}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
         {/* Inline habit completion — tap to knock out the daily core loop here */}
         {openHabits.length > 0 && (
           <div className="mb-3 space-y-2">

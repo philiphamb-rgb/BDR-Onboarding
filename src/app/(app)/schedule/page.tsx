@@ -110,8 +110,10 @@ export default function SchedulePage() {
     if (!userId) return
     // Build from the latest settings so a rapid second tap (or any other
     // settings writer) can't clobber unrelated keys.
+    const d = new Date()
+    const today = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
     let next: Record<string, unknown> = {}
-    setSettings(prev => { next = { ...prev, shift: start }; return next })
+    setSettings(prev => { next = { ...prev, shift: start, shiftConfirmedDate: today }; return next })
     const { error } = await supabase.from('users').update({ settings: next }).eq('id', userId)
     if (!error) toast.success('Shift saved')
   }
