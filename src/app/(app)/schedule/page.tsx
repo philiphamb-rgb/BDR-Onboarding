@@ -14,6 +14,8 @@ import {
 import {
   urgency, urgencyLabel, isActive, isStale, autoPlan, fmtEst, localDate, DEFAULT_TRIAGE,
 } from '@/lib/triageEngine'
+import { monthPaceFraction } from '@/lib/winsEngine'
+import { stageMeta } from '@/lib/partnerChecklist'
 import { askCoach } from '@/lib/coachBus'
 import { Tour } from '@/components/tour'
 import { RHYTHM_TOUR } from '@/lib/tours'
@@ -63,7 +65,8 @@ export default function SchedulePage() {
   const [tasks, setTasks] = useState<any[]>([])      // all open tasks (active + snoozed)
   const [goal, setGoal] = useState<number | null>(null)
   const [dealsThisMonth, setDealsThisMonth] = useState(0)
-  const [stuck, setStuck] = useState(0)
+  const [partners, setPartners] = useState<any[]>([])
+  const [dismissed, setDismissed] = useState<Set<string>>(new Set())
   const [triageBusy, setTriageBusy] = useState(false)
   const [addToBlock, setAddToBlock] = useState<number | null>(null)  // block index awaiting a task
   const [selected, setSelected] = useState<number | null>(null)
@@ -93,9 +96,8 @@ export default function SchedulePage() {
       // Goal + pace + pipeline pressure feed the day-triage summary.
       supabase.from('goals').select('monthly_deal_goal').eq('user_id', user.id).maybeSingle().then(({ data }) => setGoal(data?.monthly_deal_goal ?? null))
       supabase.from('user_progress').select('deals_this_month').eq('user_id', user.id).single().then(({ data }) => setDealsThisMonth(data?.deals_this_month ?? 0))
-      supabase.from('partner_onboarding').select('stage').eq('user_id', user.id).then(({ data }) => {
-        setStuck((data ?? []).filter(p => p.stage === 'proposal_sent' || p.stage === 'contract_signed').length)
-      })
+      supabase.from('partner_onboarding').select('id, partner_name, stage, temperature, updated_at').eq('user_id', user.id)
+        .then(({ data }) => setPartners(data ?? []))
     })
   }, [])
 
@@ -165,7 +167,42 @@ export default function SchedulePage() {
   const slots = blocks.filter(x => ['plan', 'focus', 'admin'].includes(x.b.type)).map(x => ({ index: x.i, type: x.b.type, capacity: x.dur }))
   const capacityMin = slots.reduce((s, x) => s + x.capacity, 0)
   const plannedMin = scheduledToday.reduce((s, t) => s + (t.estimated_minutes || 30), 0)
+  const overbookedMin = Math.max(0, plannedMin - capacityMin)
   const goalGap = goal && goal > 0 ? Math.max(0, goal - dealsThisMonth) : 0
+  const stuck = partners.filter(p => p.stage === 'proposal_sent' || p.stage === 'contract_signed').length
+
+  // ── Suggestions: turn pipeline pressure + goal gap into ready-to-add tasks ───
+  const daysSince = (iso?: string) => iso ? Math.max(0, Math.floor((nowDate.getTime() - new Date(iso).getTime()) / 86400000)) : null
+  const openTitles = tasks.map(t => (t.title || '').toLowerCase())
+  const hasTitle = (needle: string) => openTitles.some(t => t.includes(needle.toLowerCase()))
+  const suggestions = (() => {
+    const out: any[] = []
+    // Oldest stalled partners first — a nudge could close them.
+    const stalled = partners.filter(p => p.stage === 'proposal_sent' || p.stage === 'contract_signed')
+      .sort((a, b) => (a.updated_at || '').localeCompare(b.updated_at || ''))
+    for (const p of stalled.slice(0, 4)) {
+      if (hasTitle(p.partner_name)) continue
+      const d = daysSince(p.updated_at)
+      out.push({ id: `lead:${p.id}`, kind: 'lead', title: `Follow up with ${p.partner_name}`, priority: (d ?? 0) >= 3,
+        reason: `${stageMeta(p.stage).label}${d != null ? ` · ${d}d no movement` : ''} — a nudge could close it.`, estimate: 15, href: `/partners/${p.id}` })
+    }
+    // Behind goal pace → prospecting.
+    if (goal && goal > 0) {
+      const expected = goal * monthPaceFraction(nowDate)
+      if (dealsThisMonth < expected && !hasTitle('prospect')) {
+        const behind = Math.max(1, Math.ceil(expected - dealsThisMonth))
+        out.push({ id: 'goal', kind: 'goal', title: 'Prospect new leads to close the gap', priority: true,
+          reason: `~${behind} behind pace toward ${goal} deals — feed the top of funnel today.`, estimate: 30, href: '/partners' })
+      }
+    }
+    // Warm leads not yet advanced — convert while hot.
+    const warm = partners.filter(p => p.temperature === 'warm' && (p.stage === 'interested' || p.stage === 'new_lead'))
+    if (warm.length && !hasTitle('warm lead')) {
+      out.push({ id: 'warm', kind: 'warm', title: `Advance ${warm.length} warm lead${warm.length > 1 ? 's' : ''}`, priority: false,
+        reason: 'Warm leads convert best — book the next step before they cool.', estimate: 20, href: '/partners' })
+    }
+    return out.filter(s => !dismissed.has(s.id))
+  })()
 
   // Auto-scroll to "now" (or the start of the day) on first paint.
   useEffect(() => {
@@ -249,6 +286,34 @@ export default function SchedulePage() {
       toast.success(n ? `Planned ${n} task${n > 1 ? 's' : ''} into your day` : 'Nothing to plan right now')
     } finally { setTriageBusy(false) }
   }
+  // Create a real task from a suggestion (optionally planning it into the day).
+  const ensureList = async () => {
+    const { data } = await supabase.from('task_lists').select('id').eq('user_id', userId).order('order_index').limit(1)
+    if (data && data[0]) return data[0].id
+    const { data: created } = await supabase.from('task_lists').insert({ user_id: userId, name: 'My Tasks', order_index: 0 }).select('id').single()
+    return created?.id
+  }
+  const createTask = async (title: string, estimate: number, opts: { priority?: boolean; plan?: boolean } = {}) => {
+    if (!userId) return
+    const list_id = await ensureList()
+    const { data } = await supabase.from('tasks')
+      .insert({ user_id: userId, list_id, title, estimated_minutes: estimate, priority: !!opts.priority })
+      .select('id, title, done, priority, due_date, estimated_minutes, created_at, scheduled_day, scheduled_block, snoozed_until').single()
+    if (!data) return
+    setTasks(prev => [data, ...prev])
+    if (opts.plan) {
+      const rem: Record<number, number> = {}
+      slots.forEach(s => { rem[s.index] = s.capacity })
+      scheduledToday.forEach(st => { const k = Number(st.scheduled_block); if (rem[k] != null) rem[k] -= (st.estimated_minutes || 30) })
+      const slot = slots.find(s => rem[s.index] >= estimate) ?? slots[0]
+      if (slot) await patchTask(data.id, { scheduled_day: today, scheduled_block: String(slot.index) })
+      toast.success('Added & planned into your day')
+    } else {
+      toast.success('Task added')
+    }
+  }
+  const dismissSuggestion = (id: string) => setDismissed(prev => new Set(prev).add(id))
+
   const setAgingDays = async (n: number) => {
     let next: any = {}
     setSettings(prev => { next = { ...prev, triage: { ...(prev as any)?.triage, agingDays: n } }; return next })
@@ -340,7 +405,9 @@ export default function SchedulePage() {
         <div className="mb-2 flex items-center gap-2">
           <LightningIcon size={16} className="text-white" />
           <span className="text-[14px] font-[800]">Today’s triage</span>
-          <span className="ml-auto text-[11px] text-white/70 tabular-nums">{plannedMin}m planned · {Math.max(0, capacityMin - plannedMin)}m free</span>
+          <span className={cn('ml-auto rounded-full px-2 py-0.5 text-[11px] font-[700] tabular-nums', overbookedMin > 0 ? 'bg-error/30 text-white' : 'text-white/70')}>
+            {overbookedMin > 0 ? `Overbooked ${overbookedMin}m` : `${plannedMin}m planned · ${Math.max(0, capacityMin - plannedMin)}m free`}
+          </span>
         </div>
         <div className="grid grid-cols-3 gap-2">
           <div className="rounded-xl bg-white/10 px-2.5 py-2">
@@ -376,6 +443,39 @@ export default function SchedulePage() {
           </button>
         </div>
       </div>
+
+      {/* Smart suggestions — the day builds itself from leads + goal + pipeline */}
+      {suggestions.length > 0 && (
+        <div className="rounded-2xl border border-teal/40 bg-teal/[0.05] p-3">
+          <div className="mb-2 flex items-center gap-2">
+            <LightningIcon size={15} className="text-teal" />
+            <span className="text-[13px] font-[800] text-dark-text">Suggested for today</span>
+            <span className="text-[11px] text-gray">· from your pipeline & goal</span>
+            {suggestions.length > 1 && (
+              <button onClick={() => suggestions.forEach(s => createTask(s.title, s.estimate, { priority: s.priority, plan: true }))}
+                className="ml-auto rounded-md bg-teal px-2 py-1 text-[11px] font-[800] text-white hover:bg-teal-dark">Add all & plan</button>
+            )}
+          </div>
+          <div className="space-y-1.5">
+            {suggestions.map(s => (
+              <div key={s.id} className="flex items-center gap-2 rounded-lg bg-card px-2.5 py-2 shadow-sm">
+                <span className={cn('flex h-6 w-6 shrink-0 items-center justify-center rounded-lg',
+                  s.kind === 'goal' ? 'bg-gold/15 text-gold' : s.kind === 'warm' ? 'bg-orange-100 text-orange-600' : 'bg-navy/10 text-navy')}>
+                  {s.kind === 'goal' ? <TargetIcon size={13} /> : s.kind === 'warm' ? <PhoneIcon size={13} /> : <ArrowRightIcon size={13} />}
+                </span>
+                <div className="min-w-0 flex-1">
+                  <div className="truncate text-[13px] font-[700] text-dark-text">{s.title}</div>
+                  <div className="truncate text-[11px] text-gray">{s.reason}</div>
+                </div>
+                <span className="shrink-0 text-[11px] font-[600] text-gray tabular-nums">{fmtEst(s.estimate)}</span>
+                <button onClick={() => createTask(s.title, s.estimate, { priority: s.priority, plan: true })}
+                  className="shrink-0 rounded-md bg-teal/10 px-2 py-1 text-[11px] font-[800] text-teal hover:bg-teal/15">Add & plan</button>
+                <button onClick={() => dismissSuggestion(s.id)} aria-label="Dismiss suggestion" className="shrink-0 px-1 text-[15px] leading-none text-gray hover:text-error">×</button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Calendar day view */}
       <div ref={scrollRef} data-tour="rhythm-timeline"
@@ -430,34 +530,32 @@ export default function SchedulePage() {
                     backgroundColor: dragging ? `${st.color}26` : `${st.color}14`,
                     borderLeftColor: st.color,
                   }}>
-                  {tiny ? (
-                    <div className="flex items-center gap-1.5 overflow-hidden">
-                      <span className={cn('truncate text-[11px] font-[700] leading-none', done ? 'text-gray line-through' : 'text-dark-text')}>{b.label}</span>
-                      <span className="ml-auto shrink-0 text-[10px] font-[600] tabular-nums text-gray">{fmtClock(start)}</span>
-                    </div>
-                  ) : (
-                    <div className="flex items-start gap-1.5">
-                      <button onPointerDown={e => e.stopPropagation()} onClick={e => { e.stopPropagation(); toggleDone(i) }}
-                        aria-label={done ? 'Mark not done' : 'Mark done'}
-                        className={cn('mt-0.5 flex h-3.5 w-3.5 shrink-0 items-center justify-center rounded-full border-2 transition-all',
-                          done ? 'border-success bg-success text-white' : 'bg-card text-transparent')}
-                        style={!done ? { borderColor: st.color } : undefined}>
-                        <CheckIcon size={9} />
-                      </button>
-                      <div className="min-w-0 flex-1">
-                        <div className={cn('truncate text-[12px] font-[700] leading-tight', done ? 'text-gray line-through' : 'text-dark-text')}>{b.label}</div>
-                        {!compact && (
-                          <div className="mt-0.5 flex flex-wrap items-center gap-x-1.5 text-[10.5px] text-mid-text">
-                            <span className="tabular-nums">{fmtClock(start)}–{fmtClock(start + dur)}</span>
-                            {edited && !dragging && <span className="text-teal">· edited</span>}
-                            {isCurrent && !done && <span className="rounded-full bg-teal px-1.5 text-[9px] font-[800] text-white">NOW</span>}
-                            {bTasks.length > 0 && <span className="text-gray">· {bTasks.filter(t => t.done).length}/{bTasks.length} tasks</span>}
-                          </div>
-                        )}
-                      </div>
-                      {ncols === 1 && <span className="shrink-0 rounded-full px-1.5 py-0.5 text-[9px] font-[800]" style={{ backgroundColor: `${st.color}26`, color: st.color }}>{st.label}</span>}
-                    </div>
+                  {/* Completion check — proportionate, anchored top-left corner */}
+                  {!tiny && (
+                    <button onPointerDown={e => e.stopPropagation()} onClick={e => { e.stopPropagation(); toggleDone(i) }}
+                      aria-label={done ? 'Mark not done' : 'Mark done'}
+                      className={cn('absolute left-1.5 top-1.5 z-10 flex h-4 w-4 items-center justify-center rounded-full border-[1.5px] transition-all',
+                        done ? 'border-success bg-success text-white' : 'bg-card text-transparent')}
+                      style={!done ? { borderColor: st.color } : undefined}>
+                      <CheckIcon size={10} />
+                    </button>
                   )}
+                  {/* Type chip — top-right corner when the block owns its row */}
+                  {!tiny && ncols === 1 && (
+                    <span className="absolute right-1.5 top-1.5 z-10 rounded-full px-1.5 py-0.5 text-[9px] font-[800]" style={{ backgroundColor: `${st.color}26`, color: st.color }}>{st.label}</span>
+                  )}
+                  {/* Centered verbiage */}
+                  <div className={cn('flex h-full flex-col items-center justify-center overflow-hidden text-center', tiny ? 'px-1' : 'px-6')}>
+                    <span className={cn('w-full truncate font-[700] leading-tight', tiny ? 'text-[11px]' : 'text-[12px]', done ? 'text-gray line-through' : 'text-dark-text')}>{b.label}</span>
+                    {!compact && (
+                      <div className="mt-0.5 flex max-w-full flex-wrap items-center justify-center gap-x-1.5 text-[10.5px] text-mid-text">
+                        <span className="tabular-nums">{fmtClock(start)}–{fmtClock(start + dur)}</span>
+                        {edited && !dragging && <span className="text-teal">· edited</span>}
+                        {isCurrent && !done && <span className="rounded-full bg-teal px-1.5 text-[9px] font-[800] text-white">NOW</span>}
+                        {bTasks.length > 0 && <span className="text-gray">· {bTasks.filter(t => t.done).length}/{bTasks.length} tasks</span>}
+                      </div>
+                    )}
+                  </div>
                   {/* Resize handle */}
                   <div onPointerDown={e => startDrag(e, i, 'resize')}
                     className="absolute inset-x-0 bottom-0 flex h-2.5 cursor-ns-resize items-end justify-center"
@@ -516,7 +614,7 @@ export default function SchedulePage() {
               return (
                 <div key={t.id} className="flex items-center gap-2 rounded-lg border border-border bg-bdrbg px-2.5 py-2">
                   <button onClick={() => toggleTaskDone(t.id, true)} aria-label="Complete task"
-                    className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full border-2 border-border text-transparent transition-colors hover:border-teal hover:bg-teal/10">
+                    className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full border-[1.5px] border-border text-transparent transition-colors hover:border-teal hover:bg-teal/10">
                     <CheckIcon size={10} />
                   </button>
                   <span className={cn('shrink-0 rounded-full px-1.5 py-0.5 text-[9px] font-[800]',
@@ -603,7 +701,7 @@ export default function SchedulePage() {
                 {(blockTasks[String(sel.i)] ?? []).map(tk => (
                   <div key={tk.id} className="flex items-center gap-2 rounded-md bg-bdrbg px-2.5 py-2">
                     <button onClick={() => toggleTaskDone(tk.id, !tk.done)} aria-label={tk.done ? 'Mark task incomplete' : 'Complete task'}
-                      className={cn('flex h-4 w-4 shrink-0 items-center justify-center rounded-full border-2', tk.done ? 'border-success bg-success text-white' : 'border-border text-transparent')}>
+                      className={cn('flex h-4 w-4 shrink-0 items-center justify-center rounded-full border-[1.5px]', tk.done ? 'border-success bg-success text-white' : 'border-border text-transparent')}>
                       <CheckIcon size={10} />
                     </button>
                     <span className={cn('flex-1 text-[13px]', tk.done ? 'text-gray line-through' : 'text-mid-text')}>{tk.title}</span>
