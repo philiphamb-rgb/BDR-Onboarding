@@ -15,7 +15,7 @@ import {
   urgency, urgencyLabel, isActive, isStale, autoPlan, fmtEst, localDate, DEFAULT_TRIAGE, categorize,
   pickRolloverBlock, MAX_DEFERRALS, AUTO_PRIORITY_DEFERRALS,
 } from '@/lib/triageEngine'
-import { asLearning, recordDeferral, learnedBonus, learnedTip, EMPTY_LEARNING } from '@/lib/triageLearning'
+import { asLearning, recordDeferral, learnedBonus, learnedTip } from '@/lib/triageLearning'
 import { monthPaceFraction } from '@/lib/winsEngine'
 import { stageMeta } from '@/lib/partnerChecklist'
 import { askCoach } from '@/lib/coachBus'
@@ -78,8 +78,9 @@ export default function SchedulePage() {
   const [triageBusy, setTriageBusy] = useState(false)
   const [newTaskTitle, setNewTaskTitle] = useState('')
   const [dragTaskId, setDragTaskId] = useState<string | null>(null)   // task being dragged from the list
-  const [learning, setLearning] = useState(EMPTY_LEARNING)            // adaptive deferral memory
   const [triageBlk, setTriageBlk] = useState<{ blk: any; tasks: any[] } | null>(null)  // end-of-block triage
+  const settingsRef = useRef<any>({})       // always-latest settings, to avoid stale-closure clobbering
+  const pillDragRef = useRef(false)          // suppress the click that can follow a cancelled pill drag
   const [dropKey, setDropKey] = useState<string | null>(null)         // block hovered as a drop target
   const [selected, setSelected] = useState<string | null>(null)       // selected block key
   const [preview, setPreview] = useState<{ key: string; start: number; dur: number } | null>(null)
@@ -95,8 +96,8 @@ export default function SchedulePage() {
       setUserId(user.id)
       supabase.from('users').select('settings').eq('id', user.id).single().then(({ data }) => {
         const s = data?.settings ?? {}
+        settingsRef.current = s
         setSettings(s)
-        setLearning(asLearning((s as any).triageLearning))
         if (s.shift && SHIFT_OPTIONS.some(o => o.start === s.shift)) setShift(s.shift)
         setLoading(false)
       })
@@ -125,6 +126,16 @@ export default function SchedulePage() {
       .eq('user_id', uid).is('parent_id', null)
       .or(`done.eq.false,scheduled_day.eq.${today}`)
     setTasks(data ?? [])
+  }
+
+  useEffect(() => { settingsRef.current = settings }, [settings])
+  // One race-safe path for every settings write — always reads the latest
+  // settings (ref), so concurrent writes (shift, aging, learning) never clobber.
+  const persistSettings = (mut: (s: any) => any) => {
+    const next = mut(settingsRef.current || {})
+    settingsRef.current = next
+    setSettings(next)
+    if (userId) supabase.from('users').update({ settings: next }).eq('id', userId).then(() => {})
   }
 
   useEffect(() => {
@@ -199,6 +210,7 @@ export default function SchedulePage() {
   // proactively suggests marking these complete.
   const isWorkBlock = (t: string) => ['plan', 'focus', 'admin'].includes(t)
   const needsCheck = (blk: any) => !blk.done && isWorkBlock(blk.type) && (blk.start + blk.dur) <= now
+  const learning = asLearning((settings as any)?.triageLearning)   // adaptive deferral memory (derived)
   const endedUndone = blocks.filter(needsCheck).sort((a, b) => a.start - b.start)
   const endedLeftoverTasks = endedUndone.flatMap(b => (blockTasks[b.key] ?? []).filter((t: any) => !t.done))
   const markEndedBlocksDone = async () => { for (const b of endedUndone) await saveBlock(b, { done: true }) }
@@ -351,19 +363,17 @@ export default function SchedulePage() {
   }
   // ── End-of-block triage ──────────────────────────────────────────────────────
   const addDays = (n: number) => { const d = new Date(); d.setDate(d.getDate() + n); return localDate(d) }
-  const saveLearning = async (L: typeof learning) => {
-    const next = { ...settings, triageLearning: L }
-    setSettings(next)
-    if (userId) await supabase.from('users').update({ settings: next }).eq('id', userId)
-  }
   // Record deferrals grouped by the block type each task came from, so the
   // adaptive engine learns which kind of work the user chronically rolls over.
+  // Race-safe: derives from the latest persisted learning, never a stale closure.
   const learnBySource = (items: any[]) => {
     const byType: Record<string, number> = {}
     items.forEach(t => { const ty = blockByKey(String(t.scheduled_block))?.type ?? 'other'; byType[ty] = (byType[ty] || 0) + 1 })
-    let L2 = learning
-    for (const [ty, n] of Object.entries(byType)) L2 = recordDeferral(L2, ty === 'other' ? null : ty, n, new Date().toISOString())
-    setLearning(L2); saveLearning(L2)
+    persistSettings(prev => {
+      let L2 = asLearning(prev?.triageLearning)
+      for (const [ty, n] of Object.entries(byType)) L2 = recordDeferral(L2, ty === 'other' ? null : ty, n, new Date().toISOString())
+      return { ...prev, triageLearning: L2 }
+    })
   }
   // Bulk-complete a set of tasks.
   const completeTasks = async (items: any[]) => {
@@ -383,28 +393,30 @@ export default function SchedulePage() {
     let later = 0, deferred = 0
     const updates = items.map(t => {
       const targetKey = pickRolloverBlock(t, placement, used, now, String(t.scheduled_block))
-      const newDef = (t.deferral_count || 0) + 1
+      const newDef = Math.min(MAX_DEFERRALS, (t.deferral_count || 0) + 1)   // counter is capped
       const patch: any = { deferral_count: newDef, last_deferred_at: new Date().toISOString(), priority: t.priority || newDef >= AUTO_PRIORITY_DEFERRALS }
       if (targetKey) { used[targetKey] = (used[targetKey] || 0) + (t.estimated_minutes || 30); patch.scheduled_day = today; patch.scheduled_block = targetKey; later++ }
       else { patch.scheduled_day = tomorrow; patch.scheduled_block = null; deferred++ }
       return { id: t.id, patch }
     })
     setTasks(prev => prev.map(t => { const u = updates.find(x => x.id === t.id); return u ? { ...t, ...u.patch } : t }))
-    await Promise.all(updates.map(u => supabase.from('tasks').update({ ...u.patch, updated_at: new Date().toISOString() }).eq('id', u.id)))
     learnBySource(items)
     toast.success(later && deferred ? `Rolled ${later} later · ${deferred} to tomorrow` : later ? `Rolled ${later} into later block${later > 1 ? 's' : ''}` : `Deferred ${deferred} to tomorrow`)
+    try { await Promise.all(updates.map(u => supabase.from('tasks').update({ ...u.patch, updated_at: new Date().toISOString() }).eq('id', u.id))) }
+    catch { toast.error('Could not save — refreshing'); if (userId) loadTasks(userId) }
   }
   const deferToTomorrow = async (items: any[]) => {
     if (!items.length) return
     const tomorrow = addDays(1)
     const updates = items.map(t => {
-      const newDef = (t.deferral_count || 0) + 1
+      const newDef = Math.min(MAX_DEFERRALS, (t.deferral_count || 0) + 1)
       return { id: t.id, patch: { scheduled_day: tomorrow, scheduled_block: null, deferral_count: newDef, last_deferred_at: new Date().toISOString(), priority: t.priority || newDef >= AUTO_PRIORITY_DEFERRALS } }
     })
     setTasks(prev => prev.map(t => { const u = updates.find(x => x.id === t.id); return u ? { ...t, ...u.patch } : t }))
-    await Promise.all(updates.map(u => supabase.from('tasks').update({ ...u.patch, updated_at: new Date().toISOString() }).eq('id', u.id)))
     learnBySource(items)
     toast.success(`Deferred ${items.length} to tomorrow`)
+    try { await Promise.all(updates.map(u => supabase.from('tasks').update({ ...u.patch, updated_at: new Date().toISOString() }).eq('id', u.id))) }
+    catch { toast.error('Could not save — refreshing'); if (userId) loadTasks(userId) }
   }
   // Marking a block done: if it still holds incomplete tasks, intercept with the
   // triage micro-dialogue instead of silently completing the block.
@@ -418,6 +430,23 @@ export default function SchedulePage() {
     const blk = triageBlk?.blk
     Promise.resolve(act()).then(() => { if (blk && !blk.done) toggleDone(blk) })
     setTriageBlk(null)
+  }
+  // Bulk action on the non-stuck tasks. If stuck tasks remain (>= MAX_DEFERRALS),
+  // keep the sheet open showing only those — they need an explicit decision and
+  // are NOT silently rolled again (enforces "nothing defers forever").
+  const triageAct = (normal: any[], stuck: any[], act: (items: any[]) => Promise<void> | void) => {
+    if (stuck.length) { if (normal.length) act(normal); setTriageBlk(cur => (cur ? { ...cur, tasks: stuck } : cur)) }
+    else finalizeTriage(() => act(normal))
+  }
+  // Resolve a single stuck task, then drop it from the sheet (finalize if last).
+  const resolveStuck = async (t: any, action: 'do' | 'remove') => {
+    if (action === 'do') await completeTasks([t]); else await removeTask(t.id)
+    setTriageBlk(cur => {
+      if (!cur) return cur
+      const remaining = cur.tasks.filter((x: any) => x.id !== t.id)
+      if (!remaining.length) { if (!cur.blk.done) toggleDone(cur.blk); return null }
+      return { ...cur, tasks: remaining }
+    })
   }
 
   const ensureList = async () => {
@@ -751,9 +780,9 @@ export default function SchedulePage() {
                         {bTasks.slice(0, maxPills).map(tk => (
                           <div key={tk.id} draggable
                             onPointerDown={e => e.stopPropagation()}
-                            onDragStart={e => { e.stopPropagation(); e.dataTransfer.setData('text/plain', tk.id); setDragTaskId(tk.id) }}
-                            onDragEnd={() => { setDragTaskId(null); setDropKey(null) }}
-                            onClick={e => { e.stopPropagation(); toggleTaskDone(tk.id, !tk.done) }}
+                            onDragStart={e => { e.stopPropagation(); pillDragRef.current = true; e.dataTransfer.setData('text/plain', tk.id); setDragTaskId(tk.id) }}
+                            onDragEnd={() => { setDragTaskId(null); setDropKey(null); setTimeout(() => { pillDragRef.current = false }, 60) }}
+                            onClick={e => { e.stopPropagation(); if (pillDragRef.current) return; toggleTaskDone(tk.id, !tk.done) }}
                             className="flex cursor-grab items-center gap-1 rounded bg-white/70 px-1.5 py-0.5 text-left active:cursor-grabbing">
                             <span className={cn('flex h-3.5 w-3.5 shrink-0 items-center justify-center rounded-[3px] border', tk.done ? 'border-success bg-success text-white' : 'border-gray/50 text-transparent')}><CheckIcon size={9} /></span>
                             <span className={cn('truncate text-[10px] font-[600]', tk.done ? 'text-gray line-through' : 'text-dark-text')}>{tk.title}</span>
@@ -863,7 +892,7 @@ export default function SchedulePage() {
       {/* Block detail sheet */}
       <Sheet open={selected != null} onClose={() => setSelected(null)} title={sel?.label}>
         {sel && selStyle && (
-          <div className="space-y-4">
+          <div key={sel.key} className="space-y-4">
             {/* Custom blocks: editable label + type */}
             {sel.custom ? (
               <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
@@ -972,7 +1001,9 @@ export default function SchedulePage() {
           const tc = BLOCK_STYLE[triageBlk.blk.type] ?? BLOCK_STYLE.focus
           const n = triageBlk.tasks.length
           const tip = learnedTip(learning)
-          const stuck = triageBlk.tasks.some((t: any) => (t.deferral_count ?? 0) >= MAX_DEFERRALS)
+          const stuckTasks = triageBlk.tasks.filter((t: any) => (t.deferral_count ?? 0) >= MAX_DEFERRALS)
+          const normal = triageBlk.tasks.filter((t: any) => (t.deferral_count ?? 0) < MAX_DEFERRALS)
+          const hasStuck = stuckTasks.length > 0
           return (
             <div className="space-y-4">
               <div className="flex items-center gap-2">
@@ -981,35 +1012,50 @@ export default function SchedulePage() {
               </div>
               <p className="text-[13px] text-mid-text">{n} task{n > 1 ? 's' : ''} {n > 1 ? 'are' : 'is'} still open. How do you want to handle {n > 1 ? 'them' : 'it'}?</p>
 
-              <div className="space-y-1.5">
-                {triageBlk.tasks.map((t: any) => (
-                  <div key={t.id} className="flex items-center gap-2 rounded-lg border border-border bg-bdrbg px-2.5 py-2">
-                    <span className="min-w-0 flex-1 truncate text-[13px] text-dark-text">{t.title}{t.priority && <StarFilledIcon size={12} className="ml-1 inline text-gold" />}</span>
-                    {(t.deferral_count ?? 0) >= MAX_DEFERRALS
-                      ? <span className="shrink-0 rounded bg-error/10 px-1.5 text-[10px] font-[800] text-error">stuck · {t.deferral_count}×</span>
-                      : (t.deferral_count ?? 0) > 0 && <span className="shrink-0 rounded bg-gold/20 px-1.5 text-[10px] font-[800] text-[#A06C00]">↻{t.deferral_count}</span>}
-                    <span className="shrink-0 text-[11px] font-[600] text-gray tabular-nums">{fmtEst(t.estimated_minutes || 30)}</span>
-                  </div>
-                ))}
-              </div>
-              {stuck && <p className="text-[11px] text-error">Rolled over {MAX_DEFERRALS}+ times — best to do {n > 1 ? 'these' : 'this'} now or remove {n > 1 ? 'them' : 'it'}.</p>}
+              {/* Stuck tasks (rolled over too many times) — explicit decision required */}
+              {hasStuck && (
+                <div className="space-y-1.5 rounded-xl border border-error/30 bg-error/[0.04] p-2.5">
+                  <p className="text-[11px] font-[700] text-error">Rolled over {MAX_DEFERRALS}+ times — these won’t auto-roll again. Do {stuckTasks.length > 1 ? 'them' : 'it'} now or drop {stuckTasks.length > 1 ? 'them' : 'it'}:</p>
+                  {stuckTasks.map((t: any) => (
+                    <div key={t.id} className="flex items-center gap-2">
+                      <span className="min-w-0 flex-1 truncate text-[13px] text-dark-text">{t.title}</span>
+                      <button onClick={() => resolveStuck(t, 'do')} className="shrink-0 rounded-md bg-success/10 px-2 py-1 text-[11px] font-[800] text-success">Do now</button>
+                      <button onClick={() => resolveStuck(t, 'remove')} className="shrink-0 rounded-md bg-bdrbg px-2 py-1 text-[11px] font-[800] text-gray hover:text-error">Remove</button>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {normal.length > 0 && (
+                <div className="space-y-1.5">
+                  {normal.map((t: any) => (
+                    <div key={t.id} className="flex items-center gap-2 rounded-lg border border-border bg-bdrbg px-2.5 py-2">
+                      <span className="min-w-0 flex-1 truncate text-[13px] text-dark-text">{t.title}{t.priority && <StarFilledIcon size={12} className="ml-1 inline text-gold" />}</span>
+                      {(t.deferral_count ?? 0) > 0 && <span className="shrink-0 rounded bg-gold/20 px-1.5 text-[10px] font-[800] text-[#A06C00]">↻{t.deferral_count}</span>}
+                      <span className="shrink-0 text-[11px] font-[600] text-gray tabular-nums">{fmtEst(t.estimated_minutes || 30)}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
 
               <div className="space-y-2">
-                <button onClick={() => finalizeTriage(() => rollOverTasks(triageBlk.tasks))}
-                  className="flex w-full items-center gap-2 rounded-xl bg-gradient-hero px-3 py-3 text-left text-white shadow-card transition-transform active:scale-[0.99]">
-                  <LightningIcon size={18} className="shrink-0" />
-                  <span className="min-w-0 flex-1">
-                    <span className="block text-[14px] font-[800]">Auto-triage — roll them forward</span>
-                    <span className="block text-[11px] text-white/80">Into the next fitting block today, or tomorrow if the day’s full</span>
-                  </span>
-                </button>
+                {normal.length > 0 && (
+                  <button onClick={() => triageAct(normal, stuckTasks, rollOverTasks)}
+                    className="flex w-full items-center gap-2 rounded-xl bg-gradient-hero px-3 py-3 text-left text-white shadow-card transition-transform active:scale-[0.99]">
+                    <LightningIcon size={18} className="shrink-0" />
+                    <span className="min-w-0 flex-1">
+                      <span className="block text-[14px] font-[800]">{hasStuck ? `Roll the other ${normal.length} forward` : 'Auto-triage — roll them forward'}</span>
+                      <span className="block text-[11px] text-white/80">Into the next fitting block today, or tomorrow if the day’s full</span>
+                    </span>
+                  </button>
+                )}
                 <div className="grid grid-cols-2 gap-2">
                   <button onClick={() => finalizeTriage(() => completeTasks(triageBlk.tasks))}
                     className="flex items-center justify-center gap-1.5 rounded-xl border border-success/30 bg-success/10 py-2.5 text-[13px] font-[800] text-success">
                     <CheckIcon size={15} /> Mark all done
                   </button>
-                  <button onClick={() => finalizeTriage(() => deferToTomorrow(triageBlk.tasks))}
-                    className="flex items-center justify-center gap-1.5 rounded-xl border border-border bg-bdrbg py-2.5 text-[13px] font-[800] text-mid-text hover:bg-border/40">
+                  <button onClick={() => triageAct(normal, stuckTasks, deferToTomorrow)} disabled={normal.length === 0}
+                    className="flex items-center justify-center gap-1.5 rounded-xl border border-border bg-bdrbg py-2.5 text-[13px] font-[800] text-mid-text hover:bg-border/40 disabled:opacity-40">
                     Defer to tomorrow
                   </button>
                 </div>
