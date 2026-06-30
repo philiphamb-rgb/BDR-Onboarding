@@ -607,7 +607,7 @@ export default function SchedulePage() {
                     borderLeftColor: st.color,
                   }}>
                   <div className={cn('flex h-full flex-col', showPills ? 'justify-start pt-1' : 'justify-center')}>
-                    <div className="flex items-center justify-center gap-1.5">
+                    <div className="flex items-center justify-start gap-1.5">
                       {!tiny && (
                         <button onPointerDown={e => e.stopPropagation()} onClick={e => { e.stopPropagation(); toggleDone(blk) }}
                           aria-label={done ? 'Mark not done' : 'Mark done'}
@@ -617,13 +617,13 @@ export default function SchedulePage() {
                           <CheckIcon size={10} />
                         </button>
                       )}
-                      <span className={cn('truncate text-center font-[700] leading-tight', tiny ? 'text-[11px]' : 'text-[12px]', done ? 'text-gray line-through' : 'text-dark-text')}>{blk.label}</span>
+                      <span className={cn('truncate text-left font-[700] leading-tight', tiny ? 'text-[11px]' : 'text-[12px]', done ? 'text-gray line-through' : 'text-dark-text')}>{blk.label}</span>
                       {!tiny && ncols === 1 && (
                         <span className="shrink-0 rounded-full px-1.5 py-0.5 text-[9px] font-[800] leading-none" style={{ backgroundColor: `${st.color}26`, color: st.color }}>{st.label}</span>
                       )}
                     </div>
                     {!tiny && !compact && (
-                      <div className="mt-0.5 flex max-w-full flex-wrap items-center justify-center gap-x-1.5 text-[10.5px] text-mid-text">
+                      <div className="mt-0.5 flex max-w-full flex-wrap items-center justify-start gap-x-1.5 text-[10.5px] text-mid-text">
                         <span className="tabular-nums">{fmtClock(start)}–{fmtClock(start + dur)}</span>
                         {blk.edited && !dragging && <span className="text-teal">· edited</span>}
                         {isCurrent && !done && <span className="rounded-full bg-teal px-1.5 text-[9px] font-[800] text-white">NOW</span>}
