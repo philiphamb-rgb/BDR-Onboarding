@@ -545,47 +545,46 @@ export default function SchedulePage() {
                     backgroundColor: dragging ? `${st.color}26` : `${st.color}14`,
                     borderLeftColor: st.color,
                   }}>
-                  {/* Completion check — proportionate, anchored top-left corner */}
-                  {!tiny && (
-                    <button onPointerDown={e => e.stopPropagation()} onClick={e => { e.stopPropagation(); toggleDone(i) }}
-                      aria-label={done ? 'Mark not done' : 'Mark done'}
-                      className={cn('absolute left-1.5 top-1.5 z-10 flex h-4 w-4 items-center justify-center rounded-full border-[1.5px] transition-all',
-                        done ? 'border-success bg-success text-white' : 'bg-card text-transparent')}
-                      style={!done ? { borderColor: st.color } : undefined}>
-                      <CheckIcon size={10} />
-                    </button>
-                  )}
-                  {/* Type chip — top-right corner when the block owns its row */}
-                  {!tiny && ncols === 1 && (
-                    <span className="absolute right-1.5 top-1.5 z-10 rounded-full px-1.5 py-0.5 text-[9px] font-[800]" style={{ backgroundColor: `${st.color}26`, color: st.color }}>{st.label}</span>
-                  )}
-                  {/* Centered verbiage + (when there's room) the block's tasks */}
+                  {/* Inner content — one vertically-centered, aligned row: check · label · tag */}
                   {(() => {
-                    const showPills = !compact && bTasks.length > 0 && height >= 76
+                    const showPills = !tiny && !compact && bTasks.length > 0 && height >= 80
+                    const maxPills = Math.max(1, Math.floor((height - 46) / 19))
                     return (
-                      <div className={cn('flex h-full flex-col overflow-hidden', showPills ? 'justify-start pt-0.5' : 'justify-center', tiny ? 'px-1' : 'px-6')}>
-                        <div className="text-center">
-                          <span className={cn('block w-full truncate font-[700] leading-tight', tiny ? 'text-[11px]' : 'text-[12px]', done ? 'text-gray line-through' : 'text-dark-text')}>{b.label}</span>
-                          {!compact && (
-                            <div className="mt-0.5 flex max-w-full flex-wrap items-center justify-center gap-x-1.5 text-[10.5px] text-mid-text">
-                              <span className="tabular-nums">{fmtClock(start)}–{fmtClock(start + dur)}</span>
-                              {edited && !dragging && <span className="text-teal">· edited</span>}
-                              {isCurrent && !done && <span className="rounded-full bg-teal px-1.5 text-[9px] font-[800] text-white">NOW</span>}
-                              {bTasks.length > 0 && !showPills && <span className="text-gray">· {bTasks.filter(t => t.done).length}/{bTasks.length} tasks</span>}
-                            </div>
+                      <div className={cn('flex h-full flex-col px-1.5', showPills ? 'justify-start pt-1' : 'justify-center')}>
+                        <div className="flex items-center justify-center gap-1.5">
+                          {!tiny && (
+                            <button onPointerDown={e => e.stopPropagation()} onClick={e => { e.stopPropagation(); toggleDone(i) }}
+                              aria-label={done ? 'Mark not done' : 'Mark done'}
+                              className={cn('flex h-4 w-4 shrink-0 items-center justify-center rounded-full border-[1.5px] transition-all',
+                                done ? 'border-success bg-success text-white' : 'bg-card text-transparent')}
+                              style={!done ? { borderColor: st.color } : undefined}>
+                              <CheckIcon size={10} />
+                            </button>
+                          )}
+                          <span className={cn('truncate text-center font-[700] leading-tight', tiny ? 'text-[11px]' : 'text-[12px]', done ? 'text-gray line-through' : 'text-dark-text')}>{b.label}</span>
+                          {!tiny && ncols === 1 && (
+                            <span className="shrink-0 rounded-full px-1.5 py-0.5 text-[9px] font-[800] leading-none" style={{ backgroundColor: `${st.color}26`, color: st.color }}>{st.label}</span>
                           )}
                         </div>
+                        {!tiny && !compact && (
+                          <div className="mt-0.5 flex max-w-full flex-wrap items-center justify-center gap-x-1.5 text-[10.5px] text-mid-text">
+                            <span className="tabular-nums">{fmtClock(start)}–{fmtClock(start + dur)}</span>
+                            {edited && !dragging && <span className="text-teal">· edited</span>}
+                            {isCurrent && !done && <span className="rounded-full bg-teal px-1.5 text-[9px] font-[800] text-white">NOW</span>}
+                            {bTasks.length > 0 && !showPills && <span className="text-gray">· {bTasks.filter(t => t.done).length}/{bTasks.length} tasks</span>}
+                          </div>
+                        )}
                         {showPills && (
                           <div className="mt-1 space-y-0.5 overflow-hidden">
-                            {bTasks.slice(0, Math.max(1, Math.floor((height - 44) / 20))).map(tk => (
+                            {bTasks.slice(0, maxPills).map(tk => (
                               <div key={tk.id} onPointerDown={e => e.stopPropagation()} onClick={e => { e.stopPropagation(); toggleTaskDone(tk.id, !tk.done) }}
                                 className="flex items-center gap-1 rounded bg-white/70 px-1.5 py-0.5 text-left">
                                 <span className={cn('flex h-3 w-3 shrink-0 items-center justify-center rounded-full border', tk.done ? 'border-success bg-success text-white' : 'border-gray/50 text-transparent')}><CheckIcon size={8} /></span>
                                 <span className={cn('truncate text-[10px] font-[600]', tk.done ? 'text-gray line-through' : 'text-dark-text')}>{tk.title}</span>
                               </div>
                             ))}
-                            {bTasks.length > Math.max(1, Math.floor((height - 44) / 20)) && (
-                              <div className="text-center text-[9px] font-[700] text-gray">+{bTasks.length - Math.max(1, Math.floor((height - 44) / 20))} more</div>
+                            {bTasks.length > maxPills && (
+                              <div className="text-center text-[9px] font-[700] text-gray">+{bTasks.length - maxPills} more</div>
                             )}
                           </div>
                         )}
