@@ -8,6 +8,7 @@ import { PageHeader } from '@/components/manager'
 import { CheckIcon, PlusIcon, TrashIcon, StarFilledIcon, ClockIcon, ChevronRightIcon, CalendarIcon } from '@/components/icons'
 import { cn } from '@/lib/utils'
 import { OPTIMIZED_DAY } from '@/lib/schedule'
+import { urgency, urgencyLabel } from '@/lib/triageEngine'
 
 export default function TasksPage() {
   const supabase = createClient()
@@ -141,6 +142,7 @@ export default function TasksPage() {
                 <button onClick={() => setExpanded(isOpen ? null : t.id)} className="min-w-0 flex-1 text-left">
                   <div className={cn('text-[14px] font-[600]', t.done ? 'text-gray line-through' : 'text-dark-text')}>{t.title}</div>
                   <div className="mt-0.5 flex flex-wrap items-center gap-2 text-[11px] text-gray">
+                    {!t.done && (() => { const u = urgencyLabel(urgency(t, new Date())); return (u.tone === 'high') ? <span className={cn('rounded-full px-1.5 py-0.5 text-[9px] font-[800]', urgency(t, new Date()) >= 150 ? 'bg-error/10 text-error' : 'bg-gold/15 text-[#A06C00]')}>{u.label}</span> : null })()}
                     <span className="inline-flex items-center gap-1"><ClockIcon size={11} />{(t.estimated_minutes ?? 30) >= 60 ? `${(t.estimated_minutes ?? 30) / 60}h` : `${t.estimated_minutes ?? 30}m`}</span>
                     {t.due_date && <span className={cn('inline-flex items-center gap-1', t.due_date < today && !t.done && 'text-error font-[700]')}><CalendarIcon size={11} />{t.due_date}</span>}
                     {subs.length > 0 && <span>{subsDone}/{subs.length} subtasks</span>}
