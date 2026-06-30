@@ -6,20 +6,47 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import { useProgress, useHabits } from '@/lib/hooks/useProgress'
 import { Card, Button, ProgressBar, Skeleton } from '@/components/ui'
-import { CheckIcon, FlameIcon, XpIcon, PhoneIcon, TargetIcon, HandshakeIcon, ClockIcon } from '@/components/icons'
+import { CheckIcon, FlameIcon, XpIcon, PhoneIcon, TargetIcon, HandshakeIcon, ClockIcon, CoinIcon, ArrowRightIcon } from '@/components/icons'
 import { cn, formatXP, formatDateShort } from '@/lib/utils'
 import { toast } from '@/components/ui'
+import { computePace } from '@/lib/goals'
 
 export default function TodayPage() {
   const supabase = createClient()
   const [userId, setUserId] = useState<string>()
   const [completing, setCompleting] = useState<string | null>(null)
+  const [goalPace, setGoalPace] = useState<{ deals: number; conversations: number; hasCloseRate: boolean } | null>(null)
   const { habits, loading: habitsLoading, refresh: refreshHabits } = useHabits(userId)
   const { progress, refresh: refreshProgress } = useProgress(userId)
 
   useEffect(() => {
-    supabase.auth.getUser().then(({ data: { user } }) => { if (user) setUserId(user.id) })
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (!user) return
+      setUserId(user.id)
+      fetchGoalPace(user.id)
+    })
   }, [])
+
+  // Today's required activity to stay on pace toward the monthly commission goal.
+  const fetchGoalPace = async (uid: string) => {
+    const now = new Date()
+    const first = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-01`
+    const [{ data: g }, { data: deals }] = await Promise.all([
+      supabase.from('goals').select('target_income, commission_per_deal, close_rate, working_days')
+        .eq('user_id', uid).eq('is_active', true).maybeSingle(),
+      supabase.from('wins').select('id').eq('user_id', uid).eq('type', 'deal').gte('logged_at', first + 'T00:00:00'),
+    ])
+    if (g && g.target_income > 0 && g.commission_per_deal > 0) {
+      const p = computePace(g, deals?.length ?? 0, now)
+      if (p.remainingDeals > 0) {
+        setGoalPace({
+          deals: Math.ceil(p.dealsPerRemainingDay),
+          conversations: Math.ceil(p.conversationsPerRemainingDay),
+          hasCloseRate: g.close_rate > 0,
+        })
+      }
+    }
+  }
 
   const completeHabit = async (habitId: string, habitLabel: string) => {
     if (!userId) return
@@ -86,6 +113,23 @@ export default function TodayPage() {
           <ClockIcon size={15} /> Daily Rhythm
         </Link>
       </div>
+
+      {/* Today's pace toward the commission goal */}
+      {goalPace && (
+        <Link href="/goals">
+          <Card hover className="flex items-center gap-3 border-navy/20 !p-3">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-navy/10 text-navy"><CoinIcon size={18} /></div>
+            <div className="min-w-0 flex-1">
+              <div className="label text-navy">To stay on pace today</div>
+              <div className="text-[14px] font-[700] text-dark-text">
+                {goalPace.deals} deal{goalPace.deals === 1 ? '' : 's'}
+                {goalPace.hasCloseRate && <span className="font-[600] text-gray"> · ~{goalPace.conversations} conversations</span>}
+              </div>
+            </div>
+            <ArrowRightIcon size={16} className="shrink-0 text-gray" />
+          </Card>
+        </Link>
+      )}
 
       {/* Streak banner */}
       {(progress?.current_streak ?? 0) > 0 && (

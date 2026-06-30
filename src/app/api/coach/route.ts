@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase/server'
 import Anthropic from '@anthropic-ai/sdk'
 import { NextResponse } from 'next/server'
 import { completion, stageMeta } from '@/lib/partnerChecklist'
+import { computeTargets, computePace, fmtMoney } from '@/lib/goals'
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 
@@ -100,6 +101,29 @@ Be honest but encouraging. No preamble, no closing.`
       .from('partner_onboarding').select('partner_name, stage, checklist')
       .eq('user_id', uid).order('updated_at', { ascending: false }).limit(8)
 
+    // Commission goal + this-month pace, so the coach can advise "to hit $X you
+    // need Y deals / Z conversations a day for the rest of the month."
+    const { data: goal } = await supabase
+      .from('goals').select('target_income, commission_per_deal, close_rate, working_days')
+      .eq('user_id', uid).eq('is_active', true).maybeSingle()
+    let goalBlock = ''
+    if (goal && goal.target_income > 0 && goal.commission_per_deal > 0) {
+      const now = new Date()
+      const first = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-01`
+      const { data: dealsThisMonth } = await supabase
+        .from('wins').select('id').eq('user_id', uid).eq('type', 'deal')
+        .gte('logged_at', first + 'T00:00:00')
+      const dealsClosed = dealsThisMonth?.length ?? 0
+      const t = computeTargets(goal)
+      const p = computePace(goal, dealsClosed, now)
+      goalBlock = `\nCOMMISSION GOAL (this month):
+- Target: ${fmtMoney(goal.target_income)} in commission, earning ~${fmtMoney(goal.commission_per_deal)} per signed partner
+- Needs ~${t ? Math.ceil(t.dealsNeeded) : '?'} deals${goal.close_rate > 0 && t ? ` (~${Math.ceil(t.conversationsNeeded)} conversations at a ${goal.close_rate}% close rate)` : ''} across ${goal.working_days} selling days
+- So far: ${fmtMoney(p.earned)} earned, ${dealsClosed} deal(s) closed — ${p.status.replace('-', ' ')}
+- To finish on time: ~${Math.ceil(p.dealsPerRemainingDay)} deal(s)/day${goal.close_rate > 0 ? ` (~${Math.ceil(p.conversationsPerRemainingDay)} conversations/day)` : ''} over the ${p.daysRemaining} selling days left
+When relevant, tie advice back to this number and how to spend each selling block (use the Daily Rhythm power blocks) to get there.`
+    }
+
     const firstName = userData?.first_name || (userData?.name ?? 'BDR').split(' ')[0]
     const days = progress?.days_active ?? 0
     const belt = days >= 90 ? 'Black' : days >= 70 ? 'Purple' : days >= 50 ? 'Blue' :
@@ -119,6 +143,7 @@ ABOUT THIS BDR:
 - Deals this month: ${progress?.deals_this_month ?? 0}
 ${recentWins?.length ? `\nRECENT WINS:\n${recentWins.map((w) => `- ${w.type}: ${w.description}`).join('\n')}` : ''}
 ${partners?.length ? `\nPARTNERS IN ONBOARDING (reference by name when relevant):\n${partners.map((p) => `- ${p.partner_name} — ${stageMeta(p.stage).label}, ${completion(p.checklist).done}/${completion(p.checklist).total} onboarding tasks done`).join('\n')}` : ''}
+${goalBlock}
 
 COACHING STYLE:
 - Direct, practical, encouraging. Specific tips, not generic advice.

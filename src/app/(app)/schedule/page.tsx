@@ -6,18 +6,20 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import { Card, SkeletonCard, toast } from '@/components/ui'
 import { PageHeader } from '@/components/manager'
-import { ClockIcon, PhoneIcon, CheckIcon, ArrowRightIcon } from '@/components/icons'
+import { ClockIcon, PhoneIcon, CheckIcon, ArrowRightIcon, CoinIcon } from '@/components/icons'
 import { cn } from '@/lib/utils'
 import {
   SHIFT_OPTIONS, DEFAULT_SHIFT, OPTIMIZED_DAY, BLOCK_STYLE,
   parseHM, fmtClock, fmtShift, fmtDuration, SELLING_MINUTES,
 } from '@/lib/schedule'
+import { computePace } from '@/lib/goals'
 
 export default function SchedulePage() {
   const supabase = createClient()
   const [userId, setUserId] = useState<string>()
   const [settings, setSettings] = useState<Record<string, unknown>>({})
   const [shift, setShift] = useState(DEFAULT_SHIFT)
+  const [convosPerDay, setConvosPerDay] = useState<number | null>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -30,8 +32,39 @@ export default function SchedulePage() {
         if (s.shift && SHIFT_OPTIONS.some(o => o.start === s.shift)) setShift(s.shift)
         setLoading(false)
       })
+      // Daily conversation target from the active commission goal, so the power
+      // blocks below can show how many conversations each should carry.
+      const now = new Date()
+      const first = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-01`
+      Promise.all([
+        supabase.from('goals').select('target_income, commission_per_deal, close_rate, working_days')
+          .eq('user_id', user.id).eq('is_active', true).maybeSingle(),
+        supabase.from('wins').select('id').eq('user_id', user.id).eq('type', 'deal').gte('logged_at', first + 'T00:00:00'),
+      ]).then(([{ data: g }, { data: deals }]) => {
+        if (g && g.target_income > 0 && g.commission_per_deal > 0 && g.close_rate > 0) {
+          const p = computePace(g, deals?.length ?? 0, now)
+          if (p.conversationsPerRemainingDay > 0) setConvosPerDay(Math.ceil(p.conversationsPerRemainingDay))
+        }
+      })
     })
   }, [])
+
+  // Split the daily conversation target across the focus (selling) blocks by
+  // their share of total selling minutes. Returns a per-block-index lookup.
+  const convosByBlock = (() => {
+    if (!convosPerDay) return {} as Record<number, number>
+    const out: Record<number, number> = {}
+    let assigned = 0
+    const focus = OPTIMIZED_DAY.map((b, i) => ({ b, i })).filter(x => x.b.type === 'focus')
+    focus.forEach((x, idx) => {
+      const n = idx === focus.length - 1
+        ? Math.max(0, convosPerDay - assigned)                 // last block soaks up the rounding remainder
+        : Math.round(convosPerDay * (x.b.dur / SELLING_MINUTES))
+      assigned += n
+      out[x.i] = n
+    })
+    return out
+  })()
 
   const pickShift = async (start: string) => {
     setShift(start)
@@ -81,6 +114,20 @@ export default function SchedulePage() {
         </div>
       </Card>
 
+      {/* Goal target across the day */}
+      {convosPerDay != null && (
+        <Link href="/goals">
+          <Card hover className="flex items-center gap-3 border-navy/20 !p-3">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-navy/10 text-navy"><CoinIcon size={18} /></div>
+            <div className="min-w-0 flex-1">
+              <div className="label text-navy">Today's goal target</div>
+              <div className="text-[14px] font-[700] text-dark-text">~{convosPerDay} conversations across your power blocks</div>
+            </div>
+            <span className="shrink-0 text-[12px] font-[700] text-teal">Goal →</span>
+          </Card>
+        </Link>
+      )}
+
       {/* Timeline */}
       <Card>
         <div className="mb-3 flex items-center gap-2">
@@ -102,9 +149,14 @@ export default function SchedulePage() {
                   {i < OPTIMIZED_DAY.length - 1 && <span className="w-px flex-1 bg-border" />}
                 </div>
                 <div className="flex-1 pb-3">
-                  <div className="flex items-center gap-2">
+                  <div className="flex flex-wrap items-center gap-2">
                     <span className="text-[14px] font-[700] text-dark-text">{b.label}</span>
                     <span className="rounded-full px-1.5 py-0.5 text-[10px] font-[700]" style={{ backgroundColor: `${st.color}1A`, color: st.color }}>{st.label}</span>
+                    {convosByBlock[i] > 0 && (
+                      <span className="inline-flex items-center gap-1 rounded-full bg-navy/10 px-1.5 py-0.5 text-[10px] font-[700] text-navy">
+                        <PhoneIcon size={10} />~{convosByBlock[i]} convos
+                      </span>
+                    )}
                   </div>
                   {b.tip && <p className="mt-0.5 text-[12px] text-gray leading-relaxed">{b.tip}</p>}
                   {b.href && (

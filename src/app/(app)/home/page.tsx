@@ -6,10 +6,13 @@ import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { useProgress } from '@/lib/hooks/useProgress'
 import { Card, ProgressBar, Badge, Skeleton, Button } from '@/components/ui'
-import { FlameIcon, TrophyIcon, XpIcon, BeltIcon, ChartRisingIcon, PhoneIcon, ChecklistIcon, TargetIcon, ArrowRightIcon, LightningIcon, BookIcon, CoachIcon, HandshakeIcon, ClockIcon } from '@/components/icons'
+import { FlameIcon, TrophyIcon, XpIcon, BeltIcon, ChartRisingIcon, PhoneIcon, ChecklistIcon, TargetIcon, ArrowRightIcon, LightningIcon, BookIcon, CoachIcon, HandshakeIcon, ClockIcon, CoinIcon } from '@/components/icons'
 import { cn, formatXP, pluralize } from '@/lib/utils'
 import { currentBlock, fmtClock } from '@/lib/schedule'
+import { computePace, fmtMoney, PACE_LABEL } from '@/lib/goals'
 import Link from 'next/link'
+
+const PACE_BADGE = { ahead: 'success', 'on-track': 'teal', behind: 'gold', 'no-data': 'gray' } as const
 
 const BELT_STYLES: Record<string, { bg: string; bar: string; label: string }> = {
   white:  { bg: 'bg-bdrbg',   bar: '#9CA3AF', label: 'White Belt' },
@@ -29,6 +32,7 @@ export default function HomePage() {
   const [leaderboard, setLeaderboard] = useState<{ user_id: string; name: string; total_xp: number }[]>([])
   const [nextStep, setNextStep] = useState<{ type: 'lesson' | 'quiz' | 'done'; moduleOrder?: number; moduleTitle?: string; href?: string; title?: string } | null>(null)
   const [shift, setShift] = useState<string | null>(null)
+  const [goal, setGoal] = useState<{ pace: ReturnType<typeof computePace>; target: number } | null>(null)
   const { progress, loading } = useProgress(userId)
 
   useEffect(() => {
@@ -36,6 +40,7 @@ export default function HomePage() {
       if (!user) { router.push('/login'); return }
       setUserId(user.id)
       fetchNextStep(user.id)
+      fetchGoal(user.id)
       supabase.from('users').select('name, settings').eq('id', user.id).single().then(({ data }) => {
         if (data?.name) setUserName(data.name.split(' ')[0])
         if (data?.settings?.shift) setShift(data.settings.shift)
@@ -79,6 +84,20 @@ export default function HomePage() {
       }
     }
     setNextStep({ type: 'done' })
+  }
+
+  // Active commission goal + this-month pace for the progress-to-goal card.
+  const fetchGoal = async (uid: string) => {
+    const now = new Date()
+    const first = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-01`
+    const [{ data: g }, { data: deals }] = await Promise.all([
+      supabase.from('goals').select('target_income, commission_per_deal, close_rate, working_days')
+        .eq('user_id', uid).eq('is_active', true).maybeSingle(),
+      supabase.from('wins').select('id').eq('user_id', uid).eq('type', 'deal').gte('logged_at', first + 'T00:00:00'),
+    ])
+    if (g && g.target_income > 0 && g.commission_per_deal > 0) {
+      setGoal({ pace: computePace(g, deals?.length ?? 0, now), target: g.target_income })
+    }
   }
 
   const belt = progress?.belt_rank ?? 'white'
@@ -170,6 +189,32 @@ export default function HomePage() {
               )}
             </div>
             <span className="shrink-0 text-[12px] font-[700] text-teal">{!shift ? 'Set up' : 'View'} →</span>
+          </Card>
+        </Link>
+      )}
+
+      {/* Commission goal — progress to this month's number */}
+      {goal && (
+        <Link href="/goals">
+          <Card hover className="!p-4">
+            <div className="flex items-center justify-between gap-2 mb-2">
+              <div className="flex items-center gap-2">
+                <CoinIcon size={16} className="text-navy" />
+                <span className="text-label text-navy">Commission goal</span>
+              </div>
+              <Badge variant={PACE_BADGE[goal.pace.status]} className="text-xs">{PACE_LABEL[goal.pace.status]}</Badge>
+            </div>
+            <div className="flex items-baseline gap-1.5">
+              <span className="text-h2 font-bold text-dark-text tabular-nums">{fmtMoney(goal.pace.earned)}</span>
+              <span className="text-sm text-gray">/ {fmtMoney(goal.target)} this month</span>
+            </div>
+            <ProgressBar value={Math.min(100, goal.pace.progressPct)} max={100} color="#00C2B2" className="h-2 mt-2" />
+            {goal.pace.remainingDeals > 0 && (
+              <p className="mt-2 text-[12px] text-gray">
+                {Math.ceil(goal.pace.remainingDeals)} more deal{Math.ceil(goal.pace.remainingDeals) === 1 ? '' : 's'} ·
+                ~{Math.ceil(goal.pace.dealsPerRemainingDay)}/day for {goal.pace.daysRemaining} day{goal.pace.daysRemaining === 1 ? '' : 's'} left
+              </p>
+            )}
           </Card>
         </Link>
       )}

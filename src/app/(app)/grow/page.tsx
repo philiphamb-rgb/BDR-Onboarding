@@ -17,8 +17,12 @@ import {
   CoachIcon,
   ArrowRightIcon,
   MedalIcon,
+  CoinIcon,
 } from '@/components/icons'
 import { cn, formatXP } from '@/lib/utils'
+import { computePace, fmtMoney, PACE_LABEL } from '@/lib/goals'
+
+const PACE_BADGE = { ahead: 'success', 'on-track': 'teal', behind: 'gold', 'no-data': 'gray' } as const
 
 const BELTS = [
   { name: 'white', label: 'White', color: '#9CA3AF', day: 0 },
@@ -34,12 +38,24 @@ export default function GrowPage() {
   const supabase = createClient()
   const router = useRouter()
   const [userId, setUserId] = useState<string>()
+  const [goal, setGoal] = useState<{ pace: ReturnType<typeof computePace>; target: number } | null>(null)
   const { progress, loading } = useProgress(userId)
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => {
       if (!user) { router.push('/login'); return }
       setUserId(user.id)
+      const now = new Date()
+      const first = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-01`
+      Promise.all([
+        supabase.from('goals').select('target_income, commission_per_deal, close_rate, working_days')
+          .eq('user_id', user.id).eq('is_active', true).maybeSingle(),
+        supabase.from('wins').select('id').eq('user_id', user.id).eq('type', 'deal').gte('logged_at', first + 'T00:00:00'),
+      ]).then(([{ data: g }, { data: deals }]) => {
+        if (g && g.target_income > 0 && g.commission_per_deal > 0) {
+          setGoal({ pace: computePace(g, deals?.length ?? 0, now), target: g.target_income })
+        }
+      })
     })
   }, [])
 
@@ -82,6 +98,41 @@ export default function GrowPage() {
               </div>
             </div>
           </Card>
+
+          {/* Commission pace */}
+          {goal ? (
+            <Link href="/goals">
+              <Card hover>
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center gap-2">
+                    <CoinIcon size={18} className="text-navy" />
+                    <CardTitle>Commission Pace</CardTitle>
+                  </div>
+                  <Badge variant={PACE_BADGE[goal.pace.status]}>{PACE_LABEL[goal.pace.status]}</Badge>
+                </div>
+                <div className="flex items-baseline gap-1.5 mb-2">
+                  <span className="text-h2 font-bold text-dark-text tabular-nums">{fmtMoney(goal.pace.earned)}</span>
+                  <span className="text-sm text-gray">/ {fmtMoney(goal.target)} this month</span>
+                </div>
+                <ProgressBar value={Math.min(100, goal.pace.progressPct)} color="#00C2B2" />
+                <div className="mt-1.5 flex justify-between text-[11px] text-gray">
+                  <span>{Math.round(goal.pace.progressPct)}% of target</span>
+                  <span>pace line {Math.round(goal.pace.expectedPct)}%</span>
+                </div>
+              </Card>
+            </Link>
+          ) : (
+            <Link href="/goals">
+              <Card hover className="flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-navy/10 text-navy shrink-0"><CoinIcon size={20} /></div>
+                <div className="flex-1 min-w-0">
+                  <div className="text-sm font-[700] text-dark-text">Set a commission goal</div>
+                  <div className="text-xs text-gray">Turn an income target into a daily activity plan.</div>
+                </div>
+                <ArrowRightIcon size={16} className="text-gray shrink-0" />
+              </Card>
+            </Link>
+          )}
 
           {/* Belt journey */}
           <Card>
