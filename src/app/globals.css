@@ -274,7 +274,65 @@ button, a, [role="button"] {
 .stagger-rise > *:nth-child(7) { animation-delay: 360ms; }
 .stagger-rise > *:nth-child(n+8) { animation-delay: 420ms; }
 
+/* ── Attention / guidance system ─────────────────────────────────────────
+   A small, reusable vocabulary of motion that points the eye at the ONE thing
+   the screen wants you to do next. Used sparingly: at most one "primary" cue
+   per screen so guidance never becomes noise. */
+
+/* Soft glowing ring around THE primary action of a screen. */
+@keyframes attention-glow {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(0, 194, 178, 0); }
+  50%      { box-shadow: 0 0 0 5px rgba(0, 194, 178, 0.18); }
+}
+.animate-glow { animation: attention-glow 2.2s ease-in-out infinite; }
+
+/* Navy variant for primary actions on teal/gradient surfaces. */
+@keyframes attention-glow-gold {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(245, 166, 35, 0); }
+  50%      { box-shadow: 0 0 0 5px rgba(245, 166, 35, 0.22); }
+}
+.animate-glow-gold { animation: attention-glow-gold 2.2s ease-in-out infinite; }
+
+/* Arrow nudges right — "go this way". Apply to the arrow icon inside a CTA. */
+@keyframes arrow-nudge {
+  0%, 100% { transform: translateX(0); }
+  50%      { transform: translateX(3px); }
+}
+.animate-nudge-x { animation: arrow-nudge 1.3s ease-in-out infinite; }
+
+/* Gentle attention pop (scale) for chips/badges/icons that need a glance. */
+@keyframes attention-pop {
+  0%, 100% { transform: scale(1); }
+  50%      { transform: scale(1.08); }
+}
+.animate-attention { animation: attention-pop 1.8s ease-in-out infinite; }
+
+/* A live status dot that breathes — "AI online / live". */
+@keyframes dot-breathe {
+  0%, 100% { opacity: 1;    transform: scale(1); }
+  50%      { opacity: 0.55; transform: scale(0.82); }
+}
+.animate-breathe { animation: dot-breathe 1.8s ease-in-out infinite; }
+
+/* Pop-in entrance for a single element (numbers, badges, new rows). */
+@keyframes pop-in {
+  0%   { opacity: 0; transform: scale(0.9); }
+  60%  { transform: scale(1.03); }
+  100% { opacity: 1; transform: scale(1); }
+}
+.animate-pop { animation: pop-in 0.4s ease-out both; }
+
+/* Shimmer sweep across a surface — premium "this is the move" highlight. Put on
+   an overlay span inside a relatively-positioned, overflow-hidden CTA. */
+@keyframes shimmer-sweep {
+  0%   { transform: translateX(-120%); }
+  60%, 100% { transform: translateX(220%); }
+}
+.animate-shimmer { animation: shimmer-sweep 3s ease-in-out infinite; }
+
 @media (prefers-reduced-motion: reduce) {
-  .animate-bob, .animate-ring, .animate-rise, .animate-coach-pulse { animation: none !important; }
+  .animate-bob, .animate-ring, .animate-rise, .animate-coach-pulse,
+  .animate-glow, .animate-glow-gold, .animate-nudge-x, .animate-attention,
+  .animate-breathe, .animate-pop, .animate-shimmer { animation: none !important; }
   .stagger-rise > * { animation: none !important; }
 }

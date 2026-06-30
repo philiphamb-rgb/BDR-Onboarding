@@ -14,6 +14,7 @@ import { HOME_TOUR } from '@/lib/tours'
 import { deriveAutoWins, monthPaceFraction } from '@/lib/winsEngine'
 import { askCoach } from '@/lib/coachBus'
 import { Belt3D } from '@/components/Belt3D'
+import { CountUp } from '@/components/CountUp'
 import Link from 'next/link'
 
 const BELT_STYLES: Record<string, { bg: string; bar: string; label: string }> = {
@@ -276,7 +277,7 @@ export default function HomePage() {
           <div className="flex items-start justify-between mb-4">
             <div>
               <div className={cn('text-label mb-1', isBlack ? 'text-white/60' : 'text-gray')}>{style.label}</div>
-              <div className={cn('text-h1 font-bold', isBlack ? 'text-white' : 'text-dark-text')}>Day {progress?.belt_day ?? 0}</div>
+              <div className={cn('text-h1 font-bold', isBlack ? 'text-white' : 'text-dark-text')}>Day <CountUp value={progress?.belt_day ?? 0} /></div>
             </div>
             <Belt3D belt={belt} size={60} className="drop-shadow-sm animate-bob" />
           </div>
@@ -296,11 +297,11 @@ export default function HomePage() {
           <div className="flex items-center gap-4 pt-2 border-t border-black/10">
             <div className="flex items-center gap-1.5">
               <XpIcon className={cn('w-4 h-4', isBlack ? 'text-gold' : 'text-navy')} />
-              <span className={cn('text-sm font-semibold', isBlack ? 'text-white' : 'text-dark-text')}>{formatXP(progress?.total_xp ?? 0)}</span>
+              <span className={cn('text-sm font-semibold', isBlack ? 'text-white' : 'text-dark-text')}><CountUp value={progress?.total_xp ?? 0} format={formatXP} /></span>
             </div>
             <div className="flex items-center gap-1.5">
               <FlameIcon className="w-4 h-4 text-orange-500" />
-              <span className={cn('text-sm font-medium', isBlack ? 'text-white/80' : 'text-mid-text')}>{progress?.current_streak ?? 0} day streak</span>
+              <span className={cn('text-sm font-medium', isBlack ? 'text-white/80' : 'text-mid-text')}><CountUp value={progress?.current_streak ?? 0} /> day streak</span>
             </div>
             {progress?.streakStatus === 'at-risk' && <Badge variant="gold" className="ml-auto text-xs">Streak at risk!</Badge>}
           </div>
@@ -314,7 +315,7 @@ export default function HomePage() {
               <div className="text-[11px] font-[800] uppercase tracking-wide text-white/70">Next up · Module {nextStep.moduleOrder}</div>
               <div className="truncate text-[15px] font-[800]">{nextStep.type === 'quiz' ? `${nextStep.moduleTitle} Quiz` : nextStep.title}</div>
             </div>
-            <span className="flex shrink-0 items-center gap-1 rounded-full bg-white/20 px-3 py-1.5 text-[12px] font-[800]">{nextStep.type === 'quiz' ? 'Start' : 'Continue'} <ArrowRightIcon size={14} /></span>
+            <span className="flex shrink-0 items-center gap-1 rounded-full bg-white/20 px-3 py-1.5 text-[12px] font-[800]">{nextStep.type === 'quiz' ? 'Start' : 'Continue'} <ArrowRightIcon size={14} className="animate-nudge-x" /></span>
           </Link>
         )}
         {nextStep?.type === 'done' && (
@@ -351,8 +352,9 @@ export default function HomePage() {
             ))}
           </div>
           <button onClick={() => askCoach("Give me my game plan for today: where I stand against my monthly goal, my single biggest opportunity right now, and the top 3 specific actions that move my number most. Use my real data and be concrete.")}
-            className="mt-2.5 flex w-full items-center justify-center gap-2 rounded-lg bg-gradient-hero py-2.5 text-[13px] font-[800] text-white transition-transform active:scale-[0.99]">
-            <LightningIcon size={14} className="text-white" /> Get today&apos;s game plan
+            className="relative mt-2.5 flex w-full items-center justify-center gap-2 overflow-hidden rounded-lg bg-gradient-hero py-2.5 text-[13px] font-[800] text-white transition-transform active:scale-[0.99]">
+            <span className="pointer-events-none absolute inset-y-0 left-0 w-1/4 animate-shimmer bg-white/25 blur-md" aria-hidden="true" />
+            <LightningIcon size={14} className="relative text-white" /> <span className="relative">Get today&apos;s game plan</span>
           </button>
         </Card>
       )}

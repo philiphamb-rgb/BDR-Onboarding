@@ -39,6 +39,7 @@ export function CoachDock() {
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
   const endRef = useRef<HTMLDivElement>(null)
+  const inputRef = useRef<HTMLTextAreaElement>(null)
   const [pending, setPending] = useState<string | null>(null)   // prompt waiting to send (e.g. until userId loads)
 
   // The full Coach screen and the live Drill own the conversation there — no
@@ -78,10 +79,14 @@ export function CoachDock() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pending, userId, loading])
 
-  // Lock background scroll while the dock is open (mobile).
+  // Lock background scroll while the dock is open (mobile) + focus the input.
   useEffect(() => {
-    if (open) { document.body.style.overflow = 'hidden' } else { document.body.style.overflow = '' }
-    return () => { document.body.style.overflow = '' }
+    if (open) {
+      document.body.style.overflow = 'hidden'
+      const t = setTimeout(() => inputRef.current?.focus(), 250)
+      return () => { clearTimeout(t); document.body.style.overflow = '' }
+    }
+    document.body.style.overflow = ''
   }, [open])
 
   const ctx = contextFor(pathname)
@@ -161,7 +166,7 @@ export function CoachDock() {
             <div className="flex items-center gap-3 border-b border-border px-4 py-3">
               <div className="relative flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-hero">
                 <CoachIcon size={18} className="text-white" />
-                <span className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full border-2 border-card bg-success" />
+                <span className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 animate-breathe rounded-full border-2 border-card bg-success" />
               </div>
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-1.5 text-[15px] font-[800] text-dark-text">AI Coach <LightningIcon size={13} className="text-teal" /></div>
@@ -185,13 +190,14 @@ export function CoachDock() {
                   </div>
                   <button
                     onClick={() => send("Give me my game plan for today: where I stand against my monthly goal, my single biggest opportunity right now, and the top 3 specific actions that move my number most. Use my real data and be concrete.")}
-                    className="flex w-full items-center gap-3 rounded-2xl bg-gradient-hero p-3.5 text-left text-white shadow-card transition-transform active:scale-[0.99]">
-                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white/15"><LightningIcon size={18} className="text-white" /></div>
-                    <div className="min-w-0 flex-1">
+                    className="relative flex w-full items-center gap-3 overflow-hidden rounded-2xl bg-gradient-hero p-3.5 text-left text-white shadow-card transition-transform active:scale-[0.99]">
+                    <span className="pointer-events-none absolute inset-y-0 left-0 w-1/4 animate-shimmer bg-white/25 blur-md" aria-hidden="true" />
+                    <div className="relative flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white/15"><LightningIcon size={18} className="text-white" /></div>
+                    <div className="relative min-w-0 flex-1">
                       <div className="text-[14px] font-[800]">Today&apos;s game plan</div>
                       <div className="text-[11px] text-white/75">Where you stand & your top 3 moves</div>
                     </div>
-                    <ArrowRightIcon size={16} className="shrink-0 text-white/80" />
+                    <ArrowRightIcon size={16} className="relative shrink-0 text-white/80 animate-nudge-x" />
                   </button>
                   <div>
                     <p className="mb-2 text-[11px] font-[800] uppercase tracking-wide text-gray">Right now on {ctx.label}</p>
@@ -208,7 +214,7 @@ export function CoachDock() {
               ) : (
                 <>
                   {messages.map(m => (
-                    <div key={m.id} className={cn('flex gap-2', m.role === 'user' ? 'flex-row-reverse' : 'flex-row')}>
+                    <div key={m.id} className={cn('flex gap-2 animate-rise', m.role === 'user' ? 'flex-row-reverse' : 'flex-row')}>
                       {m.role === 'assistant' && (
                         <div className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-gradient-hero"><CoachIcon size={12} className="text-white" /></div>
                       )}
@@ -237,6 +243,7 @@ export function CoachDock() {
             <div className="border-t border-border p-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))]">
               <div className="flex items-end gap-2 rounded-2xl border border-border bg-bdrbg p-1.5">
                 <textarea
+                  ref={inputRef}
                   value={input}
                   onChange={e => setInput(e.target.value)}
                   onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send() } }}
