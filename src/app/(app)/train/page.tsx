@@ -11,6 +11,7 @@ import {
   ProductsIcon, OrgChartIcon, TargetIcon, LockIcon, SearchIcon, CloseIcon,
 } from '@/components/icons'
 import { cn, percentage } from '@/lib/utils'
+import { passedModuleSet } from '@/lib/moduleProgress'
 import { Tour } from '@/components/tour'
 import { TRAIN_TOUR } from '@/lib/tours'
 import Link from 'next/link'
@@ -54,9 +55,7 @@ export default function TrainPage() {
     setAllLessons(lessonList ?? [])
 
     const completedIds = new Set<string>(prog?.completed_lessons ?? [])
-    const passedModules = new Set<string>(
-      (quizAttempts ?? []).filter(a => (a.percentage ?? 0) >= 70).map(a => a.module_id)
-    )
+    const passedModules = passedModuleSet(quizAttempts ?? [])
 
     setModules((mods ?? []).map(m => {
       const lessonIds = (m.lessons as { id: string }[]).map(l => l.id)

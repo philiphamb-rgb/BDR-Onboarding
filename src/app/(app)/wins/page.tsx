@@ -6,7 +6,7 @@ import { useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Card, Button, Modal, Badge, EmptyState, SkeletonList } from '@/components/ui'
 import { TrophyIcon, PlusIcon, XpIcon, PhoneIcon, TargetIcon, HandshakeIcon, LightningIcon, StarFilledIcon } from '@/components/icons'
-import { cn, formatXP, formatRelativeTime } from '@/lib/utils'
+import { cn, formatRelativeTime } from '@/lib/utils'
 import { toast } from '@/components/ui'
 import { Tour } from '@/components/tour'
 import { WINS_TOUR } from '@/lib/tours'
@@ -136,7 +136,7 @@ function WinsContent() {
           icon={<TrophyIcon size={28} />}
           title={filter === 'all' ? 'No wins logged yet' : 'No wins of this type yet'}
           description={filter === 'all'
-            ? 'Every call, demo, and deal you log shows up here and earns XP. Log your first win to get the streak going.'
+            ? 'Every call, demo, and deal you log shows up here and earns XP. Log your first win to get rolling.'
             : 'Switch filters or log a new win of this type to see it here.'}
           action={{ label: 'Log a win', onClick: () => setShowModal(true) }}
         />

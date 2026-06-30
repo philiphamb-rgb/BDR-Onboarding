@@ -44,7 +44,7 @@ const REP_SECTIONS: { title: string; items: NavItem[] }[] = [
     { href: '/train',       label: 'Learning Center', shortLabel: 'Learn', icon: TrainIcon },
     { href: '/wins',        label: 'Wins',            icon: WinsIcon },
     { href: '/leaderboard', label: 'Leaderboard',     icon: LeaderboardIcon },
-    { href: '/certificate', label: 'Certificate',     icon: MedalIcon },
+    { href: '/progress',    label: 'Progress',        icon: MedalIcon },
     { href: '/resources',   label: 'Resources',       icon: BookIcon },
   ] },
 ]

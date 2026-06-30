@@ -6,16 +6,9 @@ import { createClient } from '@/lib/supabase/client'
 import { Card, Badge, SkeletonList, Avatar } from '@/components/ui'
 import { TrophyIcon, MedalIcon } from '@/components/icons'
 import { cn, formatXP } from '@/lib/utils'
+import { BELT_DOT, beltFromDays } from '@/lib/belts'
 
 interface Leader { user_id: string; name: string; belt: string; total_xp: number; streak: number }
-
-const BELT_DOT: Record<string, string> = {
-  white: 'bg-gray-300', yellow: 'bg-yellow-400', orange: 'bg-orange-500',
-  green: 'bg-green-500', blue: 'bg-blue-600', purple: 'bg-purple-600', black: 'bg-gray-900',
-}
-function beltFromDays(d: number) {
-  return d >= 90 ? 'black' : d >= 70 ? 'purple' : d >= 50 ? 'blue' : d >= 30 ? 'green' : d >= 14 ? 'orange' : d >= 7 ? 'yellow' : 'white'
-}
 
 export default function LeaderboardPage() {
   const supabase = createClient()

@@ -86,7 +86,7 @@ export function deriveAutoWins(i: WinsInput, paceFraction: number): AutoWin[] {
 
   // Curriculum.
   if (i.modulesTotal > 0 && i.modulesDone >= i.modulesTotal) {
-    wins.push({ id: 'learn', tone: 'win', title: `Curriculum complete 🎓`, detail: `Every module done — claim your certificate and keep sharpening in the Drill.`, href: '/certificate' })
+    wins.push({ id: 'learn', tone: 'win', title: `Curriculum complete 🎓`, detail: `Every module done — see your progress and certificate, and keep sharpening in the Drill.`, href: '/progress' })
   }
 
   // Rank by usefulness: goal pace first, then wins, then nudges.

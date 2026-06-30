@@ -40,7 +40,7 @@ export const FEATURES: Feature[] = [
   { key: 'wins',         label: 'Wins',            group: 'Engage',   scope: 'rep', href: '/wins' },
   { key: 'coach',        label: 'AI Coach',        group: 'Engage',   scope: 'rep', href: '/coach' },
   { key: 'leaderboard',  label: 'Leaderboard',     group: 'Engage',   scope: 'rep', href: '/leaderboard' },
-  { key: 'certificate',  label: 'Certificate',     group: 'Engage',   scope: 'rep', href: '/certificate' },
+  { key: 'certificate',  label: 'Progress',        group: 'Engage',   scope: 'rep', href: '/progress' },
   { key: 'resources',    label: 'Resources',       group: 'Engage',   scope: 'rep', href: '/resources' },
   // Manager-facing
   { key: 'mgr_dashboard',   label: 'Dashboard',      group: 'Manager', scope: 'manager', href: '/manager/dashboard' },
