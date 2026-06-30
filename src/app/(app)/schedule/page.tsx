@@ -159,7 +159,8 @@ export default function SchedulePage() {
   const unscheduled = tasks
     .filter(t => isActive(t, nowDate) && t.scheduled_day !== today)
     .sort((a, b) => urgency(b, nowDate) - urgency(a, nowDate))
-  const staleTasks = tasks.filter(t => isStale(t, nowDate))
+  const triageCfg = { ...DEFAULT_TRIAGE, agingDays: (settings as any)?.triage?.agingDays ?? DEFAULT_TRIAGE.agingDays }
+  const staleTasks = tasks.filter(t => isStale(t, nowDate, triageCfg))
   // Blocks that can hold work (selling/plan/admin), with capacity in minutes.
   const slots = blocks.filter(x => ['plan', 'focus', 'admin'].includes(x.b.type)).map(x => ({ index: x.i, type: x.b.type, capacity: x.dur }))
   const capacityMin = slots.reduce((s, x) => s + x.capacity, 0)
@@ -247,6 +248,11 @@ export default function SchedulePage() {
       const n = Object.keys(assign).length
       toast.success(n ? `Planned ${n} task${n > 1 ? 's' : ''} into your day` : 'Nothing to plan right now')
     } finally { setTriageBusy(false) }
+  }
+  const setAgingDays = async (n: number) => {
+    let next: any = {}
+    setSettings(prev => { next = { ...prev, triage: { ...(prev as any)?.triage, agingDays: n } }; return next })
+    if (userId) await supabase.from('users').update({ settings: next }).eq('id', userId)
   }
   const resetDay = async () => {
     setOver({}); setSelected(null)
@@ -471,7 +477,7 @@ export default function SchedulePage() {
           <div className="mb-2 flex items-center gap-2">
             <span className="h-2 w-2 animate-attention rounded-full bg-gold" />
             <span className="text-[13px] font-[800] text-dark-text">Needs attention</span>
-            <span className="text-[11px] text-gray">· aging {DEFAULT_TRIAGE.agingDays}+ days unplanned</span>
+            <span className="text-[11px] text-gray">· aging {triageCfg.agingDays}+ days unplanned</span>
           </div>
           <div className="space-y-1.5">
             {staleTasks.slice(0, 5).map(t => (
@@ -492,7 +498,14 @@ export default function SchedulePage() {
           <ChecklistIcon size={15} className="text-navy" />
           <span className="text-[13px] font-[800] text-dark-text">Unplanned tasks</span>
           <span className="rounded-full bg-bdrbg px-2 py-0.5 text-[11px] font-[700] text-mid-text tabular-nums">{unscheduled.length}</span>
-          <Link href="/tasks" className="ml-auto text-[12px] font-[700] text-navy">Manage →</Link>
+          <label className="ml-auto flex items-center gap-1 text-[11px] text-gray">
+            Flag stale after
+            <select value={triageCfg.agingDays} onChange={e => setAgingDays(parseInt(e.target.value, 10))}
+              className="rounded-md border border-border bg-card px-1.5 py-1 text-[11px] font-[700] text-dark-text">
+              {[3, 5, 7, 14, 30].map(d => <option key={d} value={d}>{d}d</option>)}
+            </select>
+          </label>
+          <Link href="/tasks" className="text-[12px] font-[700] text-navy">Manage →</Link>
         </div>
         {unscheduled.length === 0 ? (
           <p className="py-2 text-center text-[12px] text-gray">Everything’s planned. Nice. 🎯</p>
