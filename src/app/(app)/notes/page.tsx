@@ -10,6 +10,7 @@ import { cn } from '@/lib/utils'
 import { OPTIMIZED_DAY, BLOCK_STYLE, parseHM, fmtClock, DEFAULT_SHIFT } from '@/lib/schedule'
 import { smartTaskDefaults, suggestNoteMeta, looksActionable, cleanTaskTitle, NOTE_CATEGORIES, CATEGORY_COLOR } from '@/lib/noteTriage'
 import { fmtEst } from '@/lib/triageEngine'
+import { AiTip } from '@/components/AiTip'
 
 const uid = () => (typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(36).slice(2)}`)
 const emptyBlocks = () => [{ id: uid(), text: '' }]
@@ -207,6 +208,11 @@ export default function NotesPage() {
           <SearchIcon size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray" />
           <input value={query} onChange={e => setQuery(e.target.value)} placeholder="Search notes, text, #tags…"
             className="w-full rounded-lg border border-border bg-card py-2 pl-9 pr-3 text-[13px] shadow-card outline-none focus:ring-2 focus:ring-navy" />
+        </div>
+        <div className="mb-2">
+          <AiTip id="notes-ai" title="Notes that turn into action" prompt="">
+            Brain-dump anything. Hit <span className="font-[700]">Organize</span> and AI tags it and pulls out every to-do with a time estimate. Drag any line (⠿) into a time block, or tap to make a task.
+          </AiTip>
         </div>
         <div className="flex-1 space-y-1.5 overflow-y-auto pb-2">
           {filtered.length === 0 ? (

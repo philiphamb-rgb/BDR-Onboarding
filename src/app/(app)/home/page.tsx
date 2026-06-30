@@ -15,6 +15,7 @@ import { deriveAutoWins, monthPaceFraction } from '@/lib/winsEngine'
 import { askCoach } from '@/lib/coachBus'
 import { Belt3D } from '@/components/Belt3D'
 import { CountUp } from '@/components/CountUp'
+import { AiTip } from '@/components/AiTip'
 import Link from 'next/link'
 
 const BELT_STYLES: Record<string, { bg: string; bar: string; label: string }> = {
@@ -255,6 +256,10 @@ export default function HomePage() {
         <p className="text-sm text-gray">{greeting()},</p>
         <h1 className="text-h1 text-dark-text">{userName || 'BDR'}</h1>
       </div>
+
+      <AiTip id="home-coach" title="You have an AI coach in your pocket" prompt="What should I focus on today to hit my goal?" tryLabel="Ask your coach">
+        It already knows your belt, your goal, your pipeline, and your tasks. Tap the floating <span className="font-[700]">Ask Coach</span> button on any screen — ask it to plan your day, handle an objection, or tell you who to call next.
+      </AiTip>
 
       {/* Shift first — the very first thing each day, until it's set (or defaulted) */}
       {needsShift && (

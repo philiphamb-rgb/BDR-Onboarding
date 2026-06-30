@@ -9,6 +9,7 @@ import { CheckIcon, PlusIcon, TrashIcon, StarFilledIcon, ClockIcon, ChevronRight
 import { cn } from '@/lib/utils'
 import { OPTIMIZED_DAY } from '@/lib/schedule'
 import { urgency, urgencyLabel } from '@/lib/triageEngine'
+import { AiTip } from '@/components/AiTip'
 
 export default function TasksPage() {
   const supabase = createClient()
@@ -102,6 +103,10 @@ export default function TasksPage() {
   return (
     <div className="space-y-4 pb-4">
       <PageHeader title="Tasks" subtitle="Plan your work, then drop tasks into Time Blocks." />
+
+      <AiTip id="tasks-ai" title="AI does the busywork" prompt="Look at all my open tasks and prioritize them for me — what's most important and what should I time-block today?" tryLabel="Prioritize with AI">
+        Every task gets an AI-estimated time and an urgency score (priority + due date + age) automatically. Open a task to fine-tune its estimate, or ask the coach to prioritize your whole list.
+      </AiTip>
 
       {/* Lists */}
       <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">

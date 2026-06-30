@@ -9,6 +9,8 @@ import { Card, Button, ProgressBar, Skeleton } from '@/components/ui'
 import { CheckIcon, FlameIcon, XpIcon, PhoneIcon, TargetIcon, HandshakeIcon, ClockIcon } from '@/components/icons'
 import { cn, formatXP, formatDateShort } from '@/lib/utils'
 import { toast } from '@/components/ui'
+import { AiTip } from '@/components/AiTip'
+import { askCoach } from '@/lib/coachBus'
 
 export default function TodayPage() {
   const supabase = createClient()
@@ -94,6 +96,10 @@ export default function TodayPage() {
           <ClockIcon size={15} /> Time Blocks
         </Link>
       </div>
+
+      <AiTip id="today-plan" title="Start the day with an AI game plan" prompt="Give me my game plan for today: where I stand, my biggest opportunity, and the top 3 things to do." tryLabel="Get today's game plan">
+        Ask the coach to triage your day from your goal, pipeline, and tasks — then open <span className="font-[700]">Time Blocks</span> and tap Auto-plan to schedule it all.
+      </AiTip>
 
       {/* Streak banner */}
       {(progress?.current_streak ?? 0) > 0 && (

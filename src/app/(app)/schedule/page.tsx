@@ -17,6 +17,7 @@ import {
 import { monthPaceFraction } from '@/lib/winsEngine'
 import { stageMeta } from '@/lib/partnerChecklist'
 import { askCoach } from '@/lib/coachBus'
+import { AiTip } from '@/components/AiTip'
 import { Tour } from '@/components/tour'
 import { RHYTHM_TOUR } from '@/lib/tours'
 
@@ -460,6 +461,10 @@ export default function SchedulePage() {
         <span className="inline-flex items-center gap-1.5 rounded-full bg-teal/10 px-2.5 py-1 font-[700] text-teal"><PhoneIcon size={13} />{fmtDuration(SELLING_MINUTES)} selling</span>
         <span className="inline-flex items-center gap-1.5 rounded-full bg-bdrbg px-2.5 py-1 font-[700] text-mid-text tabular-nums">{doneCount}/{OPTIMIZED_DAY.length} done</span>
       </div>
+
+      <AiTip id="tb-autoplan" title="Let AI build your day" prompt="Plan my day for me — what should I focus on first, and in what order?" tryLabel="Plan my day with AI">
+        Tap <span className="font-[700]">Auto-plan my day</span> and AI schedules your tasks by priority into the right blocks — selling work into power blocks, admin into the admin block. You can still drag any block to move it.
+      </AiTip>
 
       {/* AI day-triage summary */}
       <div className="rounded-2xl bg-gradient-hero p-4 text-white shadow-card">
