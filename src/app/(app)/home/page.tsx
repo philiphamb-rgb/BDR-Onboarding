@@ -8,10 +8,13 @@ import { useProgress, useHabits } from '@/lib/hooks/useProgress'
 import { Card, ProgressBar, Badge, Skeleton, Button, toast } from '@/components/ui'
 import { FlameIcon, TrophyIcon, XpIcon, BeltIcon, ChartRisingIcon, PhoneIcon, ChecklistIcon, TargetIcon, ArrowRightIcon, LightningIcon, BookIcon, CoachIcon, HandshakeIcon, ClockIcon, CheckIcon, CoinIcon, PlusIcon, StarFilledIcon, InfoIcon, ChevronDownIcon } from '@/components/icons'
 import { cn, formatXP, pluralize } from '@/lib/utils'
-import { currentBlock, fmtClock, fmtShift, SHIFT_OPTIONS } from '@/lib/schedule'
+import { currentBlock, fmtClock, fmtShift, SHIFT_OPTIONS, OPTIMIZED_DAY, parseHM } from '@/lib/schedule'
 import { Tour } from '@/components/tour'
 import { HOME_TOUR } from '@/lib/tours'
-import { deriveAutoWins, monthPaceFraction } from '@/lib/winsEngine'
+import { monthPaceFraction } from '@/lib/winsEngine'
+import { goalStats, strategyLine, buildActions } from '@/lib/priorityEngine'
+import { autoPlan, fmtEst } from '@/lib/triageEngine'
+import { stageMeta } from '@/lib/partnerChecklist'
 import { askCoach } from '@/lib/coachBus'
 import { Belt3D } from '@/components/Belt3D'
 import { CountUp } from '@/components/CountUp'
@@ -40,6 +43,21 @@ const BELT_LADDER: { key: string; label: string; day: number; blurb: string }[] 
   { key: 'black',  label: 'Black',  day: 90, blurb: 'Mastery — 90+ days of proven performance.' },
 ]
 
+// Compact progress ring for the goal cockpit.
+function GoalRing({ pct }: { pct: number }) {
+  const r = 24, c = 2 * Math.PI * r
+  const off = c * (1 - Math.min(100, Math.max(0, pct)) / 100)
+  return (
+    <div className="relative h-[60px] w-[60px] shrink-0">
+      <svg width="60" height="60" viewBox="0 0 60 60" className="-rotate-90">
+        <circle cx="30" cy="30" r={r} fill="none" stroke="rgba(255,255,255,0.22)" strokeWidth="5" />
+        <circle cx="30" cy="30" r={r} fill="none" stroke="white" strokeWidth="5" strokeLinecap="round" strokeDasharray={c} strokeDashoffset={off} style={{ transition: 'stroke-dashoffset 0.9s ease' }} />
+      </svg>
+      <span className="absolute inset-0 flex items-center justify-center text-[14px] font-[800] text-white">{pct}%</span>
+    </div>
+  )
+}
+
 export default function HomePage() {
   const supabase = createClient()
   const router = useRouter()
@@ -48,12 +66,14 @@ export default function HomePage() {
   const [leaderboard, setLeaderboard] = useState<{ user_id: string; name: string; total_xp: number }[]>([])
   const [nextStep, setNextStep] = useState<{ type: 'lesson' | 'quiz' | 'done'; moduleOrder?: number; moduleTitle?: string; href?: string; title?: string } | null>(null)
   const [shift, setShift] = useState<string | null>(null)
-  const [stuck, setStuck] = useState(0)
-  const [unread, setUnread] = useState(0)
-  const [autoWins, setAutoWins] = useState<any[]>([])
   const [completing, setCompleting] = useState<string | null>(null)
   const [settings, setSettings] = useState<Record<string, any>>({})
   const [tasks, setTasks] = useState<any[]>([])
+  const [partners, setPartners] = useState<any[]>([])
+  const [goal, setGoal] = useState<number | null>(null)
+  const [dealsThisMonth, setDealsThisMonth] = useState(0)
+  const [dayBlocks, setDayBlocks] = useState<any[]>([])
+  const [triageBusy, setTriageBusy] = useState(false)
   const [useEveryDay, setUseEveryDay] = useState(false)
   const [savingShift, setSavingShift] = useState(false)
   const [doneTaskId, setDoneTaskId] = useState<string | null>(null)
@@ -73,19 +93,14 @@ export default function HomePage() {
         if (s.shift) setShift(s.shift)
         setUseEveryDay(!!s.shiftDefault)
       })
-      // Top open tasks — surface task management right on Home.
-      supabase.from('tasks').select('id, title, priority, due_date')
-        .eq('user_id', user.id).eq('done', false).is('parent_id', null)
-        .order('priority', { ascending: false }).order('due_date', { ascending: true, nullsFirst: false })
-        .limit(3)
-        .then(({ data }) => setTasks(data ?? []))
-      // Partners awaiting a next step — drives the proactive "Right now" nudge.
-      supabase.from('partner_onboarding').select('stage').eq('user_id', user.id).then(({ data }) => {
-        setStuck((data ?? []).filter(p => p.stage === 'proposal_sent' || p.stage === 'contract_signed').length)
-      })
-      computeAutoWins(user.id)
-      supabase.from('notifications').select('id', { count: 'exact', head: true }).eq('user_id', user.id).eq('is_read', false)
-        .then(({ count }) => setUnread(count ?? 0))
+      loadTasks(user.id)
+      loadDayBlocks(user.id)
+      // Pipeline (full rows) feeds the priority engine + 'Right now' nudge.
+      supabase.from('partner_onboarding').select('id, partner_name, stage, temperature, updated_at').eq('user_id', user.id)
+        .then(({ data }) => setPartners(data ?? []))
+      // Goal + this-month deals for the live goal cockpit.
+      supabase.from('goals').select('monthly_deal_goal').eq('user_id', user.id).maybeSingle().then(({ data }) => setGoal(data?.monthly_deal_goal ?? null))
+      supabase.from('user_progress').select('deals_this_month').eq('user_id', user.id).single().then(({ data }) => setDealsThisMonth(data?.deals_this_month ?? 0))
       supabase.from('user_progress').select('user_id, total_xp, users!inner(name)')
         .order('total_xp', { ascending: false }).limit(5)
         .then(({ data }) => {
@@ -127,38 +142,28 @@ export default function HomePage() {
     setNextStep({ type: 'done' })
   }
 
-  // Auto-Wins / Coach insights — deterministic, framed against goals. Real data only.
-  const computeAutoWins = async (uid: string) => {
-    const now = new Date()
-    const wk = new Date(now.getTime() - 7 * 86400000).toISOString()
-    const fortnight = new Date(now.getTime() - 14 * 86400000).toISOString()
-    const [{ data: w }, { data: g }, { data: parts }, { data: up }] = await Promise.all([
-      supabase.from('wins').select('type, logged_at').eq('user_id', uid).gte('logged_at', fortnight),
-      supabase.from('goals').select('monthly_deal_goal').eq('user_id', uid).maybeSingle(),
-      supabase.from('partner_onboarding').select('stage, temperature').eq('user_id', uid),
-      supabase.from('user_progress').select('current_streak, deals_this_month').eq('user_id', uid).single(),
+  // All open top-level tasks with the fields the priority engine needs.
+  const loadTasks = async (uid: string) => {
+    const { data } = await supabase.from('tasks')
+      .select('id, title, done, priority, due_date, estimated_minutes, created_at, scheduled_day, scheduled_block, snoozed_until')
+      .eq('user_id', uid).eq('done', false).is('parent_id', null)
+    setTasks(data ?? [])
+  }
+  // Today's schedulable blocks (template + overrides + custom) for on-Home auto-plan.
+  const loadDayBlocks = async (uid: string) => {
+    const [{ data: u }, { data: rows }] = await Promise.all([
+      supabase.from('users').select('settings').eq('id', uid).single(),
+      supabase.from('schedule_blocks').select('block_key, type, start_min, dur_min').eq('user_id', uid).eq('day', localToday()),
     ])
-    const inWeek = (t: string, type: string) => (w ?? []).filter(x => x.type === type && x.logged_at >= t).length
-    const cnt = (type: string) => ({
-      thisW: inWeek(wk, type),
-      lastW: (w ?? []).filter(x => x.type === type && x.logged_at >= fortnight && x.logged_at < wk).length,
-    })
-    const calls = cnt('call'), demos = cnt('demo'), deals = cnt('deal')
-    const all = parts ?? []
-    const warm = all.filter(p => (p.temperature ?? 'cold') === 'warm')
-    const stalled = all.filter(p => p.stage === 'proposal_sent' || p.stage === 'contract_signed').length
-    const closeRate = (arr: any[]) => arr.length ? Math.round(arr.filter(p => p.stage === 'opportunity_won').length / arr.length * 100) : 0
-    setAutoWins(deriveAutoWins({
-      callsThisWeek: calls.thisW, callsLastWeek: calls.lastW,
-      demosThisWeek: demos.thisW, demosLastWeek: demos.lastW,
-      dealsThisWeek: deals.thisW, dealsLastWeek: deals.lastW,
-      dealsThisMonth: up?.deals_this_month ?? 0,
-      monthlyDealGoal: g?.monthly_deal_goal ?? null,
-      closeRateWarm: closeRate(warm), closeRateOverall: closeRate(all),
-      streak: up?.current_streak ?? 0,
-      modulesDone: 0, modulesTotal: 0,
-      stalledPartners: stalled,
-    }, monthPaceFraction(now)))
+    const start = (u?.settings as any)?.shift || '08:00'
+    const base = parseHM(start)
+    const ov: Record<string, any> = {}; const customs: any[] = []
+    for (const r of rows ?? []) { if (/^\d+$/.test(r.block_key)) ov[r.block_key] = r; else customs.push({ key: r.block_key, type: r.type, start: r.start_min, dur: r.dur_min }) }
+    const template = OPTIMIZED_DAY.map((b, i) => ({ key: String(i), type: b.type, start: ov[i]?.start_min ?? base + b.off, dur: ov[i]?.dur_min ?? b.dur }))
+    const slots = [...template, ...customs].filter(b => ['plan', 'focus', 'admin'].includes(b.type))
+      .sort((a, b) => { const ap = (a.start + a.dur) <= (new Date().getHours() * 60 + new Date().getMinutes()) ? 1 : 0, bp = (b.start + b.dur) <= (new Date().getHours() * 60 + new Date().getMinutes()) ? 1 : 0; return ap - bp || a.start - b.start })
+      .map(b => ({ key: b.key, type: b.type, capacity: b.dur }))
+    setDayBlocks(slots)
   }
 
   // Local (not UTC) date key so "today" matches the rep's calendar day.
@@ -188,6 +193,22 @@ export default function HomePage() {
       setTasks(prev => prev.filter(t => t.id !== id))
       setDoneTaskId(prev => (prev === id ? null : prev))
     }, 450)
+  }
+
+  // Auto-triage today right from Home: pack tasks into time blocks by priority.
+  const autoPlanHome = async () => {
+    if (triageBusy || !userId) return
+    setTriageBusy(true)
+    try {
+      const now = new Date()
+      const assign = autoPlan(tasks, dayBlocks, now, { reflow: false })
+      const t = localToday()
+      const updates = tasks.filter(x => assign[x.id] != null && (x.scheduled_day !== t || String(x.scheduled_block) !== String(assign[x.id])))
+      setTasks(prev => prev.map(x => assign[x.id] != null ? { ...x, scheduled_day: t, scheduled_block: String(assign[x.id]) } : x))
+      await Promise.all(updates.map(x => supabase.from('tasks').update({ scheduled_day: t, scheduled_block: String(assign[x.id]), updated_at: new Date().toISOString() }).eq('id', x.id)))
+      const n = Object.keys(assign).length
+      toast.success(n ? `Planned ${n} task${n > 1 ? 's' : ''} into your day` : 'Nothing to plan right now')
+    } finally { setTriageBusy(false) }
   }
 
   // Complete a habit inline from Home — the daily core loop, 1 tap from landing.
@@ -221,6 +242,16 @@ export default function HomePage() {
   const greeting = () => { const h = new Date().getHours(); return h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : 'Good evening' }
   const userRank = leaderboard.findIndex(l => l.user_id === userId) + 1
   const rhythm = shift ? currentBlock(shift) : null
+  const stuck = partners.filter(p => p.stage === 'proposal_sent' || p.stage === 'contract_signed').length
+
+  // ── Priority brain: live goal math + the single ranked action list ───────────
+  const nowDate = new Date()
+  const gstats = goalStats(goal, dealsThisMonth, nowDate)
+  const actions = buildActions({ tasks, partners, g: gstats, now: nowDate, stageLabel: (s) => stageMeta(s).label })
+  const focus = actions[0] ?? null
+  const gamePlan = actions.slice(1, 5)
+  const plannedCount = tasks.filter(t => t.scheduled_day === localToday() && t.scheduled_block != null).length
+  const STATUS_LABEL: Record<string, string> = { hit: 'Goal hit 🎯', ahead: 'Ahead of pace', on: 'On track', behind: `${gstats.behind} behind pace`, none: '' }
 
   // Shift prompt shows at the very top until the rep sets today's shift — unless
   // they've made a shift their daily default (then it's applied automatically).
@@ -284,6 +315,101 @@ export default function HomePage() {
           </label>
         </Card>
       )}
+
+      {/* ── Goal cockpit — where you are, what's needed, and why ── */}
+      <Card className="overflow-hidden !p-0">
+        <div className="bg-gradient-hero p-4 text-white">
+          <div className="mb-3 flex items-center gap-2">
+            <TargetIcon size={15} className="text-white" />
+            <span className="text-[13px] font-[800]">This month&apos;s goal</span>
+            {gstats.hasGoal && <span className="ml-auto rounded-full bg-white/15 px-2 py-0.5 text-[11px] font-[700] tabular-nums">{gstats.daysLeft}d left</span>}
+          </div>
+          {gstats.hasGoal ? (
+            <div className="flex items-center gap-4">
+              <GoalRing pct={gstats.pct} />
+              <div className="min-w-0 flex-1">
+                <div className="text-[20px] font-[800] leading-none"><CountUp value={gstats.done} />/{gstats.goal} <span className="text-[12px] font-[700] text-white/70">deals</span></div>
+                <div className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] text-white/80">
+                  <span className={cn('rounded-full px-2 py-0.5 font-[800]', gstats.status === 'behind' ? 'bg-error/30' : (gstats.status === 'hit' || gstats.status === 'ahead') ? 'bg-success/30' : 'bg-white/15')}>{STATUS_LABEL[gstats.status]}</span>
+                  <span>Projected {gstats.projection}</span>
+                  {gstats.remaining > 0 && <span>· {gstats.perDayNeeded.toFixed(1)}/day to goal</span>}
+                </div>
+              </div>
+            </div>
+          ) : (
+            <Link href="/analytics" className="flex items-center gap-2 rounded-xl bg-white/10 p-3 text-[13px] font-[700] hover:bg-white/15">
+              <TargetIcon size={16} className="shrink-0" /> Set your monthly deal goal to unlock your game plan <ArrowRightIcon size={14} className="ml-auto shrink-0" />
+            </Link>
+          )}
+        </div>
+        {gstats.hasGoal && (
+          <div className="flex items-start gap-2 p-3">
+            <LightningIcon size={14} className="mt-0.5 shrink-0 text-teal" />
+            <p className="text-[12px] leading-relaxed text-mid-text">{strategyLine(gstats)}</p>
+          </div>
+        )}
+      </Card>
+
+      {/* ── Do this now — the single most important action, alive ── */}
+      {focus ? (
+        <Link href={focus.href} className="relative block overflow-hidden rounded-2xl border-2 border-teal bg-card p-4 shadow-card animate-glow transition-transform active:scale-[0.99]">
+          <div className="flex items-center gap-3">
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-gradient-hero text-white animate-bob"><LightningIcon size={22} /></div>
+            <div className="min-w-0 flex-1">
+              <div className="text-label text-teal">Do this now</div>
+              <div className="truncate text-[16px] font-[800] text-dark-text">{focus.title}</div>
+              <div className="truncate text-[12px] text-gray">{focus.why}{focus.est ? ` · ~${fmtEst(focus.est)}` : ''}</div>
+            </div>
+            <span className="flex shrink-0 items-center gap-1 rounded-full bg-teal px-3 py-1.5 text-[12px] font-[800] text-white">{focus.cta} <ArrowRightIcon size={14} className="animate-nudge-x" /></span>
+          </div>
+        </Link>
+      ) : (
+        <div className="rounded-2xl border-2 border-success/40 bg-success/[0.06] p-4">
+          <div className="flex items-center gap-3">
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-success/15 text-success"><CheckIcon size={22} /></div>
+            <div className="min-w-0">
+              <div className="text-[15px] font-[800] text-dark-text">You&apos;re all caught up</div>
+              <div className="text-[12px] text-gray">No urgent actions — prospect, learn, or add a task to plan ahead.</div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Your game plan — auto-triaged from goal, pipeline & tasks ── */}
+      <Card data-tour="home-wins" className="!p-3">
+        <div className="mb-2 flex items-center gap-2">
+          <LightningIcon size={15} className="text-teal" />
+          <span className="text-label text-teal">Your game plan</span>
+          <span className="ml-auto text-[11px] text-gray tabular-nums">{plannedCount} planned today</span>
+        </div>
+        {gamePlan.length > 0 ? (
+          <div className="space-y-1.5">
+            {gamePlan.map(a => (
+              <Link key={a.id} href={a.href} className="flex items-start gap-2.5 rounded-lg border border-border bg-bdrbg p-2.5 transition-colors hover:border-teal/50 hover:bg-teal/5">
+                <span className={cn('mt-1 h-2 w-2 shrink-0 rounded-full', a.kind === 'lead' ? 'bg-navy' : a.kind === 'goal' ? 'bg-gold' : 'bg-teal')} />
+                <div className="min-w-0 flex-1">
+                  <div className="truncate text-[13px] font-[700] text-dark-text">{a.title}</div>
+                  <div className="truncate text-[12px] text-gray">{a.why}{a.est ? ` · ~${fmtEst(a.est)}` : ''}</div>
+                </div>
+                <span className="mt-0.5 shrink-0 text-[11px] font-[700] text-teal">{a.cta} →</span>
+              </Link>
+            ))}
+          </div>
+        ) : (
+          <p className="px-1 py-2 text-[12px] text-gray">Add a few tasks (or jot a note) and your prioritized plan appears here automatically.</p>
+        )}
+        <div className="mt-2.5 grid grid-cols-2 gap-2">
+          <button onClick={autoPlanHome} disabled={triageBusy}
+            className="relative flex items-center justify-center gap-1.5 overflow-hidden rounded-lg bg-gradient-hero py-2.5 text-[13px] font-[800] text-white transition-transform active:scale-[0.99] disabled:opacity-60">
+            <span className="pointer-events-none absolute inset-y-0 left-0 w-1/4 animate-shimmer bg-white/25 blur-md" aria-hidden="true" />
+            <LightningIcon size={14} className="relative text-white" /><span className="relative">{triageBusy ? 'Planning…' : 'Auto-plan my day'}</span>
+          </button>
+          <button onClick={() => askCoach('Triage my day from my goal, pipeline, and tasks. What are the top 3 things to do right now, in order, and why?')}
+            className="flex items-center justify-center gap-1.5 rounded-lg border border-navy/30 bg-navy/5 py-2.5 text-[13px] font-[800] text-navy hover:bg-navy/10">
+            <CoachIcon size={14} /> Coach my day
+          </button>
+        </div>
+      </Card>
 
       {/* Belt + next move — your rank and your next step, together */}
       <div data-tour="home-belt" className="overflow-hidden rounded-2xl shadow-card">
@@ -375,35 +501,6 @@ export default function HomePage() {
         )}
       </div>
 
-      {/* AI Coach — auto-detected wins & insights, each tappable to coach on it */}
-      {autoWins.length > 0 && (
-        <Card data-tour="home-wins" className="!p-3">
-          <div className="mb-2 flex items-center gap-2">
-            <LightningIcon size={15} className="text-teal" />
-            <span className="text-label text-teal">Your coach sees</span>
-            <Link href="/coach" className="ml-auto text-[12px] font-[700] text-navy">More →</Link>
-          </div>
-          <div className="space-y-1.5">
-            {autoWins.slice(0, 3).map(wn => (
-              <button key={wn.id} onClick={() => askCoach(`Coach me on this: ${wn.title}. ${wn.detail} What exactly should I do next?`)}
-                className="flex w-full items-start gap-2.5 rounded-lg border border-border bg-bdrbg p-2.5 text-left transition-colors hover:border-teal/50 hover:bg-teal/5">
-                <span className={cn('mt-1 h-2 w-2 shrink-0 rounded-full', wn.tone === 'win' ? 'bg-success' : wn.tone === 'pace' ? 'bg-navy' : 'bg-gold')} />
-                <div className="min-w-0 flex-1">
-                  <div className="text-[13px] font-[700] leading-snug text-dark-text">{wn.title}</div>
-                  <div className="text-[12px] leading-snug text-gray">{wn.detail}</div>
-                </div>
-                <span className="mt-0.5 shrink-0 text-[11px] font-[700] text-teal">Coach me →</span>
-              </button>
-            ))}
-          </div>
-          <button onClick={() => askCoach("Give me my game plan for today: where I stand against my monthly goal, my single biggest opportunity right now, and the top 3 specific actions that move my number most. Use my real data and be concrete.")}
-            className="relative mt-2.5 flex w-full items-center justify-center gap-2 overflow-hidden rounded-lg bg-gradient-hero py-2.5 text-[13px] font-[800] text-white transition-transform active:scale-[0.99]">
-            <span className="pointer-events-none absolute inset-y-0 left-0 w-1/4 animate-shimmer bg-white/25 blur-md" aria-hidden="true" />
-            <LightningIcon size={14} className="relative text-white" /> <span className="relative">Get today&apos;s game plan</span>
-          </button>
-        </Card>
-      )}
-
       {/* Right now — current time block. Only once a shift exists; setting the
           shift lives in the "Start your day" prompt at the top, so no duplicate. */}
       {shift && (rhythm?.status === 'active' ? (
@@ -451,7 +548,7 @@ export default function HomePage() {
             </Link>
           ) : (
             <div className="space-y-2">
-              {tasks.map(t => {
+              {tasks.slice(0, 3).map(t => {
                 const isDone = doneTaskId === t.id
                 return (
                   <div key={t.id} className={cn('flex items-center gap-3 rounded-xl border bg-bdrbg p-3 transition-all duration-300', isDone ? 'border-teal/40 opacity-60' : 'border-border')}>
