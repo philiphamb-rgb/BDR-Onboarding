@@ -636,9 +636,9 @@ export default function SchedulePage() {
                       {!tiny && (
                         <button onPointerDown={e => e.stopPropagation()} onClick={e => { e.stopPropagation(); toggleDone(blk) }}
                           aria-label={done ? 'Mark not done' : 'Mark done'}
-                          className={cn('flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded-[5px] border-[1.5px] transition-all',
+                          className={cn('flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded-[4px] border-[1.5px] transition-all',
                             done ? 'border-success bg-success text-white' : 'bg-card text-transparent', suggestDone && 'animate-attention')}
-                          style={!done ? { borderColor: suggestDone ? '#F5A623' : st.color } : undefined}>
+                          style={{ minHeight: 18, ...(!done ? { borderColor: suggestDone ? '#F5A623' : st.color } : {}) }}>
                           <CheckIcon size={11} />
                         </button>
                       )}
@@ -736,8 +736,8 @@ export default function SchedulePage() {
                   onDragStart={e => { e.dataTransfer.setData('text/plain', t.id); setDragTaskId(t.id) }}
                   onDragEnd={() => { setDragTaskId(null); setDropKey(null) }}
                   className="flex items-center gap-2 rounded-lg border border-border bg-bdrbg px-2.5 py-2">
-                  <button onClick={() => toggleTaskDone(t.id, true)} aria-label="Complete task"
-                    className="flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded-[5px] border-[1.5px] border-border text-transparent transition-colors hover:border-teal hover:bg-teal/10">
+                  <button onClick={() => toggleTaskDone(t.id, true)} aria-label="Complete task" style={{ minHeight: 18 }}
+                    className="flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded-[4px] border-[1.5px] border-border text-transparent transition-colors hover:border-teal hover:bg-teal/10">
                     <CheckIcon size={11} />
                   </button>
                   <span className={cn('shrink-0 rounded-full px-1.5 py-0.5 text-[9px] font-[800]',
@@ -839,8 +839,8 @@ export default function SchedulePage() {
               <div className="space-y-1.5">
                 {(blockTasks[sel.key] ?? []).map(tk => (
                   <div key={tk.id} className="flex items-center gap-2 rounded-md bg-bdrbg px-2.5 py-2">
-                    <button onClick={() => toggleTaskDone(tk.id, !tk.done)} aria-label={tk.done ? 'Mark task incomplete' : 'Complete task'}
-                      className={cn('flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded-[5px] border-[1.5px]', tk.done ? 'border-success bg-success text-white' : 'border-border text-transparent')}>
+                    <button onClick={() => toggleTaskDone(tk.id, !tk.done)} aria-label={tk.done ? 'Mark task incomplete' : 'Complete task'} style={{ minHeight: 18 }}
+                      className={cn('flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded-[4px] border-[1.5px]', tk.done ? 'border-success bg-success text-white' : 'border-border text-transparent')}>
                       <CheckIcon size={11} />
                     </button>
                     <span className={cn('flex-1 text-[13px]', tk.done ? 'text-gray line-through' : 'text-mid-text')}>{tk.title}</span>
