@@ -68,6 +68,7 @@ export default function SchedulePage() {
   const [partners, setPartners] = useState<any[]>([])
   const [dismissed, setDismissed] = useState<Set<string>>(new Set())
   const [triageBusy, setTriageBusy] = useState(false)
+  const [newTaskTitle, setNewTaskTitle] = useState('')
   const [addToBlock, setAddToBlock] = useState<number | null>(null)  // block index awaiting a task
   const [selected, setSelected] = useState<number | null>(null)
   const [preview, setPreview] = useState<{ i: number; start: number; dur: number } | null>(null)
@@ -544,18 +545,39 @@ export default function SchedulePage() {
                   {!tiny && ncols === 1 && (
                     <span className="absolute right-1.5 top-1.5 z-10 rounded-full px-1.5 py-0.5 text-[9px] font-[800]" style={{ backgroundColor: `${st.color}26`, color: st.color }}>{st.label}</span>
                   )}
-                  {/* Centered verbiage */}
-                  <div className={cn('flex h-full flex-col items-center justify-center overflow-hidden text-center', tiny ? 'px-1' : 'px-6')}>
-                    <span className={cn('w-full truncate font-[700] leading-tight', tiny ? 'text-[11px]' : 'text-[12px]', done ? 'text-gray line-through' : 'text-dark-text')}>{b.label}</span>
-                    {!compact && (
-                      <div className="mt-0.5 flex max-w-full flex-wrap items-center justify-center gap-x-1.5 text-[10.5px] text-mid-text">
-                        <span className="tabular-nums">{fmtClock(start)}–{fmtClock(start + dur)}</span>
-                        {edited && !dragging && <span className="text-teal">· edited</span>}
-                        {isCurrent && !done && <span className="rounded-full bg-teal px-1.5 text-[9px] font-[800] text-white">NOW</span>}
-                        {bTasks.length > 0 && <span className="text-gray">· {bTasks.filter(t => t.done).length}/{bTasks.length} tasks</span>}
+                  {/* Centered verbiage + (when there's room) the block's tasks */}
+                  {(() => {
+                    const showPills = !compact && bTasks.length > 0 && height >= 76
+                    return (
+                      <div className={cn('flex h-full flex-col overflow-hidden', showPills ? 'justify-start pt-0.5' : 'justify-center', tiny ? 'px-1' : 'px-6')}>
+                        <div className="text-center">
+                          <span className={cn('block w-full truncate font-[700] leading-tight', tiny ? 'text-[11px]' : 'text-[12px]', done ? 'text-gray line-through' : 'text-dark-text')}>{b.label}</span>
+                          {!compact && (
+                            <div className="mt-0.5 flex max-w-full flex-wrap items-center justify-center gap-x-1.5 text-[10.5px] text-mid-text">
+                              <span className="tabular-nums">{fmtClock(start)}–{fmtClock(start + dur)}</span>
+                              {edited && !dragging && <span className="text-teal">· edited</span>}
+                              {isCurrent && !done && <span className="rounded-full bg-teal px-1.5 text-[9px] font-[800] text-white">NOW</span>}
+                              {bTasks.length > 0 && !showPills && <span className="text-gray">· {bTasks.filter(t => t.done).length}/{bTasks.length} tasks</span>}
+                            </div>
+                          )}
+                        </div>
+                        {showPills && (
+                          <div className="mt-1 space-y-0.5 overflow-hidden">
+                            {bTasks.slice(0, Math.max(1, Math.floor((height - 44) / 20))).map(tk => (
+                              <div key={tk.id} onPointerDown={e => e.stopPropagation()} onClick={e => { e.stopPropagation(); toggleTaskDone(tk.id, !tk.done) }}
+                                className="flex items-center gap-1 rounded bg-white/70 px-1.5 py-0.5 text-left">
+                                <span className={cn('flex h-3 w-3 shrink-0 items-center justify-center rounded-full border', tk.done ? 'border-success bg-success text-white' : 'border-gray/50 text-transparent')}><CheckIcon size={8} /></span>
+                                <span className={cn('truncate text-[10px] font-[600]', tk.done ? 'text-gray line-through' : 'text-dark-text')}>{tk.title}</span>
+                              </div>
+                            ))}
+                            {bTasks.length > Math.max(1, Math.floor((height - 44) / 20)) && (
+                              <div className="text-center text-[9px] font-[700] text-gray">+{bTasks.length - Math.max(1, Math.floor((height - 44) / 20))} more</div>
+                            )}
+                          </div>
+                        )}
                       </div>
-                    )}
-                  </div>
+                    )
+                  })()}
                   {/* Resize handle */}
                   <div onPointerDown={e => startDrag(e, i, 'resize')}
                     className="absolute inset-x-0 bottom-0 flex h-2.5 cursor-ns-resize items-end justify-center"
@@ -604,6 +626,16 @@ export default function SchedulePage() {
             </select>
           </label>
           <Link href="/tasks" className="text-[12px] font-[700] text-navy">Manage →</Link>
+        </div>
+        {/* Quick add */}
+        <div className="mb-2 flex items-center gap-2">
+          <input value={newTaskTitle} onChange={e => setNewTaskTitle(e.target.value)}
+            onKeyDown={e => { if (e.key === 'Enter' && newTaskTitle.trim()) { createTask(newTaskTitle.trim(), 30); setNewTaskTitle('') } }}
+            placeholder="Quick-add a task…"
+            className="flex-1 rounded-lg border border-border bg-bdrbg px-3 py-2 text-[13px] outline-none placeholder-gray focus:ring-2 focus:ring-navy" />
+          <button onClick={() => { if (newTaskTitle.trim()) { createTask(newTaskTitle.trim(), 30, { plan: true }); setNewTaskTitle('') } }}
+            disabled={!newTaskTitle.trim()}
+            className="shrink-0 rounded-lg bg-navy px-3 py-2 text-[12px] font-[800] text-white disabled:opacity-50">Add &amp; plan</button>
         </div>
         {unscheduled.length === 0 ? (
           <p className="py-2 text-center text-[12px] text-gray">Everything’s planned. Nice. 🎯</p>
