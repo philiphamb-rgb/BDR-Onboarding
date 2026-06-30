@@ -21,9 +21,10 @@ function contextFor(pathname: string): { label: string; prompts: string[] } {
   if (p.startsWith('/analytics')) return { label: 'My analytics', prompts: ['What do my numbers say I should improve?', "Where's my biggest bottleneck?"] }
   if (p.startsWith('/schedule')) return { label: 'Time Blocks', prompts: ['How do I get the most from my power blocks?', 'Plan my next selling block'] }
   if (p.startsWith('/tasks')) return { label: 'Tasks', prompts: ['Help me prioritize my tasks', 'What should I do first today?'] }
+  if (p.startsWith('/notes')) return { label: 'Notes', prompts: ['Pull the action items out of my notes', 'Turn this note into a plan'] }
   if (p.startsWith('/train')) return { label: 'Learning Center', prompts: ['Sum up the key idea I should apply', 'How do I use this on a real call?'] }
   if (p.startsWith('/wins')) return { label: 'Wins log', prompts: ['What pattern do you see in my wins?', 'How do I repeat my best week?'] }
-  if (p.startsWith('/calculator')) return { label: 'Income Calculator', prompts: ['How many deals to hit my income goal?', 'Is my goal realistic?'] }
+  if (p.startsWith('/progress')) return { label: 'My progress', prompts: ['What should I focus on to rank up?', 'How close am I to my certificate?'] }
   if (p.startsWith('/leaderboard')) return { label: 'Leaderboard', prompts: ['How do I climb the leaderboard?', 'What are top reps doing differently?'] }
   if (p.startsWith('/manager')) return { label: 'Manager view', prompts: ['Where should I coach my team this week?', "Who's at risk and why?"] }
   return { label: 'BDR Hub', prompts: ['What should I focus on this week?', 'How can I improve my close rate?'] }

@@ -50,7 +50,7 @@ export function deriveAutoWins(i: WinsInput, paceFraction: number): AutoWin[] {
       wins.push({ id: 'goal', tone: 'pace', title: `On pace — ${i.dealsThisMonth}/${i.monthlyDealGoal} deals (${p}%)`, detail: `Right where you should be this far into the month. Keep the cadence.`, href: '/analytics' })
     } else {
       const behind = Math.max(1, Math.ceil(expected - i.dealsThisMonth))
-      wins.push({ id: 'goal', tone: 'nudge', title: `${i.monthlyDealGoal - i.dealsThisMonth} deals to your goal`, detail: `About ${behind} behind pace — a focused power block today closes the gap.`, href: '/calculator' })
+      wins.push({ id: 'goal', tone: 'nudge', title: `${i.monthlyDealGoal - i.dealsThisMonth} deals to your goal`, detail: `About ${behind} behind pace — a focused power block today closes the gap.`, href: '/analytics' })
     }
   }
 
