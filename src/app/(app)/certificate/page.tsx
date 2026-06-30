@@ -86,7 +86,7 @@ export default function CertificatePage() {
             Complete every module and pass its quiz to unlock your ConsumerDirect BDR certificate.
           </p>
           <Link href="/train" className="mt-5 inline-block">
-            <Button variant="conversion" icon={<BookIcon size={18} />} iconPosition="right">Keep training</Button>
+            <Button variant="conversion" icon={<BookIcon size={18} />} iconPosition="right">Keep learning</Button>
           </Link>
         </Card>
       ) : (

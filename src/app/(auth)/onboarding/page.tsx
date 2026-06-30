@@ -76,7 +76,7 @@ export default function OnboardingPage() {
               <div className="mb-4 flex justify-center"><TrophyIcon size={48} className="text-gold" /></div>
               <h2 className="text-h2 text-dark-text mb-3 text-center">Welcome to BDR Hub</h2>
               <p className="text-sm text-gray mb-4 text-center">Your personal onboarding and performance hub for ConsumerDirect.</p>
-              {['Daily habit tracking','XP & belt progression','Training & quizzes','Coach AI personalization'].map(item => (
+              {['Daily habit tracking','XP & belt progression','Learning & quizzes','Coach AI personalization'].map(item => (
                 <div key={item} className="flex items-center gap-3 py-2">
                   <div className="w-5 h-5 bg-teal/10 rounded-full flex items-center justify-center flex-shrink-0">
                     <CheckIcon className="w-3 h-3 text-teal" />

@@ -35,6 +35,8 @@ import { Avatar } from '@/components/ui'
 interface NavItem {
   href: string
   label: string
+  /** Compact label for the mobile bottom nav, where horizontal space is tight. */
+  shortLabel?: string
   icon: React.ComponentType<{ size?: number; className?: string }>
   managerOnly?: boolean
 }
@@ -42,7 +44,7 @@ interface NavItem {
 const REP_NAV: NavItem[] = [
   { href: '/home',    label: 'Home',    icon: HomeIcon  },
   { href: '/today',   label: 'Today',   icon: TodayIcon },
-  { href: '/train',   label: 'Train',   icon: TrainIcon },
+  { href: '/train',   label: 'Learning Center', shortLabel: 'Learn',   icon: TrainIcon },
   { href: '/wins',    label: 'Wins',    icon: WinsIcon  },
   { href: '/coach',   label: 'Coach',   icon: CoachIcon },
 ]
@@ -171,7 +173,7 @@ export function BottomNav({ user, unreadCount = 0 }: BottomNavProps) {
                   isActive ? 'text-teal' : 'text-gray'
                 )}
               >
-                {item.label}
+                {item.shortLabel ?? item.label}
               </span>
               {/* Active indicator dot */}
               {isActive && (

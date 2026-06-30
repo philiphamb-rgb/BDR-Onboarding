@@ -300,7 +300,7 @@ export default function HomePage() {
           { href: '/partners',        Icon: HandshakeIcon, label: 'Partners',  sub: 'Onboarding checklist',    gradient: 'from-teal to-navy' },
           { href: '/today',          Icon: ChecklistIcon, label: 'Check In',  sub: 'Log today\'s habits',     gradient: 'from-teal to-teal-dark' },
           { href: '/wins?action=new', Icon: TrophyIcon,    label: 'Log Win',   sub: 'Call · Demo · Deal',      gradient: 'from-navy to-navy-dark' },
-          { href: '/train',           Icon: BookIcon,      label: 'Train',     sub: 'Continue learning',       gradient: 'from-purple-600 to-purple-800' },
+          { href: '/train',           Icon: BookIcon,      label: 'Learning Center', sub: 'Continue learning',     gradient: 'from-purple-600 to-purple-800' },
           { href: '/coach',           Icon: CoachIcon,     label: 'Coach AI',  sub: 'Get personalized tips',   gradient: 'from-gold to-orange-500' },
         ].map(a => (
           <Link key={a.href} href={a.href}
