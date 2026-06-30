@@ -66,7 +66,7 @@ export default function TeamPage() {
             icon={<TeamIcon size={28} />}
             title="No team members yet"
             description="Each rep you invite shows up here with their belt, streak, calls, demos, and training progress — your full coaching view in one place."
-            action={{ label: 'Invite reps', onClick: () => router.push('/manager/invite') }}
+            action={{ label: 'Invite reps', onClick: () => router.push('/manager/roles') }}
           />
         </Card>
       ) : (

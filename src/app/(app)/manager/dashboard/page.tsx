@@ -87,7 +87,7 @@ export default function ManagerDashboardPage() {
             icon={<TeamIcon size={28} />}
             title="No reps on your team yet"
             description="Invite your first BDR and this dashboard fills with live coaching insights, streaks, and pipeline activity."
-            action={{ label: 'Invite your team', onClick: () => router.push('/manager/invite') }}
+            action={{ label: 'Invite your team', onClick: () => router.push('/manager/roles') }}
           />
         </Card>
       ) : (
@@ -155,7 +155,7 @@ export default function ManagerDashboardPage() {
               { href: '/manager/analytics', label: 'Analytics', icon: <BarChartIcon size={18} />, accent: 'text-navy' },
               { href: '/manager/broadcast', label: 'Broadcast', icon: <BellIcon size={18} />, accent: 'text-teal' },
               { href: '/manager/gamification', label: 'XP Rules', icon: <XpIcon size={18} />, accent: 'text-gold' },
-              { href: '/manager/invite', label: 'Invite', icon: <TeamIcon size={18} />, accent: 'text-navy' },
+              { href: '/manager/roles', label: 'Roles', icon: <TeamIcon size={18} />, accent: 'text-navy' },
             ].map(a => (
               <Link key={a.href} href={a.href}>
                 <Card hover className="flex items-center gap-2 !p-3">

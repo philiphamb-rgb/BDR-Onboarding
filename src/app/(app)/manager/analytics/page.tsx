@@ -84,7 +84,7 @@ export default function AnalyticsPage() {
             icon={<BarChartIcon size={28} />}
             title="No data to analyze yet"
             description="Once reps join and start logging calls, demos, and training, you'll see team XP, an activity funnel, and AI coaching insights here."
-            action={{ label: 'Invite your team', onClick: () => router.push('/manager/invite') }}
+            action={{ label: 'Invite your team', onClick: () => router.push('/manager/roles') }}
           />
         </Card>
       ) : (
