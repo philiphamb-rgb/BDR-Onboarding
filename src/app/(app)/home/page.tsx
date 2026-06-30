@@ -184,7 +184,7 @@ export default function HomePage() {
   )
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 stagger-rise">
       {/* Header */}
       <div className="flex items-center justify-between mb-2">
         <div>
