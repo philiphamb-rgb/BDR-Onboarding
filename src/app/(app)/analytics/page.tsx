@@ -6,8 +6,9 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import { Card, SkeletonCard, ProgressBar } from '@/components/ui'
 import { PageHeader } from '@/components/manager'
-import { PhoneIcon, TargetIcon, HandshakeIcon, ArrowRightIcon } from '@/components/icons'
+import { PhoneIcon, TargetIcon, HandshakeIcon, ArrowRightIcon, LightningIcon } from '@/components/icons'
 import { PIPELINE_STAGES, stageMeta } from '@/lib/partnerChecklist'
+import { askCoach } from '@/lib/coachBus'
 
 const WON = 'opportunity_won'
 const rate = (arr) => arr.length ? Math.round(arr.filter(p => p.stage === WON).length / arr.length * 100) : 0
@@ -66,6 +67,17 @@ export default function AnalyticsPage() {
   return (
     <div className="space-y-4 pb-4">
       <PageHeader title="Analytics" subtitle="Your pipeline, conversion, and activity at a glance." />
+
+      {/* Proactive coaching on the numbers right here */}
+      <button onClick={() => askCoach('Look at my analytics — my pipeline, conversion, and activity. What is my single biggest bottleneck and what 3 specific things should I do to improve my numbers?')}
+        className="flex w-full items-center gap-3 rounded-2xl bg-gradient-hero p-3.5 text-left text-white shadow-card transition-transform active:scale-[0.99]">
+        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white/15"><LightningIcon size={18} className="text-white" /></div>
+        <div className="min-w-0 flex-1">
+          <div className="text-[14px] font-[800]">Coach me on these numbers</div>
+          <div className="text-[11px] text-white/75">Your biggest bottleneck & how to fix it</div>
+        </div>
+        <ArrowRightIcon size={16} className="shrink-0 text-white/80" />
+      </button>
 
       {/* Monthly deal goal — powers Coach pace insights & auto-Wins */}
       <Card>

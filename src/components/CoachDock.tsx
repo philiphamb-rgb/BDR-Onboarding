@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { cn } from '@/lib/utils'
+import { COACH_OPEN_EVENT } from '@/lib/coachBus'
 import { CoachIcon, CloseIcon, ArrowRightIcon, LightningIcon } from '@/components/icons'
 
 interface Msg { id: string; role: 'user' | 'assistant'; content: string }
@@ -38,6 +39,7 @@ export function CoachDock() {
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
   const endRef = useRef<HTMLDivElement>(null)
+  const [pending, setPending] = useState<string | null>(null)   // prompt waiting to send (e.g. until userId loads)
 
   // The full Coach screen and the live Drill own the conversation there — no
   // floating duplicate on those routes.
@@ -53,6 +55,28 @@ export function CoachDock() {
   }, [])
 
   useEffect(() => { if (open) endRef.current?.scrollIntoView({ behavior: 'smooth' }) }, [messages, open])
+
+  // Any screen can summon the coach via askCoach() — optionally with a question
+  // to answer immediately ("coach me on this metric").
+  useEffect(() => {
+    const handler = (e: any) => {
+      setOpen(true)
+      const p = e?.detail?.prompt
+      if (typeof p === 'string' && p.trim()) setPending(p.trim())
+    }
+    window.addEventListener(COACH_OPEN_EVENT, handler)
+    return () => window.removeEventListener(COACH_OPEN_EVENT, handler)
+  }, [])
+
+  // Flush a queued prompt once we can actually send it.
+  useEffect(() => {
+    if (pending && userId && !loading) {
+      const p = pending
+      setPending(null)
+      send(p)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pending, userId, loading])
 
   // Lock background scroll while the dock is open (mobile).
   useEffect(() => {

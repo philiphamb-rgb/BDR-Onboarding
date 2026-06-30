@@ -25,6 +25,7 @@ export interface WinsInput {
   streak: number
   modulesDone: number
   modulesTotal: number
+  stalledPartners?: number   // partners sitting at proposal/contract stage
 }
 
 const pct = (a: number, b: number) => (b > 0 ? Math.round((a / b) * 100) : 0)
@@ -70,6 +71,12 @@ export function deriveAutoWins(i: WinsInput, paceFraction: number): AutoWin[] {
     wins.push({ id: 'close', tone: 'win', title: `${i.closeRateWarm}% warm closing rate`, detail: `Your warm conversations convert — feed that pipeline with more referrals.`, href: '/analytics' })
   } else if ((i.closeRateOverall ?? 0) > 0 && (i.closeRateWarm ?? 0) > 0 && (i.closeRateWarm ?? 0) < (i.closeRateOverall ?? 0)) {
     wins.push({ id: 'close', tone: 'nudge', title: `Cold leads are dragging your close rate`, detail: `Warm closes higher than cold — run the pain funnel before pitching cold prospects.`, href: '/coach' })
+  }
+
+  // Stalled pipeline — proposals/contracts sitting without a next step.
+  if ((i.stalledPartners ?? 0) > 0) {
+    const n = i.stalledPartners as number
+    wins.push({ id: 'stalled', tone: 'nudge', title: `${n} deal${n === 1 ? '' : 's'} waiting on you`, detail: `${n === 1 ? 'A partner is' : `${n} partners are`} at proposal/contract stage — one nudge today could close ${n === 1 ? 'it' : 'them'}.`, href: '/partners' })
   }
 
   // Streak.

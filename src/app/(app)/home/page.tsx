@@ -12,6 +12,7 @@ import { currentBlock, fmtClock } from '@/lib/schedule'
 import { Tour } from '@/components/tour'
 import { HOME_TOUR } from '@/lib/tours'
 import { deriveAutoWins, monthPaceFraction } from '@/lib/winsEngine'
+import { askCoach } from '@/lib/coachBus'
 import { Belt3D } from '@/components/Belt3D'
 import Link from 'next/link'
 
@@ -116,6 +117,7 @@ export default function HomePage() {
     const calls = cnt('call'), demos = cnt('demo'), deals = cnt('deal')
     const all = parts ?? []
     const warm = all.filter(p => (p.temperature ?? 'cold') === 'warm')
+    const stalled = all.filter(p => p.stage === 'proposal_sent' || p.stage === 'contract_signed').length
     const closeRate = (arr: any[]) => arr.length ? Math.round(arr.filter(p => p.stage === 'opportunity_won').length / arr.length * 100) : 0
     setAutoWins(deriveAutoWins({
       callsThisWeek: calls.thisW, callsLastWeek: calls.lastW,
@@ -126,6 +128,7 @@ export default function HomePage() {
       closeRateWarm: closeRate(warm), closeRateOverall: closeRate(all),
       streak: up?.current_streak ?? 0,
       modulesDone: 0, modulesTotal: 0,
+      stalledPartners: stalled,
     }, monthPaceFraction(now)))
   }
 
@@ -236,26 +239,31 @@ export default function HomePage() {
         </div>
       </div>
 
-      {/* AI Coach — auto-detected wins & insights, framed against goals */}
+      {/* AI Coach — auto-detected wins & insights, each tappable to coach on it */}
       {autoWins.length > 0 && (
         <Card data-tour="home-wins" className="!p-3">
           <div className="mb-2 flex items-center gap-2">
             <LightningIcon size={15} className="text-teal" />
-            <span className="text-label text-teal">Coach · your wins</span>
+            <span className="text-label text-teal">Your coach sees</span>
             <Link href="/coach" className="ml-auto text-[12px] font-[700] text-navy">More →</Link>
           </div>
           <div className="space-y-1.5">
             {autoWins.slice(0, 3).map(wn => (
-              <Link key={wn.id} href={wn.href ?? '/coach'}
-                className="flex items-start gap-2.5 rounded-lg border border-border bg-bdrbg p-2.5 transition-colors hover:border-teal/50">
+              <button key={wn.id} onClick={() => askCoach(`Coach me on this: ${wn.title}. ${wn.detail} What exactly should I do next?`)}
+                className="flex w-full items-start gap-2.5 rounded-lg border border-border bg-bdrbg p-2.5 text-left transition-colors hover:border-teal/50 hover:bg-teal/5">
                 <span className={cn('mt-1 h-2 w-2 shrink-0 rounded-full', wn.tone === 'win' ? 'bg-success' : wn.tone === 'pace' ? 'bg-navy' : 'bg-gold')} />
-                <div className="min-w-0">
+                <div className="min-w-0 flex-1">
                   <div className="text-[13px] font-[700] leading-snug text-dark-text">{wn.title}</div>
                   <div className="text-[12px] leading-snug text-gray">{wn.detail}</div>
                 </div>
-              </Link>
+                <span className="mt-0.5 shrink-0 text-[11px] font-[700] text-teal">Coach me →</span>
+              </button>
             ))}
           </div>
+          <button onClick={() => askCoach("Give me my game plan for today: where I stand against my monthly goal, my single biggest opportunity right now, and the top 3 specific actions that move my number most. Use my real data and be concrete.")}
+            className="mt-2.5 flex w-full items-center justify-center gap-2 rounded-lg bg-gradient-hero py-2.5 text-[13px] font-[800] text-white transition-transform active:scale-[0.99]">
+            <LightningIcon size={14} className="text-white" /> Get today&apos;s game plan
+          </button>
         </Card>
       )}
 
