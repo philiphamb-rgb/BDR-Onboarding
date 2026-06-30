@@ -351,8 +351,14 @@ export default function SchedulePage() {
     if (userId) await supabase.from('users').update({ settings: next }).eq('id', userId)
   }
   const resetDay = async () => {
+    // Tasks parked in custom blocks must return to the queue (those blocks vanish).
+    const orphans = tasks.filter(t => t.scheduled_day === today && typeof t.scheduled_block === 'string' && t.scheduled_block.startsWith('c:'))
     setOver({}); setCustomBlocks([]); setSelected(null)
-    if (userId) await supabase.from('schedule_blocks').delete().eq('user_id', userId).eq('day', today)
+    if (orphans.length) setTasks(prev => prev.map(t => orphans.some(o => o.id === t.id) ? { ...t, scheduled_day: null, scheduled_block: null } : t))
+    if (userId) {
+      await supabase.from('schedule_blocks').delete().eq('user_id', userId).eq('day', today)
+      await Promise.all(orphans.map(o => supabase.from('tasks').update({ scheduled_day: null, scheduled_block: null }).eq('id', o.id)))
+    }
     toast.success('Reset to the optimized day')
   }
   const pickShift = async (start: string) => {
