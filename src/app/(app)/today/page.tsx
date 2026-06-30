@@ -6,7 +6,7 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import { useProgress, useHabits } from '@/lib/hooks/useProgress'
 import { Card, Button, ProgressBar, Skeleton } from '@/components/ui'
-import { CheckIcon, FlameIcon, XpIcon, PhoneIcon, TargetIcon, HandshakeIcon, ClockIcon } from '@/components/icons'
+import { CheckIcon, FlameIcon, XpIcon, PhoneIcon, TargetIcon, HandshakeIcon, ClockIcon, ArrowRightIcon, LightningIcon } from '@/components/icons'
 import { cn, formatXP, formatDateShort } from '@/lib/utils'
 import { toast } from '@/components/ui'
 import { AiTip } from '@/components/AiTip'
@@ -16,12 +16,27 @@ export default function TodayPage() {
   const supabase = createClient()
   const [userId, setUserId] = useState<string>()
   const [completing, setCompleting] = useState<string | null>(null)
+  const [planned, setPlanned] = useState<any[]>([])     // tasks scheduled into today's blocks
+  const [unplannedCount, setUnplannedCount] = useState(0)
   const { habits, loading: habitsLoading, refresh: refreshHabits } = useHabits(userId)
   const { progress, refresh: refreshProgress } = useProgress(userId)
+  const today = new Date().toISOString().split('T')[0]
 
   useEffect(() => {
-    supabase.auth.getUser().then(({ data: { user } }) => { if (user) setUserId(user.id) })
+    supabase.auth.getUser().then(({ data: { user } }) => { if (user) { setUserId(user.id); loadPlan(user.id) } })
   }, [])
+
+  const loadPlan = async (uid: string) => {
+    const { data } = await supabase.from('tasks').select('id, title, done, estimated_minutes, scheduled_day, scheduled_block')
+      .eq('user_id', uid).is('parent_id', null).or(`done.eq.false,scheduled_day.eq.${today}`)
+    const all = data ?? []
+    setPlanned(all.filter(t => t.scheduled_day === today && t.scheduled_block != null))
+    setUnplannedCount(all.filter(t => !t.done && !(t.scheduled_day === today && t.scheduled_block != null)).length)
+  }
+  const togglePlanTask = (id: string, done: boolean) => {
+    setPlanned(prev => prev.map(t => t.id === id ? { ...t, done } : t))
+    supabase.from('tasks').update({ done, updated_at: new Date().toISOString() }).eq('id', id).then(() => {})
+  }
 
   const completeHabit = async (habitId: string, habitLabel: string) => {
     if (!userId) return
@@ -100,6 +115,43 @@ export default function TodayPage() {
       <AiTip id="today-plan" title="Start the day with an AI game plan" prompt="Give me my game plan for today: where I stand, my biggest opportunity, and the top 3 things to do." tryLabel="Get today's game plan">
         Ask the coach to triage your day from your goal, pipeline, and tasks — then open <span className="font-[700]">Time Blocks</span> and tap Auto-plan to schedule it all.
       </AiTip>
+
+      {/* Today's plan — tasks scheduled into your time blocks */}
+      <Card>
+        <div className="mb-3 flex items-center justify-between">
+          <h2 className="text-h3 text-dark-text">Today&apos;s plan</h2>
+          <Link href="/schedule" className="flex items-center gap-1 text-sm font-medium text-navy">Time Blocks <ArrowRightIcon className="h-4 w-4" /></Link>
+        </div>
+        {planned.length === 0 ? (
+          <div>
+            <p className="text-sm text-gray">Nothing time-blocked yet{unplannedCount > 0 ? ` — you have ${unplannedCount} unplanned task${unplannedCount > 1 ? 's' : ''}.` : '.'}</p>
+            <div className="mt-3 flex flex-wrap gap-2">
+              <Link href="/schedule" className="flex items-center gap-1.5 rounded-lg bg-navy px-3 py-2 text-[13px] font-[800] text-white"><LightningIcon size={14} /> Auto-plan my day</Link>
+              <button onClick={() => askCoach('Give me my game plan for today and tell me what to time-block first.')} className="rounded-lg bg-bdrbg px-3 py-2 text-[13px] font-[700] text-mid-text hover:bg-border/40">Ask the coach</button>
+            </div>
+          </div>
+        ) : (
+          <>
+            <div className="mb-1.5 flex items-center justify-between text-xs text-gray">
+              <span className="tabular-nums">{planned.filter(t => t.done).length}/{planned.length} done</span>
+              <span className="tabular-nums">{planned.reduce((s, t) => s + (t.estimated_minutes || 30), 0)}m planned</span>
+            </div>
+            <ProgressBar value={planned.filter(t => t.done).length} max={planned.length} className="mb-3" />
+            <div className="space-y-2">
+              {planned.slice(0, 6).map(t => (
+                <div key={t.id} className="flex items-center gap-3 rounded-xl border border-border bg-bdrbg p-3">
+                  <button onClick={() => togglePlanTask(t.id, !t.done)} aria-label={t.done ? 'Mark incomplete' : 'Complete task'}
+                    className={cn('flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 transition-colors', t.done ? 'border-success bg-success text-white' : 'border-border text-transparent hover:border-teal')}>
+                    <CheckIcon className="h-3 w-3" />
+                  </button>
+                  <span className={cn('flex-1 truncate text-sm font-medium', t.done ? 'text-gray line-through' : 'text-dark-text')}>{t.title}</span>
+                  <span className="shrink-0 text-xs text-gray tabular-nums">{(t.estimated_minutes || 30) >= 60 ? `${(t.estimated_minutes || 30) / 60}h` : `${t.estimated_minutes || 30}m`}</span>
+                </div>
+              ))}
+            </div>
+          </>
+        )}
+      </Card>
 
       {/* Streak banner */}
       {(progress?.current_streak ?? 0) > 0 && (
