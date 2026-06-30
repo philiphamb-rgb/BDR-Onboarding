@@ -16,17 +16,37 @@ export default function AnalyticsPage() {
   const supabase = createClient()
   const [partners, setPartners] = useState([])
   const [prog, setProg] = useState<any>(null)
+  const [userId, setUserId] = useState<string>()
+  const [teamId, setTeamId] = useState<string | null>(null)
+  const [goalInput, setGoalInput] = useState('')
+  const [savedGoal, setSavedGoal] = useState<number | null>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => {
       if (!user) { setLoading(false); return }
+      setUserId(user.id)
       Promise.all([
         supabase.from('partner_onboarding').select('stage, temperature').eq('user_id', user.id),
         supabase.from('user_progress').select('calls_this_week, demos_this_week, deals_this_month, total_deals').eq('user_id', user.id).single(),
-      ]).then(([{ data: p }, { data: pr }]) => { setPartners(p ?? []); setProg(pr ?? {}); setLoading(false) })
+        supabase.from('goals').select('monthly_deal_goal').eq('user_id', user.id).maybeSingle(),
+        supabase.from('users').select('team_id').eq('id', user.id).single(),
+      ]).then(([{ data: p }, { data: pr }, { data: g }, { data: u }]) => {
+        setPartners(p ?? []); setProg(pr ?? {})
+        if (g?.monthly_deal_goal != null) { setSavedGoal(g.monthly_deal_goal); setGoalInput(String(g.monthly_deal_goal)) }
+        setTeamId(u?.team_id ?? null)
+        setLoading(false)
+      })
     })
   }, [])
+
+  const saveGoal = async () => {
+    const n = parseInt(goalInput, 10)
+    if (!userId || !Number.isFinite(n) || n < 0) return
+    await supabase.from('goals').upsert({ user_id: userId, team_id: teamId, monthly_deal_goal: n, updated_at: new Date().toISOString() }, { onConflict: 'user_id' })
+    setSavedGoal(n)
+    const { toast } = await import('@/components/ui'); toast.success('Monthly goal saved')
+  }
 
   if (loading) return <div className="space-y-4"><SkeletonCard /><SkeletonCard /></div>
 
@@ -46,6 +66,26 @@ export default function AnalyticsPage() {
   return (
     <div className="space-y-4 pb-4">
       <PageHeader title="Analytics" subtitle="Your pipeline, conversion, and activity at a glance." />
+
+      {/* Monthly deal goal — powers Coach pace insights & auto-Wins */}
+      <Card>
+        <div className="label mb-2">Monthly deal goal</div>
+        <div className="flex items-center gap-2">
+          <input type="number" min={0} value={goalInput} onChange={e => setGoalInput(e.target.value)} placeholder="e.g. 8"
+            className="w-24 rounded-md border border-border px-3 py-2 text-sm font-[700] text-dark-text focus:outline-none focus:ring-2 focus:ring-navy" />
+          <span className="text-[12px] text-gray">deals / month</span>
+          <button onClick={saveGoal} className="ml-auto rounded-md bg-navy px-3 py-2 text-[12px] font-[700] text-white hover:bg-navy-dark">Save</button>
+        </div>
+        {savedGoal != null && savedGoal > 0 && (
+          <div className="mt-3">
+            <div className="flex items-center justify-between text-[12px] text-mid-text">
+              <span>This month</span><span className="font-[700]">{prog?.deals_this_month ?? 0} / {savedGoal} deals</span>
+            </div>
+            <ProgressBar value={prog?.deals_this_month ?? 0} max={savedGoal} color={(prog?.deals_this_month ?? 0) >= savedGoal ? '#16A34A' : '#00C2B2'} className="mt-1 h-2" />
+          </div>
+        )}
+        <p className="mt-2 text-[11px] text-gray">Powers your Coach pace insights. Plan the full income picture in the <Link href="/calculator" className="font-[700] text-teal">Income Calculator →</Link></p>
+      </Card>
 
       {partners.length === 0 ? (
         <Card className="text-center !py-8">

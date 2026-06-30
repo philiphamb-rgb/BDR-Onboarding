@@ -20,6 +20,7 @@ async function buildUserContext(supabase, uid: string) {
     supabase.from('partner_onboarding').select('partner_name, stage, checklist, temperature')
       .eq('user_id', uid).order('updated_at', { ascending: false }).limit(20),
   ])
+  const { data: goal } = await supabase.from('goals').select('monthly_deal_goal').eq('user_id', uid).maybeSingle()
 
   const firstName = userData?.first_name || (userData?.name ?? 'BDR').split(' ')[0]
   const days = progress?.days_active ?? 0
@@ -49,7 +50,7 @@ async function buildUserContext(supabase, uid: string) {
 - Current streak: ${progress?.current_streak ?? 0} days
 - Calls this week: ${progress?.calls_this_week ?? 0} · Demos this week: ${progress?.demos_this_week ?? 0} · Deals this month: ${progress?.deals_this_month ?? 0}
 - Pipeline funnel: ${funnel}
-- Conversion: ${conversion}${shift ? `\n- Works a shift starting ${shift} with an optimized time-blocked day (~4h45m of protected selling time across three power blocks).` : ''}
+- Conversion: ${conversion}${goal?.monthly_deal_goal ? `\n- Monthly deal goal: ${goal.monthly_deal_goal} (${progress?.deals_this_month ?? 0} closed so far this month) — coach toward this number.` : ''}${shift ? `\n- Works a shift starting ${shift} with an optimized time-blocked day (~4h45m of protected selling time across three power blocks).` : ''}
 ${recentWins?.length ? `\nRECENT WINS:\n${recentWins.map((w) => `- ${w.type}: ${w.description}`).join('\n')}` : ''}
 ${partners?.length ? `\nPARTNERS IN ONBOARDING (reference by name when relevant):\n${partners.slice(0, 8).map((p) => `- ${p.partner_name} — ${stageMeta(p.stage).label}, ${completion(p.checklist).done}/${completion(p.checklist).total} onboarding tasks done`).join('\n')}` : ''}`
 

@@ -11,6 +11,7 @@ import { cn, formatXP, pluralize } from '@/lib/utils'
 import { currentBlock, fmtClock } from '@/lib/schedule'
 import { Tour } from '@/components/tour'
 import { HOME_TOUR } from '@/lib/tours'
+import { deriveAutoWins, monthPaceFraction } from '@/lib/winsEngine'
 import Link from 'next/link'
 
 const BELT_STYLES: Record<string, { bg: string; bar: string; label: string }> = {
@@ -32,6 +33,7 @@ export default function HomePage() {
   const [nextStep, setNextStep] = useState<{ type: 'lesson' | 'quiz' | 'done'; moduleOrder?: number; moduleTitle?: string; href?: string; title?: string } | null>(null)
   const [shift, setShift] = useState<string | null>(null)
   const [stuck, setStuck] = useState(0)
+  const [autoWins, setAutoWins] = useState<any[]>([])
   const [completing, setCompleting] = useState<string | null>(null)
   const { progress, loading, refresh: refreshProgress } = useProgress(userId)
   const { habits, refresh: refreshHabits } = useHabits(userId)
@@ -49,6 +51,7 @@ export default function HomePage() {
       supabase.from('partner_onboarding').select('stage').eq('user_id', user.id).then(({ data }) => {
         setStuck((data ?? []).filter(p => p.stage === 'proposal_sent' || p.stage === 'contract_signed').length)
       })
+      computeAutoWins(user.id)
       supabase.from('user_progress').select('user_id, total_xp, users!inner(name)')
         .order('total_xp', { ascending: false }).limit(5)
         .then(({ data }) => {
@@ -88,6 +91,38 @@ export default function HomePage() {
       }
     }
     setNextStep({ type: 'done' })
+  }
+
+  // Auto-Wins / Coach insights — deterministic, framed against goals. Real data only.
+  const computeAutoWins = async (uid: string) => {
+    const now = new Date()
+    const wk = new Date(now.getTime() - 7 * 86400000).toISOString()
+    const fortnight = new Date(now.getTime() - 14 * 86400000).toISOString()
+    const [{ data: w }, { data: g }, { data: parts }, { data: up }] = await Promise.all([
+      supabase.from('wins').select('type, logged_at').eq('user_id', uid).gte('logged_at', fortnight),
+      supabase.from('goals').select('monthly_deal_goal').eq('user_id', uid).maybeSingle(),
+      supabase.from('partner_onboarding').select('stage, temperature').eq('user_id', uid),
+      supabase.from('user_progress').select('current_streak, deals_this_month').eq('user_id', uid).single(),
+    ])
+    const inWeek = (t: string, type: string) => (w ?? []).filter(x => x.type === type && x.logged_at >= t).length
+    const cnt = (type: string) => ({
+      thisW: inWeek(wk, type),
+      lastW: (w ?? []).filter(x => x.type === type && x.logged_at >= fortnight && x.logged_at < wk).length,
+    })
+    const calls = cnt('call'), demos = cnt('demo'), deals = cnt('deal')
+    const all = parts ?? []
+    const warm = all.filter(p => (p.temperature ?? 'cold') === 'warm')
+    const closeRate = (arr: any[]) => arr.length ? Math.round(arr.filter(p => p.stage === 'opportunity_won').length / arr.length * 100) : 0
+    setAutoWins(deriveAutoWins({
+      callsThisWeek: calls.thisW, callsLastWeek: calls.lastW,
+      demosThisWeek: demos.thisW, demosLastWeek: demos.lastW,
+      dealsThisWeek: deals.thisW, dealsLastWeek: deals.lastW,
+      dealsThisMonth: up?.deals_this_month ?? 0,
+      monthlyDealGoal: g?.monthly_deal_goal ?? null,
+      closeRateWarm: closeRate(warm), closeRateOverall: closeRate(all),
+      streak: up?.current_streak ?? 0,
+      modulesDone: 0, modulesTotal: 0,
+    }, monthPaceFraction(now)))
   }
 
   // Complete a habit inline from Home — the daily core loop, 1 tap from landing.
@@ -193,6 +228,29 @@ export default function HomePage() {
           {progress?.streakStatus === 'at-risk' && <Badge variant="gold" className="ml-auto text-xs">Streak at risk!</Badge>}
         </div>
       </div>
+
+      {/* AI Coach — auto-detected wins & insights, framed against goals */}
+      {autoWins.length > 0 && (
+        <Card data-tour="home-wins" className="!p-3">
+          <div className="mb-2 flex items-center gap-2">
+            <LightningIcon size={15} className="text-teal" />
+            <span className="text-label text-teal">Coach · your wins</span>
+            <Link href="/coach" className="ml-auto text-[12px] font-[700] text-navy">More →</Link>
+          </div>
+          <div className="space-y-1.5">
+            {autoWins.slice(0, 3).map(wn => (
+              <Link key={wn.id} href={wn.href ?? '/coach'}
+                className="flex items-start gap-2.5 rounded-lg border border-border bg-bdrbg p-2.5 transition-colors hover:border-teal/50">
+                <span className={cn('mt-1 h-2 w-2 shrink-0 rounded-full', wn.tone === 'win' ? 'bg-success' : wn.tone === 'pace' ? 'bg-navy' : 'bg-gold')} />
+                <div className="min-w-0">
+                  <div className="text-[13px] font-[700] leading-snug text-dark-text">{wn.title}</div>
+                  <div className="text-[12px] leading-snug text-gray">{wn.detail}</div>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </Card>
+      )}
 
       {/* Right now — current time block from the rep's Daily Rhythm */}
       {rhythm?.status === 'active' ? (
