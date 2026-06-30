@@ -254,6 +254,14 @@ button, a, [role="button"] {
 }
 .animate-rise { animation: rise-in 0.4s ease-out both; }
 
+/* Soft outward pulse on the floating Coach launcher — a gentle "I'm here". */
+@keyframes coach-pulse {
+  0%   { transform: scale(1);   opacity: 0.45; }
+  70%  { transform: scale(1.5); opacity: 0; }
+  100% { transform: scale(1.5); opacity: 0; }
+}
+.animate-coach-pulse { animation: coach-pulse 2.4s ease-out infinite; }
+
 /* Staggered entrance for a stack of cards — makes the screen feel alive on
    load without touching each conditionally-rendered child. */
 .stagger-rise > * { animation: rise-in 0.45s ease-out both; }
@@ -267,6 +275,6 @@ button, a, [role="button"] {
 .stagger-rise > *:nth-child(n+8) { animation-delay: 420ms; }
 
 @media (prefers-reduced-motion: reduce) {
-  .animate-bob, .animate-ring, .animate-rise { animation: none !important; }
+  .animate-bob, .animate-ring, .animate-rise, .animate-coach-pulse { animation: none !important; }
   .stagger-rise > * { animation: none !important; }
 }

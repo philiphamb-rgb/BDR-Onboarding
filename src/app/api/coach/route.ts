@@ -72,7 +72,11 @@ export async function POST(request: Request) {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-    const { message, userId, history = [], mode = 'coach', scenario } = await request.json()
+    const { message, userId, history = [], mode = 'coach', scenario, pageContext } = await request.json()
+
+    // The dock tells us which screen the rep is on. Keep it short + single-line
+    // so it can't be used to inject extra instructions into the system prompt.
+    const screen = typeof pageContext === 'string' ? pageContext.replace(/[\r\n]+/g, ' ').slice(0, 60).trim() : ''
 
     // ── Roleplay prospect: AI stays in character as a skeptical partner ──────
     if (mode === 'drill') {
@@ -147,6 +151,7 @@ Be honest but encouraging. No preamble, no closing.`
 ${COMPANY_CONTEXT}
 
 ${ctx.block}
+${screen ? `\nThe rep is currently on the "${screen}" screen of the app. If it's relevant to their question, tailor your help to what they're looking at right now.` : ''}
 
 COACHING STYLE:
 - Direct, practical, encouraging. Specific tips, not generic advice.

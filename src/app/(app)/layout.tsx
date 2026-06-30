@@ -1,6 +1,7 @@
 // @ts-nocheck
 import { BottomNav, Sidebar } from '@/components/nav'
 import { BeltWatcher } from '@/components/gamification'
+import { CoachDock } from '@/components/CoachDock'
 import { ServiceWorkerRegister } from '@/components/ServiceWorkerRegister'
 import { OfflineBanner } from '@/lib/hooks/OfflineBanner'
 import { createClient } from '@/lib/supabase/server'
@@ -53,6 +54,9 @@ export default async function AppLayout({ children }: { children: React.ReactNod
 
       {/* Fires a confetti celebration on a genuine belt advance */}
       <BeltWatcher userId={user?.id} />
+
+      {/* The AI Coach in your pocket — reachable from every screen */}
+      <CoachDock />
 
       {/* Registers the push-only service worker (Web Push + PWA) */}
       <ServiceWorkerRegister />
