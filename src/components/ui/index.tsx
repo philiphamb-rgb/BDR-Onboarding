@@ -677,7 +677,7 @@ export function EmptyState({ icon, title, description, action }: EmptyStateProps
   return (
     <div className="flex flex-col items-center justify-center text-center py-12 px-6">
       {icon && (
-        <div className="w-16 h-16 rounded-full bg-bdrbg flex items-center justify-center mb-4 text-gray">
+        <div className="w-16 h-16 rounded-full bg-teal/10 flex items-center justify-center mb-4 text-teal animate-attention">
           {icon}
         </div>
       )}
@@ -689,7 +689,7 @@ export function EmptyState({ icon, title, description, action }: EmptyStateProps
         <Button
           variant="primary"
           size="md"
-          className="mt-6"
+          className="mt-6 animate-glow"
           onClick={action.onClick}
         >
           {action.label}

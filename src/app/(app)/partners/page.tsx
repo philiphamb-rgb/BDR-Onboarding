@@ -88,16 +88,20 @@ export default function PartnersPage() {
           />
         </Card>
       ) : (
-        <div className="space-y-3" data-tour="partners-list">
+        <div className="space-y-3 stagger-rise" data-tour="partners-list">
           {partners.map(p => {
             const c = completion(p.checklist)
             const s = stageMeta(p.stage)
+            const needsAction = p.stage === 'proposal_sent' || p.stage === 'contract_signed'
             return (
               <Link key={p.id} href={`/partners/${p.id}`} className="block">
-                <Card hover>
+                <Card hover className={cn(needsAction && 'border-gold/50')}>
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
-                      <div className="truncate text-[15px] font-[700] text-dark-text">{p.partner_name}</div>
+                      <div className="flex items-center gap-2">
+                        {needsAction && <span className="h-2 w-2 shrink-0 animate-attention rounded-full bg-gold" title="Awaiting your next step" />}
+                        <div className="truncate text-[15px] font-[700] text-dark-text">{p.partner_name}</div>
+                      </div>
                       {p.company && <div className="truncate text-[12px] text-gray">{p.company}</div>}
                     </div>
                     <span className="shrink-0 rounded-full px-2.5 py-1 text-[11px] font-[700]" style={{ backgroundColor: `${s.color}1A`, color: s.color }}>

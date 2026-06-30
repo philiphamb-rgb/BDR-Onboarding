@@ -198,7 +198,7 @@ export function BottomNav({ user, unreadCount = 0 }: BottomNavProps) {
               )}
               aria-current={isActive ? 'page' : undefined}
             >
-              <Icon size={22} />
+              <Icon size={22} className={cn('transition-transform duration-200', isActive && 'scale-110')} />
               <span
                 className={cn(
                   'text-[10px] font-[700] uppercase tracking-[0.05em]',
@@ -209,7 +209,7 @@ export function BottomNav({ user, unreadCount = 0 }: BottomNavProps) {
               </span>
               {/* Active indicator dot */}
               {isActive && (
-                <span className="absolute -bottom-0.5 w-1 h-1 rounded-full bg-teal" />
+                <span className="absolute -bottom-0.5 h-1 w-1 animate-pop rounded-full bg-teal" />
               )}
             </Link>
           )

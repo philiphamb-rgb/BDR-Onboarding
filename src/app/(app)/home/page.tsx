@@ -403,7 +403,7 @@ export default function HomePage() {
           </div>
           {tasks.length === 0 ? (
             <Link href="/tasks" className="flex items-center gap-3 rounded-xl border border-dashed border-border bg-bdrbg p-3 text-left transition-colors hover:border-navy/40">
-              <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border-2 border-border text-gray"><PlusIcon className="h-3.5 w-3.5" /></span>
+              <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border-2 border-teal/50 text-teal animate-attention"><PlusIcon className="h-3.5 w-3.5" /></span>
               <span className="flex-1 text-sm font-medium text-mid-text">Add your first task</span>
             </Link>
           ) : (
