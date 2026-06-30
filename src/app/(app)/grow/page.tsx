@@ -94,9 +94,9 @@ export default function GrowthOverviewPage() {
               </label>
             </div>
           ) : hasGoals ? (
-            <div className="grid grid-cols-2 gap-3">
-              <Ring pct={leadPct} label={<><CountUp value={leads.newThisWeek} />/{lpw}</>} sub={`new leads this week`} />
-              <Ring pct={crPct} label={`${leads.closeRate}%`} sub={`close rate · goal ${crGoal}%`} tone="#F5A623" />
+            <div className={cn('grid gap-3', lpw > 0 && crGoal > 0 ? 'grid-cols-2' : 'grid-cols-1')}>
+              {lpw > 0 && <Ring pct={leadPct} label={<><CountUp value={leads.newThisWeek} />/{lpw}</>} sub={`new leads this week`} />}
+              {crGoal > 0 && <Ring pct={crPct} label={`${leads.closeRate}%`} sub={`close rate · goal ${crGoal}%`} tone="#F5A623" />}
             </div>
           ) : (
             <button onClick={() => setEditing(true)} className="flex w-full items-center gap-2 rounded-xl bg-white/10 p-3 text-[13px] font-[700] text-white hover:bg-white/15">
@@ -108,9 +108,11 @@ export default function GrowthOverviewPage() {
           <div className="flex items-start gap-2 p-3">
             <LightningIcon size={14} className="mt-0.5 shrink-0 text-teal" />
             <p className="text-[12px] leading-relaxed text-mid-text">
-              {leads.newThisWeek >= lpw && lpw > 0
-                ? `Top-of-funnel is healthy — ${leads.newThisWeek} new leads this week. Now turn the pressure to conversion.`
-                : `You're at ${leads.newThisWeek} of ${lpw} new leads this week. Feed the funnel from Partners to stay on pace.`}
+              {lpw > 0
+                ? (leads.newThisWeek >= lpw
+                    ? `Top-of-funnel is healthy — ${leads.newThisWeek} new leads this week. Now turn the pressure to conversion.`
+                    : `You're at ${leads.newThisWeek} of ${lpw} new leads this week. Feed the funnel from Partners to stay on pace.`)
+                : `Your close rate is ${leads.closeRate}% against a ${crGoal}% goal. Tighten discovery on your warmest leads to lift it.`}
             </p>
           </div>
         )}
