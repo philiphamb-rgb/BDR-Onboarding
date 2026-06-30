@@ -34,13 +34,16 @@ export function goalStats(goal: number | null | undefined, done: number, now: Da
   const remaining = Math.max(0, goal - done)
   const rawPct = Math.round((done / goal) * 100)
   const expected = goal * paceFraction
-  const behind = Math.max(0, Math.ceil(expected - done))
+  const gap = expected - done           // + = behind pace, − = ahead
+  const behind = Math.max(0, Math.round(gap))
   const projection = day > 0 ? Math.round((done / day) * daysInMonth) : done
   const perDayNeeded = remaining / daysLeft
+  // One-deal tolerance band: don't flag "behind" for sub-deal, early-month
+  // rounding slack — only when you're a full deal or more off pace.
   let status: GoalStats['status']
   if (done >= goal) status = 'hit'
-  else if (done >= expected * 1.1) status = 'ahead'
-  else if (done >= expected) status = 'on'
+  else if (gap <= -1) status = 'ahead'
+  else if (gap < 1) status = 'on'
   else status = 'behind'
   return { hasGoal: true, goal, done, remaining, pct: Math.min(100, rawPct), rawPct, daysInMonth, day, daysLeft, paceFraction, expected, behind, status, projection, perDayNeeded }
 }
@@ -101,7 +104,7 @@ export function buildActions(input: {
   }
 
   // Behind goal → prospecting (high priority; one entry).
-  if (g.hasGoal && g.behind > 0 && !hasTitle('prospect')) {
+  if (g.hasGoal && g.status === 'behind' && !hasTitle('prospect')) {
     out.push({ id: 'goal:prospect', kind: 'goal', title: 'Prospect new leads to close the gap', why: `~${g.behind} behind pace toward ${g.goal} — feed the top of funnel today`, href: '/partners', cta: 'Prospect', est: 30, score: 155 + g.behind * 18 })
   }
 
