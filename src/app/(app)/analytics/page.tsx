@@ -117,13 +117,16 @@ export default function AnalyticsPage() {
             </div>
           </Card>
 
-          {/* Goal pacing — wired once the commission goals tool ships */}
-          <Card className="bg-gradient-hero text-white">
-            <div className="text-[11px] font-[800] uppercase tracking-[0.08em] text-white/70">Goal pacing</div>
-            <p className="mt-1 text-sm leading-relaxed text-white/90">
-              Set a commission goal and the Hub will back-solve your daily calls and demos to hit it — and show you if you’re on pace. Coming with the commissions tool.
-            </p>
-          </Card>
+          {/* Goal pacing — opens the income/commission calculator */}
+          <Link href="/calculator">
+            <Card hover className="bg-gradient-hero text-white">
+              <div className="text-[11px] font-[800] uppercase tracking-[0.08em] text-white/70">Goal pacing</div>
+              <p className="mt-1 text-sm leading-relaxed text-white/90">
+                Set a commission goal and the Hub back-solves the daily calls and demos to hit it — and tracks your pace.
+              </p>
+              <span className="mt-3 inline-flex items-center gap-1 text-[13px] font-[800] text-white">Open the Income Calculator <ArrowRightIcon size={14} /></span>
+            </Card>
+          </Link>
         </>
       )}
     </div>

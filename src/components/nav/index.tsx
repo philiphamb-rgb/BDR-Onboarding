@@ -25,6 +25,7 @@ import {
   HandshakeIcon,
   ClockIcon,
   MoreIcon,
+  CoinIcon,
 } from '@/components/icons'
 import type { User } from '@/types/database'
 import { Avatar } from '@/components/ui'
@@ -51,6 +52,7 @@ const REP_NAV: NavItem[] = [
 const TOOLS_NAV: NavItem[] = [
   { href: '/partners',    label: 'Partners',        icon: HandshakeIcon },
   { href: '/analytics',   label: 'Analytics',       icon: BarChartIcon },
+  { href: '/calculator',  label: 'Income Calculator', icon: CoinIcon },
   { href: '/schedule',    label: 'Daily Time Management', icon: ClockIcon },
   { href: '/drill',       label: 'Objection Drill', icon: TargetIcon },
   { href: '/resources',   label: 'Resources',       icon: BookIcon },

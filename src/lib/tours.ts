@@ -50,6 +50,10 @@ export const COACH_TOUR: TourStep[] = [
   { selector: '[data-tour="coach-input"]', emoji: '💬', title: 'Ask anything', body: 'Stuck on an objection, or need a plan to hit your number? Ask — the advice is specific to you.' },
 ]
 
+export const CALCULATOR_TOUR: TourStep[] = [
+  { emoji: '💰', title: 'Plan your income', body: 'Set a commission or income goal and this back-solves the daily calls & demos to hit it — then tracks your pace. Your inputs save automatically.' },
+]
+
 export const RESOURCES_TOUR: TourStep[] = [
   { emoji: '🧭', title: 'Everything, one tap away', body: 'Tools, docs, and the right people to contact — no more hunting.' },
   { selector: '[data-tour="resources-tools"]', emoji: '🛠️', title: 'Jump straight in', body: 'Tap any tool to open it. Your whole stack lives right here.' },
