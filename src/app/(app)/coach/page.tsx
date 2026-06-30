@@ -170,7 +170,7 @@ export default function CoachPage() {
                   <div className="text-sm font-[800]">Objection Drill</div>
                   <div className="text-[12px] text-white/70">Practice live against an AI prospect, then get Sandler feedback.</div>
                 </div>
-                <ArrowRightIcon size={18} className="text-white/80 shrink-0" />
+                <ArrowRightIcon size={18} className="text-white/80 shrink-0 animate-nudge-x" />
               </Card>
             </Link>
 

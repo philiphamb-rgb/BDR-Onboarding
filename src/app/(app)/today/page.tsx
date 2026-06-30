@@ -132,9 +132,8 @@ export default function TodayPage() {
                   habit.completed_today ? 'bg-teal/5 border-teal/30 opacity-80'
                     : 'bg-bdrbg border-border hover:border-teal/50 hover:bg-teal/5 active:scale-[0.98]')}>
                 <div className={cn('w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 border-2 transition-all',
-                  habit.completed_today ? 'bg-teal border-teal'
-                    : completing === habit.id ? 'border-teal animate-pulse' : 'border-border')}>
-                  {habit.completed_today && <CheckIcon className="w-3 h-3 text-white" />}
+                  habit.completed_today || completing === habit.id ? 'bg-teal border-teal' : 'border-border')}>
+                  {(habit.completed_today || completing === habit.id) && <CheckIcon className={cn('w-3 h-3 text-white', completing === habit.id && 'animate-pop')} />}
                 </div>
                 <span className={cn('text-sm font-medium flex-1', habit.completed_today ? 'text-gray line-through' : 'text-dark-text')}>
                   {habit.label}
