@@ -78,6 +78,16 @@ export function isStale(t: TriageTask, now: Date, cfg: TriageConfig = DEFAULT_TR
 
 export interface SchedSlot { index: number; type: string; capacity: number } // minutes
 
+// Infer which kind of block a task belongs in from its title, so selling work
+// lands in power blocks, admin in the admin block, planning in the plan block.
+export function categorize(title: string): 'focus' | 'admin' | 'plan' | null {
+  const t = (title || '').toLowerCase()
+  if (/\b(call|follow[\s-]?up|prospect|demo|reach|pitch|close|outreach|book|meet|partner|lead|sell|email)\b/.test(t)) return 'focus'
+  if (/\b(update|crm|hubspot|log|note|admin|clean|onboard|report|invoice|form|data|inbox)\b/.test(t)) return 'admin'
+  if (/\b(plan|review|prioriti|organi|prep|strategy|research)\b/.test(t)) return 'plan'
+  return null
+}
+
 // Pack the highest-urgency active tasks into schedulable blocks. Returns a map
 // taskId -> block index. Tasks already scheduled today keep their slot (and
 // consume its capacity) unless reflow is requested.
@@ -114,9 +124,20 @@ export function autoPlan(
     .sort((a, b) => urgency(b, now, cfg) - urgency(a, now, cfg))
 
   for (const t of pending) {
-    for (let k = 0; k < slots.length; k++) {
-      if (remaining[k] >= t.estimated_minutes) {
-        assign[t.id] = slots[k].index; remaining[k] -= t.estimated_minutes; break
+    const cat = categorize(t.title)
+    let placed = false
+    // First choice: a block whose type matches the task's nature.
+    if (cat) {
+      for (let k = 0; k < slots.length; k++) {
+        if (slots[k].type === cat && remaining[k] >= t.estimated_minutes) {
+          assign[t.id] = slots[k].index; remaining[k] -= t.estimated_minutes; placed = true; break
+        }
+      }
+    }
+    // Fallback: the first block with room at all.
+    if (!placed) {
+      for (let k = 0; k < slots.length; k++) {
+        if (remaining[k] >= t.estimated_minutes) { assign[t.id] = slots[k].index; remaining[k] -= t.estimated_minutes; break }
       }
     }
   }

@@ -12,7 +12,7 @@ import {
   parseHM, fmtClock, fmtShift, fmtDuration, SELLING_MINUTES, currentBlock,
 } from '@/lib/schedule'
 import {
-  urgency, urgencyLabel, isActive, isStale, autoPlan, fmtEst, localDate, DEFAULT_TRIAGE,
+  urgency, urgencyLabel, isActive, isStale, autoPlan, fmtEst, localDate, DEFAULT_TRIAGE, categorize,
 } from '@/lib/triageEngine'
 import { monthPaceFraction } from '@/lib/winsEngine'
 import { stageMeta } from '@/lib/partnerChecklist'
@@ -104,9 +104,12 @@ export default function SchedulePage() {
 
   // All open tasks (top-level only) with triage fields. Reused after mutations.
   const loadTasks = async (uid: string) => {
+    // Open tasks (any day) PLUS anything scheduled today — so today's completed
+    // tasks still show (struck through) and the day's progress stays accurate.
     const { data } = await supabase.from('tasks')
       .select('id, title, done, priority, due_date, estimated_minutes, created_at, scheduled_day, scheduled_block, snoozed_until')
-      .eq('user_id', uid).eq('done', false).is('parent_id', null)
+      .eq('user_id', uid).is('parent_id', null)
+      .or(`done.eq.false,scheduled_day.eq.${today}`)
     setTasks(data ?? [])
   }
 
@@ -156,9 +159,13 @@ export default function SchedulePage() {
 
   // ── Triage derivations ──────────────────────────────────────────────────────
   const nowDate = new Date()
-  const scheduledToday = tasks.filter(t => t.scheduled_day === today && t.scheduled_block != null && isActive(t, nowDate))
+  const plannedToday = tasks.filter(t => t.scheduled_day === today && t.scheduled_block != null)
+  const scheduledToday = plannedToday.filter(t => isActive(t, nowDate))   // active (not done) — for capacity
   const blockTasks: Record<string, any[]> = {}
-  for (const t of scheduledToday) { (blockTasks[String(t.scheduled_block)] ??= []).push(t) }
+  for (const t of plannedToday) { (blockTasks[String(t.scheduled_block)] ??= []).push(t) }
+  const planTotal = plannedToday.length
+  const planDone = plannedToday.filter(t => t.done).length
+  const planProgress = planTotal ? Math.round((planDone / planTotal) * 100) : 0
   const unscheduled = tasks
     .filter(t => isActive(t, nowDate) && t.scheduled_day !== today)
     .sort((a, b) => urgency(b, nowDate) - urgency(a, nowDate))
@@ -248,11 +255,15 @@ export default function SchedulePage() {
   }
   const unassignTask = (id: string) => patchTask(id, { scheduled_day: null, scheduled_block: null })
   // Plan a single task into the first block with room (falls back to the first block).
-  const planOne = (t: any) => {
+  const bestSlot = (title: string, est: number) => {
     const rem: Record<number, number> = {}
     slots.forEach(s => { rem[s.index] = s.capacity })
     scheduledToday.forEach(st => { const k = Number(st.scheduled_block); if (rem[k] != null) rem[k] -= (st.estimated_minutes || 30) })
-    const slot = slots.find(s => rem[s.index] >= (t.estimated_minutes || 30)) ?? slots[0]
+    const cat = categorize(title)
+    return (cat && slots.find(s => s.type === cat && rem[s.index] >= est)) || slots.find(s => rem[s.index] >= est) || slots[0]
+  }
+  const planOne = (t: any) => {
+    const slot = bestSlot(t.title, t.estimated_minutes || 30)
     if (slot) { assignTask(t.id, slot.index); toast.success('Planned into your day') }
   }
   const setEstimate = (id: string, min: number) => patchTask(id, { estimated_minutes: Math.max(5, min) })
@@ -303,10 +314,7 @@ export default function SchedulePage() {
     if (!data) return
     setTasks(prev => [data, ...prev])
     if (opts.plan) {
-      const rem: Record<number, number> = {}
-      slots.forEach(s => { rem[s.index] = s.capacity })
-      scheduledToday.forEach(st => { const k = Number(st.scheduled_block); if (rem[k] != null) rem[k] -= (st.estimated_minutes || 30) })
-      const slot = slots.find(s => rem[s.index] >= estimate) ?? slots[0]
+      const slot = bestSlot(title, estimate)
       if (slot) await patchTask(data.id, { scheduled_day: today, scheduled_block: String(slot.index) })
       toast.success('Added & planned into your day')
     } else {
@@ -427,6 +435,12 @@ export default function SchedulePage() {
             <div className="text-[10px] text-white/60">{unscheduled.length} unplanned</div>
           </div>
         </div>
+        {planTotal > 0 && (
+          <div className="mt-3">
+            <div className="mb-1 flex items-center justify-between text-[11px] text-white/80"><span>Today’s plan</span><span className="tabular-nums">{planDone}/{planTotal} done</span></div>
+            <div className="h-1.5 w-full overflow-hidden rounded-full bg-white/20"><div className="h-full rounded-full bg-white transition-all duration-700 ease-out" style={{ width: `${planProgress}%` }} /></div>
+          </div>
+        )}
         <div className="mt-3 flex flex-wrap gap-2">
           <button onClick={() => autoPlanDay(false)} disabled={triageBusy}
             className="relative flex items-center gap-1.5 overflow-hidden rounded-lg bg-white px-3 py-2 text-[13px] font-[800] text-navy active:scale-[0.99] disabled:opacity-60">
