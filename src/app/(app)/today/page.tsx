@@ -126,7 +126,7 @@ export default function TodayPage() {
           <div>
             <p className="text-sm text-gray">Nothing time-blocked yet{unplannedCount > 0 ? ` — you have ${unplannedCount} unplanned task${unplannedCount > 1 ? 's' : ''}.` : '.'}</p>
             <div className="mt-3 flex flex-wrap gap-2">
-              <Link href="/schedule" className="flex items-center gap-1.5 rounded-lg bg-navy px-3 py-2 text-[13px] font-[800] text-white"><LightningIcon size={14} /> Auto-plan my day</Link>
+              <Link href="/schedule" className="flex items-center gap-1.5 rounded-lg bg-navy px-3 py-2 text-[13px] font-[800] text-white"><LightningIcon size={14} /> Plan in Time Blocks</Link>
               <button onClick={() => askCoach('Give me my game plan for today and tell me what to time-block first.')} className="rounded-lg bg-bdrbg px-3 py-2 text-[13px] font-[700] text-mid-text hover:bg-border/40">Ask the coach</button>
             </div>
           </div>
