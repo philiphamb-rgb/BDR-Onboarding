@@ -53,19 +53,29 @@ const REP_NAV: NavItem[] = [
   { href: '/coach',   label: 'Coach',   icon: CoachIcon },
 ]
 
-// Shared "Tools" routes — rendered in the desktop sidebar AND the mobile "More"
-// sheet so every route is reachable on phones (the primary PWA surface).
-const TOOLS_NAV: NavItem[] = [
-  { href: '/partners',    label: 'Partners',        icon: HandshakeIcon },
-  { href: '/analytics',   label: 'Analytics',       icon: BarChartIcon },
-  { href: '/calculator',  label: 'Income Calculator', icon: CoinIcon },
-  { href: '/schedule',    label: 'Time Blocking',   icon: ClockIcon },
-  { href: '/tasks',       label: 'Tasks',           icon: ChecklistIcon },
-  { href: '/drill',       label: 'Objection Drill', icon: TargetIcon },
-  { href: '/resources',   label: 'Resources',       icon: BookIcon },
-  { href: '/leaderboard', label: 'Leaderboard',     icon: LeaderboardIcon },
-  { href: '/certificate', label: 'Certificate',     icon: MedalIcon },
+// Shared "Tools" routes — grouped by what the rep is trying to do, so the
+// sidebar reads as Sell / Plan / Grow instead of one long flat list. Rendered
+// grouped on desktop and (flattened, in the same order) in the mobile "More"
+// sheet so every route stays reachable on phones (the primary PWA surface).
+const TOOLS_GROUPS: { title: string; items: NavItem[] }[] = [
+  { title: 'Sell', items: [
+    { href: '/partners',    label: 'Partners',          icon: HandshakeIcon },
+    { href: '/drill',       label: 'Objection Drill',   icon: TargetIcon },
+    { href: '/analytics',   label: 'Analytics',         icon: BarChartIcon },
+    { href: '/calculator',  label: 'Income Calculator', icon: CoinIcon },
+  ] },
+  { title: 'Plan', items: [
+    { href: '/schedule',    label: 'Time Blocking',     icon: ClockIcon },
+    { href: '/tasks',       label: 'Tasks',             icon: ChecklistIcon },
+  ] },
+  { title: 'Grow', items: [
+    { href: '/resources',   label: 'Resources',         icon: BookIcon },
+    { href: '/leaderboard', label: 'Leaderboard',       icon: LeaderboardIcon },
+    { href: '/certificate', label: 'Certificate',       icon: MedalIcon },
+  ] },
 ]
+// Flat view for the mobile "More" grid + permission filtering.
+const TOOLS_NAV: NavItem[] = TOOLS_GROUPS.flatMap(g => g.items)
 
 const MANAGER_EXTRA_NAV: NavItem[] = [
   { href: '/manager/dashboard',    label: 'Dashboard',    icon: DashboardIcon,  managerOnly: true },
@@ -236,7 +246,9 @@ export function Sidebar({ user, unreadCount = 0 }: SidebarProps) {
   // Hide a route only if its feature is explicitly disabled for this role (fail-open).
   const allowed = (item: NavItem) => { const f = featureForHref(item.href); return !f || canView(f) }
   const repItems = REP_NAV
-  const toolItems = TOOLS_NAV.filter(allowed)
+  const toolGroups = TOOLS_GROUPS
+    .map(g => ({ title: g.title, items: g.items.filter(allowed) }))
+    .filter(g => g.items.length > 0)
   const managerItems = (isManager ? MANAGER_EXTRA_NAV : []).filter(allowed)
 
   return (
@@ -287,11 +299,15 @@ export function Sidebar({ user, unreadCount = 0 }: SidebarProps) {
           </>
         )}
 
-        {/* Grow section */}
-        <div className="mt-4 mb-2 px-3">
-          <span className="label text-[10px]">Tools</span>
-        </div>
-        <NavSection items={toolItems} pathname={pathname} />
+        {/* Tools — grouped by Sell / Plan / Grow */}
+        {toolGroups.map(g => (
+          <div key={g.title}>
+            <div className="mt-4 mb-2 px-3">
+              <span className="label text-[10px]">{g.title}</span>
+            </div>
+            <NavSection items={g.items} pathname={pathname} />
+          </div>
+        ))}
       </div>
 
       {/* Bottom: notifications + settings */}
