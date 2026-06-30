@@ -174,7 +174,14 @@ export default function SchedulePage() {
     .sort((a, b) => urgency(b, nowDate) - urgency(a, nowDate))
   const triageCfg = { ...DEFAULT_TRIAGE, agingDays: (settings as any)?.triage?.agingDays ?? DEFAULT_TRIAGE.agingDays }
   const staleTasks = tasks.filter(t => isStale(t, nowDate, triageCfg))
-  const slots = blocks.filter(x => ['plan', 'focus', 'admin'].includes(x.type)).sort((a, b) => a.start - b.start).map(x => ({ key: x.key, type: x.type, capacity: x.dur }))
+  // Slots = work blocks, ordered so blocks that haven't ended yet fill first
+  // (auto-plan won't dump tasks into a block that already passed today).
+  const slots = blocks.filter(x => ['plan', 'focus', 'admin'].includes(x.type))
+    .sort((a, b) => {
+      const ap = (a.start + a.dur) <= now ? 1 : 0, bp = (b.start + b.dur) <= now ? 1 : 0
+      return ap - bp || a.start - b.start
+    })
+    .map(x => ({ key: x.key, type: x.type, capacity: x.dur }))
   const capacityMin = slots.reduce((s, x) => s + x.capacity, 0)
   const plannedMin = scheduledToday.reduce((s, t) => s + (t.estimated_minutes || 30), 0)
   const overbookedMin = Math.max(0, plannedMin - capacityMin)
