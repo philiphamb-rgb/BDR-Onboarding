@@ -11,9 +11,8 @@ import { cn, formatXP, formatDateShort } from '@/lib/utils'
 import { toast } from '@/components/ui'
 import { AiTip } from '@/components/AiTip'
 import { askCoach } from '@/lib/coachBus'
-import { GoalRing } from '@/components/GoalRing'
-import { CountUp } from '@/components/CountUp'
-import { goalStats, strategyLine, buildActions } from '@/lib/priorityEngine'
+import { GoalCockpit } from '@/components/GoalCockpit'
+import { goalStats, buildActions } from '@/lib/priorityEngine'
 import { autoPlan, fmtEst } from '@/lib/triageEngine'
 import { stageMeta } from '@/lib/partnerChecklist'
 import { localToday } from '@/lib/schedule'
@@ -144,7 +143,6 @@ export default function TodayPage() {
   const gstats = goalStats(goal, dealsThisMonth, nowDate)
   const actions = buildActions({ tasks, partners, g: gstats, now: nowDate, stageLabel: (s) => stageMeta(s).label })
   const focus = actions[0] ?? null
-  const STATUS_LABEL: Record<string, string> = { hit: 'Goal hit 🎯', ahead: 'Ahead of pace', on: 'On track', behind: `${gstats.behind} behind pace`, none: '' }
 
   // Today's time-blocked tasks (the day's execution list).
   const planned = tasks.filter(t => t.scheduled_day === today && t.scheduled_block != null)
@@ -175,36 +173,7 @@ export default function TodayPage() {
 
       {/* ── Day cockpit — goal pace + today at a glance ── */}
       <Card className="overflow-hidden !p-0">
-        <div className="bg-gradient-hero p-4 text-white">
-          <div className="mb-3 flex items-center gap-2">
-            <TargetIcon size={15} className="text-white" />
-            <span className="text-[13px] font-[800]">Where you stand</span>
-            {gstats.hasGoal && <span className="ml-auto rounded-full bg-white/15 px-2 py-0.5 text-[11px] font-[700] tabular-nums">{gstats.daysLeft}d left</span>}
-          </div>
-          {gstats.hasGoal ? (
-            <div className="flex items-center gap-4">
-              <GoalRing pct={gstats.pct} />
-              <div className="min-w-0 flex-1">
-                <div className="text-[20px] font-[800] leading-none"><CountUp value={gstats.done} />/{gstats.goal} <span className="text-[12px] font-[700] text-white/70">deals</span></div>
-                <div className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] text-white/80">
-                  <span className={cn('rounded-full px-2 py-0.5 font-[800]', gstats.status === 'behind' ? 'bg-error/30' : (gstats.status === 'hit' || gstats.status === 'ahead') ? 'bg-success/30' : 'bg-white/15')}>{STATUS_LABEL[gstats.status]}</span>
-                  <span>Projected {gstats.projection}</span>
-                  {gstats.remaining > 0 && <span>· {gstats.perDayNeeded.toFixed(1)}/day to goal</span>}
-                </div>
-              </div>
-            </div>
-          ) : (
-            <Link href="/analytics" className="flex items-center gap-2 rounded-xl bg-white/10 p-3 text-[13px] font-[700] hover:bg-white/15">
-              <TargetIcon size={16} className="shrink-0" /> Set your monthly deal goal to unlock your game plan <ArrowRightIcon size={14} className="ml-auto shrink-0" />
-            </Link>
-          )}
-        </div>
-        {gstats.hasGoal && (
-          <div className="flex items-start gap-2 p-3">
-            <LightningIcon size={14} className="mt-0.5 shrink-0 text-teal" />
-            <p className="text-[12px] leading-relaxed text-mid-text">{strategyLine(gstats)}</p>
-          </div>
-        )}
+        <GoalCockpit g={gstats} title="Where you stand" />
         {/* Today at a glance — plan, habits, streak */}
         <div className="grid grid-cols-3 gap-px border-t border-border bg-border">
           {[

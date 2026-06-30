@@ -12,12 +12,12 @@ import { currentBlock, fmtClock, fmtShift, SHIFT_OPTIONS, localToday } from '@/l
 import { fetchDaySlots } from '@/lib/daySlots'
 import { Tour } from '@/components/tour'
 import { HOME_TOUR } from '@/lib/tours'
-import { goalStats, strategyLine, buildActions } from '@/lib/priorityEngine'
+import { goalStats, buildActions } from '@/lib/priorityEngine'
 import { autoPlan, fmtEst } from '@/lib/triageEngine'
 import { stageMeta } from '@/lib/partnerChecklist'
 import { askCoach } from '@/lib/coachBus'
 import { Belt3D } from '@/components/Belt3D'
-import { GoalRing } from '@/components/GoalRing'
+import { GoalCockpit } from '@/components/GoalCockpit'
 import { CountUp } from '@/components/CountUp'
 import { AiTip } from '@/components/AiTip'
 import Link from 'next/link'
@@ -217,7 +217,6 @@ export default function HomePage() {
   const focus = actions[0] ?? null
   const gamePlan = actions.slice(1, 5)
   const plannedCount = tasks.filter(t => t.scheduled_day === localToday() && t.scheduled_block != null).length
-  const STATUS_LABEL: Record<string, string> = { hit: 'Goal hit 🎯', ahead: 'Ahead of pace', on: 'On track', behind: `${gstats.behind} behind pace`, none: '' }
 
   // Shift prompt shows at the very top until the rep sets today's shift — unless
   // they've made a shift their daily default (then it's applied automatically).
@@ -284,36 +283,7 @@ export default function HomePage() {
 
       {/* ── Goal cockpit — where you are, what's needed, and why ── */}
       <Card className="overflow-hidden !p-0">
-        <div className="bg-gradient-hero p-4 text-white">
-          <div className="mb-3 flex items-center gap-2">
-            <TargetIcon size={15} className="text-white" />
-            <span className="text-[13px] font-[800]">This month&apos;s goal</span>
-            {gstats.hasGoal && <span className="ml-auto rounded-full bg-white/15 px-2 py-0.5 text-[11px] font-[700] tabular-nums">{gstats.daysLeft}d left</span>}
-          </div>
-          {gstats.hasGoal ? (
-            <div className="flex items-center gap-4">
-              <GoalRing pct={gstats.pct} />
-              <div className="min-w-0 flex-1">
-                <div className="text-[20px] font-[800] leading-none"><CountUp value={gstats.done} />/{gstats.goal} <span className="text-[12px] font-[700] text-white/70">deals</span></div>
-                <div className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] text-white/80">
-                  <span className={cn('rounded-full px-2 py-0.5 font-[800]', gstats.status === 'behind' ? 'bg-error/30' : (gstats.status === 'hit' || gstats.status === 'ahead') ? 'bg-success/30' : 'bg-white/15')}>{STATUS_LABEL[gstats.status]}</span>
-                  <span>Projected {gstats.projection}</span>
-                  {gstats.remaining > 0 && <span>· {gstats.perDayNeeded.toFixed(1)}/day to goal</span>}
-                </div>
-              </div>
-            </div>
-          ) : (
-            <Link href="/analytics" className="flex items-center gap-2 rounded-xl bg-white/10 p-3 text-[13px] font-[700] hover:bg-white/15">
-              <TargetIcon size={16} className="shrink-0" /> Set your monthly deal goal to unlock your game plan <ArrowRightIcon size={14} className="ml-auto shrink-0" />
-            </Link>
-          )}
-        </div>
-        {gstats.hasGoal && (
-          <div className="flex items-start gap-2 p-3">
-            <LightningIcon size={14} className="mt-0.5 shrink-0 text-teal" />
-            <p className="text-[12px] leading-relaxed text-mid-text">{strategyLine(gstats)}</p>
-          </div>
-        )}
+        <GoalCockpit g={gstats} title="This month's goal" />
       </Card>
 
       {/* ── Do this now — the single most important action, alive ── */}
@@ -587,7 +557,7 @@ export default function HomePage() {
             { href: '/partners',        Icon: HandshakeIcon, label: 'Partners',        sub: 'Work your pipeline', tint: 'bg-teal/10 text-teal',       accent: '#00C2B2' },
             { href: '/train',           Icon: BookIcon,      label: 'Learning Center', sub: 'Continue learning',  tint: 'bg-navy/10 text-navy',       accent: '#003087' },
             { href: '/wins?action=new', Icon: TrophyIcon,    label: 'Log a Win',       sub: 'Call · Demo · Deal', tint: 'bg-gold/10 text-gold',       accent: '#CA8A04' },
-            { href: '/calculator',      Icon: CoinIcon,      label: 'Income Calc',     sub: 'Plan your goal',     tint: 'bg-success/10 text-success', accent: '#16A34A' },
+            { href: '/analytics',       Icon: CoinIcon,      label: 'Goals & Income',  sub: 'Pace & calculator',  tint: 'bg-success/10 text-success', accent: '#16A34A' },
           ].map(a => (
             <Link key={a.href} href={a.href}
               className="flex items-center gap-3 rounded-xl border border-l-4 border-border bg-card p-3 shadow-card transition-transform active:scale-95"

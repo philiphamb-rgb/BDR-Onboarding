@@ -6,9 +6,11 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import { Card, SkeletonCard, ProgressBar } from '@/components/ui'
 import { PageHeader } from '@/components/manager'
-import { PhoneIcon, TargetIcon, HandshakeIcon, ArrowRightIcon, LightningIcon } from '@/components/icons'
+import { PhoneIcon, TargetIcon, HandshakeIcon, ArrowRightIcon, LightningIcon, CoinIcon } from '@/components/icons'
 import { PIPELINE_STAGES, stageMeta } from '@/lib/partnerChecklist'
 import { askCoach } from '@/lib/coachBus'
+import { goalStats } from '@/lib/priorityEngine'
+import { GoalCockpit } from '@/components/GoalCockpit'
 
 const WON = 'opportunity_won'
 const rate = (arr) => arr.length ? Math.round(arr.filter(p => p.stage === WON).length / arr.length * 100) : 0
@@ -57,8 +59,10 @@ export default function AnalyticsPage() {
   const funnel = PIPELINE_STAGES.map(s => ({ ...s, n: partners.filter(p => p.stage === s.key).length }))
   const maxN = Math.max(1, ...funnel.map(f => f.n))
 
+  const gstats = goalStats(savedGoal, prog?.deals_this_month ?? 0, new Date())
+
   const tiles = [
-    { label: 'Total leads', value: partners.length },
+    { label: 'Total partners', value: partners.length },
     { label: '🔥 Warm', value: warm.length },
     { label: '❄️ Cold', value: cold.length },
     { label: 'Won', value: won },
@@ -79,24 +83,23 @@ export default function AnalyticsPage() {
         <ArrowRightIcon size={16} className="shrink-0 text-white/80 animate-nudge-x" />
       </button>
 
-      {/* Monthly deal goal — powers Coach pace insights & auto-Wins */}
+      {/* Live goal cockpit — the same dashboard shown on Home & Today */}
+      {gstats.hasGoal && (
+        <Card className="overflow-hidden !p-0">
+          <GoalCockpit g={gstats} title="This month's goal" />
+        </Card>
+      )}
+
+      {/* Set / edit the monthly deal goal — the single setter for the whole app */}
       <Card>
-        <div className="label mb-2">Monthly deal goal</div>
+        <div className="label mb-2">{gstats.hasGoal ? 'Edit your monthly deal goal' : 'Set your monthly deal goal'}</div>
         <div className="flex items-center gap-2">
           <input type="number" min={0} value={goalInput} onChange={e => setGoalInput(e.target.value)} placeholder="e.g. 8"
             className="w-24 rounded-md border border-border px-3 py-2 text-sm font-[700] text-dark-text focus:outline-none focus:ring-2 focus:ring-navy" />
           <span className="text-[12px] text-gray">deals / month</span>
           <button onClick={saveGoal} className="ml-auto rounded-md bg-navy px-3 py-2 text-[12px] font-[700] text-white hover:bg-navy-dark">Save</button>
         </div>
-        {savedGoal != null && savedGoal > 0 && (
-          <div className="mt-3">
-            <div className="flex items-center justify-between text-[12px] text-mid-text">
-              <span>This month</span><span className="font-[700]">{prog?.deals_this_month ?? 0} / {savedGoal} deals</span>
-            </div>
-            <ProgressBar value={prog?.deals_this_month ?? 0} max={savedGoal} color={(prog?.deals_this_month ?? 0) >= savedGoal ? '#16A34A' : '#00C2B2'} className="mt-1 h-2" />
-          </div>
-        )}
-        <p className="mt-2 text-[11px] text-gray">Powers your Coach pace insights. Plan the full income picture in the <Link href="/calculator" className="font-[700] text-teal">Income Calculator →</Link></p>
+        <p className="mt-2 text-[11px] text-gray">This goal powers your live pace, projection, and game plan across Home, Today, and Coach.</p>
       </Card>
 
       {partners.length === 0 ? (
@@ -169,18 +172,23 @@ export default function AnalyticsPage() {
             </div>
           </Card>
 
-          {/* Goal pacing — opens the income/commission calculator */}
-          <Link href="/calculator">
-            <Card hover className="bg-gradient-hero text-white">
-              <div className="text-[11px] font-[800] uppercase tracking-[0.08em] text-white/70">Goal pacing</div>
-              <p className="mt-1 text-sm leading-relaxed text-white/90">
-                Set a commission goal and the Hub back-solves the daily calls and demos to hit it — and tracks your pace.
-              </p>
-              <span className="mt-3 inline-flex items-center gap-1 text-[13px] font-[800] text-white">Open the Income Calculator <ArrowRightIcon size={14} /></span>
-            </Card>
-          </Link>
         </>
       )}
+
+      {/* Income Calculator — commission goal → daily calls/demos (embedded tool) */}
+      <Card className="!p-3">
+        <div className="mb-2 flex items-center gap-2">
+          <CoinIcon size={16} className="text-teal" />
+          <span className="label">Income Calculator</span>
+        </div>
+        <p className="mb-2 text-[12px] text-gray">Set a commission goal and the Hub back-solves the daily calls and demos to hit it.</p>
+        <iframe
+          src="/tools/income-calculator.html"
+          title="BDR Income & Commission Goals Calculator"
+          className="w-full rounded-xl border border-border bg-white"
+          style={{ height: 'calc(100vh - 12rem)', minHeight: 520 }}
+        />
+      </Card>
     </div>
   )
 }

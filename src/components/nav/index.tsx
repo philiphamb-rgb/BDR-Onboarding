@@ -8,7 +8,7 @@ import { createClient } from '@/lib/supabase/client'
 import {
   HomeIcon, TodayIcon, TrainIcon, WinsIcon, CoachIcon, DashboardIcon, XpIcon,
   BellIcon, BellDotIcon, SettingsIcon, LeaderboardIcon, TeamIcon, BarChartIcon,
-  BookIcon, TargetIcon, MedalIcon, HandshakeIcon, ClockIcon, MoreIcon, CoinIcon,
+  BookIcon, MedalIcon, HandshakeIcon, ClockIcon, MoreIcon,
   ChecklistIcon, ShieldIcon, DocumentIcon, SearchIcon, ChevronDownIcon, CloseIcon,
 } from '@/components/icons'
 import type { User } from '@/types/database'
@@ -32,10 +32,8 @@ const TOP_NAV: NavItem[] = [
 // Collapsible sections (accordion — one open at a time).
 const REP_SECTIONS: { title: string; items: NavItem[] }[] = [
   { title: 'Sell', items: [
-    { href: '/partners',   label: 'Partners',          icon: HandshakeIcon },
-    { href: '/drill',      label: 'Objection Drill',   icon: TargetIcon },
-    { href: '/analytics',  label: 'Analytics',         icon: BarChartIcon },
-    { href: '/calculator', label: 'Income Calculator', icon: CoinIcon },
+    { href: '/partners',  label: 'Partners',  icon: HandshakeIcon },
+    { href: '/analytics', label: 'Analytics', icon: BarChartIcon },
   ] },
   { title: 'Plan', items: [
     { href: '/notes',    label: 'Notes',       icon: DocumentIcon },
