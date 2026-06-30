@@ -181,7 +181,6 @@ export function BattleCardsReference({ progress, save, onReplay }: any) {
           <div className="text-[15px] font-[800] text-dark-text">Competitive mastery</div>
           <div className="text-[12px] text-gray">{masteredCount === 9 ? 'All competitors mastered — you’re battle-ready.' : `${9 - masteredCount} to go. Check off every card to master a competitor.`}</div>
         </div>
-        <button onClick={() => setView('cheat')} className="hidden shrink-0 items-center gap-1 rounded-lg border border-border bg-card px-2.5 py-2 text-[12px] font-[700] text-navy hover:border-navy/40 sm:flex"><BookIcon size={14} /> Cheat sheet</button>
       </Card>
 
       {/* Search */}
@@ -238,9 +237,14 @@ export function BattleCardsReference({ progress, save, onReplay }: any) {
             })}
           </div>
 
-          <button onClick={onReplay} className="flex w-full items-center justify-center gap-1.5 rounded-xl border border-border bg-bdrbg py-2.5 text-[13px] font-[700] text-mid-text hover:bg-border/40">
-            <RefreshIcon size={14} /> Replay training
-          </button>
+          <div className="grid grid-cols-2 gap-2">
+            <button onClick={() => setView('cheat')} className="flex items-center justify-center gap-1.5 rounded-xl border border-border bg-card py-2.5 text-[13px] font-[700] text-navy hover:border-navy/40">
+              <BookIcon size={14} /> Cheat sheet
+            </button>
+            <button onClick={onReplay} className="flex items-center justify-center gap-1.5 rounded-xl border border-border bg-bdrbg py-2.5 text-[13px] font-[700] text-mid-text hover:bg-border/40">
+              <RefreshIcon size={14} /> Replay training
+            </button>
+          </div>
         </>
       )}
     </div>

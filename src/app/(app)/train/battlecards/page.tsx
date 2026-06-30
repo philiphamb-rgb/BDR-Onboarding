@@ -32,7 +32,7 @@ export default function BattleCardsPage() {
       {loading ? (
         <div className="mx-auto max-w-2xl space-y-3"><Skeleton className="h-40 rounded-2xl" /><Skeleton className="h-24 rounded-2xl" /></div>
       ) : progress.done ? (
-        <BattleCardsReference progress={progress} save={save} onReplay={() => save({ done: false, step: 0 })} />
+        <BattleCardsReference progress={progress} save={save} onReplay={() => save({ done: false, step: 0, quiz: {} })} />
       ) : (
         <BattleCardsTraining progress={progress} save={save} certify={certify} onEnter={() => {}} />
       )}

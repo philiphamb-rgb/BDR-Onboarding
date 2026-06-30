@@ -143,11 +143,12 @@ export function BattleCardsTraining({ progress, save, certify, onEnter }: any) {
   }
 
   // Lesson
+  const lessonNum = lessons.findIndex(l => l.i === stepIdx) + 1
   return (
     <div className="mx-auto max-w-2xl space-y-4">
       <div className="flex items-center gap-2">
-        <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-border"><div className="h-full rounded-full bg-gradient-to-r from-teal to-navy transition-all" style={{ width: `${(stepIdx / (total - 1)) * 100}%` }} /></div>
-        <span className="text-[11px] font-[700] text-gray tabular-nums">{stepIdx}/{total - 1}</span>
+        <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-border"><div className="h-full rounded-full bg-gradient-to-r from-teal to-navy transition-all" style={{ width: `${(lessonNum / lessons.length) * 100}%` }} /></div>
+        <span className="text-[11px] font-[700] text-gray tabular-nums">{lessonNum}/{lessons.length}</span>
       </div>
       <Lesson key={stepIdx} step={step} recorded={progress.quiz[stepIdx]}
         onAnswer={(correct: boolean) => save(p => ({ quiz: { ...p.quiz, [stepIdx]: correct } }))} />
