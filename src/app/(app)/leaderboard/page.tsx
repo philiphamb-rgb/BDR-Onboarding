@@ -51,7 +51,7 @@ export default function LeaderboardPage() {
   const myRank = sorted.findIndex(l => l.user_id === userId) + 1
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 stagger-rise">
       <div>
         <h1 className="text-h1 text-dark-text">Leaderboard</h1>
         {myRank > 0 && <p className="text-sm text-gray">Your rank: #{myRank}</p>}

@@ -84,7 +84,7 @@ export default function TodayPage() {
   const allDone = completedCount === totalCount && totalCount > 0
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 stagger-rise">
       <div className="flex items-start justify-between gap-3">
         <div>
           <h1 className="text-h1 text-dark-text">Today</h1>

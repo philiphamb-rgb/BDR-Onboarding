@@ -93,7 +93,7 @@ export default function TrainPage() {
   )
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 stagger-rise">
       <div>
         <h1 className="text-h1 text-dark-text">Learning Center</h1>
         <p className="text-sm text-gray">{completedModules} of {modules.length} modules complete</p>

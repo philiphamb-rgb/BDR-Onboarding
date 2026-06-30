@@ -38,7 +38,7 @@ export default function NotificationsPage() {
   }, [])
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 stagger-rise">
       <div className="flex items-center justify-between">
         <h1 className="text-h1 text-dark-text">Notifications</h1>
         {notifs.filter(n => !n.is_read).length > 0 && (

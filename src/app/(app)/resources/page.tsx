@@ -115,7 +115,7 @@ export default function ResourcesPage() {
   })).filter((sec) => sec.items.length > 0)
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 stagger-rise">
       {/* Header */}
       <div>
         <h1 className="text-h1 text-dark-text">Resource Center</h1>

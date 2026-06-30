@@ -91,7 +91,7 @@ function WinsContent() {
   const filtered = filter === 'all' ? wins : wins.filter(w => w.type === filter)
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 stagger-rise">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-h1 text-dark-text">Wins</h1>

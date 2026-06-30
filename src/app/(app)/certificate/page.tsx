@@ -65,7 +65,7 @@ export default function CertificatePage() {
   const currentIdx = Math.max(0, BELTS.findIndex(b => b.name === beltName))
 
   return (
-    <div className="space-y-5 pb-4">
+    <div className="space-y-5 pb-4 stagger-rise">
       <div className="flex items-start justify-between gap-3 no-print">
         <div>
           <h1 className="text-h1 text-dark-text">Certificate</h1>
