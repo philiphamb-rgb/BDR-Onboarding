@@ -159,6 +159,16 @@ export function CoachDock() {
                       I&apos;m your coach in your pocket — I already know your belt, your pace to goal, your pipeline, and your wins. Ask me anything, anytime.
                     </p>
                   </div>
+                  <button
+                    onClick={() => send("Give me my game plan for today: where I stand against my monthly goal, my single biggest opportunity right now, and the top 3 specific actions that move my number most. Use my real data and be concrete.")}
+                    className="flex w-full items-center gap-3 rounded-2xl bg-gradient-hero p-3.5 text-left text-white shadow-card transition-transform active:scale-[0.99]">
+                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white/15"><LightningIcon size={18} className="text-white" /></div>
+                    <div className="min-w-0 flex-1">
+                      <div className="text-[14px] font-[800]">Today&apos;s game plan</div>
+                      <div className="text-[11px] text-white/75">Where you stand & your top 3 moves</div>
+                    </div>
+                    <ArrowRightIcon size={16} className="shrink-0 text-white/80" />
+                  </button>
                   <div>
                     <p className="mb-2 text-[11px] font-[800] uppercase tracking-wide text-gray">Right now on {ctx.label}</p>
                     <div className="space-y-2">
