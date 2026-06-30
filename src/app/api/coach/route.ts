@@ -21,6 +21,13 @@ async function buildUserContext(supabase, uid: string) {
       .eq('user_id', uid).order('updated_at', { ascending: false }).limit(20),
   ])
   const { data: goal } = await supabase.from('goals').select('monthly_deal_goal').eq('user_id', uid).maybeSingle()
+  const todayStr = new Date().toISOString().split('T')[0]
+  const [{ data: openTasks }, { data: recentNotes }] = await Promise.all([
+    supabase.from('tasks').select('title, done, priority, due_date, estimated_minutes, scheduled_day, scheduled_block')
+      .eq('user_id', uid).eq('done', false).is('parent_id', null).limit(40),
+    supabase.from('notes').select('title, category, tags, updated_at')
+      .eq('user_id', uid).eq('archived', false).order('updated_at', { ascending: false }).limit(5),
+  ])
 
   const firstName = userData?.first_name || (userData?.name ?? 'BDR').split(' ')[0]
   const days = progress?.days_active ?? 0
@@ -52,7 +59,16 @@ async function buildUserContext(supabase, uid: string) {
 - Pipeline funnel: ${funnel}
 - Conversion: ${conversion}${goal?.monthly_deal_goal ? `\n- Monthly deal goal: ${goal.monthly_deal_goal} (${progress?.deals_this_month ?? 0} closed so far this month) — coach toward this number.` : ''}${shift ? `\n- Works a shift starting ${shift} with an optimized time-blocked day (~4h45m of protected selling time across three power blocks).` : ''}
 ${recentWins?.length ? `\nRECENT WINS:\n${recentWins.map((w) => `- ${w.type}: ${w.description}`).join('\n')}` : ''}
-${partners?.length ? `\nPARTNERS IN ONBOARDING (reference by name when relevant):\n${partners.slice(0, 8).map((p) => `- ${p.partner_name} — ${stageMeta(p.stage).label}, ${completion(p.checklist).done}/${completion(p.checklist).total} onboarding tasks done`).join('\n')}` : ''}`
+${partners?.length ? `\nPARTNERS IN ONBOARDING (reference by name when relevant):\n${partners.slice(0, 8).map((p) => `- ${p.partner_name} — ${stageMeta(p.stage).label}, ${completion(p.checklist).done}/${completion(p.checklist).total} onboarding tasks done`).join('\n')}` : ''}${(() => {
+  const tasks = openTasks ?? []
+  if (!tasks.length) return ''
+  const planned = tasks.filter(t => t.scheduled_day === todayStr && t.scheduled_block != null)
+  const unplanned = tasks.filter(t => !(t.scheduled_day === todayStr && t.scheduled_block != null))
+  const line = (t) => `- ${t.priority ? '★ ' : ''}${t.title}${t.due_date ? ` (due ${t.due_date})` : ''} [~${t.estimated_minutes ?? 30}m]`
+  return `\nTASKS — they manage tasks in this app; reference real titles and help them prioritize/time-block:\n- Planned into today's blocks: ${planned.length} · Unplanned: ${unplanned.length}` +
+    (planned.length ? `\nTODAY'S PLAN:\n${planned.slice(0, 8).map(line).join('\n')}` : '') +
+    (unplanned.length ? `\nTOP UNPLANNED:\n${unplanned.slice(0, 8).map(line).join('\n')}` : '')
+})()}${recentNotes?.length ? `\nRECENT NOTES (Plan tab):\n${recentNotes.map(n => `- ${n.title || 'Untitled'}${n.category ? ` [${n.category}]` : ''}`).join('\n')}` : ''}`
 
   return { firstName, belt, days, block }
 }
@@ -157,6 +173,7 @@ COACHING STYLE:
 - Direct, practical, encouraging. Specific tips, not generic advice.
 - Reference their metrics and pipeline funnel when relevant — call out bottlenecks (e.g. partners stuck at Proposal Sent) and name specific partners.
 - Use the conversion line to coach on closing: if cold close rate lags warm, push discovery/qualification on cold leads; if the warm pipeline is thin, push prospecting for referrals/inbound. Cite the actual percentages.
+- They plan in this app (Notes → Tasks → Time Blocks). When they ask what to do, ground your answer in their REAL tasks above: prioritize by urgency/due/impact, suggest what to time-block now, and tell them to use "Auto-plan my day" on Time Blocks. Reference real task titles.
 - Keep it concise (2–4 short paragraphs, bullets for lists).
 - Ground advice in ConsumerDirect's partner/credit sales reality and the Sandler method.
 - When the rep wants to practice, suggest the Objection Drill.`
