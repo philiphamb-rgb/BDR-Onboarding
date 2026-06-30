@@ -12,6 +12,7 @@ import { currentBlock, fmtClock } from '@/lib/schedule'
 import { Tour } from '@/components/tour'
 import { HOME_TOUR } from '@/lib/tours'
 import { deriveAutoWins, monthPaceFraction } from '@/lib/winsEngine'
+import { Belt3D } from '@/components/Belt3D'
 import Link from 'next/link'
 
 const BELT_STYLES: Record<string, { bg: string; bar: string; label: string }> = {
@@ -201,7 +202,7 @@ export default function HomePage() {
             <div className={cn('text-label mb-1', isBlack ? 'text-white/60' : 'text-gray')}>{style.label}</div>
             <div className={cn('text-h1 font-bold', isBlack ? 'text-white' : 'text-dark-text')}>Day {progress?.belt_day ?? 0}</div>
           </div>
-          <BeltIcon className={cn('w-12 h-12', isBlack ? 'text-white/80' : 'text-gray')} />
+          <Belt3D belt={belt} size={56} className="drop-shadow-sm" />
         </div>
         {progress?.nextBelt && (
           <div className="mb-3">
@@ -273,7 +274,7 @@ export default function HomePage() {
               {!shift ? (
                 <><div className="text-[14px] font-[700] text-dark-text">Set your shift</div><div className="text-[12px] text-gray">Pick your hours for a time-blocked day</div></>
               ) : (
-                <><div className="label text-gray">Daily Time Management</div><div className="text-[14px] font-[700] text-dark-text">{rhythm?.status === 'before' ? `Your day starts at ${fmtClock(rhythm.startsAt)}` : 'Shift complete — nice work'}</div></>
+                <><div className="label text-gray">Time Blocking</div><div className="text-[14px] font-[700] text-dark-text">{rhythm?.status === 'before' ? `Your day starts at ${fmtClock(rhythm.startsAt)}` : 'Shift complete — nice work'}</div></>
               )}
             </div>
             <span className="shrink-0 text-[12px] font-[700] text-teal">{!shift ? 'Set up' : 'View'} →</span>

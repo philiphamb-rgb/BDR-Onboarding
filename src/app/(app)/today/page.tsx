@@ -91,7 +91,7 @@ export default function TodayPage() {
           <p className="text-sm text-gray">{formatDateShort(new Date())}</p>
         </div>
         <Link href="/schedule" className="flex items-center gap-1.5 rounded-pill border border-border bg-card px-3 py-2 text-[12px] font-[700] text-navy shadow-card hover:border-navy/40">
-          <ClockIcon size={15} /> Daily Time Management
+          <ClockIcon size={15} /> Time Blocking
         </Link>
       </div>
 

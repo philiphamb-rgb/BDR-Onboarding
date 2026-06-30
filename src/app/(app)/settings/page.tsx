@@ -105,7 +105,7 @@ export default function SettingsPage() {
         <p className="text-xs text-gray mb-3">Connect your accounts so the Hub can sync live data for you.</p>
         <div className="space-y-2">
           {[
-            { key: 'outlook', label: 'Outlook Calendar', desc: 'Two-way sync your Daily Time Management blocks & notes', Icon: CalendarIcon, tint: 'bg-navy/10 text-navy' },
+            { key: 'outlook', label: 'Outlook Calendar', desc: 'Two-way sync your Time Blocking blocks & notes', Icon: CalendarIcon, tint: 'bg-navy/10 text-navy' },
             { key: 'slack', label: 'Slack', desc: 'Reach teammates & partner-support channels', Icon: SlackIcon, tint: 'bg-purple-50 text-purple-600' },
           ].map(c => (
             <div key={c.key} className="flex items-center gap-3 rounded-xl border border-border bg-bdrbg p-3">

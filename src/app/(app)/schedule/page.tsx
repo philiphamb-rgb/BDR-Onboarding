@@ -132,7 +132,7 @@ export default function SchedulePage() {
 
   return (
     <div className="space-y-5 pb-4">
-      <PageHeader title="Daily Time Management" subtitle="Pick your shift, then run the optimized time-blocked day." />
+      <PageHeader title="Time Blocking" subtitle="Pick your shift, then run the optimized time-blocked day." />
 
       {/* Shift picker */}
       <Card data-tour="rhythm-shift">
