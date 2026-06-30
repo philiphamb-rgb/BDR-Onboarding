@@ -264,7 +264,7 @@ export default function SchedulePage() {
                     <div className="mt-2 space-y-1">
                       {blockTasks[String(i)].map(tk => (
                         <div key={tk.id} className="flex items-center gap-2 rounded-md bg-bdrbg px-2.5 py-1.5">
-                          <button onClick={() => toggleTask(tk.id, String(i), !tk.done)}
+                          <button onClick={() => toggleTask(tk.id, String(i), !tk.done)} aria-label={tk.done ? 'Mark task incomplete' : 'Complete task'}
                             className={cn('flex h-4 w-4 shrink-0 items-center justify-center rounded-full border-2', tk.done ? 'border-success bg-success text-white' : 'border-border text-transparent')}>
                             <CheckIcon size={10} />
                           </button>

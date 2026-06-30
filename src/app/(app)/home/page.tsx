@@ -295,7 +295,7 @@ export default function HomePage() {
         <div className={cn('p-5', style.bg)}>
           <div className="flex items-start justify-between mb-4">
             <div>
-              <button onClick={() => setBeltInfoOpen(o => !o)} aria-expanded={beltInfoOpen}
+              <button onClick={() => setBeltInfoOpen(o => !o)} aria-expanded={beltInfoOpen} aria-label="What the belts are and how to earn them"
                 className={cn('mb-1 flex items-center gap-1 text-label transition-opacity hover:opacity-80', isBlack ? 'text-white/60' : 'text-gray')}>
                 {style.label}
                 <InfoIcon size={13} className={isBlack ? 'text-white/60' : 'text-gray'} />

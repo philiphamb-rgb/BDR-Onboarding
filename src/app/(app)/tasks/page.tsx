@@ -149,7 +149,7 @@ export default function TasksPage() {
                 <button onClick={() => patch(t.id, { priority: !t.priority })} aria-label="Priority" className="shrink-0 p-1">
                   <StarFilledIcon size={16} className={t.priority ? 'text-gold' : 'text-border'} />
                 </button>
-                <button onClick={() => setExpanded(isOpen ? null : t.id)} className="shrink-0 p-1 text-gray">
+                <button onClick={() => setExpanded(isOpen ? null : t.id)} aria-label={isOpen ? 'Hide task details' : 'Show task details'} aria-expanded={isOpen} className="shrink-0 p-1 text-gray">
                   <ChevronRightIcon size={16} className={cn('transition-transform', isOpen && 'rotate-90')} />
                 </button>
               </div>
@@ -160,12 +160,12 @@ export default function TasksPage() {
                   <div className="space-y-1.5">
                     {subs.map(s => (
                       <div key={s.id} className="flex items-center gap-2">
-                        <button onClick={() => patch(s.id, { done: !s.done })}
+                        <button onClick={() => patch(s.id, { done: !s.done })} aria-label={s.done ? 'Mark subtask incomplete' : 'Complete subtask'}
                           className={cn('flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2', s.done ? 'border-success bg-success text-white' : 'border-border text-transparent')}>
                           <CheckIcon size={11} />
                         </button>
                         <span className={cn('flex-1 text-[13px]', s.done ? 'text-gray line-through' : 'text-mid-text')}>{s.title}</span>
-                        <button onClick={() => del(s.id)} className="p-1 text-gray hover:text-error"><TrashIcon size={13} /></button>
+                        <button onClick={() => del(s.id)} aria-label="Delete subtask" className="p-1 text-gray hover:text-error"><TrashIcon size={13} /></button>
                       </div>
                     ))}
                     <div className="flex items-center gap-2">
