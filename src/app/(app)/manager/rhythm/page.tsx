@@ -23,10 +23,12 @@ export default function ManagerRhythmPage() {
         if (!me?.team_id) { setLoading(false); return }
         Promise.all([
           supabase.from('users').select('id, name, avatar_url, settings').eq('team_id', me.team_id).eq('role', 'rep'),
-          supabase.from('schedule_blocks').select('user_id, done').eq('day', today),
+          supabase.from('schedule_blocks').select('user_id, done, block_key').eq('day', today),
         ]).then(([{ data: reps }, { data: blocks }]) => {
           const doneByUser = {}
-          for (const b of blocks ?? []) if (b.done) doneByUser[b.user_id] = (doneByUser[b.user_id] ?? 0) + 1
+          // Only count the optimized template blocks (numeric keys) so the tally
+          // stays out of /TOTAL; freeform custom blocks ("c:…") don't inflate it.
+          for (const b of blocks ?? []) if (b.done && /^\d+$/.test(b.block_key)) doneByUser[b.user_id] = (doneByUser[b.user_id] ?? 0) + 1
           const list = (reps ?? []).map(r => {
             const shift = r.settings?.shift
             const cur = shift ? currentBlock(shift) : null
