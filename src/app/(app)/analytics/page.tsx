@@ -76,7 +76,7 @@ export default function AnalyticsPage() {
           <div className="text-[14px] font-[800]">Coach me on these numbers</div>
           <div className="text-[11px] text-white/75">Your biggest bottleneck & how to fix it</div>
         </div>
-        <ArrowRightIcon size={16} className="shrink-0 text-white/80" />
+        <ArrowRightIcon size={16} className="shrink-0 text-white/80 animate-nudge-x" />
       </button>
 
       {/* Monthly deal goal — powers Coach pace insights & auto-Wins */}

@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { useProgress, useHabits } from '@/lib/hooks/useProgress'
 import { Card, ProgressBar, Badge, Skeleton, Button, toast } from '@/components/ui'
-import { FlameIcon, TrophyIcon, XpIcon, BeltIcon, ChartRisingIcon, PhoneIcon, ChecklistIcon, TargetIcon, ArrowRightIcon, LightningIcon, BookIcon, CoachIcon, HandshakeIcon, ClockIcon, CheckIcon, CoinIcon, PlusIcon, StarFilledIcon } from '@/components/icons'
+import { FlameIcon, TrophyIcon, XpIcon, BeltIcon, ChartRisingIcon, PhoneIcon, ChecklistIcon, TargetIcon, ArrowRightIcon, LightningIcon, BookIcon, CoachIcon, HandshakeIcon, ClockIcon, CheckIcon, CoinIcon, PlusIcon, StarFilledIcon, InfoIcon, ChevronDownIcon } from '@/components/icons'
 import { cn, formatXP, pluralize } from '@/lib/utils'
 import { currentBlock, fmtClock, fmtShift, SHIFT_OPTIONS } from '@/lib/schedule'
 import { Tour } from '@/components/tour'
@@ -27,6 +27,18 @@ const BELT_STYLES: Record<string, { bg: string; bar: string; label: string }> = 
   black:  { bg: 'bg-gray-900',   bar: '#111827', label: 'Black Belt' },
 }
 
+// The belt ladder — each rank is a milestone in your days active in BDR Hub.
+// Thresholds match the app's belt logic (manager dashboard + coach context).
+const BELT_LADDER: { key: string; label: string; day: number; blurb: string }[] = [
+  { key: 'white',  label: 'White',  day: 0,  blurb: 'Day one. Learn the fundamentals and start logging activity.' },
+  { key: 'yellow', label: 'Yellow', day: 7,  blurb: 'One week in — building the daily habit.' },
+  { key: 'orange', label: 'Orange', day: 14, blurb: 'Two weeks — running real conversations.' },
+  { key: 'green',  label: 'Green',  day: 30, blurb: 'A month in — consistent pipeline work.' },
+  { key: 'blue',   label: 'Blue',   day: 50, blurb: 'Seasoned — closing and onboarding partners.' },
+  { key: 'purple', label: 'Purple', day: 70, blurb: 'Advanced — coaching-level fundamentals.' },
+  { key: 'black',  label: 'Black',  day: 90, blurb: 'Mastery — 90+ days of proven performance.' },
+]
+
 export default function HomePage() {
   const supabase = createClient()
   const router = useRouter()
@@ -44,6 +56,7 @@ export default function HomePage() {
   const [useEveryDay, setUseEveryDay] = useState(false)
   const [savingShift, setSavingShift] = useState(false)
   const [doneTaskId, setDoneTaskId] = useState<string | null>(null)
+  const [beltInfoOpen, setBeltInfoOpen] = useState(false)
   const { progress, loading, refresh: refreshProgress } = useProgress(userId)
   const { habits, refresh: refreshHabits } = useHabits(userId)
 
@@ -282,11 +295,42 @@ export default function HomePage() {
         <div className={cn('p-5', style.bg)}>
           <div className="flex items-start justify-between mb-4">
             <div>
-              <div className={cn('text-label mb-1', isBlack ? 'text-white/60' : 'text-gray')}>{style.label}</div>
+              <button onClick={() => setBeltInfoOpen(o => !o)} aria-expanded={beltInfoOpen}
+                className={cn('mb-1 flex items-center gap-1 text-label transition-opacity hover:opacity-80', isBlack ? 'text-white/60' : 'text-gray')}>
+                {style.label}
+                <InfoIcon size={13} className={isBlack ? 'text-white/60' : 'text-gray'} />
+                <ChevronDownIcon size={13} className={cn('transition-transform', beltInfoOpen && 'rotate-180', isBlack ? 'text-white/60' : 'text-gray')} />
+              </button>
               <div className={cn('text-h1 font-bold', isBlack ? 'text-white' : 'text-dark-text')}>Day <CountUp value={progress?.belt_day ?? 0} /></div>
             </div>
             <Belt3D belt={belt} size={60} className="drop-shadow-sm animate-bob" />
           </div>
+
+          {/* Collapsed bubble: what the belts are and how to earn them */}
+          {beltInfoOpen && (
+            <div className="mb-3 rounded-xl bg-card p-3 text-left shadow-sm animate-rise">
+              <p className="mb-2 text-[12px] font-[700] text-dark-text">Your belt is your journey — rank up by your days active in BDR Hub:</p>
+              <div className="space-y-0.5">
+                {BELT_LADDER.map(b => {
+                  const isCurrent = b.key === belt
+                  return (
+                    <div key={b.key} className={cn('flex items-center gap-2 rounded-md px-2 py-1.5', isCurrent && 'bg-teal/10')}>
+                      <span className="h-3 w-3 shrink-0 rounded-full ring-1 ring-black/10" style={{ backgroundColor: BELT_STYLES[b.key]?.bar }} />
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-1.5">
+                          <span className={cn('text-[12px]', isCurrent ? 'font-[800] text-dark-text' : 'font-[600] text-mid-text')}>{b.label} Belt</span>
+                          {isCurrent && <span className="rounded-full bg-teal px-1.5 text-[9px] font-[800] text-white">YOU</span>}
+                        </div>
+                        <div className="truncate text-[11px] text-gray">{b.blurb}</div>
+                      </div>
+                      <span className="shrink-0 text-[11px] font-[700] text-gray">{b.day === 0 ? 'Day 1' : `Day ${b.day}+`}</span>
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+          )}
+
           {progress?.nextBelt && (
             <div className="mb-3">
               <div className="flex justify-between mb-2">
@@ -365,8 +409,9 @@ export default function HomePage() {
         </Card>
       )}
 
-      {/* Right now — current time block from the rep's Daily Rhythm */}
-      {rhythm?.status === 'active' ? (
+      {/* Right now — current time block. Only once a shift exists; setting the
+          shift lives in the "Start your day" prompt at the top, so no duplicate. */}
+      {shift && (rhythm?.status === 'active' ? (
         <Link href={rhythm.block.href ?? '/schedule'}>
           <Card hover data-tour="home-rhythm" className="flex items-center gap-3 border-teal/40 !p-3">
             <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-teal/10 text-teal"><ClockIcon size={18} /></div>
@@ -383,16 +428,13 @@ export default function HomePage() {
           <Card hover data-tour="home-rhythm" className="flex items-center gap-3 !p-3">
             <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-navy/10 text-navy"><ClockIcon size={18} /></div>
             <div className="min-w-0 flex-1">
-              {!shift ? (
-                <><div className="text-[14px] font-[700] text-dark-text">Set your shift</div><div className="text-[12px] text-gray">Pick your hours for a time-blocked day</div></>
-              ) : (
-                <><div className="label text-gray">Time Blocking</div><div className="text-[14px] font-[700] text-dark-text">{rhythm?.status === 'before' ? `Your day starts at ${fmtClock(rhythm.startsAt)}` : 'Shift complete — nice work'}</div></>
-              )}
+              <div className="label text-gray">Time Blocking</div>
+              <div className="text-[14px] font-[700] text-dark-text">{rhythm?.status === 'before' ? `Your day starts at ${fmtClock(rhythm.startsAt)}` : 'Shift complete — nice work'}</div>
             </div>
-            <span className="shrink-0 text-[12px] font-[700] text-teal">{!shift ? 'Set up' : 'View'} →</span>
+            <span className="shrink-0 text-[12px] font-[700] text-teal">View →</span>
           </Card>
         </Link>
-      )}
+      ))}
 
       {/* Today Summary */}
       <Card data-tour="home-today">
