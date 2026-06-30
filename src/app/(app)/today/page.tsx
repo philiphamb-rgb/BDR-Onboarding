@@ -93,15 +93,12 @@ export default function TodayPage() {
     } finally { setTriageBusy(false) }
   }
 
-  // Complete a planned task inline — celebrate the check, then clear it from the day.
-  const completeTask = (id: string) => {
-    if (doneTaskId) return
-    setDoneTaskId(id)
-    supabase.from('tasks').update({ done: true, updated_at: new Date().toISOString() }).eq('id', id).then(() => {})
-    setTimeout(() => {
-      setTasks(prev => prev.map(t => t.id === id ? { ...t, done: true } : t))
-      setDoneTaskId(prev => (prev === id ? null : prev))
-    }, 450)
+  // Toggle a planned task done/undone inline — it stays in the day's checklist so
+  // the progress bar fills as you knock items out; pop the check on completion.
+  const togglePlanTask = (id: string, next: boolean) => {
+    if (next) { setDoneTaskId(id); setTimeout(() => setDoneTaskId(p => (p === id ? null : p)), 450) }
+    setTasks(prev => prev.map(t => t.id === id ? { ...t, done: next } : t))
+    supabase.from('tasks').update({ done: next, updated_at: new Date().toISOString() }).eq('id', id).then(() => {})
   }
 
   const completeHabit = async (habitId: string, habitLabel: string) => {
@@ -222,7 +219,7 @@ export default function TodayPage() {
           )}
         </div>
         {gstats.hasGoal && (
-          <div className="flex items-start gap-2 px-3 py-2.5">
+          <div className="flex items-start gap-2 p-3">
             <LightningIcon size={14} className="mt-0.5 shrink-0 text-teal" />
             <p className="text-[12px] leading-relaxed text-mid-text">{strategyLine(gstats)}</p>
           </div>
@@ -286,19 +283,16 @@ export default function TodayPage() {
             </div>
             <ProgressBar value={plannedDone} max={planned.length} className="mb-3" />
             <div className="space-y-2">
-              {planned.slice(0, 6).map(t => {
-                const isDone = t.done || doneTaskId === t.id
-                return (
-                  <div key={t.id} className={cn('flex items-center gap-3 rounded-xl border bg-bdrbg p-3 transition-all duration-300', isDone ? 'border-teal/40 opacity-70' : 'border-border')}>
-                    <button onClick={() => completeTask(t.id)} disabled={isDone} aria-label={isDone ? 'Completed' : 'Complete task'}
-                      className={cn('flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 transition-colors', isDone ? 'border-teal bg-teal' : 'border-border hover:border-teal hover:bg-teal/10')}>
-                      <CheckIcon className={cn('h-3 w-3', isDone ? 'text-white' : 'text-transparent', doneTaskId === t.id && 'animate-pop')} />
-                    </button>
-                    <span className={cn('flex-1 truncate text-sm font-medium', isDone ? 'text-gray line-through' : 'text-dark-text')}>{t.title}</span>
-                    <span className="shrink-0 text-xs text-gray tabular-nums">{(t.estimated_minutes || 30) >= 60 ? `${(t.estimated_minutes || 30) / 60}h` : `${t.estimated_minutes || 30}m`}</span>
-                  </div>
-                )
-              })}
+              {planned.slice(0, 6).map(t => (
+                <div key={t.id} className={cn('flex items-center gap-3 rounded-xl border bg-bdrbg p-3 transition-all duration-300', t.done ? 'border-teal/40 opacity-70' : 'border-border')}>
+                  <button onClick={() => togglePlanTask(t.id, !t.done)} aria-label={t.done ? 'Mark incomplete' : 'Complete task'}
+                    className={cn('flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 transition-colors', t.done ? 'border-teal bg-teal' : 'border-border hover:border-teal hover:bg-teal/10')}>
+                    <CheckIcon className={cn('h-3 w-3', t.done ? 'text-white' : 'text-transparent', doneTaskId === t.id && 'animate-pop')} />
+                  </button>
+                  <span className={cn('flex-1 truncate text-sm font-medium', t.done ? 'text-gray line-through' : 'text-dark-text')}>{t.title}</span>
+                  <span className="shrink-0 text-xs text-gray tabular-nums">{(t.estimated_minutes || 30) >= 60 ? `${(t.estimated_minutes || 30) / 60}h` : `${t.estimated_minutes || 30}m`}</span>
+                </div>
+              ))}
             </div>
           </>
         )}
