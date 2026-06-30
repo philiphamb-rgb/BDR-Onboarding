@@ -14,9 +14,38 @@ import {
 import { Tour } from '@/components/tour'
 import { RHYTHM_TOUR } from '@/lib/tours'
 
-const PX_PER_MIN = 1          // 60px per hour (Google-Calendar-like density)
+const PX_PER_MIN = 1.5        // 90px per hour — short blocks stay usable & legible
 const SNAP = 5                // snap drag to 5-minute steps
 const GUTTER = 52             // px reserved for the hour labels
+
+// Greedy column layout for any overlapping blocks (Google-Calendar style): each
+// cluster of overlapping blocks is split into side-by-side columns so nothing
+// stacks on top of anything else. Returns i -> { col, cols }.
+function layoutColumns(items: { i: number; start: number; dur: number }[]) {
+  const sorted = [...items].sort((a, b) => a.start - b.start || a.i - b.i)
+  const out: Record<number, { col: number; cols: number }> = {}
+  let cluster: any[] = []
+  let clusterEnd = -1
+  const flush = (cl: any[]) => {
+    const colEnds: number[] = []
+    cl.forEach(it => {
+      let placed = false
+      for (let c = 0; c < colEnds.length; c++) {
+        if (it.start >= colEnds[c]) { colEnds[c] = it.start + it.dur; it._col = c; placed = true; break }
+      }
+      if (!placed) { it._col = colEnds.length; colEnds.push(it.start + it.dur) }
+    })
+    const cols = Math.max(1, colEnds.length)
+    cl.forEach(it => { out[it.i] = { col: it._col, cols } })
+  }
+  sorted.forEach(it => {
+    if (cluster.length && it.start >= clusterEnd) { flush(cluster); cluster = [] }
+    cluster.push(it)
+    clusterEnd = cluster.length === 1 ? it.start + it.dur : Math.max(clusterEnd, it.start + it.dur)
+  })
+  if (cluster.length) flush(cluster)
+  return out
+}
 
 export default function SchedulePage() {
   const supabase = createClient()
@@ -95,6 +124,14 @@ export default function SchedulePage() {
   const cur = shift ? currentBlock(shift) : null
   const activeIdx = cur?.status === 'active' ? OPTIMIZED_DAY.indexOf(cur.block) : -1
   const doneCount = blocks.filter(x => x.done).length
+
+  // Column layout using the live (preview-adjusted) positions, so dragging a
+  // block over another splits them into side-by-side columns instead of stacking.
+  const cols = layoutColumns(blocks.map(x => ({
+    i: x.i,
+    start: preview?.i === x.i ? preview.start : x.start,
+    dur: preview?.i === x.i ? preview.dur : x.dur,
+  })))
 
   // Auto-scroll to "now" (or the start of the day) on first paint.
   useEffect(() => {
@@ -233,60 +270,72 @@ export default function SchedulePage() {
             </div>
           )}
 
-          {/* Blocks */}
-          {blocks.map(({ i, b, start: rStart, dur: rDur, note, done, edited }) => {
-            const st = BLOCK_STYLE[b.type]
-            const p = preview?.i === i ? preview : null
-            const start = p ? p.start : rStart
-            const dur = p ? p.dur : rDur
-            const top = y(start)
-            const height = Math.max(18, dur * PX_PER_MIN)
-            const compact = height < 44
-            const isCurrent = i === activeIdx
-            const dragging = preview?.i === i
-            const tasks = blockTasks[String(i)] ?? []
-            return (
-              <div key={i}
-                onPointerDown={e => startDrag(e, i, 'move')}
-                className={cn('group absolute z-10 select-none overflow-hidden rounded-lg border-l-[3px] px-2.5 py-1.5 shadow-sm transition-shadow touch-none',
-                  done ? 'opacity-60' : '', dragging ? 'z-30 shadow-modal ring-2 ring-navy/30' : 'hover:shadow-card cursor-grab')}
-                style={{
-                  top, height, left: GUTTER + 4, right: 8,
-                  backgroundColor: `${st.color}14`, borderLeftColor: st.color,
-                }}>
-                <div className="flex items-start gap-1.5">
-                  <button onPointerDown={e => e.stopPropagation()} onClick={e => { e.stopPropagation(); toggleDone(i) }}
-                    aria-label={done ? 'Mark not done' : 'Mark done'}
-                    className={cn('mt-px flex h-4 w-4 shrink-0 items-center justify-center rounded-full border-2 transition-all',
-                      done ? 'border-success bg-success text-white' : 'bg-card text-transparent')}
-                    style={!done ? { borderColor: st.color } : undefined}>
-                    <CheckIcon size={10} />
-                  </button>
-                  <div className="min-w-0 flex-1">
-                    <div className={cn('truncate text-[12.5px] font-[700] leading-tight', done ? 'text-gray line-through' : 'text-dark-text')}>{b.label}</div>
-                    {!compact && (
-                      <div className="mt-0.5 flex items-center gap-1.5 text-[11px] text-mid-text">
-                        <span className="tabular-nums">{fmtClock(start)}–{fmtClock(start + dur)}</span>
-                        <span className="text-gray">· {fmtDuration(dur)}</span>
-                        {edited && !dragging && <span className="text-teal">· edited</span>}
-                        {isCurrent && !done && <span className="rounded-full bg-teal px-1.5 text-[9px] font-[800] text-white">NOW</span>}
+          {/* Events area (right of the hour gutter) — blocks lay out in columns */}
+          <div className="absolute bottom-0 top-0" style={{ left: GUTTER + 4, right: 8 }}>
+            {blocks.map(({ i, b, start: rStart, dur: rDur, done, edited }) => {
+              const st = BLOCK_STYLE[b.type]
+              const p = preview?.i === i ? preview : null
+              const start = p ? p.start : rStart
+              const dur = p ? p.dur : rDur
+              const top = y(start)
+              const height = Math.max(16, dur * PX_PER_MIN)
+              const tiny = height < 30          // ~20 min or less — one slim line
+              const compact = height < 52       // hide the time row, keep title
+              const isCurrent = i === activeIdx
+              const dragging = preview?.i === i
+              const tasks = blockTasks[String(i)] ?? []
+              const { col, cols: ncols } = cols[i] ?? { col: 0, cols: 1 }
+              return (
+                <div key={i}
+                  onPointerDown={e => startDrag(e, i, 'move')}
+                  className={cn('group absolute select-none overflow-hidden rounded-lg border-l-[3px] shadow-sm transition-shadow touch-none',
+                    tiny ? 'px-2 py-0.5' : 'px-2 py-1',
+                    done ? 'opacity-60' : '', dragging ? 'z-30 shadow-modal ring-2 ring-navy/40' : 'z-10 hover:shadow-card cursor-grab')}
+                  style={{
+                    top, height,
+                    left: `${(col / ncols) * 100}%`,
+                    width: `calc(${100 / ncols}% - 3px)`,
+                    backgroundColor: dragging ? `${st.color}26` : `${st.color}14`,
+                    borderLeftColor: st.color,
+                  }}>
+                  {tiny ? (
+                    <div className="flex items-center gap-1.5 overflow-hidden">
+                      <span className={cn('truncate text-[11px] font-[700] leading-none', done ? 'text-gray line-through' : 'text-dark-text')}>{b.label}</span>
+                      <span className="ml-auto shrink-0 text-[10px] font-[600] tabular-nums text-gray">{fmtClock(start)}</span>
+                    </div>
+                  ) : (
+                    <div className="flex items-start gap-1.5">
+                      <button onPointerDown={e => e.stopPropagation()} onClick={e => { e.stopPropagation(); toggleDone(i) }}
+                        aria-label={done ? 'Mark not done' : 'Mark done'}
+                        className={cn('mt-0.5 flex h-3.5 w-3.5 shrink-0 items-center justify-center rounded-full border-2 transition-all',
+                          done ? 'border-success bg-success text-white' : 'bg-card text-transparent')}
+                        style={!done ? { borderColor: st.color } : undefined}>
+                        <CheckIcon size={9} />
+                      </button>
+                      <div className="min-w-0 flex-1">
+                        <div className={cn('truncate text-[12px] font-[700] leading-tight', done ? 'text-gray line-through' : 'text-dark-text')}>{b.label}</div>
+                        {!compact && (
+                          <div className="mt-0.5 flex flex-wrap items-center gap-x-1.5 text-[10.5px] text-mid-text">
+                            <span className="tabular-nums">{fmtClock(start)}–{fmtClock(start + dur)}</span>
+                            {edited && !dragging && <span className="text-teal">· edited</span>}
+                            {isCurrent && !done && <span className="rounded-full bg-teal px-1.5 text-[9px] font-[800] text-white">NOW</span>}
+                            {tasks.length > 0 && <span className="text-gray">· {tasks.filter(t => t.done).length}/{tasks.length} tasks</span>}
+                          </div>
+                        )}
                       </div>
-                    )}
-                    {!compact && tasks.length > 0 && (
-                      <div className="mt-1 flex items-center gap-1 text-[10px] font-[700] text-gray"><CheckIcon size={10} />{tasks.filter(t => t.done).length}/{tasks.length} tasks</div>
-                    )}
+                      {ncols === 1 && <span className="shrink-0 rounded-full px-1.5 py-0.5 text-[9px] font-[800]" style={{ backgroundColor: `${st.color}26`, color: st.color }}>{st.label}</span>}
+                    </div>
+                  )}
+                  {/* Resize handle */}
+                  <div onPointerDown={e => startDrag(e, i, 'resize')}
+                    className="absolute inset-x-0 bottom-0 flex h-2.5 cursor-ns-resize items-end justify-center"
+                    aria-hidden="true">
+                    <span className="mb-0.5 h-1 w-7 rounded-full bg-dark-text/15 opacity-0 transition-opacity group-hover:opacity-100" />
                   </div>
-                  <span className="rounded-full px-1.5 py-0.5 text-[9px] font-[800] shrink-0" style={{ backgroundColor: `${st.color}26`, color: st.color }}>{st.label}</span>
                 </div>
-                {/* Resize handle */}
-                <div onPointerDown={e => startDrag(e, i, 'resize')}
-                  className="absolute inset-x-0 bottom-0 flex h-3 cursor-ns-resize items-end justify-center"
-                  aria-hidden="true">
-                  <span className="mb-0.5 h-1 w-8 rounded-full bg-dark-text/15 opacity-0 transition-opacity group-hover:opacity-100" />
-                </div>
-              </div>
-            )
-          })}
+              )
+            })}
+          </div>
         </div>
       </div>
 
