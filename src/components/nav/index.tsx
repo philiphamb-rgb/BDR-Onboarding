@@ -53,6 +53,17 @@ const REP_NAV: NavItem[] = [
   { href: '/coach',   label: 'Coach',   icon: CoachIcon },
 ]
 
+// Mobile bottom bar (5 slots). Home is the hub (it now carries the daily
+// checklist), so Partners — the pipeline, the core daily work — gets a slot and
+// Coach sits center. 'Today' stays reachable under "More".
+const BOTTOM_NAV: NavItem[] = [
+  { href: '/home',     label: 'Home',     icon: HomeIcon      },
+  { href: '/partners', label: 'Partners', icon: HandshakeIcon },
+  { href: '/coach',    label: 'Coach',    icon: CoachIcon     },
+  { href: '/train',    label: 'Learning Center', shortLabel: 'Learn', icon: TrainIcon },
+  { href: '/wins',     label: 'Wins',     icon: WinsIcon      },
+]
+
 // Shared "Tools" routes — grouped by what the rep is trying to do, so the
 // sidebar reads as Sell / Plan / Grow instead of one long flat list. Rendered
 // grouped on desktop and (flattened, in the same order) in the mobile "More"
@@ -100,7 +111,7 @@ interface BottomNavProps {
 
 export function BottomNav({ user, unreadCount = 0 }: BottomNavProps) {
   const pathname = usePathname()
-  const navItems = REP_NAV
+  const navItems = BOTTOM_NAV
   const [moreOpen, setMoreOpen] = useState(false)
   const { canView } = usePermissions()
 
@@ -108,9 +119,12 @@ export function BottomNav({ user, unreadCount = 0 }: BottomNavProps) {
   const isManager = ['manager', 'owner'].includes(role)
   // Hide a route only if its feature is explicitly disabled for this role (fail-open).
   const allowed = (item: NavItem) => { const f = featureForHref(item.href); return !f || canView(f) }
-  // Everything not in the 5-slot bottom bar, so phones can reach every route.
+  const inBottom = (href: string) => BOTTOM_NAV.some(b => b.href === href)
+  // Everything not in the 5-slot bottom bar, so phones can reach every route —
+  // including primary pages bumped off the bar (e.g. Today).
   const moreItems: NavItem[] = [
-    ...TOOLS_NAV.filter(allowed),
+    ...REP_NAV.filter(i => !inBottom(i.href)),
+    ...TOOLS_NAV.filter(allowed).filter(i => !inBottom(i.href)),
     ...(isManager ? MANAGER_EXTRA_NAV.filter(allowed) : []),
     { href: '/notifications', label: 'Notifications', icon: unreadCount > 0 ? BellDotIcon : BellIcon },
     { href: '/settings', label: 'Settings', icon: SettingsIcon },
