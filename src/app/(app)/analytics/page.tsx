@@ -175,20 +175,19 @@ export default function AnalyticsPage() {
         </>
       )}
 
-      {/* Income Calculator — commission goal → daily calls/demos (embedded tool) */}
-      <Card data-tour="an-calc" className="!p-3">
-        <div className="mb-2 flex items-center gap-2">
-          <CoinIcon size={16} className="text-teal" />
-          <span className="label">Income Calculator</span>
-        </div>
-        <p className="mb-2 text-[12px] text-gray">Set a commission goal and the Hub back-solves the daily calls and demos to hit it.</p>
-        <iframe
-          src="/tools/income-calculator.html"
-          title="BDR Income & Commission Goals Calculator"
-          className="w-full rounded-xl border border-border bg-white"
-          style={{ height: 'calc(100vh - 12rem)', minHeight: 520 }}
-        />
-      </Card>
+      {/* Income & Commission Planner — the native tool that drives this goal */}
+      <Link href="/commissions" data-tour="an-calc" className="block">
+        <Card hover className="bg-gradient-hero text-white">
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white/15"><CoinIcon size={20} className="text-white" /></div>
+            <div className="min-w-0 flex-1">
+              <div className="text-[14px] font-[800]">Income &amp; Commission Planner</div>
+              <div className="text-[11px] text-white/75">Turn your income goal into a daily number — it sets the goal above</div>
+            </div>
+            <ArrowRightIcon size={18} className="shrink-0 text-white/80 animate-nudge-x" />
+          </div>
+        </Card>
+      </Link>
     </div>
   )
 }

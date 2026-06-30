@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase/server'
 import Anthropic from '@anthropic-ai/sdk'
 import { NextResponse } from 'next/server'
 import { completion, stageMeta, PIPELINE_STAGES } from '@/lib/partnerChecklist'
+import { computePlan, computeInsight, fmt } from '@/lib/income/engine'
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 
@@ -22,12 +23,33 @@ async function buildUserContext(supabase, uid: string) {
   ])
   const { data: goal } = await supabase.from('goals').select('monthly_deal_goal').eq('user_id', uid).maybeSingle()
   const todayStr = new Date().toISOString().split('T')[0]
-  const [{ data: openTasks }, { data: recentNotes }] = await Promise.all([
+  const [{ data: openTasks }, { data: recentNotes }, { data: incomePlanRow }] = await Promise.all([
     supabase.from('tasks').select('title, done, priority, due_date, estimated_minutes, scheduled_day, scheduled_block')
       .eq('user_id', uid).eq('done', false).is('parent_id', null).limit(40),
     supabase.from('notes').select('title, category, tags, updated_at')
       .eq('user_id', uid).eq('archived', false).order('updated_at', { ascending: false }).limit(5),
+    supabase.from('income_plans').select('*').eq('user_id', uid).maybeSingle(),
   ])
+
+  // Income & Commission plan — same engine the planner UI uses, so the coach
+  // reasons from the BDR's real plan numbers, not guesses.
+  let incomeBlock = ''
+  if (incomePlanRow) {
+    const r = incomePlanRow
+    const ip = computePlan({
+      target: +r.target, base: +r.base, path: r.path, buffer: r.buffer,
+      b2cRate: +r.b2c_rate, b2cChurn: +r.b2c_churn, bwWarmLeads: +r.bw_warm_leads, bwWarmRate: +r.bw_warm_rate, b2cSelfRate: +r.b2c_self_rate,
+      bbComm: +r.bb_comm, bbWarmLeads: +r.bb_warm_leads, bbWarmRate: +r.bb_warm_rate, bbSelfRate: +r.bb_self_rate,
+    })
+    const { data: ci } = await supabase.from('income_checkins').select('contacts, closes, target_contacts').eq('plan_id', r.id)
+    const weeks = (ci ?? []).map((w: any) => ({ c: w.contacts, x: w.closes, t: w.target_contacts }))
+    const ins = computeInsight(ip, weeks)
+    incomeBlock = `\nINCOME PLAN (from the Commission Planner — coach toward these real numbers):
+- Income goal ${fmt(ip.target)}/yr (base ${fmt(ip.base)}), ${ip.path === 'b2c' ? 'Direct/B2C' : 'Partner/B2B2C'} path
+- Daily target: ${ip.coldDay} cold + ${ip.warmDay} warm contacts/day · ~${(ip.totalWk || ip.coldWk).toLocaleString()} contacts/week
+- Projected year-1 ${fmt(ip.y1total)}${ip.goalMonth ? ` · on pace to hit goal ~month ${ip.goalMonth}` : ''}
+- Weeks logged: ${weeks.length}${ins ? `\n- Current insight: ${ins.text}` : ''}`
+  }
 
   const firstName = userData?.first_name || (userData?.name ?? 'BDR').split(' ')[0]
   const days = progress?.days_active ?? 0
@@ -68,7 +90,7 @@ ${partners?.length ? `\nPARTNERS IN ONBOARDING (reference by name when relevant)
   return `\nTASKS — they manage tasks in this app; reference real titles and help them prioritize/time-block:\n- Planned into today's blocks: ${planned.length} · Unplanned: ${unplanned.length}` +
     (planned.length ? `\nTODAY'S PLAN:\n${planned.slice(0, 8).map(line).join('\n')}` : '') +
     (unplanned.length ? `\nTOP UNPLANNED:\n${unplanned.slice(0, 8).map(line).join('\n')}` : '')
-})()}${recentNotes?.length ? `\nRECENT NOTES (Plan tab):\n${recentNotes.map(n => `- ${n.title || 'Untitled'}${n.category ? ` [${n.category}]` : ''}`).join('\n')}` : ''}`
+})()}${recentNotes?.length ? `\nRECENT NOTES (Plan tab):\n${recentNotes.map(n => `- ${n.title || 'Untitled'}${n.category ? ` [${n.category}]` : ''}`).join('\n')}` : ''}${incomeBlock}`
 
   return { firstName, belt, days, block }
 }

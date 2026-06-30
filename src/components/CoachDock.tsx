@@ -19,6 +19,7 @@ function contextFor(pathname: string): { label: string; prompts: string[] } {
   if (p === '/home') return { label: 'Home dashboard', prompts: ['How am I pacing to my goal?', 'What should I focus on right now?'] }
   if (p.startsWith('/partners')) return { label: 'Partners pipeline', prompts: ['Who should I follow up with first?', 'Help me move a stuck deal forward'] }
   if (p.startsWith('/analytics')) return { label: 'My analytics', prompts: ['What do my numbers say I should improve?', "Where's my biggest bottleneck?"] }
+  if (p.startsWith('/commissions')) return { label: 'My income plan', prompts: ['Am I on track to hit my income goal?', 'What daily activity closes my gap fastest?'] }
   if (p.startsWith('/schedule')) return { label: 'Time Blocks', prompts: ['How do I get the most from my power blocks?', 'Plan my next selling block'] }
   if (p.startsWith('/tasks')) return { label: 'Tasks', prompts: ['Help me prioritize my tasks', 'What should I do first today?'] }
   if (p.startsWith('/notes')) return { label: 'Notes', prompts: ['Pull the action items out of my notes', 'Turn this note into a plan'] }
