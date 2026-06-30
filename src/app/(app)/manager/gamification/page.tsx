@@ -112,7 +112,7 @@ export default function GamificationPage() {
   }, {} as Record<string, GamRule[]>)
 
   return (
-    <div className="space-y-4 pb-4">
+    <div className="space-y-4 pb-4 stagger-rise">
       <PageHeader title="XP Rules" subtitle="Tune how XP is awarded for your team. Changes apply immediately." />
 
       {loading ? (

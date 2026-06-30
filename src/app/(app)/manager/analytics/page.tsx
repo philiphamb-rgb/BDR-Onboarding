@@ -73,7 +73,7 @@ export default function AnalyticsPage() {
   ]
 
   return (
-    <div className="space-y-5 pb-4">
+    <div className="space-y-5 pb-4 stagger-rise">
       <PageHeader title="Analytics" subtitle={loading || !size ? undefined : `Across ${size} rep${size === 1 ? '' : 's'}`} />
 
       {loading ? (

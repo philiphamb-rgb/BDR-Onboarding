@@ -55,7 +55,7 @@ export default function TeamPage() {
   }, [])
 
   return (
-    <div className="space-y-4 pb-4">
+    <div className="space-y-4 pb-4 stagger-rise">
       <PageHeader title="Team" subtitle={loading ? undefined : members.length ? `${members.length} rep${members.length === 1 ? '' : 's'}` : undefined} />
 
       {loading ? (

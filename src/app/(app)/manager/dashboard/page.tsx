@@ -13,6 +13,7 @@ import {
 } from '@/components/icons'
 import { cn, formatXP } from '@/lib/utils'
 import { deriveTeamInsights, daysSince } from '@/lib/insights'
+import { CountUp } from '@/components/CountUp'
 
 function beltFromDays(d: number) {
   return d >= 90 ? 'black' : d >= 70 ? 'purple' : d >= 50 ? 'blue' : d >= 30 ? 'green' : d >= 14 ? 'orange' : d >= 7 ? 'yellow' : 'white'
@@ -73,7 +74,7 @@ export default function ManagerDashboardPage() {
   const ranked = [...members].sort((a, b) => b.total_xp - a.total_xp)
 
   return (
-    <div className="space-y-5 pb-4">
+    <div className="space-y-5 pb-4 stagger-rise">
       <PageHeader
         title="Team Dashboard"
         subtitle={loading ? 'Loading team…' : teamSize ? `${teamSize} rep${teamSize === 1 ? '' : 's'} on your team` : 'Build your team to get started'}
@@ -94,10 +95,10 @@ export default function ManagerDashboardPage() {
         <>
           {/* KPI row */}
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-            <StatTile label="Avg XP / rep" value={formatXP(avgXP).replace(' XP', '')} sub="All time" icon={<ChartRisingIcon size={18} />} accent="text-navy" />
-            <StatTile label="On a streak" value={`${activeStreaks}/${teamSize}`} sub="Active today" icon={<FlameIcon size={18} />} accent="text-orange-500" />
-            <StatTile label="Calls this week" value={callsThisWeek} sub="Team total" icon={<LightningIcon size={18} />} accent="text-teal" />
-            <StatTile label="Deals this month" value={dealsThisMonth} sub="Closed-won" icon={<TargetIcon size={18} />} accent="text-success" />
+            <StatTile label="Avg XP / rep" value={<CountUp value={avgXP} format={n => formatXP(n).replace(' XP', '')} />} sub="All time" icon={<ChartRisingIcon size={18} />} accent="text-navy" />
+            <StatTile label="On a streak" value={<><CountUp value={activeStreaks} />/{teamSize}</>} sub="Active today" icon={<FlameIcon size={18} />} accent="text-orange-500" />
+            <StatTile label="Calls this week" value={<CountUp value={callsThisWeek} />} sub="Team total" icon={<LightningIcon size={18} />} accent="text-teal" />
+            <StatTile label="Deals this month" value={<CountUp value={dealsThisMonth} />} sub="Closed-won" icon={<TargetIcon size={18} />} accent="text-success" />
           </div>
 
           {/* Coaching insights */}
@@ -136,7 +137,9 @@ export default function ManagerDashboardPage() {
                     <div className="min-w-0 flex-1">
                       <div className="truncate text-[14px] font-[600] text-dark-text">{m.name}</div>
                       {idle !== null && idle >= 3 && (
-                        <div className="text-[11px] font-[600] text-[#A06C00]">Quiet for {idle}d</div>
+                        <div className="flex items-center gap-1 text-[11px] font-[600] text-[#A06C00]">
+                          <span className="h-1.5 w-1.5 shrink-0 animate-attention rounded-full bg-gold" />Quiet for {idle}d
+                        </div>
                       )}
                     </div>
                     <div className="text-right">

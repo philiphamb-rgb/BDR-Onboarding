@@ -4,7 +4,7 @@
 // (dark-text / gray / border / bdrbg / teal / gold) so every /manager/* view
 // reads as one product, not seven different pages.
 
-import React from 'react'
+import React, { useState, useEffect } from 'react'
 import { cn } from '@/lib/utils'
 import type { Insight, InsightTone } from '@/lib/insights'
 import {
@@ -30,7 +30,7 @@ export function InsightRow({ insight }: { insight: Insight }) {
   const tone = TONE_STYLES[insight.tone]
   return (
     <div className={cn('flex items-start gap-3 rounded-md border p-3', tone.wrap)}>
-      <div className={cn('mt-0.5 shrink-0', tone.icon)}>
+      <div className={cn('mt-0.5 shrink-0', tone.icon, insight.tone === 'warning' && 'animate-attention')}>
         <Icon size={18} />
       </div>
       <div className="min-w-0">
@@ -74,11 +74,15 @@ export function MiniBar({
   color?: string
 }) {
   const pct = max > 0 ? Math.max(2, Math.round((value / max) * 100)) : 0
+  // Fill from 0 on mount for a lively "drawing in" feel (reduced-motion users
+  // simply see the final width since the transition is near-instant for them).
+  const [w, setW] = useState(0)
+  useEffect(() => { const t = setTimeout(() => setW(pct), 60); return () => clearTimeout(t) }, [pct])
   return (
     <div className="flex items-center gap-3">
       <span className="w-24 shrink-0 truncate text-[12px] font-[600] text-mid-text">{label}</span>
       <div className="h-2.5 flex-1 overflow-hidden rounded-full bg-border">
-        <div className={cn('h-full rounded-full transition-all duration-500', color)} style={{ width: `${pct}%` }} />
+        <div className={cn('h-full rounded-full transition-all duration-700 ease-out', color)} style={{ width: `${w}%` }} />
       </div>
       <span className="w-14 shrink-0 text-right text-[12px] font-[700] text-dark-text tabular-nums">
         {display ?? value}

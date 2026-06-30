@@ -94,7 +94,7 @@ export default function RolesPage() {
   if (loading) return <div className="space-y-4"><SkeletonList count={3} /></div>
 
   return (
-    <div className="space-y-4 pb-4">
+    <div className="space-y-4 pb-4 stagger-rise">
       <PageHeader title="Roles & Permissions" subtitle="Define what each role can see and edit, and assign roles to your team." />
 
       {/* Invite with required role */}

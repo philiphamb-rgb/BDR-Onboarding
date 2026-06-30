@@ -72,7 +72,7 @@ export default function ManagerResourcesPage() {
   }
 
   return (
-    <div className="space-y-4 pb-4">
+    <div className="space-y-4 pb-4 stagger-rise">
       <PageHeader
         title="Team Resources"
         subtitle="Share docs, links, and videos that show up in your reps' Resource Center."

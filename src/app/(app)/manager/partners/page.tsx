@@ -31,7 +31,7 @@ export default function ManagerPartnersPage() {
   const byStage = PIPELINE_STAGES.map(s => ({ ...s, n: rows.filter(r => r.stage === s.key).length }))
 
   return (
-    <div className="space-y-5 pb-4">
+    <div className="space-y-5 pb-4 stagger-rise">
       <PageHeader title="Team Partners" subtitle={loading || !total ? undefined : `${total} partner${total === 1 ? '' : 's'} in onboarding across your team`} />
 
       {loading ? (

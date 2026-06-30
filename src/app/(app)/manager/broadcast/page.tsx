@@ -85,7 +85,7 @@ export default function BroadcastPage() {
   const canSend = title.trim() && body.trim() && teamSize > 0
 
   return (
-    <div className="space-y-4 pb-4">
+    <div className="space-y-4 pb-4 stagger-rise">
       <PageHeader title="Broadcast" subtitle="Send an announcement to every rep on your team at once." />
 
       <Card>
