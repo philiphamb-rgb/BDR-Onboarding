@@ -92,11 +92,17 @@ function GlobalSearch() {
   const [results, setResults] = useState<{ group: string; label: string; href: string }[]>([])
   const timer = useRef<any>(null)
   const boxRef = useRef<HTMLDivElement>(null)
+  const inputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
     const onDoc = (e: MouseEvent) => { if (boxRef.current && !boxRef.current.contains(e.target as Node)) setOpen(false) }
+    const onKey = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') { e.preventDefault(); inputRef.current?.focus(); setOpen(true) }
+      if (e.key === 'Escape') { setOpen(false); inputRef.current?.blur() }
+    }
     document.addEventListener('mousedown', onDoc)
-    return () => document.removeEventListener('mousedown', onDoc)
+    document.addEventListener('keydown', onKey)
+    return () => { document.removeEventListener('mousedown', onDoc); document.removeEventListener('keydown', onKey) }
   }, [])
 
   useEffect(() => {
@@ -129,13 +135,18 @@ function GlobalSearch() {
     <div ref={boxRef} className="relative w-full max-w-[520px]">
       <SearchIcon size={16} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-gray" />
       <input
+        ref={inputRef}
         value={q}
         onChange={e => { setQ(e.target.value); setOpen(true) }}
         onFocus={() => setOpen(true)}
-        placeholder="Search partners, tasks, notes, pages…"
-        className="w-full rounded-lg border border-border bg-bdrbg py-2 pl-9 pr-8 text-[13px] outline-none focus:border-navy/40 focus:bg-card focus:ring-2 focus:ring-navy/30"
+        placeholder="Search partners, tasks, notes, lessons…"
+        className="w-full rounded-lg border border-border bg-bdrbg py-2 pl-9 pr-12 text-[13px] outline-none focus:border-navy/40 focus:bg-card focus:ring-2 focus:ring-navy/30"
       />
-      {q && <button onClick={() => { setQ(''); setResults([]) }} aria-label="Clear" className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray hover:text-dark-text"><CloseIcon size={14} /></button>}
+      {q ? (
+        <button onClick={() => { setQ(''); setResults([]) }} aria-label="Clear" className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray hover:text-dark-text"><CloseIcon size={14} /></button>
+      ) : (
+        <kbd className="pointer-events-none absolute right-2.5 top-1/2 hidden -translate-y-1/2 rounded border border-border bg-card px-1.5 py-0.5 text-[10px] font-[700] text-gray desktop:block">⌘K</kbd>
+      )}
       {open && q.trim() && (
         <div className="absolute left-0 right-0 top-full z-[60] mt-1 max-h-[60vh] overflow-y-auto rounded-xl border border-border bg-card p-1.5 shadow-modal">
           {results.length === 0 ? (
