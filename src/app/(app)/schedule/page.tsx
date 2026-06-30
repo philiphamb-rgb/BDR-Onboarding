@@ -500,7 +500,7 @@ export default function SchedulePage() {
             <div className="h-1.5 w-full overflow-hidden rounded-full bg-white/20"><div className="h-full rounded-full bg-white transition-all duration-700 ease-out" style={{ width: `${planProgress}%` }} /></div>
           </div>
         )}
-        <div className="mt-3 flex flex-wrap gap-2">
+        <div data-tour="autoplan-controls" className="mt-3 flex flex-wrap gap-2">
           <button onClick={() => autoPlanDay(false)} disabled={triageBusy}
             className="flex items-center gap-1.5 rounded-lg bg-white px-3 py-2 text-[13px] font-[800] text-navy active:scale-[0.99] disabled:opacity-60">
             <LightningIcon size={14} className="text-navy" /> {triageBusy ? 'Planning…' : 'Auto-plan my day'}

@@ -7,7 +7,7 @@ import { createClient } from '@/lib/supabase/client'
 import { Card, Button, Avatar } from '@/components/ui'
 import { BellIcon, LogoutIcon, ShieldIcon, DownloadIcon, ChevronRightIcon, UserIcon, CalendarIcon, SlackIcon, RefreshIcon, LightningIcon } from '@/components/icons'
 import { usePushNotifications } from '@/lib/push'
-import { openReleaseNotes, APP_VERSION } from '@/lib/releaseNotes'
+import { startWalkthrough, APP_VERSION } from '@/lib/walkthroughs'
 import { resetTours } from '@/components/tour'
 import { cn } from '@/lib/utils'
 import { toast } from '@/components/ui'
@@ -124,7 +124,7 @@ export default function SettingsPage() {
       </button>
 
       {[
-        { icon: <LightningIcon className="text-teal w-5 h-5" />, label: "What's new", sub: `Tour the latest features · v${APP_VERSION}`, onPress: openReleaseNotes },
+        { icon: <LightningIcon className="text-teal w-5 h-5" />, label: "What's new", sub: `Take the guided tour · v${APP_VERSION}`, onPress: () => startWalkthrough() },
         { icon: <BellIcon className="text-navy w-5 h-5" />, label: 'Notifications', sub: 'Reminders, quiet hours', onPress: () => setSection('notifications') },
         { icon: <DownloadIcon className="text-green-600 w-5 h-5" />, label: 'My Data', sub: 'Export or delete your data', onPress: () => setSection('data') },
         { icon: <ShieldIcon className="text-purple-600 w-5 h-5" />, label: 'Help & FAQ', sub: 'Common questions answered', onPress: () => setSection('help') },

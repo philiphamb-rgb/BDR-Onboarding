@@ -4,8 +4,9 @@
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { Card, SkeletonList } from '@/components/ui'
-import { BellIcon, BeltIcon, TrophyIcon, ClockIcon, TargetIcon, SuccessIcon, BookIcon, FlameIcon } from '@/components/icons'
+import { BellIcon, BeltIcon, TrophyIcon, ClockIcon, TargetIcon, SuccessIcon, BookIcon, FlameIcon, LightningIcon, ArrowRightIcon } from '@/components/icons'
 import { cn, formatRelativeTime } from '@/lib/utils'
+import { WALKTHROUGHS, startWalkthrough } from '@/lib/walkthroughs'
 
 interface NotifRow { id: string; type: string; title: string; body: string; is_read: boolean; created_at: string }
 
@@ -44,6 +45,25 @@ export default function NotificationsPage() {
         {notifs.filter(n => !n.is_read).length > 0 && (
           <span className="text-xs text-gray">{notifs.filter(n => !n.is_read).length} unread</span>
         )}
+      </div>
+
+      {/* Guided tours — replay any product walkthrough, any time */}
+      <div className="space-y-2">
+        <div className="flex items-center gap-2">
+          <LightningIcon size={15} className="text-teal" />
+          <span className="label text-teal">Guided tours</span>
+        </div>
+        {WALKTHROUGHS.map(w => (
+          <button key={w.id} onClick={() => startWalkthrough(w.id)}
+            className="flex w-full items-center gap-3 rounded-2xl border border-border bg-card p-3 text-left shadow-card transition-transform hover:border-teal/40 active:scale-[0.99]">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-hero text-white"><LightningIcon size={20} /></div>
+            <div className="min-w-0 flex-1">
+              <div className="text-[14px] font-[800] text-dark-text">{w.title}</div>
+              <div className="text-[12px] text-gray">{w.description}</div>
+            </div>
+            <span className="flex shrink-0 items-center gap-1 rounded-full bg-teal/10 px-3 py-1.5 text-[12px] font-[800] text-teal">Start <ArrowRightIcon size={13} /></span>
+          </button>
+        ))}
       </div>
 
       {loading ? (

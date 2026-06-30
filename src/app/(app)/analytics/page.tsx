@@ -91,7 +91,7 @@ export default function AnalyticsPage() {
       )}
 
       {/* Set / edit the monthly deal goal — the single setter for the whole app */}
-      <Card>
+      <Card data-tour="an-goal">
         <div className="label mb-2">{gstats.hasGoal ? 'Edit your monthly deal goal' : 'Set your monthly deal goal'}</div>
         <div className="flex items-center gap-2">
           <input type="number" min={0} value={goalInput} onChange={e => setGoalInput(e.target.value)} placeholder="e.g. 8"
@@ -176,7 +176,7 @@ export default function AnalyticsPage() {
       )}
 
       {/* Income Calculator — commission goal → daily calls/demos (embedded tool) */}
-      <Card className="!p-3">
+      <Card data-tour="an-calc" className="!p-3">
         <div className="mb-2 flex items-center gap-2">
           <CoinIcon size={16} className="text-teal" />
           <span className="label">Income Calculator</span>

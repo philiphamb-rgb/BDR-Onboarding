@@ -185,7 +185,7 @@ export function AppHeader({ user, unreadCount = 0 }: { user?: User | null; unrea
         <SettingsIcon size={19} />
       </Link>
 
-      <Link href="/notifications" aria-label={unreadCount > 0 ? `${unreadCount} unread notifications` : 'Notifications'}
+      <Link href="/notifications" data-tour="nav-bell" aria-label={unreadCount > 0 ? `${unreadCount} unread notifications` : 'Notifications'}
         className="relative flex h-9 w-9 items-center justify-center rounded-lg text-gray hover:bg-bdrbg hover:text-navy">
         <Bell size={20} className={unreadCount > 0 ? 'text-navy animate-ring' : ''} />
         {unreadCount > 0 && (

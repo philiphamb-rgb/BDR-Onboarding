@@ -16,7 +16,7 @@ import { goalStats, buildActions } from '@/lib/priorityEngine'
 import { autoPlan, fmtEst } from '@/lib/triageEngine'
 import { stageMeta } from '@/lib/partnerChecklist'
 import { askCoach } from '@/lib/coachBus'
-import { openReleaseNotes, APP_VERSION } from '@/lib/releaseNotes'
+import { startWalkthrough, APP_VERSION } from '@/lib/walkthroughs'
 import { Belt3D } from '@/components/Belt3D'
 import { GoalCockpit } from '@/components/GoalCockpit'
 import { CountUp } from '@/components/CountUp'
@@ -283,13 +283,13 @@ export default function HomePage() {
       )}
 
       {/* ── Goal cockpit — where you are, what's needed, and why ── */}
-      <Card className="overflow-hidden !p-0">
+      <Card data-tour="home-goal" className="overflow-hidden !p-0">
         <GoalCockpit g={gstats} title="This month's goal" />
       </Card>
 
       {/* ── Do this now — the single most important action, alive ── */}
       {focus ? (
-        <Link href={focus.href} className="relative block overflow-hidden rounded-2xl border-2 border-teal bg-card p-4 shadow-card animate-glow transition-transform active:scale-[0.99]">
+        <Link href={focus.href} data-tour="home-focus" className="relative block overflow-hidden rounded-2xl border-2 border-teal bg-card p-4 shadow-card animate-glow transition-transform active:scale-[0.99]">
           <div className="flex items-center gap-3">
             <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-gradient-hero text-white animate-bob"><LightningIcon size={22} /></div>
             <div className="min-w-0 flex-1">
@@ -301,7 +301,7 @@ export default function HomePage() {
           </div>
         </Link>
       ) : (
-        <div className="rounded-2xl border-2 border-success/40 bg-success/[0.06] p-4">
+        <div data-tour="home-focus" className="rounded-2xl border-2 border-success/40 bg-success/[0.06] p-4">
           <div className="flex items-center gap-3">
             <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-success/15 text-success"><CheckIcon size={22} /></div>
             <div className="min-w-0">
@@ -599,8 +599,8 @@ export default function HomePage() {
         </Card>
       )}
 
-      <button onClick={openReleaseNotes} className="block w-full pt-2 text-center text-[11px] text-gray hover:text-navy">
-        BDR Hub · Version {APP_VERSION} · <span className="font-[700] underline-offset-2 hover:underline">What&apos;s new</span>
+      <button onClick={() => startWalkthrough()} className="block w-full pt-2 text-center text-[11px] text-gray hover:text-navy">
+        BDR Hub · Version {APP_VERSION} · <span className="font-[700] underline-offset-2 hover:underline">Take the tour</span>
       </button>
 
       <Tour tourKey="home" steps={HOME_TOUR} />

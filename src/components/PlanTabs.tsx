@@ -18,7 +18,7 @@ const PLAN_VIEWS = [
 export function PlanTabs() {
   const pathname = usePathname()
   return (
-    <div className="flex gap-1 rounded-xl bg-bdrbg p-1" role="tablist" aria-label="Plan workspace">
+    <div data-tour="plan-tabs" className="flex gap-1 rounded-xl bg-bdrbg p-1" role="tablist" aria-label="Plan workspace">
       {PLAN_VIEWS.map(v => {
         const active = pathname === v.href || pathname.startsWith(v.href + '/')
         const Icon = v.icon

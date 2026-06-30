@@ -46,7 +46,10 @@ export function Tour({ tourKey, steps, autoStart = true }: { tourKey: string; st
     supabase.auth.getUser().then(({ data: { user } }) => {
       if (!user || !active) return
       setUid(user.id)
-      if (autoStart && !getSeen(user.id).has(tourKey)) {
+      // Don't auto-fire a page tour while the global guided walkthrough is running.
+      let guided = false
+      try { guided = !!sessionStorage.getItem('bdr:guidedActive') } catch {}
+      if (autoStart && !guided && !getSeen(user.id).has(tourKey)) {
         setTimeout(() => { if (active) { setI(0); setRun(true) } }, 700)
       }
     })

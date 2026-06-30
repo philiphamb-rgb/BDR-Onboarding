@@ -5,7 +5,7 @@ import { CoachDock } from '@/components/CoachDock'
 import { ServiceWorkerRegister } from '@/components/ServiceWorkerRegister'
 import { OfflineBanner } from '@/lib/hooks/OfflineBanner'
 import { UpdateBanner } from '@/components/UpdateBanner'
-import { ReleaseNotesWizard } from '@/components/ReleaseNotesWizard'
+import { GuidedTour } from '@/components/GuidedTour'
 import { createClient } from '@/lib/supabase/server'
 
 export const dynamic = 'force-dynamic'
@@ -66,8 +66,9 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       {/* Registers the push-only service worker (Web Push + PWA) */}
       <ServiceWorkerRegister />
 
-      {/* "What's new" walkthrough — auto-opens once per release */}
-      <ReleaseNotesWizard />
+      {/* Live, cross-screen "What's new" walkthrough — auto-runs once per release,
+          replayable from the notifications bell */}
+      <GuidedTour />
     </div>
   )
 }

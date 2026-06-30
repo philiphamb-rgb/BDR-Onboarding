@@ -216,7 +216,7 @@ export default function TodayPage() {
       )}
 
       {/* ── Today's plan — tasks scheduled into your time blocks ── */}
-      <Card>
+      <Card data-tour="today-plan-card">
         <div className="mb-3 flex items-center justify-between">
           <h2 className="text-h3 text-dark-text">Today&apos;s plan</h2>
           <Link href="/schedule" className="flex items-center gap-1 text-sm font-medium text-navy">Time Blocks <ArrowRightIcon className="h-4 w-4" /></Link>

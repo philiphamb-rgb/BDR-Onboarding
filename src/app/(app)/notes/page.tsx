@@ -203,7 +203,7 @@ export default function NotesPage() {
       <div className="flex h-[calc(100vh-16rem)] gap-3 desktop:h-[calc(100vh-13rem)]">
       {/* List / history — hidden on mobile when a note is open */}
       <div className={cn('flex w-full flex-col desktop:w-[320px] desktop:shrink-0', active && 'hidden desktop:flex')}>
-        <div className="mb-2 flex items-center gap-2">
+        <div data-tour="notes-new" className="mb-2 flex items-center gap-2">
           <h1 className="text-h2 text-dark-text">Notes</h1>
           <button onClick={newNote} className="ml-auto flex items-center gap-1 rounded-lg bg-navy px-3 py-2 text-[13px] font-[800] text-white hover:bg-navy-dark"><PlusIcon size={15} /> New</button>
         </div>

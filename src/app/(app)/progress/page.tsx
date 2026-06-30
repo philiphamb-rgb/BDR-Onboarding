@@ -67,7 +67,7 @@ export default function ProgressPage() {
       </div>
 
       {/* Personal snapshot */}
-      <div className="grid grid-cols-3 gap-2 no-print">
+      <div data-tour="progress-snapshot" className="grid grid-cols-3 gap-2 no-print">
         <Card className="!p-3 text-center">
           <div className="mx-auto mb-1 flex h-8 w-8 items-center justify-center rounded-full" style={{ backgroundColor: BELTS[currentIdx]?.color }}>
             <BeltIcon size={16} className="text-white" />
