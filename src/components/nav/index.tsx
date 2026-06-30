@@ -27,9 +27,12 @@ import {
   MoreIcon,
   CoinIcon,
   ChecklistIcon,
+  ShieldIcon,
 } from '@/components/icons'
 import type { User } from '@/types/database'
 import { Avatar } from '@/components/ui'
+import { usePermissions } from '@/components/usePermissions'
+import { featureForHref } from '@/lib/permissions'
 
 // ─── Nav Item Definition ──────────────────────────────────────────────────────
 
@@ -72,8 +75,8 @@ const MANAGER_EXTRA_NAV: NavItem[] = [
   { href: '/manager/analytics',    label: 'Analytics',     icon: BarChartIcon,   managerOnly: true },
   { href: '/manager/broadcast',    label: 'Broadcast',     icon: BellIcon,       managerOnly: true },
   { href: '/manager/resources',    label: 'Resources',     icon: BookIcon,       managerOnly: true },
-  { href: '/manager/invite',       label: 'Invite',        icon: MailIcon,       managerOnly: true },
   { href: '/manager/gamification', label: 'XP Rules',      icon: XpIcon,         managerOnly: true },
+  { href: '/manager/roles',        label: 'Roles & Permissions', icon: ShieldIcon, managerOnly: true },
 ]
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -89,13 +92,16 @@ export function BottomNav({ user, unreadCount = 0 }: BottomNavProps) {
   const pathname = usePathname()
   const navItems = REP_NAV
   const [moreOpen, setMoreOpen] = useState(false)
+  const { canView } = usePermissions()
 
   const role = user?.role ?? 'rep'
   const isManager = ['manager', 'owner'].includes(role)
+  // Hide a route only if its feature is explicitly disabled for this role (fail-open).
+  const allowed = (item: NavItem) => { const f = featureForHref(item.href); return !f || canView(f) }
   // Everything not in the 5-slot bottom bar, so phones can reach every route.
   const moreItems: NavItem[] = [
-    ...TOOLS_NAV,
-    ...(isManager ? MANAGER_EXTRA_NAV : []),
+    ...TOOLS_NAV.filter(allowed),
+    ...(isManager ? MANAGER_EXTRA_NAV.filter(allowed) : []),
     { href: '/notifications', label: 'Notifications', icon: unreadCount > 0 ? BellDotIcon : BellIcon },
     { href: '/settings', label: 'Settings', icon: SettingsIcon },
   ]
@@ -225,9 +231,13 @@ export function Sidebar({ user, unreadCount = 0 }: SidebarProps) {
   const pathname = usePathname()
   const role = user?.role ?? 'rep'
   const isManager = ['manager', 'owner'].includes(role)
+  const { canView } = usePermissions()
 
+  // Hide a route only if its feature is explicitly disabled for this role (fail-open).
+  const allowed = (item: NavItem) => { const f = featureForHref(item.href); return !f || canView(f) }
   const repItems = REP_NAV
-  const managerItems = isManager ? MANAGER_EXTRA_NAV : []
+  const toolItems = TOOLS_NAV.filter(allowed)
+  const managerItems = (isManager ? MANAGER_EXTRA_NAV : []).filter(allowed)
 
   return (
     <aside
@@ -281,7 +291,7 @@ export function Sidebar({ user, unreadCount = 0 }: SidebarProps) {
         <div className="mt-4 mb-2 px-3">
           <span className="label text-[10px]">Tools</span>
         </div>
-        <NavSection items={TOOLS_NAV} pathname={pathname} />
+        <NavSection items={toolItems} pathname={pathname} />
       </div>
 
       {/* Bottom: notifications + settings */}
