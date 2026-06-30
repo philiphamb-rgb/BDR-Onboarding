@@ -49,6 +49,7 @@ export function useIncomeCalculator() {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const saveTimer = useRef<any>(null)
+  const teamRef = useRef<string | null>(null)   // always-latest team_id (no stale closure on first edit)
   const today = localDateKey()
 
   useEffect(() => {
@@ -63,7 +64,7 @@ export function useIncomeCalculator() {
       ])
       if (!active) return
       setBdrName(u?.name ?? '')
-      setTeamId(u?.team_id ?? null)
+      setTeamId(u?.team_id ?? null); teamRef.current = u?.team_id ?? null
       if (pb?.checks) setPlaybookState(pb.checks)
       if (planRow) {
         setPlanId(planRow.id); setHasPlan(true); setInputs(rowToInputs(planRow))
@@ -91,16 +92,17 @@ export function useIncomeCalculator() {
           b2c_rate: next.b2cRate, b2c_churn: next.b2cChurn, bw_warm_leads: next.bwWarmLeads, bw_warm_rate: next.bwWarmRate, b2c_self_rate: next.b2cSelfRate,
           bb_comm: next.bbComm, bb_warm_leads: next.bbWarmLeads, bb_warm_rate: next.bbWarmRate, bb_self_rate: next.bbSelfRate,
         }
-        const { data } = await supabase.from('income_plans').upsert(payload, { onConflict: 'user_id' }).select('id').single()
-        if (data) { setPlanId(data.id); setHasPlan(true) }
+        const { data, error } = await supabase.from('income_plans').upsert(payload, { onConflict: 'user_id' }).select('id').single()
+        if (error || !data) { setSaving(false); return }   // don't clobber the goal if the plan didn't save
+        setPlanId(data.id); setHasPlan(true)
         // Keep the shared Goal Cockpit in sync: the income plan IS the goal.
         const monthly = impliedMonthlyDeals(computePlan(next))
-        await supabase.from('goals').upsert({ user_id: userId, team_id: teamId, monthly_deal_goal: monthly, updated_at: new Date().toISOString() }, { onConflict: 'user_id' })
+        await supabase.from('goals').upsert({ user_id: userId, team_id: teamRef.current, monthly_deal_goal: monthly, updated_at: new Date().toISOString() }, { onConflict: 'user_id' })
         setSaving(false)
       }, 600)
       return next
     })
-  }, [userId, teamId, supabase])
+  }, [userId, supabase])
 
   const setPlaybook = useCallback((checks: boolean[]) => {
     setPlaybookState(checks)
