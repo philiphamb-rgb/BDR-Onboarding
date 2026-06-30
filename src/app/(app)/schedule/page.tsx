@@ -78,6 +78,7 @@ export default function SchedulePage() {
   const [selected, setSelected] = useState<string | null>(null)       // selected block key
   const [preview, setPreview] = useState<{ key: string; start: number; dur: number } | null>(null)
   const previewRef = useRef<any>(null)
+  const interactedRef = useRef(false)   // suppress the click that follows a block drag/tap
   const [now, setNow] = useState(() => { const d = new Date(); return d.getHours() * 60 + d.getMinutes() })
   const scrollRef = useRef<HTMLDivElement>(null)
   const today = new Date().toISOString().split('T')[0]
@@ -391,6 +392,9 @@ export default function SchedulePage() {
       else if (!meta.moved) setSelected(blk.key)
       previewRef.current = null
       setPreview(null)
+      // The browser fires a click after pointerup; suppress canvas-create for it.
+      interactedRef.current = true
+      setTimeout(() => { interactedRef.current = false }, 60)
     }
     window.addEventListener('pointermove', onMove)
     window.addEventListener('pointerup', onUp)
@@ -398,6 +402,7 @@ export default function SchedulePage() {
 
   // Click empty calendar space → create a freeform block at that time.
   const onCanvasClick = (e: React.MouseEvent) => {
+    if (interactedRef.current) return        // ignore the click right after a block drag
     if (e.target !== e.currentTarget) return
     const rect = (e.currentTarget as HTMLElement).getBoundingClientRect()
     const min = rangeStart + (e.clientY - rect.top) / PX_PER_MIN
