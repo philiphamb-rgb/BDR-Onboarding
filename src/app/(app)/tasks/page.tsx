@@ -11,6 +11,7 @@ import { OPTIMIZED_DAY, localToday } from '@/lib/schedule'
 import { urgency, urgencyLabel } from '@/lib/triageEngine'
 import { smartTaskDefaults } from '@/lib/noteTriage'
 import { AiTip } from '@/components/AiTip'
+import { PlanTabs } from '@/components/PlanTabs'
 
 export default function TasksPage() {
   const supabase = createClient()
@@ -124,7 +125,8 @@ export default function TasksPage() {
 
   return (
     <div className="space-y-4 pb-4">
-      <PageHeader title="Tasks" subtitle="Plan your work, then drop tasks into Time Blocks." />
+      <PlanTabs />
+      <PageHeader title="Tasks" subtitle="Capture in Notes, organize here, then schedule into Time Blocks." />
 
       <AiTip id="tasks-ai" title="AI does the busywork" prompt="Look at all my open tasks and prioritize them for me — what's most important and what should I time-block today?" tryLabel="Prioritize with AI">
         Every task gets an AI-estimated time and an urgency score (priority + due date + age) automatically. Open a task to fine-tune its estimate, or ask the coach to prioritize your whole list.

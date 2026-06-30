@@ -11,6 +11,7 @@ import { OPTIMIZED_DAY, BLOCK_STYLE, parseHM, fmtClock, DEFAULT_SHIFT, localToda
 import { smartTaskDefaults, suggestNoteMeta, looksActionable, cleanTaskTitle, NOTE_CATEGORIES, CATEGORY_COLOR } from '@/lib/noteTriage'
 import { fmtEst } from '@/lib/triageEngine'
 import { AiTip } from '@/components/AiTip'
+import { PlanTabs } from '@/components/PlanTabs'
 
 const uid = () => (typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(36).slice(2)}`)
 const emptyBlocks = () => [{ id: uid(), text: '' }]
@@ -197,7 +198,9 @@ export default function NotesPage() {
   if (loading) return <div className="space-y-4"><SkeletonList count={4} /></div>
 
   return (
-    <div className="flex h-[calc(100vh-12rem)] gap-3 desktop:h-[calc(100vh-9rem)]">
+    <div className="space-y-3">
+      <PlanTabs />
+      <div className="flex h-[calc(100vh-16rem)] gap-3 desktop:h-[calc(100vh-13rem)]">
       {/* List / history — hidden on mobile when a note is open */}
       <div className={cn('flex w-full flex-col desktop:w-[320px] desktop:shrink-0', active && 'hidden desktop:flex')}>
         <div className="mb-2 flex items-center gap-2">
@@ -373,6 +376,7 @@ export default function NotesPage() {
           <button onClick={newNote} className="mt-4 flex items-center gap-1.5 rounded-lg bg-navy px-4 py-2 text-[13px] font-[800] text-white"><PlusIcon size={15} /> New note</button>
         </div>
       )}
+      </div>
     </div>
   )
 }

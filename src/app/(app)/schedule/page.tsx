@@ -18,6 +18,7 @@ import { monthPaceFraction } from '@/lib/winsEngine'
 import { stageMeta } from '@/lib/partnerChecklist'
 import { askCoach } from '@/lib/coachBus'
 import { AiTip } from '@/components/AiTip'
+import { PlanTabs } from '@/components/PlanTabs'
 import { Tour } from '@/components/tour'
 import { RHYTHM_TOUR } from '@/lib/tours'
 
@@ -437,6 +438,7 @@ export default function SchedulePage() {
 
   return (
     <div className="space-y-3 pb-4">
+      <PlanTabs />
       {/* Compact header + toolbar */}
       <div className="flex flex-wrap items-center gap-2">
         <div className="mr-auto">

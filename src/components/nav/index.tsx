@@ -9,7 +9,7 @@ import {
   HomeIcon, TodayIcon, TrainIcon, WinsIcon, CoachIcon, DashboardIcon, XpIcon,
   BellIcon, BellDotIcon, SettingsIcon, LeaderboardIcon, TeamIcon, BarChartIcon,
   BookIcon, MedalIcon, HandshakeIcon, ClockIcon, MoreIcon,
-  ChecklistIcon, ShieldIcon, DocumentIcon, SearchIcon, ChevronDownIcon, CloseIcon,
+  ChecklistIcon, ShieldIcon, SearchIcon, ChevronDownIcon, CloseIcon,
 } from '@/components/icons'
 import type { User } from '@/types/database'
 import { usePermissions } from '@/components/usePermissions'
@@ -20,13 +20,16 @@ interface NavItem {
   label: string
   shortLabel?: string
   icon: React.ComponentType<{ size?: number; className?: string }>
+  match?: string[]   // extra hrefs that should mark this item active
 }
 
-// Always-visible quick destinations.
+// Always-visible quick destinations. Plan is one workspace (Capture/Organize/
+// Schedule) — its three views share the in-page PlanTabs switcher.
 const TOP_NAV: NavItem[] = [
-  { href: '/home',  label: 'Home',  icon: HomeIcon },
-  { href: '/today', label: 'Today', icon: TodayIcon },
-  { href: '/coach', label: 'Coach', icon: CoachIcon },
+  { href: '/home',     label: 'Home',  icon: HomeIcon },
+  { href: '/today',    label: 'Today', icon: TodayIcon },
+  { href: '/schedule', label: 'Plan',  icon: ChecklistIcon, match: ['/notes', '/tasks', '/schedule'] },
+  { href: '/coach',    label: 'Coach', icon: CoachIcon },
 ]
 
 // Collapsible sections (accordion — one open at a time).
@@ -34,11 +37,6 @@ const REP_SECTIONS: { title: string; items: NavItem[] }[] = [
   { title: 'Sell', items: [
     { href: '/partners',  label: 'Partners',  icon: HandshakeIcon },
     { href: '/analytics', label: 'Analytics', icon: BarChartIcon },
-  ] },
-  { title: 'Plan', items: [
-    { href: '/notes',    label: 'Notes',       icon: DocumentIcon },
-    { href: '/schedule', label: 'Time Blocks', icon: ClockIcon },
-    { href: '/tasks',    label: 'Tasks',       icon: ChecklistIcon },
   ] },
   { title: 'Grow', items: [
     { href: '/train',       label: 'Learning Center', shortLabel: 'Learn', icon: TrainIcon },
@@ -71,6 +69,7 @@ const BOTTOM_NAV: NavItem[] = [
 ]
 
 const isActiveHref = (pathname: string, href: string) => pathname === href || pathname.startsWith(href + '/')
+const matchNav = (pathname: string, item: NavItem) => isActiveHref(pathname, item.href) || (item.match?.some(m => isActiveHref(pathname, m)) ?? false)
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // GLOBAL SEARCH (header)
@@ -79,6 +78,8 @@ const isActiveHref = (pathname: string, href: string) => pathname === href || pa
 const PAGE_INDEX: { label: string; href: string }[] = [
   ...TOP_NAV.map(i => ({ label: i.label, href: i.href })),
   ...REP_SECTIONS.flatMap(s => s.items.map(i => ({ label: i.label, href: i.href }))),
+  // Plan workspace views (the Plan top-nav entry is the workspace itself).
+  { label: 'Notes', href: '/notes' }, { label: 'Tasks', href: '/tasks' }, { label: 'Time Blocks', href: '/schedule' },
   { label: 'Settings', href: '/settings' }, { label: 'Notifications', href: '/notifications' },
 ]
 
@@ -219,7 +220,7 @@ export function BottomNav({ user }: { user?: User | null; unreadCount?: number }
     ...REP_SECTIONS.flatMap(s => s.items).filter(allowed).filter(i => !inBottom(i.href)),
     ...(isManager ? MANAGER_ITEMS.filter(allowed) : []),
   ]
-  const moreActive = moreItems.some(i => isActiveHref(pathname, i.href))
+  const moreActive = moreItems.some(i => matchNav(pathname, i))
 
   return (
     <>
@@ -230,7 +231,7 @@ export function BottomNav({ user }: { user?: User | null; unreadCount?: number }
             <div className="mx-auto mb-2 h-1 w-10 rounded-full bg-border" />
             <div className="grid grid-cols-4 gap-1">
               {moreItems.map(item => {
-                const isActive = isActiveHref(pathname, item.href)
+                const isActive = matchNav(pathname, item)
                 const Icon = item.icon
                 return (
                   <Link key={item.href} href={item.href} onClick={() => setMoreOpen(false)}
@@ -248,7 +249,7 @@ export function BottomNav({ user }: { user?: User | null; unreadCount?: number }
 
       <nav className={cn('fixed bottom-0 left-0 right-0 z-nav bg-card border-t border-border flex items-center justify-around px-2 pb-safe pt-1 h-[60px] pb-[max(8px,env(safe-area-inset-bottom))] desktop:hidden')} aria-label="Main navigation">
         {BOTTOM_NAV.map(item => {
-          const isActive = isActiveHref(pathname, item.href)
+          const isActive = matchNav(pathname, item)
           const Icon = item.icon
           return (
             <Link key={item.href} href={item.href} onClick={() => setMoreOpen(false)}
@@ -341,7 +342,7 @@ export function Sidebar({ user }: { user?: User | null; unreadCount?: number }) 
 
 function SidebarItem({ item, pathname }: { item: NavItem; pathname: string }) {
   const Icon = item.icon
-  const isActive = isActiveHref(pathname, item.href)
+  const isActive = matchNav(pathname, item)
   return (
     <Link href={item.href}
       className={cn('relative flex items-center gap-3 px-3 py-2.5 rounded-lg min-h-[42px] w-full text-[14px] font-[600] transition-all duration-[150ms]',
