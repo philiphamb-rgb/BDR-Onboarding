@@ -9,7 +9,7 @@ import { ClockIcon, PhoneIcon, CheckIcon, ArrowRightIcon, CalendarIcon, RefreshI
 import { cn } from '@/lib/utils'
 import {
   SHIFT_OPTIONS, DEFAULT_SHIFT, OPTIMIZED_DAY, BLOCK_STYLE,
-  parseHM, fmtClock, fmtShift, fmtDuration, SELLING_MINUTES,
+  parseHM, fmtClock, fmtShift, fmtDuration, SELLING_MINUTES, localToday,
 } from '@/lib/schedule'
 import {
   urgency, urgencyLabel, isActive, isStale, autoPlan, fmtEst, localDate, DEFAULT_TRIAGE, categorize,
@@ -82,7 +82,7 @@ export default function SchedulePage() {
   const interactedRef = useRef(false)   // suppress the click that follows a block drag/tap
   const [now, setNow] = useState(() => { const d = new Date(); return d.getHours() * 60 + d.getMinutes() })
   const scrollRef = useRef<HTMLDivElement>(null)
-  const today = new Date().toISOString().split('T')[0]
+  const today = localToday()
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => {

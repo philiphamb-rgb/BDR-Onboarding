@@ -7,7 +7,7 @@ import { Card, Button, SkeletonCard, toast } from '@/components/ui'
 import { PageHeader } from '@/components/manager'
 import { CheckIcon, PlusIcon, TrashIcon, StarFilledIcon, ClockIcon, ChevronRightIcon, CalendarIcon, LightningIcon } from '@/components/icons'
 import { cn } from '@/lib/utils'
-import { OPTIMIZED_DAY } from '@/lib/schedule'
+import { OPTIMIZED_DAY, localToday } from '@/lib/schedule'
 import { urgency, urgencyLabel } from '@/lib/triageEngine'
 import { smartTaskDefaults } from '@/lib/noteTriage'
 import { AiTip } from '@/components/AiTip'
@@ -23,7 +23,7 @@ export default function TasksPage() {
   const [expanded, setExpanded] = useState<string | null>(null)
   const [newSub, setNewSub] = useState('')
   const [showDone, setShowDone] = useState(false)
-  const today = new Date().toISOString().split('T')[0]
+  const today = localToday()
   const [dragId, setDragId] = useState<string | null>(null)
 
   useEffect(() => {

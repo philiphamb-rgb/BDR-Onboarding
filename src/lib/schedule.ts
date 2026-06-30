@@ -67,6 +67,14 @@ export const BLOCK_STYLE: Record<BlockType, { color: string; label: string }> = 
   admin: { color: '#6D28D9', label: 'Admin' },
 }
 
+// Local (not UTC) date key — "YYYY-MM-DD" in the rep's own timezone, so "today"
+// matches their calendar day. Using toISOString() here would roll over at UTC
+// midnight and make tasks scheduled late in the day vanish from Today/Home.
+// One shared definition so every surface agrees on what "today" is.
+export function localToday(d: Date = new Date()): string {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+}
+
 export function parseHM(hm: string): number {
   const [h, m] = hm.split(':').map(Number)
   return h * 60 + (m || 0)

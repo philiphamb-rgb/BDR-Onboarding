@@ -7,13 +7,13 @@ import { Card, Avatar, SkeletonList, ProgressBar } from '@/components/ui'
 import { PageHeader } from '@/components/manager'
 import { ClockIcon } from '@/components/icons'
 import { cn } from '@/lib/utils'
-import { OPTIMIZED_DAY, currentBlock, fmtClock } from '@/lib/schedule'
+import { OPTIMIZED_DAY, currentBlock, fmtClock, localToday } from '@/lib/schedule'
 
 export default function ManagerRhythmPage() {
   const supabase = createClient()
   const [rows, setRows] = useState([])
   const [loading, setLoading] = useState(true)
-  const today = new Date().toISOString().split('T')[0]
+  const today = localToday()
   const TOTAL = OPTIMIZED_DAY.length
 
   useEffect(() => {

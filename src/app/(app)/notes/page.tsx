@@ -7,7 +7,7 @@ import { createClient } from '@/lib/supabase/client'
 import { SkeletonList, toast } from '@/components/ui'
 import { SearchIcon, PlusIcon, TrashIcon, CheckIcon, LightningIcon, ChecklistIcon, ClockIcon, ArrowRightIcon, DocumentIcon, BackIcon } from '@/components/icons'
 import { cn } from '@/lib/utils'
-import { OPTIMIZED_DAY, BLOCK_STYLE, parseHM, fmtClock, DEFAULT_SHIFT } from '@/lib/schedule'
+import { OPTIMIZED_DAY, BLOCK_STYLE, parseHM, fmtClock, DEFAULT_SHIFT, localToday } from '@/lib/schedule'
 import { smartTaskDefaults, suggestNoteMeta, looksActionable, cleanTaskTitle, NOTE_CATEGORIES, CATEGORY_COLOR } from '@/lib/noteTriage'
 import { fmtEst } from '@/lib/triageEngine'
 import { AiTip } from '@/components/AiTip'
@@ -32,7 +32,7 @@ export default function NotesPage() {
   const [noteTasks, setNoteTasks] = useState<any[]>([])     // tasks created from the active note
   const [dropKey, setDropKey] = useState<string | null>(null)
   const saveTimer = useRef<any>(null)
-  const today = new Date().toISOString().split('T')[0]
+  const today = localToday()
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => {
