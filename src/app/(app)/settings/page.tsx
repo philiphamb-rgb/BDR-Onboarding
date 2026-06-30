@@ -4,7 +4,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import { Card, Button, Avatar } from '@/components/ui'
+import { Card, Button, Avatar, Toggle } from '@/components/ui'
 import { BellIcon, LogoutIcon, ShieldIcon, DownloadIcon, ChevronRightIcon, UserIcon, CalendarIcon, SlackIcon, RefreshIcon, LightningIcon } from '@/components/icons'
 import { usePushNotifications } from '@/lib/push'
 import { startWalkthrough, APP_VERSION } from '@/lib/walkthroughs'
@@ -188,13 +188,7 @@ export default function SettingsPage() {
                 <div className="text-sm font-medium text-dark-text">{label}</div>
                 <div className="text-xs text-gray">{desc}</div>
               </div>
-              <button role="switch" aria-checked={!!notifPrefs[key]} aria-label={label}
-                onClick={() => setNotifPrefs(p => ({ ...p, [key]: !p[key] }))}
-                className={cn('relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-navy/40',
-                  notifPrefs[key] ? 'bg-teal' : 'bg-gray-300')}>
-                <span className={cn('inline-block h-5 w-5 transform rounded-full bg-white shadow-sm transition-transform',
-                  notifPrefs[key] ? 'translate-x-[22px]' : 'translate-x-0.5')} />
-              </button>
+              <Toggle checked={!!notifPrefs[key]} label={label} onChange={() => setNotifPrefs(p => ({ ...p, [key]: !p[key] }))} />
             </div>
           ))}
         </div>

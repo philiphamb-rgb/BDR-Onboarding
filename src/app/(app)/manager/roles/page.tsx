@@ -3,7 +3,7 @@
 
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import { Card, Button, Badge, SkeletonList, toast } from '@/components/ui'
+import { Card, Button, Badge, SkeletonList, toast, Toggle as UIToggle } from '@/components/ui'
 import { PageHeader } from '@/components/manager'
 import { MailIcon, ShieldIcon } from '@/components/icons'
 import { cn } from '@/lib/utils'
@@ -84,11 +84,7 @@ export default function RolesPage() {
   }
 
   const Toggle = ({ on, disabled, onClick }: any) => (
-    <button role="switch" aria-checked={on} disabled={disabled} onClick={onClick}
-      className={cn('relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors',
-        on ? 'bg-teal' : 'bg-gray-300', disabled && 'opacity-50')}>
-      <span className={cn('inline-block h-4 w-4 rounded-full bg-white shadow-sm transition-transform', on ? 'translate-x-[18px]' : 'translate-x-0.5')} />
-    </button>
+    <UIToggle checked={!!on} disabled={disabled} size="sm" onChange={() => onClick?.()} />
   )
 
   if (loading) return <div className="space-y-4"><SkeletonList count={3} /></div>

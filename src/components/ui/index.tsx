@@ -174,6 +174,56 @@ export function CardLabel({ children, className, ...props }: React.HTMLAttribute
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
+// TOGGLE — the one switch used everywhere (settings prefs, roles matrix, …)
+// ═══════════════════════════════════════════════════════════════════════════════
+
+// A clean, proportional pill toggle. NOTE: it pins its own height inline because
+// globals.css sets `button { min-height: 44px }` (an unlayered rule that beats
+// Tailwind height utilities) — without the pin the track stretches into a circle.
+const TOGGLE_SIZES = {
+  sm: { track: 'h-5 w-9',  knob: 'h-4 w-4', on: 'translate-x-[18px]', off: 'translate-x-0.5', h: 20 },
+  md: { track: 'h-6 w-11', knob: 'h-5 w-5', on: 'translate-x-[22px]', off: 'translate-x-0.5', h: 24 },
+} as const
+
+export function Toggle({
+  checked,
+  onChange,
+  disabled = false,
+  size = 'md',
+  label,
+  className,
+}: {
+  checked: boolean
+  onChange: (next: boolean) => void
+  disabled?: boolean
+  size?: 'sm' | 'md'
+  label?: string
+  className?: string
+}) {
+  const s = TOGGLE_SIZES[size]
+  return (
+    <button
+      type="button"
+      role="switch"
+      aria-checked={checked}
+      aria-label={label}
+      disabled={disabled}
+      onClick={() => { if (!disabled) onChange(!checked) }}
+      style={{ minHeight: s.h }}
+      className={cn(
+        'relative inline-flex shrink-0 items-center rounded-full transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-navy/40',
+        s.track,
+        checked ? 'bg-teal' : 'bg-gray-300',
+        disabled ? 'cursor-not-allowed opacity-50' : 'cursor-pointer',
+        className,
+      )}
+    >
+      <span className={cn('inline-block transform rounded-full bg-white shadow-sm transition-transform duration-200', s.knob, checked ? s.on : s.off)} />
+    </button>
+  )
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
 // MODAL
 // ═══════════════════════════════════════════════════════════════════════════════
 
