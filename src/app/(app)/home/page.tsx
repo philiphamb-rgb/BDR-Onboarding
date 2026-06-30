@@ -132,7 +132,7 @@ export default function HomePage() {
   // All open top-level tasks with the fields the priority engine needs.
   const loadTasks = async (uid: string) => {
     const { data } = await supabase.from('tasks')
-      .select('id, title, done, priority, due_date, estimated_minutes, created_at, scheduled_day, scheduled_block, snoozed_until')
+      .select('id, title, done, priority, due_date, estimated_minutes, created_at, scheduled_day, scheduled_block, snoozed_until, deferral_count')
       .eq('user_id', uid).eq('done', false).is('parent_id', null)
     setTasks(data ?? [])
   }

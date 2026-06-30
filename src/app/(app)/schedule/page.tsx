@@ -13,7 +13,9 @@ import {
 } from '@/lib/schedule'
 import {
   urgency, urgencyLabel, isActive, isStale, autoPlan, fmtEst, localDate, DEFAULT_TRIAGE, categorize,
+  pickRolloverBlock, MAX_DEFERRALS, AUTO_PRIORITY_DEFERRALS,
 } from '@/lib/triageEngine'
+import { asLearning, recordDeferral, learnedBonus, learnedTip, EMPTY_LEARNING } from '@/lib/triageLearning'
 import { monthPaceFraction } from '@/lib/winsEngine'
 import { stageMeta } from '@/lib/partnerChecklist'
 import { askCoach } from '@/lib/coachBus'
@@ -76,6 +78,8 @@ export default function SchedulePage() {
   const [triageBusy, setTriageBusy] = useState(false)
   const [newTaskTitle, setNewTaskTitle] = useState('')
   const [dragTaskId, setDragTaskId] = useState<string | null>(null)   // task being dragged from the list
+  const [learning, setLearning] = useState(EMPTY_LEARNING)            // adaptive deferral memory
+  const [triageBlk, setTriageBlk] = useState<{ blk: any; tasks: any[] } | null>(null)  // end-of-block triage
   const [dropKey, setDropKey] = useState<string | null>(null)         // block hovered as a drop target
   const [selected, setSelected] = useState<string | null>(null)       // selected block key
   const [preview, setPreview] = useState<{ key: string; start: number; dur: number } | null>(null)
@@ -92,6 +96,7 @@ export default function SchedulePage() {
       supabase.from('users').select('settings').eq('id', user.id).single().then(({ data }) => {
         const s = data?.settings ?? {}
         setSettings(s)
+        setLearning(asLearning((s as any).triageLearning))
         if (s.shift && SHIFT_OPTIONS.some(o => o.start === s.shift)) setShift(s.shift)
         setLoading(false)
       })
@@ -116,7 +121,7 @@ export default function SchedulePage() {
   }
   const loadTasks = async (uid: string) => {
     const { data } = await supabase.from('tasks')
-      .select('id, title, done, priority, due_date, estimated_minutes, created_at, scheduled_day, scheduled_block, snoozed_until')
+      .select('id, title, done, priority, due_date, estimated_minutes, created_at, scheduled_day, scheduled_block, snoozed_until, deferral_count, last_deferred_at')
       .eq('user_id', uid).is('parent_id', null)
       .or(`done.eq.false,scheduled_day.eq.${today}`)
     setTasks(data ?? [])
@@ -195,7 +200,10 @@ export default function SchedulePage() {
   const isWorkBlock = (t: string) => ['plan', 'focus', 'admin'].includes(t)
   const needsCheck = (blk: any) => !blk.done && isWorkBlock(blk.type) && (blk.start + blk.dur) <= now
   const endedUndone = blocks.filter(needsCheck).sort((a, b) => a.start - b.start)
-  const markAllEndedDone = async () => { for (const b of endedUndone) await saveBlock(b, { done: true }) }
+  const endedLeftoverTasks = endedUndone.flatMap(b => (blockTasks[b.key] ?? []).filter((t: any) => !t.done))
+  const markEndedBlocksDone = async () => { for (const b of endedUndone) await saveBlock(b, { done: true }) }
+  const completeEnded = async () => { await completeTasks(endedLeftoverTasks); await markEndedBlocksDone() }
+  const rollOverEnded = async () => { await rollOverTasks(endedLeftoverTasks); await markEndedBlocksDone() }
 
   const daysSince = (iso?: string) => iso ? Math.max(0, Math.floor((nowDate.getTime() - new Date(iso).getTime()) / 86400000)) : null
   const openTitles = tasks.map(t => (t.title || '').toLowerCase())
@@ -325,7 +333,7 @@ export default function SchedulePage() {
     if (triageBusy) return
     setTriageBusy(true)
     try {
-      const assign = autoPlan(tasks, slots, nowDate, { reflow })
+      const assign = autoPlan(tasks, slots, nowDate, { reflow, learn: learnedBonus(learning) })
       const updates = tasks.filter(t => assign[t.id] != null && (t.scheduled_day !== today || String(t.scheduled_block) !== String(assign[t.id])))
       const cleared = reflow ? tasks.filter(t => assign[t.id] == null && t.scheduled_day === today) : []
       setTasks(prev => prev.map(t => {
@@ -341,6 +349,77 @@ export default function SchedulePage() {
       toast.success(n ? `Planned ${n} task${n > 1 ? 's' : ''} into your day` : 'Nothing to plan right now')
     } finally { setTriageBusy(false) }
   }
+  // ── End-of-block triage ──────────────────────────────────────────────────────
+  const addDays = (n: number) => { const d = new Date(); d.setDate(d.getDate() + n); return localDate(d) }
+  const saveLearning = async (L: typeof learning) => {
+    const next = { ...settings, triageLearning: L }
+    setSettings(next)
+    if (userId) await supabase.from('users').update({ settings: next }).eq('id', userId)
+  }
+  // Record deferrals grouped by the block type each task came from, so the
+  // adaptive engine learns which kind of work the user chronically rolls over.
+  const learnBySource = (items: any[]) => {
+    const byType: Record<string, number> = {}
+    items.forEach(t => { const ty = blockByKey(String(t.scheduled_block))?.type ?? 'other'; byType[ty] = (byType[ty] || 0) + 1 })
+    let L2 = learning
+    for (const [ty, n] of Object.entries(byType)) L2 = recordDeferral(L2, ty === 'other' ? null : ty, n, new Date().toISOString())
+    setLearning(L2); saveLearning(L2)
+  }
+  // Bulk-complete a set of tasks.
+  const completeTasks = async (items: any[]) => {
+    const ids = items.map(t => t.id)
+    setTasks(prev => prev.map(t => ids.includes(t.id) ? { ...t, done: true } : t))
+    await Promise.all(ids.map(id => supabase.from('tasks').update({ done: true, updated_at: new Date().toISOString() }).eq('id', id)))
+  }
+  // Roll incomplete tasks into the next fitting block later today; otherwise defer
+  // to tomorrow. Each move increments deferral_count (auto-escalating priority).
+  const rollOverTasks = async (items: any[]) => {
+    if (!items.length) return
+    const used: Record<string, number> = {}
+    scheduledToday.forEach(st => { if (st.done) return; const k = String(st.scheduled_block); used[k] = (used[k] || 0) + (st.estimated_minutes || 30) })
+    items.forEach(t => { const k = String(t.scheduled_block); if (used[k] != null) used[k] = Math.max(0, used[k] - (t.estimated_minutes || 30)) })
+    const placement = blocks.map(b => ({ key: b.key, type: b.type, start: b.start, dur: b.dur }))
+    const tomorrow = addDays(1)
+    let later = 0, deferred = 0
+    const updates = items.map(t => {
+      const targetKey = pickRolloverBlock(t, placement, used, now, String(t.scheduled_block))
+      const newDef = (t.deferral_count || 0) + 1
+      const patch: any = { deferral_count: newDef, last_deferred_at: new Date().toISOString(), priority: t.priority || newDef >= AUTO_PRIORITY_DEFERRALS }
+      if (targetKey) { used[targetKey] = (used[targetKey] || 0) + (t.estimated_minutes || 30); patch.scheduled_day = today; patch.scheduled_block = targetKey; later++ }
+      else { patch.scheduled_day = tomorrow; patch.scheduled_block = null; deferred++ }
+      return { id: t.id, patch }
+    })
+    setTasks(prev => prev.map(t => { const u = updates.find(x => x.id === t.id); return u ? { ...t, ...u.patch } : t }))
+    await Promise.all(updates.map(u => supabase.from('tasks').update({ ...u.patch, updated_at: new Date().toISOString() }).eq('id', u.id)))
+    learnBySource(items)
+    toast.success(later && deferred ? `Rolled ${later} later · ${deferred} to tomorrow` : later ? `Rolled ${later} into later block${later > 1 ? 's' : ''}` : `Deferred ${deferred} to tomorrow`)
+  }
+  const deferToTomorrow = async (items: any[]) => {
+    if (!items.length) return
+    const tomorrow = addDays(1)
+    const updates = items.map(t => {
+      const newDef = (t.deferral_count || 0) + 1
+      return { id: t.id, patch: { scheduled_day: tomorrow, scheduled_block: null, deferral_count: newDef, last_deferred_at: new Date().toISOString(), priority: t.priority || newDef >= AUTO_PRIORITY_DEFERRALS } }
+    })
+    setTasks(prev => prev.map(t => { const u = updates.find(x => x.id === t.id); return u ? { ...t, ...u.patch } : t }))
+    await Promise.all(updates.map(u => supabase.from('tasks').update({ ...u.patch, updated_at: new Date().toISOString() }).eq('id', u.id)))
+    learnBySource(items)
+    toast.success(`Deferred ${items.length} to tomorrow`)
+  }
+  // Marking a block done: if it still holds incomplete tasks, intercept with the
+  // triage micro-dialogue instead of silently completing the block.
+  const requestBlockDone = (blk: any) => {
+    if (blk.done) { toggleDone(blk); return }
+    const incomplete = (blockTasks[blk.key] ?? []).filter((t: any) => !t.done)
+    if (incomplete.length) { setTriageBlk({ blk, tasks: incomplete }); return }
+    toggleDone(blk)
+  }
+  const finalizeTriage = (act: () => Promise<void> | void) => {
+    const blk = triageBlk?.blk
+    Promise.resolve(act()).then(() => { if (blk && !blk.done) toggleDone(blk) })
+    setTriageBlk(null)
+  }
+
   const ensureList = async () => {
     const { data } = await supabase.from('task_lists').select('id').eq('user_id', userId).order('order_index').limit(1)
     if (data && data[0]) return data[0].id
@@ -352,7 +431,7 @@ export default function SchedulePage() {
     const list_id = await ensureList()
     const { data } = await supabase.from('tasks')
       .insert({ user_id: userId, list_id, title, estimated_minutes: estimate, priority: !!opts.priority })
-      .select('id, title, done, priority, due_date, estimated_minutes, created_at, scheduled_day, scheduled_block, snoozed_until').single()
+      .select('id, title, done, priority, due_date, estimated_minutes, created_at, scheduled_day, scheduled_block, snoozed_until, deferral_count, last_deferred_at').single()
     if (!data) return
     setTasks(prev => [data, ...prev])
     if (opts.blockKey) { await patchTask(data.id, { scheduled_day: today, scheduled_block: opts.blockKey }); toast.success('Added to block') }
@@ -560,16 +639,27 @@ export default function SchedulePage() {
 
       {/* Proactive nudge: blocks whose time has passed but aren't checked done */}
       {endedUndone.length > 0 && (
-        <div className="flex items-center gap-3 rounded-2xl border border-gold/40 bg-gold/[0.08] p-3">
-          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gold/20 text-[#A06C00]"><ClockIcon size={18} /></span>
-          <div className="min-w-0 flex-1">
-            <div className="text-[13px] font-[800] text-dark-text">{endedUndone.length} time block{endedUndone.length > 1 ? 's have' : ' has'} ended</div>
-            <div className="text-[11px] text-gray">Check off what you finished to keep your day accurate.</div>
+        <div className="rounded-2xl border border-gold/40 bg-gold/[0.08] p-3">
+          <div className="flex items-center gap-3">
+            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gold/20 text-[#A06C00]"><ClockIcon size={18} /></span>
+            <div className="min-w-0 flex-1">
+              <div className="text-[13px] font-[800] text-dark-text">{endedUndone.length} time block{endedUndone.length > 1 ? 's have' : ' has'} ended</div>
+              <div className="text-[11px] text-gray">{endedLeftoverTasks.length > 0 ? `${endedLeftoverTasks.length} task${endedLeftoverTasks.length > 1 ? 's' : ''} left — roll forward or mark done.` : 'Check off what you finished to keep your day accurate.'}</div>
+            </div>
           </div>
-          <button onClick={markAllEndedDone}
-            className="flex shrink-0 items-center gap-1.5 rounded-lg bg-[#A06C00] px-3 py-2 text-[12px] font-[800] text-white active:scale-[0.99]">
-            <CheckIcon size={13} /> Mark all done
-          </button>
+          <div className="mt-2.5 flex flex-wrap gap-2">
+            {endedLeftoverTasks.length > 0 && (
+              <button onClick={rollOverEnded}
+                className="flex items-center gap-1.5 rounded-lg bg-[#A06C00] px-3 py-2 text-[12px] font-[800] text-white active:scale-[0.99]">
+                <LightningIcon size={13} /> Roll {endedLeftoverTasks.length > 1 ? 'them' : 'it'} forward
+              </button>
+            )}
+            <button onClick={endedLeftoverTasks.length > 0 ? completeEnded : markEndedBlocksDone}
+              className={cn('flex items-center gap-1.5 rounded-lg px-3 py-2 text-[12px] font-[800] active:scale-[0.99]',
+                endedLeftoverTasks.length > 0 ? 'border border-gold/50 bg-card text-[#A06C00]' : 'bg-[#A06C00] text-white')}>
+              <CheckIcon size={13} /> Mark all done
+            </button>
+          </div>
         </div>
       )}
 
@@ -634,7 +724,7 @@ export default function SchedulePage() {
                   <div className={cn('flex h-full flex-col', showPills ? 'justify-start pt-1' : 'justify-center')}>
                     <div className="flex items-center justify-start gap-1.5">
                       {!tiny && (
-                        <button onPointerDown={e => e.stopPropagation()} onClick={e => { e.stopPropagation(); toggleDone(blk) }}
+                        <button onPointerDown={e => e.stopPropagation()} onClick={e => { e.stopPropagation(); requestBlockDone(blk) }}
                           aria-label={done ? 'Mark not done' : 'Mark done'}
                           className={cn('flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded-[4px] border-[1.5px] transition-all',
                             done ? 'border-success bg-success text-white' : 'bg-card text-transparent', suggestDone && 'animate-attention')}
@@ -659,10 +749,15 @@ export default function SchedulePage() {
                     {showPills && (
                       <div className="mt-1 space-y-0.5 overflow-hidden">
                         {bTasks.slice(0, maxPills).map(tk => (
-                          <div key={tk.id} onPointerDown={e => e.stopPropagation()} onClick={e => { e.stopPropagation(); toggleTaskDone(tk.id, !tk.done) }}
-                            className="flex items-center gap-1 rounded bg-white/70 px-1.5 py-0.5 text-left">
+                          <div key={tk.id} draggable
+                            onPointerDown={e => e.stopPropagation()}
+                            onDragStart={e => { e.stopPropagation(); e.dataTransfer.setData('text/plain', tk.id); setDragTaskId(tk.id) }}
+                            onDragEnd={() => { setDragTaskId(null); setDropKey(null) }}
+                            onClick={e => { e.stopPropagation(); toggleTaskDone(tk.id, !tk.done) }}
+                            className="flex cursor-grab items-center gap-1 rounded bg-white/70 px-1.5 py-0.5 text-left active:cursor-grabbing">
                             <span className={cn('flex h-3.5 w-3.5 shrink-0 items-center justify-center rounded-[3px] border', tk.done ? 'border-success bg-success text-white' : 'border-gray/50 text-transparent')}><CheckIcon size={9} /></span>
                             <span className={cn('truncate text-[10px] font-[600]', tk.done ? 'text-gray line-through' : 'text-dark-text')}>{tk.title}</span>
+                            {(tk.deferral_count ?? 0) > 0 && <span className="ml-auto shrink-0 rounded bg-gold/20 px-1 text-[8px] font-[800] text-[#A06C00]" title={`Rolled over ${tk.deferral_count}×`}>↻{tk.deferral_count}</span>}
                           </div>
                         ))}
                         {bTasks.length > maxPills && <div className="text-center text-[9px] font-[700] text-gray">+{bTasks.length - maxPills} more</div>}
@@ -794,7 +889,7 @@ export default function SchedulePage() {
             {sel.tip && <p className="text-[13px] leading-relaxed text-mid-text">{sel.tip}</p>}
 
             <div className="flex flex-wrap gap-2">
-              <button onClick={() => toggleDone(sel)}
+              <button onClick={() => { setSelected(null); requestBlockDone(sel) }}
                 className={cn('flex items-center gap-1.5 rounded-lg px-3 py-2 text-[13px] font-[700]',
                   sel.done ? 'bg-success/10 text-success' : needsCheck(sel) ? 'bg-gold/15 text-[#A06C00] ring-1 ring-gold/50' : 'bg-bdrbg text-dark-text hover:bg-border/40')}>
                 <CheckIcon size={15} />{sel.done ? 'Completed' : needsCheck(sel) ? 'Mark done?' : 'Mark done'}
@@ -869,6 +964,65 @@ export default function SchedulePage() {
             </div>
           </div>
         )}
+      </Sheet>
+
+      {/* End-of-block triage — supportive, low-friction handling of leftovers */}
+      <Sheet open={triageBlk != null} onClose={() => setTriageBlk(null)} title="Wrap up this block">
+        {triageBlk && (() => {
+          const tc = BLOCK_STYLE[triageBlk.blk.type] ?? BLOCK_STYLE.focus
+          const n = triageBlk.tasks.length
+          const tip = learnedTip(learning)
+          const stuck = triageBlk.tasks.some((t: any) => (t.deferral_count ?? 0) >= MAX_DEFERRALS)
+          return (
+            <div className="space-y-4">
+              <div className="flex items-center gap-2">
+                <span className="rounded-full px-2 py-0.5 text-[11px] font-[800]" style={{ backgroundColor: `${tc.color}1A`, color: tc.color }}>{tc.label}</span>
+                <span className="truncate text-[13px] font-[700] text-dark-text">{triageBlk.blk.label}</span>
+              </div>
+              <p className="text-[13px] text-mid-text">{n} task{n > 1 ? 's' : ''} {n > 1 ? 'are' : 'is'} still open. How do you want to handle {n > 1 ? 'them' : 'it'}?</p>
+
+              <div className="space-y-1.5">
+                {triageBlk.tasks.map((t: any) => (
+                  <div key={t.id} className="flex items-center gap-2 rounded-lg border border-border bg-bdrbg px-2.5 py-2">
+                    <span className="min-w-0 flex-1 truncate text-[13px] text-dark-text">{t.title}{t.priority && <StarFilledIcon size={12} className="ml-1 inline text-gold" />}</span>
+                    {(t.deferral_count ?? 0) >= MAX_DEFERRALS
+                      ? <span className="shrink-0 rounded bg-error/10 px-1.5 text-[10px] font-[800] text-error">stuck · {t.deferral_count}×</span>
+                      : (t.deferral_count ?? 0) > 0 && <span className="shrink-0 rounded bg-gold/20 px-1.5 text-[10px] font-[800] text-[#A06C00]">↻{t.deferral_count}</span>}
+                    <span className="shrink-0 text-[11px] font-[600] text-gray tabular-nums">{fmtEst(t.estimated_minutes || 30)}</span>
+                  </div>
+                ))}
+              </div>
+              {stuck && <p className="text-[11px] text-error">Rolled over {MAX_DEFERRALS}+ times — best to do {n > 1 ? 'these' : 'this'} now or remove {n > 1 ? 'them' : 'it'}.</p>}
+
+              <div className="space-y-2">
+                <button onClick={() => finalizeTriage(() => rollOverTasks(triageBlk.tasks))}
+                  className="flex w-full items-center gap-2 rounded-xl bg-gradient-hero px-3 py-3 text-left text-white shadow-card transition-transform active:scale-[0.99]">
+                  <LightningIcon size={18} className="shrink-0" />
+                  <span className="min-w-0 flex-1">
+                    <span className="block text-[14px] font-[800]">Auto-triage — roll them forward</span>
+                    <span className="block text-[11px] text-white/80">Into the next fitting block today, or tomorrow if the day’s full</span>
+                  </span>
+                </button>
+                <div className="grid grid-cols-2 gap-2">
+                  <button onClick={() => finalizeTriage(() => completeTasks(triageBlk.tasks))}
+                    className="flex items-center justify-center gap-1.5 rounded-xl border border-success/30 bg-success/10 py-2.5 text-[13px] font-[800] text-success">
+                    <CheckIcon size={15} /> Mark all done
+                  </button>
+                  <button onClick={() => finalizeTriage(() => deferToTomorrow(triageBlk.tasks))}
+                    className="flex items-center justify-center gap-1.5 rounded-xl border border-border bg-bdrbg py-2.5 text-[13px] font-[800] text-mid-text hover:bg-border/40">
+                    Defer to tomorrow
+                  </button>
+                </div>
+                <button onClick={() => { const blk = triageBlk.blk; if (!blk.done) toggleDone(blk); setTriageBlk(null) }}
+                  className="w-full py-1.5 text-center text-[12px] font-[700] text-gray hover:text-dark-text">
+                  Just mark the block done
+                </button>
+              </div>
+
+              {tip && <p className="flex items-start gap-1.5 text-[11px] text-teal"><LightningIcon size={12} className="mt-0.5 shrink-0" /> {tip}</p>}
+            </div>
+          )
+        })()}
       </Sheet>
 
       <Tour tourKey="rhythm" steps={RHYTHM_TOUR} />

@@ -179,6 +179,7 @@ export default function TasksPage() {
                     <span className="inline-flex items-center gap-1"><ClockIcon size={11} />{(t.estimated_minutes ?? 30) >= 60 ? `${(t.estimated_minutes ?? 30) / 60}h` : `${t.estimated_minutes ?? 30}m`}</span>
                     {t.due_date && <span className={cn('inline-flex items-center gap-1', t.due_date < today && !t.done && 'text-error font-[700]')}><CalendarIcon size={11} />{t.due_date}</span>}
                     {subs.length > 0 && <span>{subsDone}/{subs.length} subtasks</span>}
+                    {!t.done && (t.deferral_count ?? 0) > 0 && <span className="inline-flex items-center gap-1 rounded-full bg-gold/15 px-1.5 py-0.5 text-[9px] font-[800] text-[#A06C00]" title={`Rolled over ${t.deferral_count}×`}>↻ {t.deferral_count}× rolled</span>}
                     {t.scheduled_day === today && t.scheduled_block != null && <span className="inline-flex items-center gap-1 text-teal font-[700]"><ClockIcon size={11} />{OPTIMIZED_DAY[+t.scheduled_block]?.label?.split(' — ')[0] ?? 'Scheduled'}</span>}
                   </div>
                 </button>
