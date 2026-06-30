@@ -5,12 +5,16 @@ import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import { Sheet, SkeletonCard, toast } from '@/components/ui'
-import { ClockIcon, PhoneIcon, CheckIcon, ArrowRightIcon, CalendarIcon, RefreshIcon } from '@/components/icons'
+import { ClockIcon, PhoneIcon, CheckIcon, ArrowRightIcon, CalendarIcon, RefreshIcon, LightningIcon, StarFilledIcon, PlusIcon, TrashIcon, TargetIcon, ChecklistIcon } from '@/components/icons'
 import { cn } from '@/lib/utils'
 import {
   SHIFT_OPTIONS, DEFAULT_SHIFT, OPTIMIZED_DAY, BLOCK_STYLE,
   parseHM, fmtClock, fmtShift, fmtDuration, SELLING_MINUTES, currentBlock,
 } from '@/lib/schedule'
+import {
+  urgency, urgencyLabel, isActive, isStale, autoPlan, fmtEst, localDate, DEFAULT_TRIAGE,
+} from '@/lib/triageEngine'
+import { askCoach } from '@/lib/coachBus'
 import { Tour } from '@/components/tour'
 import { RHYTHM_TOUR } from '@/lib/tours'
 
@@ -56,7 +60,12 @@ export default function SchedulePage() {
   // Per-block overrides for today: start time, duration, note, done. Empty = use
   // the OPTIMIZED_DAY template. Works fully offline; syncs to Outlook later.
   const [over, setOver] = useState<Record<string, { start_min?: number; dur_min?: number; note?: string; done?: boolean }>>({})
-  const [blockTasks, setBlockTasks] = useState<Record<string, any[]>>({})
+  const [tasks, setTasks] = useState<any[]>([])      // all open tasks (active + snoozed)
+  const [goal, setGoal] = useState<number | null>(null)
+  const [dealsThisMonth, setDealsThisMonth] = useState(0)
+  const [stuck, setStuck] = useState(0)
+  const [triageBusy, setTriageBusy] = useState(false)
+  const [addToBlock, setAddToBlock] = useState<number | null>(null)  // block index awaiting a task
   const [selected, setSelected] = useState<number | null>(null)
   const [preview, setPreview] = useState<{ i: number; start: number; dur: number } | null>(null)
   const previewRef = useRef<{ i: number; start: number; dur: number } | null>(null)
@@ -80,14 +89,23 @@ export default function SchedulePage() {
           for (const r of data ?? []) map[r.block_key] = { start_min: r.start_min, dur_min: r.dur_min, note: r.note ?? undefined, done: r.done ?? false }
           setOver(map)
         })
-      supabase.from('tasks').select('id, title, done, scheduled_block').eq('user_id', user.id).eq('scheduled_day', today)
-        .then(({ data }) => {
-          const map: Record<string, any[]> = {}
-          for (const t of data ?? []) { (map[t.scheduled_block] ??= []).push(t) }
-          setBlockTasks(map)
-        })
+      loadTasks(user.id)
+      // Goal + pace + pipeline pressure feed the day-triage summary.
+      supabase.from('goals').select('monthly_deal_goal').eq('user_id', user.id).maybeSingle().then(({ data }) => setGoal(data?.monthly_deal_goal ?? null))
+      supabase.from('user_progress').select('deals_this_month').eq('user_id', user.id).single().then(({ data }) => setDealsThisMonth(data?.deals_this_month ?? 0))
+      supabase.from('partner_onboarding').select('stage').eq('user_id', user.id).then(({ data }) => {
+        setStuck((data ?? []).filter(p => p.stage === 'proposal_sent' || p.stage === 'contract_signed').length)
+      })
     })
   }, [])
+
+  // All open tasks (top-level only) with triage fields. Reused after mutations.
+  const loadTasks = async (uid: string) => {
+    const { data } = await supabase.from('tasks')
+      .select('id, title, done, priority, due_date, estimated_minutes, created_at, scheduled_day, scheduled_block, snoozed_until')
+      .eq('user_id', uid).eq('done', false).is('parent_id', null)
+    setTasks(data ?? [])
+  }
 
   // Live "now" line, refreshed each minute.
   useEffect(() => {
@@ -133,6 +151,21 @@ export default function SchedulePage() {
     dur: preview?.i === x.i ? preview.dur : x.dur,
   })))
 
+  // ── Triage derivations ──────────────────────────────────────────────────────
+  const nowDate = new Date()
+  const scheduledToday = tasks.filter(t => t.scheduled_day === today && t.scheduled_block != null && isActive(t, nowDate))
+  const blockTasks: Record<string, any[]> = {}
+  for (const t of scheduledToday) { (blockTasks[String(t.scheduled_block)] ??= []).push(t) }
+  const unscheduled = tasks
+    .filter(t => isActive(t, nowDate) && t.scheduled_day !== today)
+    .sort((a, b) => urgency(b, nowDate) - urgency(a, nowDate))
+  const staleTasks = tasks.filter(t => isStale(t, nowDate))
+  // Blocks that can hold work (selling/plan/admin), with capacity in minutes.
+  const slots = blocks.filter(x => ['plan', 'focus', 'admin'].includes(x.b.type)).map(x => ({ index: x.i, type: x.b.type, capacity: x.dur }))
+  const capacityMin = slots.reduce((s, x) => s + x.capacity, 0)
+  const plannedMin = scheduledToday.reduce((s, t) => s + (t.estimated_minutes || 30), 0)
+  const goalGap = goal && goal > 0 ? Math.max(0, goal - dealsThisMonth) : 0
+
   // Auto-scroll to "now" (or the start of the day) on first paint.
   useEffect(() => {
     if (loading || !scrollRef.current) return
@@ -160,9 +193,60 @@ export default function SchedulePage() {
     }, { onConflict: 'user_id,day,block_key' })
   }
   const toggleDone = (i: number) => saveBlock(i, OPTIMIZED_DAY[i], { done: !blocks[i].done })
-  const toggleTask = async (id: string, key: string, done: boolean) => {
-    setBlockTasks(prev => ({ ...prev, [key]: (prev[key] ?? []).map(t => t.id === id ? { ...t, done } : t) }))
-    await supabase.from('tasks').update({ done, updated_at: new Date().toISOString() }).eq('id', id)
+
+  // ── Task actions (optimistic) ───────────────────────────────────────────────
+  const patchTask = async (id: string, patch: any) => {
+    setTasks(prev => prev.map(t => t.id === id ? { ...t, ...patch } : t))
+    await supabase.from('tasks').update({ ...patch, updated_at: new Date().toISOString() }).eq('id', id)
+  }
+  const toggleTaskDone = (id: string, done: boolean) => {
+    setTasks(prev => prev.map(t => t.id === id ? { ...t, done } : t))
+    supabase.from('tasks').update({ done, updated_at: new Date().toISOString() }).eq('id', id).then(() => {})
+  }
+  const assignTask = (id: string, blockIndex: number) => {
+    patchTask(id, { scheduled_day: today, scheduled_block: String(blockIndex) })
+    setAddToBlock(null)
+  }
+  const unassignTask = (id: string) => patchTask(id, { scheduled_day: null, scheduled_block: null })
+  // Plan a single task into the first block with room (falls back to the first block).
+  const planOne = (t: any) => {
+    const rem: Record<number, number> = {}
+    slots.forEach(s => { rem[s.index] = s.capacity })
+    scheduledToday.forEach(st => { const k = Number(st.scheduled_block); if (rem[k] != null) rem[k] -= (st.estimated_minutes || 30) })
+    const slot = slots.find(s => rem[s.index] >= (t.estimated_minutes || 30)) ?? slots[0]
+    if (slot) { assignTask(t.id, slot.index); toast.success('Planned into your day') }
+  }
+  const setEstimate = (id: string, min: number) => patchTask(id, { estimated_minutes: Math.max(5, min) })
+  const snoozeTask = (id: string, days: number) => {
+    const d = new Date(); d.setDate(d.getDate() + days)
+    patchTask(id, { snoozed_until: localDate(d) })
+    toast.success(`Deferred ${days} day${days > 1 ? 's' : ''}`)
+  }
+  const removeTask = async (id: string) => {
+    setTasks(prev => prev.filter(t => t.id !== id))
+    await supabase.from('tasks').delete().eq('id', id)
+    toast.success('Task removed')
+  }
+  // Auto-triage: pack the highest-urgency tasks into today's blocks by capacity.
+  const autoPlanDay = async (reflow: boolean) => {
+    if (triageBusy) return
+    setTriageBusy(true)
+    try {
+      const assign = autoPlan(tasks, slots, nowDate, { reflow })
+      const updates = tasks.filter(t => assign[t.id] != null && (t.scheduled_day !== today || String(t.scheduled_block) !== String(assign[t.id])))
+      const cleared = reflow ? tasks.filter(t => assign[t.id] == null && t.scheduled_day === today) : []
+      setTasks(prev => prev.map(t => {
+        if (assign[t.id] != null) return { ...t, scheduled_day: today, scheduled_block: String(assign[t.id]) }
+        if (reflow && t.scheduled_day === today) return { ...t, scheduled_day: null, scheduled_block: null }
+        return t
+      }))
+      await Promise.all([
+        ...updates.map(t => supabase.from('tasks').update({ scheduled_day: today, scheduled_block: String(assign[t.id]), updated_at: new Date().toISOString() }).eq('id', t.id)),
+        ...cleared.map(t => supabase.from('tasks').update({ scheduled_day: null, scheduled_block: null, updated_at: new Date().toISOString() }).eq('id', t.id)),
+      ])
+      const n = Object.keys(assign).length
+      toast.success(n ? `Planned ${n} task${n > 1 ? 's' : ''} into your day` : 'Nothing to plan right now')
+    } finally { setTriageBusy(false) }
   }
   const resetDay = async () => {
     setOver({}); setSelected(null)
@@ -245,6 +329,48 @@ export default function SchedulePage() {
         <span className="inline-flex items-center gap-1.5 rounded-full bg-bdrbg px-2.5 py-1 font-[700] text-mid-text tabular-nums">{doneCount}/{OPTIMIZED_DAY.length} done</span>
       </div>
 
+      {/* AI day-triage summary — built from your goal, pipeline, and tasks */}
+      <div className="rounded-2xl bg-gradient-hero p-4 text-white shadow-card">
+        <div className="mb-2 flex items-center gap-2">
+          <LightningIcon size={16} className="text-white" />
+          <span className="text-[14px] font-[800]">Today’s triage</span>
+          <span className="ml-auto text-[11px] text-white/70 tabular-nums">{plannedMin}m planned · {Math.max(0, capacityMin - plannedMin)}m free</span>
+        </div>
+        <div className="grid grid-cols-3 gap-2">
+          <div className="rounded-xl bg-white/10 px-2.5 py-2">
+            <div className="text-[11px] text-white/70">Goal</div>
+            <div className="text-[15px] font-[800] leading-tight">{goal ? `${dealsThisMonth}/${goal}` : '—'}</div>
+            <div className="text-[10px] text-white/60">{goal ? (goalGap > 0 ? `${goalGap} to go` : 'hit 🎯') : 'set in Analytics'}</div>
+          </div>
+          <div className="rounded-xl bg-white/10 px-2.5 py-2">
+            <div className="text-[11px] text-white/70">Pipeline</div>
+            <div className="text-[15px] font-[800] leading-tight">{stuck}</div>
+            <div className="text-[10px] text-white/60">awaiting next step</div>
+          </div>
+          <div className="rounded-xl bg-white/10 px-2.5 py-2">
+            <div className="text-[11px] text-white/70">Tasks</div>
+            <div className="text-[15px] font-[800] leading-tight">{scheduledToday.length}/{scheduledToday.length + unscheduled.length}</div>
+            <div className="text-[10px] text-white/60">{unscheduled.length} unplanned</div>
+          </div>
+        </div>
+        <div className="mt-3 flex flex-wrap gap-2">
+          <button onClick={() => autoPlanDay(false)} disabled={triageBusy}
+            className="relative flex items-center gap-1.5 overflow-hidden rounded-lg bg-white px-3 py-2 text-[13px] font-[800] text-navy active:scale-[0.99] disabled:opacity-60">
+            <LightningIcon size={14} className="text-navy" /> {triageBusy ? 'Planning…' : 'Auto-plan my day'}
+          </button>
+          {scheduledToday.length > 0 && (
+            <button onClick={() => autoPlanDay(true)} disabled={triageBusy}
+              className="flex items-center gap-1.5 rounded-lg bg-white/15 px-3 py-2 text-[13px] font-[700] text-white hover:bg-white/25 disabled:opacity-60">
+              <RefreshIcon size={14} /> Re-plan
+            </button>
+          )}
+          <button onClick={() => askCoach('Look at my goal, pipeline, and today’s tasks. Triage my day for me: what are the top 3 things to focus on and in what order?')}
+            className="flex items-center gap-1.5 rounded-lg bg-white/15 px-3 py-2 text-[13px] font-[700] text-white hover:bg-white/25">
+            <TargetIcon size={14} /> Coach my day
+          </button>
+        </div>
+      </div>
+
       {/* Calendar day view */}
       <div ref={scrollRef} data-tour="rhythm-timeline"
         className="overflow-y-auto rounded-2xl border border-border bg-card shadow-card"
@@ -283,7 +409,7 @@ export default function SchedulePage() {
               const compact = height < 52       // hide the time row, keep title
               const isCurrent = i === activeIdx
               const dragging = preview?.i === i
-              const tasks = blockTasks[String(i)] ?? []
+              const bTasks = blockTasks[String(i)] ?? []
               const { col, cols: ncols } = cols[i] ?? { col: 0, cols: 1 }
               return (
                 <div key={i}
@@ -319,7 +445,7 @@ export default function SchedulePage() {
                             <span className="tabular-nums">{fmtClock(start)}–{fmtClock(start + dur)}</span>
                             {edited && !dragging && <span className="text-teal">· edited</span>}
                             {isCurrent && !done && <span className="rounded-full bg-teal px-1.5 text-[9px] font-[800] text-white">NOW</span>}
-                            {tasks.length > 0 && <span className="text-gray">· {tasks.filter(t => t.done).length}/{tasks.length} tasks</span>}
+                            {bTasks.length > 0 && <span className="text-gray">· {bTasks.filter(t => t.done).length}/{bTasks.length} tasks</span>}
                           </div>
                         )}
                       </div>
@@ -337,6 +463,64 @@ export default function SchedulePage() {
             })}
           </div>
         </div>
+      </div>
+
+      {/* Needs attention — stale tasks aging out; defer or remove to de-congest */}
+      {staleTasks.length > 0 && (
+        <div className="rounded-2xl border border-gold/40 bg-gold/[0.06] p-3">
+          <div className="mb-2 flex items-center gap-2">
+            <span className="h-2 w-2 animate-attention rounded-full bg-gold" />
+            <span className="text-[13px] font-[800] text-dark-text">Needs attention</span>
+            <span className="text-[11px] text-gray">· aging {DEFAULT_TRIAGE.agingDays}+ days unplanned</span>
+          </div>
+          <div className="space-y-1.5">
+            {staleTasks.slice(0, 5).map(t => (
+              <div key={t.id} className="flex items-center gap-2 rounded-lg bg-card px-2.5 py-2">
+                <span className="flex-1 truncate text-[13px] text-dark-text">{t.title}</span>
+                <button onClick={() => planOne(t)} className="shrink-0 rounded-md bg-teal/10 px-2 py-1 text-[11px] font-[700] text-teal hover:bg-teal/15">Plan</button>
+                <button onClick={() => snoozeTask(t.id, 3)} className="shrink-0 rounded-md bg-bdrbg px-2 py-1 text-[11px] font-[700] text-mid-text hover:bg-border/40">Defer</button>
+                <button onClick={() => removeTask(t.id)} aria-label="Remove task" className="shrink-0 px-1 text-gray hover:text-error"><TrashIcon size={14} /></button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Unscheduled tasks — triage queue, set time estimates, plan into the day */}
+      <div className="rounded-2xl border border-border bg-card p-3 shadow-card">
+        <div className="mb-2 flex items-center gap-2">
+          <ChecklistIcon size={15} className="text-navy" />
+          <span className="text-[13px] font-[800] text-dark-text">Unplanned tasks</span>
+          <span className="rounded-full bg-bdrbg px-2 py-0.5 text-[11px] font-[700] text-mid-text tabular-nums">{unscheduled.length}</span>
+          <Link href="/tasks" className="ml-auto text-[12px] font-[700] text-navy">Manage →</Link>
+        </div>
+        {unscheduled.length === 0 ? (
+          <p className="py-2 text-center text-[12px] text-gray">Everything’s planned. Nice. 🎯</p>
+        ) : (
+          <div className="space-y-1.5">
+            {unscheduled.slice(0, 12).map(t => {
+              const u = urgencyLabel(urgency(t, nowDate))
+              return (
+                <div key={t.id} className="flex items-center gap-2 rounded-lg border border-border bg-bdrbg px-2.5 py-2">
+                  <button onClick={() => toggleTaskDone(t.id, true)} aria-label="Complete task"
+                    className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full border-2 border-border text-transparent transition-colors hover:border-teal hover:bg-teal/10">
+                    <CheckIcon size={10} />
+                  </button>
+                  <span className={cn('shrink-0 rounded-full px-1.5 py-0.5 text-[9px] font-[800]',
+                    u.tone === 'high' ? 'bg-error/10 text-error' : u.tone === 'med' ? 'bg-gold/15 text-[#A06C00]' : 'bg-bdrbg text-gray')}>{u.label}</span>
+                  <span className="min-w-0 flex-1 truncate text-[13px] text-dark-text">{t.title}{t.priority && <StarFilledIcon size={12} className="ml-1 inline text-gold" />}</span>
+                  {/* ETC stepper */}
+                  <div className="flex shrink-0 items-center rounded-md border border-border bg-card">
+                    <button onClick={() => setEstimate(t.id, (t.estimated_minutes || 30) - 15)} aria-label="Less time" className="px-1.5 text-gray hover:text-navy">−</button>
+                    <span className="w-9 text-center text-[11px] font-[700] text-mid-text tabular-nums">{fmtEst(t.estimated_minutes || 30)}</span>
+                    <button onClick={() => setEstimate(t.id, (t.estimated_minutes || 30) + 15)} aria-label="More time" className="px-1.5 text-gray hover:text-navy">+</button>
+                  </div>
+                  <button onClick={() => planOne(t)} className="shrink-0 rounded-md bg-teal/10 px-2 py-1 text-[11px] font-[700] text-teal hover:bg-teal/15">Plan</button>
+                </div>
+              )
+            })}
+          </div>
+        )}
       </div>
 
       {/* Outlook — compact, foundation laid */}
@@ -395,26 +579,45 @@ export default function SchedulePage() {
             </div>
 
             {/* Assigned tasks */}
-            {(blockTasks[String(sel.i)] ?? []).length > 0 && (
-              <div>
-                <div className="mb-1 text-[11px] font-[700] text-gray">Tasks in this block</div>
-                <div className="space-y-1.5">
-                  {blockTasks[String(sel.i)].map(tk => (
-                    <div key={tk.id} className="flex items-center gap-2 rounded-md bg-bdrbg px-2.5 py-2">
-                      <button onClick={() => toggleTask(tk.id, String(sel.i), !tk.done)} aria-label={tk.done ? 'Mark task incomplete' : 'Complete task'}
-                        className={cn('flex h-4 w-4 shrink-0 items-center justify-center rounded-full border-2', tk.done ? 'border-success bg-success text-white' : 'border-border text-transparent')}>
-                        <CheckIcon size={10} />
-                      </button>
-                      <span className={cn('text-[13px]', tk.done ? 'text-gray line-through' : 'text-mid-text')}>{tk.title}</span>
-                    </div>
-                  ))}
-                </div>
+            <div>
+              <div className="mb-1 flex items-center justify-between">
+                <span className="text-[11px] font-[700] text-gray">Tasks in this block</span>
+                {(blockTasks[String(sel.i)] ?? []).length > 0 && (
+                  <span className="text-[11px] font-[700] text-mid-text tabular-nums">{(blockTasks[String(sel.i)] ?? []).reduce((s, t) => s + (t.estimated_minutes || 30), 0)}m planned</span>
+                )}
               </div>
-            )}
-
-            <Link href="/tasks" className="flex items-center justify-center gap-1.5 rounded-lg border border-dashed border-border py-2.5 text-[12px] font-[700] text-navy hover:border-navy/40">
-              Assign tasks to blocks in Tasks <ArrowRightIcon size={13} />
-            </Link>
+              <div className="space-y-1.5">
+                {(blockTasks[String(sel.i)] ?? []).map(tk => (
+                  <div key={tk.id} className="flex items-center gap-2 rounded-md bg-bdrbg px-2.5 py-2">
+                    <button onClick={() => toggleTaskDone(tk.id, !tk.done)} aria-label={tk.done ? 'Mark task incomplete' : 'Complete task'}
+                      className={cn('flex h-4 w-4 shrink-0 items-center justify-center rounded-full border-2', tk.done ? 'border-success bg-success text-white' : 'border-border text-transparent')}>
+                      <CheckIcon size={10} />
+                    </button>
+                    <span className={cn('flex-1 text-[13px]', tk.done ? 'text-gray line-through' : 'text-mid-text')}>{tk.title}</span>
+                    {tk.priority && <StarFilledIcon size={13} className="text-gold shrink-0" />}
+                    <span className="shrink-0 text-[11px] font-[600] text-gray tabular-nums">{fmtEst(tk.estimated_minutes || 30)}</span>
+                    <button onClick={() => unassignTask(tk.id)} aria-label="Remove from block" className="shrink-0 px-1 text-[15px] leading-none text-gray hover:text-error">×</button>
+                  </div>
+                ))}
+                {(blockTasks[String(sel.i)] ?? []).length === 0 && <p className="text-[12px] text-gray">No tasks yet — add one below.</p>}
+              </div>
+              {/* Add an unscheduled task to this block */}
+              {unscheduled.length > 0 && (
+                <div className="mt-2">
+                  <div className="mb-1 text-[11px] font-[700] text-gray">Add a task</div>
+                  <div className="max-h-40 space-y-1 overflow-y-auto">
+                    {unscheduled.slice(0, 8).map(tk => (
+                      <button key={tk.id} onClick={() => assignTask(tk.id, sel.i)}
+                        className="flex w-full items-center gap-2 rounded-md border border-border bg-card px-2.5 py-2 text-left hover:border-teal/50 hover:bg-teal/5">
+                        <PlusIcon size={13} className="shrink-0 text-teal" />
+                        <span className="flex-1 truncate text-[13px] text-dark-text">{tk.title}</span>
+                        <span className="shrink-0 text-[11px] font-[600] text-gray tabular-nums">{fmtEst(tk.estimated_minutes || 30)}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
         )}
       </Sheet>

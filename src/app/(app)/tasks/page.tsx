@@ -141,6 +141,7 @@ export default function TasksPage() {
                 <button onClick={() => setExpanded(isOpen ? null : t.id)} className="min-w-0 flex-1 text-left">
                   <div className={cn('text-[14px] font-[600]', t.done ? 'text-gray line-through' : 'text-dark-text')}>{t.title}</div>
                   <div className="mt-0.5 flex flex-wrap items-center gap-2 text-[11px] text-gray">
+                    <span className="inline-flex items-center gap-1"><ClockIcon size={11} />{(t.estimated_minutes ?? 30) >= 60 ? `${(t.estimated_minutes ?? 30) / 60}h` : `${t.estimated_minutes ?? 30}m`}</span>
                     {t.due_date && <span className={cn('inline-flex items-center gap-1', t.due_date < today && !t.done && 'text-error font-[700]')}><CalendarIcon size={11} />{t.due_date}</span>}
                     {subs.length > 0 && <span>{subsDone}/{subs.length} subtasks</span>}
                     {t.scheduled_day === today && t.scheduled_block != null && <span className="inline-flex items-center gap-1 text-teal font-[700]"><ClockIcon size={11} />{OPTIMIZED_DAY[+t.scheduled_block]?.label?.split(' — ')[0] ?? 'Scheduled'}</span>}
@@ -186,6 +187,12 @@ export default function TasksPage() {
                         className="mt-1 w-full rounded-md border border-border bg-card px-2 py-1.5 text-[12px]" />
                     </label>
                   </div>
+                  <label className="block text-[11px] font-[700] text-gray">Estimated time (powers auto-triage)
+                    <select value={t.estimated_minutes ?? 30} onChange={e => patch(t.id, { estimated_minutes: parseInt(e.target.value, 10) })}
+                      className="mt-1 w-full rounded-md border border-border bg-card px-2 py-1.5 text-[12px] font-[600] text-dark-text">
+                      {[10, 15, 20, 30, 45, 60, 90, 120].map(m => <option key={m} value={m}>{m >= 60 ? `${m / 60}h${m % 60 ? ` ${m % 60}m` : ''}` : `${m} min`}</option>)}
+                    </select>
+                  </label>
                   <textarea value={t.notes ?? ''} onChange={e => patch(t.id, { notes: e.target.value })} rows={2} placeholder="Notes…"
                     className="w-full resize-none rounded-md border border-border bg-card px-2 py-1.5 text-[12px] outline-none placeholder-gray" />
 
