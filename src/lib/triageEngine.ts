@@ -76,7 +76,7 @@ export function isStale(t: TriageTask, now: Date, cfg: TriageConfig = DEFAULT_TR
   return ageDays(t.created_at, now) >= cfg.agingDays
 }
 
-export interface SchedSlot { index: number; type: string; capacity: number } // minutes
+export interface SchedSlot { key: string; type: string; capacity: number } // minutes
 
 // Infer which kind of block a task belongs in from its title, so selling work
 // lands in power blocks, admin in the admin block, planning in the plan block.
@@ -94,13 +94,13 @@ export function categorize(title: string): 'focus' | 'admin' | 'plan' | null {
 export function autoPlan(
   tasks: TriageTask[], slots: SchedSlot[], now: Date,
   opts: { reflow?: boolean; cfg?: TriageConfig } = {},
-): Record<string, number> {
+): Record<string, string> {
   const cfg = opts.cfg ?? DEFAULT_TRIAGE
   const today = localDate(now)
   const remaining = slots.map(s => s.capacity)
-  const slotByIndex: Record<number, number> = {}
-  slots.forEach((s, k) => { slotByIndex[s.index] = k })
-  const assign: Record<string, number> = {}
+  const slotPos: Record<string, number> = {}
+  slots.forEach((s, k) => { slotPos[s.key] = k })
+  const assign: Record<string, string> = {}
 
   const active = tasks.filter(t => isActive(t, now))
 
@@ -109,11 +109,11 @@ export function autoPlan(
   if (!opts.reflow) {
     for (const t of active) {
       if (t.scheduled_day === today && t.scheduled_block != null) {
-        const k = slotByIndex[Number(t.scheduled_block)]
+        const k = slotPos[String(t.scheduled_block)]
         if (k != null && remaining[k] >= t.estimated_minutes) {
-          assign[t.id] = slots[k].index; remaining[k] -= t.estimated_minutes
+          assign[t.id] = slots[k].key; remaining[k] -= t.estimated_minutes
         } else if (k != null) {
-          assign[t.id] = slots[k].index   // keep it even if slightly over
+          assign[t.id] = slots[k].key   // keep it even if slightly over
         }
       }
     }
@@ -130,14 +130,14 @@ export function autoPlan(
     if (cat) {
       for (let k = 0; k < slots.length; k++) {
         if (slots[k].type === cat && remaining[k] >= t.estimated_minutes) {
-          assign[t.id] = slots[k].index; remaining[k] -= t.estimated_minutes; placed = true; break
+          assign[t.id] = slots[k].key; remaining[k] -= t.estimated_minutes; placed = true; break
         }
       }
     }
     // Fallback: the first block with room at all.
     if (!placed) {
       for (let k = 0; k < slots.length; k++) {
-        if (remaining[k] >= t.estimated_minutes) { assign[t.id] = slots[k].index; remaining[k] -= t.estimated_minutes; break }
+        if (remaining[k] >= t.estimated_minutes) { assign[t.id] = slots[k].key; remaining[k] -= t.estimated_minutes; break }
       }
     }
   }
