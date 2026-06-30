@@ -76,6 +76,7 @@ export function GuidedTour() {
     // 3) Poll for the target element (it may mount after data loads).
     setSearching(true)
     let cancelled = false
+    let timer: any = null
     const started = Date.now()
     const tick = () => {
       if (cancelled) return
@@ -83,8 +84,8 @@ export function GuidedTour() {
       if (el) {
         setSearching(false)
         el.scrollIntoView({ behavior: 'smooth', block: 'center' })
-        setTimeout(() => { if (!cancelled) setRect(el.getBoundingClientRect()) }, 280)
         setRect(el.getBoundingClientRect())
+        timer = setTimeout(() => { if (!cancelled) setRect(el.getBoundingClientRect()) }, 280) // re-measure post-scroll
         return
       }
       if (Date.now() - started > FIND_TIMEOUT) {  // give up → skip this step
@@ -94,7 +95,6 @@ export function GuidedTour() {
       }
       timer = setTimeout(tick, FIND_INTERVAL)
     }
-    let timer = setTimeout(tick, FIND_INTERVAL)
     tick()
     return () => { cancelled = true; clearTimeout(timer) }
   }, [wt, i, step, centered, pathname, router, finish, steps.length])
