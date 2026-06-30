@@ -43,6 +43,7 @@ export default function HomePage() {
   const [tasks, setTasks] = useState<any[]>([])
   const [useEveryDay, setUseEveryDay] = useState(false)
   const [savingShift, setSavingShift] = useState(false)
+  const [doneTaskId, setDoneTaskId] = useState<string | null>(null)
   const { progress, loading, refresh: refreshProgress } = useProgress(userId)
   const { habits, refresh: refreshHabits } = useHabits(userId)
 
@@ -164,10 +165,15 @@ export default function HomePage() {
     setSavingShift(false)
   }
 
-  // Complete a task inline from Home.
-  const completeTask = async (id: string) => {
-    setTasks(prev => prev.filter(t => t.id !== id))
-    await supabase.from('tasks').update({ done: true, updated_at: new Date().toISOString() }).eq('id', id)
+  // Complete a task inline from Home — celebrate the check, then clear the row.
+  const completeTask = (id: string) => {
+    if (doneTaskId) return
+    setDoneTaskId(id)
+    supabase.from('tasks').update({ done: true, updated_at: new Date().toISOString() }).eq('id', id).then(() => {})
+    setTimeout(() => {
+      setTasks(prev => prev.filter(t => t.id !== id))
+      setDoneTaskId(prev => (prev === id ? null : prev))
+    }, 450)
   }
 
   // Complete a habit inline from Home — the daily core loop, 1 tap from landing.
@@ -408,16 +414,19 @@ export default function HomePage() {
             </Link>
           ) : (
             <div className="space-y-2">
-              {tasks.map(t => (
-                <div key={t.id} className="flex items-center gap-3 rounded-xl border border-border bg-bdrbg p-3">
-                  <button onClick={() => completeTask(t.id)} aria-label="Complete task"
-                    className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border-2 border-border transition-colors hover:border-teal hover:bg-teal/10">
-                    <CheckIcon className="h-3 w-3 text-transparent" />
-                  </button>
-                  <span className="flex-1 truncate text-sm font-medium text-dark-text">{t.title}</span>
-                  {t.priority && <StarFilledIcon className="h-4 w-4 shrink-0 text-gold" />}
-                </div>
-              ))}
+              {tasks.map(t => {
+                const isDone = doneTaskId === t.id
+                return (
+                  <div key={t.id} className={cn('flex items-center gap-3 rounded-xl border bg-bdrbg p-3 transition-all duration-300', isDone ? 'border-teal/40 opacity-60' : 'border-border')}>
+                    <button onClick={() => completeTask(t.id)} aria-label="Complete task"
+                      className={cn('flex h-6 w-6 shrink-0 items-center justify-center rounded-full border-2 transition-colors', isDone ? 'border-teal bg-teal' : 'border-border hover:border-teal hover:bg-teal/10')}>
+                      <CheckIcon className={cn('h-3 w-3', isDone ? 'text-white animate-pop' : 'text-transparent')} />
+                    </button>
+                    <span className={cn('flex-1 truncate text-sm font-medium transition-colors', isDone ? 'text-gray line-through' : 'text-dark-text')}>{t.title}</span>
+                    {t.priority && <StarFilledIcon className="h-4 w-4 shrink-0 text-gold" />}
+                  </div>
+                )
+              })}
             </div>
           )}
         </div>
@@ -430,9 +439,9 @@ export default function HomePage() {
                 onClick={() => completeHabit(habit.id, habit.label)}
                 disabled={completing === habit.id}
                 className="flex w-full items-center gap-3 rounded-xl border border-border bg-bdrbg p-3 text-left transition-all hover:border-teal/50 hover:bg-teal/5 active:scale-[0.98]">
-                <span className={cn('flex h-6 w-6 shrink-0 items-center justify-center rounded-full border-2',
-                  completing === habit.id ? 'border-teal animate-pulse' : 'border-border')}>
-                  <CheckIcon className="h-3 w-3 text-transparent" />
+                <span className={cn('flex h-6 w-6 shrink-0 items-center justify-center rounded-full border-2 transition-colors',
+                  completing === habit.id ? 'border-teal bg-teal' : 'border-border')}>
+                  <CheckIcon className={cn('h-3 w-3', completing === habit.id ? 'text-white animate-pop' : 'text-transparent')} />
                 </span>
                 <span className="flex-1 text-sm font-medium text-dark-text">{habit.label}</span>
                 <span className="flex items-center gap-1 text-xs text-gray"><XpIcon className="h-3 w-3" />+5</span>
