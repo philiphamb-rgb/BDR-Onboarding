@@ -4,6 +4,18 @@ import Anthropic from '@anthropic-ai/sdk'
 import { NextResponse } from 'next/server'
 import { completion, stageMeta, PIPELINE_STAGES } from '@/lib/partnerChecklist'
 import { computePlan, computeInsight, fmt } from '@/lib/income/engine'
+import { COMPETITORS, COMMISSION_COMPARISON } from '@/lib/modules/battle-cards'
+
+// Compact competitive intel from the Battle Cards module, so the Coach answers
+// competitor objections with the real battlecard — one source of truth.
+const stripHtml = (s: string) => (s || '').replace(/<[^>]+>/g, '')
+const COMPETITOR_INTEL = `COMPETITOR BATTLE CARDS (when a prospect names a competitor, lead with the edge, then the line to say):
+${Object.values(COMPETITORS).map((c: any) => {
+  const edge = c.blocks.find((b: any) => /edge|win/i.test(b.tag)) || c.blocks.find((b: any) => b.type === 'YOUR WIN')
+  const say = c.blocks.find((b: any) => b.type === 'TALK TRACK')
+  return `- ${c.name} (${c.pill}): ${edge ? stripHtml(edge.summary) : ''}${say ? ` — SAY: ${stripHtml(say.summary)}` : ''}`
+}).join('\n')}
+Commission math: ${stripHtml((COMMISSION_COMPARISON.blocks.find((b: any) => b.type === 'THE MATH') || {}).summary || '')}`
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 
@@ -102,7 +114,9 @@ const COMPANY_CONTEXT = `ConsumerDirect is a credit technology company. Its prod
 
 The sales model is B2B/B2B2C. BDRs do NOT sell mortgages to consumers. They sign PARTNERS — resellers and affiliates such as credit-repair companies, mortgage brokers, financial coaches, and fintechs — who then sponsor or resell ConsumerDirect's credit tools to their own clients. A BDR's job: prospect (Seamless.AI, LinkedIn), qualify fit and need, send a Partnership Order Form in Onit, get it signed via Dropbox Sign, and onboard the partner for their first 12 months before handing off to Account Management.
 
-The pipeline is: New Lead → Interested → Proposal Sent → Contract Signed → Opportunity Won. The team is trained on the Sandler selling method (up-front contracts, the pain funnel, reversing, "don't spill your candy in the lobby"). Common partner objections: "We already have a credit product," "What's the price?", "Now isn't a good time," "I need to think about it." Upsells include Credit Versio, LevelUp Score, ECRYPT, GOAT Payment, myLONA Rev Share, and Business Credit Reporting.`
+The pipeline is: New Lead → Interested → Proposal Sent → Contract Signed → Opportunity Won. The team is trained on the Sandler selling method (up-front contracts, the pain funnel, reversing, "don't spill your candy in the lobby"). Common partner objections: "We already have a credit product," "What's the price?", "Now isn't a good time," "I need to think about it." Upsells include Credit Versio, LevelUp Score, ECRYPT, GOAT Payment, myLONA Rev Share, and Business Credit Reporting.
+
+${COMPETITOR_INTEL}`
 
 export async function POST(request: Request) {
   try {

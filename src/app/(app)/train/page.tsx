@@ -8,7 +8,7 @@ import {
   ArrowRightIcon, XpIcon, SuccessIcon, BookIcon,
   HubspotIcon, ChartRisingIcon, PipelineIcon, TeamIcon, DocumentSignIcon,
   HubIcon, CoinIcon, PhoneIcon, ChecklistIcon, IntegrationIcon,
-  ProductsIcon, OrgChartIcon, TargetIcon, LockIcon, SearchIcon, CloseIcon,
+  ProductsIcon, OrgChartIcon, TargetIcon, LockIcon, SearchIcon, CloseIcon, ShieldIcon,
 } from '@/components/icons'
 import { cn, percentage } from '@/lib/utils'
 import { passedModuleSet } from '@/lib/moduleProgress'
@@ -215,21 +215,38 @@ export default function TrainPage() {
       {/* Book Training — standalone, self-paced courses */}
       <div className="pt-2">
         <h2 className="text-sm font-[700] text-dark-text mb-2">Book Training</h2>
-        <Link href="/train/sandler" className="block active:scale-[0.98] transition-transform">
-          <Card className="bg-gradient-primary !p-4">
-            <div className="flex items-start gap-4">
-              <div className="w-12 h-12 rounded-2xl bg-white/15 flex items-center justify-center flex-shrink-0">
-                <BookIcon size={24} className="text-white" />
+        <div className="space-y-2">
+          <Link href="/train/sandler" className="block active:scale-[0.98] transition-transform">
+            <Card className="bg-gradient-primary !p-4">
+              <div className="flex items-start gap-4">
+                <div className="w-12 h-12 rounded-2xl bg-white/15 flex items-center justify-center flex-shrink-0">
+                  <BookIcon size={24} className="text-white" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="text-xs text-white/70 font-medium">Sandler Sales Mastery</div>
+                  <h3 className="text-sm font-semibold text-white leading-tight">The 49 Sandler Rules</h3>
+                  <p className="text-xs text-white/70 mt-1">Self-paced · lessons, quizzes & certification</p>
+                </div>
+                <ArrowRightIcon className="w-4 h-4 text-white/80 flex-shrink-0 mt-1" />
               </div>
-              <div className="flex-1 min-w-0">
-                <div className="text-xs text-white/70 font-medium">Sandler Sales Mastery</div>
-                <h3 className="text-sm font-semibold text-white leading-tight">The 49 Sandler Rules</h3>
-                <p className="text-xs text-white/70 mt-1">Self-paced · lessons, quizzes & certification</p>
+            </Card>
+          </Link>
+          <Link href="/train/battlecards" className="block active:scale-[0.98] transition-transform">
+            <Card className="bg-gradient-hero !p-4">
+              <div className="flex items-start gap-4">
+                <div className="w-12 h-12 rounded-2xl bg-white/15 flex items-center justify-center flex-shrink-0">
+                  <ShieldIcon size={24} className="text-white" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="text-xs text-white/70 font-medium">Competitive Intelligence</div>
+                  <h3 className="text-sm font-semibold text-white leading-tight">Battle Cards</h3>
+                  <p className="text-xs text-white/70 mt-1">9 competitors · train, then your live reference</p>
+                </div>
+                <ArrowRightIcon className="w-4 h-4 text-white/80 flex-shrink-0 mt-1" />
               </div>
-              <ArrowRightIcon className="w-4 h-4 text-white/80 flex-shrink-0 mt-1" />
-            </div>
-          </Card>
-        </Link>
+            </Card>
+          </Link>
+        </div>
       </div>
       </>
       )}
