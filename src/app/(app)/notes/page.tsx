@@ -154,7 +154,7 @@ export default function NotesPage() {
   if (loading) return <div className="space-y-4"><SkeletonList count={4} /></div>
 
   return (
-    <div className="flex h-[calc(100vh-7rem)] gap-3 desktop:h-[calc(100vh-3rem)]">
+    <div className="flex h-[calc(100vh-12rem)] gap-3 desktop:h-[calc(100vh-9rem)]">
       {/* List / history — hidden on mobile when a note is open */}
       <div className={cn('flex w-full flex-col desktop:w-[320px] desktop:shrink-0', active && 'hidden desktop:flex')}>
         <div className="mb-2 flex items-center gap-2">

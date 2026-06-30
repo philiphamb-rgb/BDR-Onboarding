@@ -1,166 +1,228 @@
 'use client'
 
-import { useState } from 'react'
-import { usePathname } from 'next/navigation'
+import { useState, useEffect, useRef } from 'react'
+import { usePathname, useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { cn } from '@/components/ui'
+import { cn, Avatar } from '@/components/ui'
+import { createClient } from '@/lib/supabase/client'
 import {
-  HomeIcon,
-  TodayIcon,
-  TrainIcon,
-  WinsIcon,
-  CoachIcon,
-  DashboardIcon,
-  XpIcon,
-  BellIcon,
-  MailIcon,
-  SettingsIcon,
-  BellDotIcon,
-  LeaderboardIcon,
-  TeamIcon,
-  BarChartIcon,
-  BookIcon,
-  TargetIcon,
-  MedalIcon,
-  HandshakeIcon,
-  ClockIcon,
-  MoreIcon,
-  CoinIcon,
-  ChecklistIcon,
-  ShieldIcon,
-  DocumentIcon,
+  HomeIcon, TodayIcon, TrainIcon, WinsIcon, CoachIcon, DashboardIcon, XpIcon,
+  BellIcon, BellDotIcon, SettingsIcon, LeaderboardIcon, TeamIcon, BarChartIcon,
+  BookIcon, TargetIcon, MedalIcon, HandshakeIcon, ClockIcon, MoreIcon, CoinIcon,
+  ChecklistIcon, ShieldIcon, DocumentIcon, SearchIcon, ChevronDownIcon, CloseIcon,
 } from '@/components/icons'
 import type { User } from '@/types/database'
-import { Avatar } from '@/components/ui'
 import { usePermissions } from '@/components/usePermissions'
 import { featureForHref } from '@/lib/permissions'
-
-// ─── Nav Item Definition ──────────────────────────────────────────────────────
 
 interface NavItem {
   href: string
   label: string
-  /** Compact label for the mobile bottom nav, where horizontal space is tight. */
   shortLabel?: string
   icon: React.ComponentType<{ size?: number; className?: string }>
-  managerOnly?: boolean
 }
 
-const REP_NAV: NavItem[] = [
-  { href: '/home',    label: 'Home',    icon: HomeIcon  },
-  { href: '/today',   label: 'Today',   icon: TodayIcon },
-  { href: '/train',   label: 'Learning Center', shortLabel: 'Learn',   icon: TrainIcon },
-  { href: '/wins',    label: 'Wins',    icon: WinsIcon  },
-  { href: '/coach',   label: 'Coach',   icon: CoachIcon },
+// Always-visible quick destinations.
+const TOP_NAV: NavItem[] = [
+  { href: '/home',  label: 'Home',  icon: HomeIcon },
+  { href: '/today', label: 'Today', icon: TodayIcon },
+  { href: '/coach', label: 'Coach', icon: CoachIcon },
 ]
 
-// Mobile bottom bar (5 slots). Home is the hub (it now carries the daily
-// checklist), so Partners — the pipeline, the core daily work — gets a slot and
-// Coach sits center. 'Today' stays reachable under "More".
-const BOTTOM_NAV: NavItem[] = [
-  { href: '/home',     label: 'Home',     icon: HomeIcon      },
-  { href: '/partners', label: 'Partners', icon: HandshakeIcon },
-  { href: '/coach',    label: 'Coach',    icon: CoachIcon     },
-  { href: '/train',    label: 'Learning Center', shortLabel: 'Learn', icon: TrainIcon },
-  { href: '/wins',     label: 'Wins',     icon: WinsIcon      },
-]
-
-// Shared "Tools" routes — grouped by what the rep is trying to do, so the
-// sidebar reads as Sell / Plan / Grow instead of one long flat list. Rendered
-// grouped on desktop and (flattened, in the same order) in the mobile "More"
-// sheet so every route stays reachable on phones (the primary PWA surface).
-const TOOLS_GROUPS: { title: string; items: NavItem[] }[] = [
+// Collapsible sections (accordion — one open at a time).
+const REP_SECTIONS: { title: string; items: NavItem[] }[] = [
   { title: 'Sell', items: [
-    { href: '/partners',    label: 'Partners',          icon: HandshakeIcon },
-    { href: '/drill',       label: 'Objection Drill',   icon: TargetIcon },
-    { href: '/analytics',   label: 'Analytics',         icon: BarChartIcon },
-    { href: '/calculator',  label: 'Income Calculator', icon: CoinIcon },
+    { href: '/partners',   label: 'Partners',          icon: HandshakeIcon },
+    { href: '/drill',      label: 'Objection Drill',   icon: TargetIcon },
+    { href: '/analytics',  label: 'Analytics',         icon: BarChartIcon },
+    { href: '/calculator', label: 'Income Calculator', icon: CoinIcon },
   ] },
   { title: 'Plan', items: [
-    { href: '/notes',       label: 'Notes',             icon: DocumentIcon },
-    { href: '/schedule',    label: 'Time Blocks',       icon: ClockIcon },
-    { href: '/tasks',       label: 'Tasks',             icon: ChecklistIcon },
+    { href: '/notes',    label: 'Notes',       icon: DocumentIcon },
+    { href: '/schedule', label: 'Time Blocks', icon: ClockIcon },
+    { href: '/tasks',    label: 'Tasks',       icon: ChecklistIcon },
   ] },
   { title: 'Grow', items: [
-    { href: '/resources',   label: 'Resources',         icon: BookIcon },
-    { href: '/leaderboard', label: 'Leaderboard',       icon: LeaderboardIcon },
-    { href: '/certificate', label: 'Certificate',       icon: MedalIcon },
+    { href: '/train',       label: 'Learning Center', shortLabel: 'Learn', icon: TrainIcon },
+    { href: '/wins',        label: 'Wins',            icon: WinsIcon },
+    { href: '/leaderboard', label: 'Leaderboard',     icon: LeaderboardIcon },
+    { href: '/certificate', label: 'Certificate',     icon: MedalIcon },
+    { href: '/resources',   label: 'Resources',       icon: BookIcon },
   ] },
 ]
-// Flat view for the mobile "More" grid + permission filtering.
-const TOOLS_NAV: NavItem[] = TOOLS_GROUPS.flatMap(g => g.items)
 
-const MANAGER_EXTRA_NAV: NavItem[] = [
-  { href: '/manager/dashboard',    label: 'Dashboard',    icon: DashboardIcon,  managerOnly: true },
-  { href: '/manager/team',         label: 'Team',          icon: TeamIcon,       managerOnly: true },
-  { href: '/manager/partners',     label: 'Team Partners', icon: HandshakeIcon,  managerOnly: true },
-  { href: '/manager/rhythm',       label: 'Team Time Blocks', icon: ClockIcon, managerOnly: true },
-  { href: '/manager/analytics',    label: 'Analytics',     icon: BarChartIcon,   managerOnly: true },
-  { href: '/manager/broadcast',    label: 'Broadcast',     icon: BellIcon,       managerOnly: true },
-  { href: '/manager/resources',    label: 'Resources',     icon: BookIcon,       managerOnly: true },
-  { href: '/manager/gamification', label: 'XP Rules',      icon: XpIcon,         managerOnly: true },
-  { href: '/manager/roles',        label: 'Roles & Permissions', icon: ShieldIcon, managerOnly: true },
+const MANAGER_ITEMS: NavItem[] = [
+  { href: '/manager/dashboard',    label: 'Dashboard',           icon: DashboardIcon },
+  { href: '/manager/team',         label: 'Team',                icon: TeamIcon },
+  { href: '/manager/partners',     label: 'Team Partners',       icon: HandshakeIcon },
+  { href: '/manager/rhythm',       label: 'Team Time Blocks',    icon: ClockIcon },
+  { href: '/manager/analytics',    label: 'Analytics',           icon: BarChartIcon },
+  { href: '/manager/broadcast',    label: 'Broadcast',           icon: BellIcon },
+  { href: '/manager/resources',    label: 'Resources',           icon: BookIcon },
+  { href: '/manager/gamification', label: 'XP Rules',            icon: XpIcon },
+  { href: '/manager/roles',        label: 'Roles & Permissions', icon: ShieldIcon },
 ]
+
+// Mobile bottom bar (5 slots).
+const BOTTOM_NAV: NavItem[] = [
+  { href: '/home',     label: 'Home',     icon: HomeIcon },
+  { href: '/partners', label: 'Partners', icon: HandshakeIcon },
+  { href: '/coach',    label: 'Coach',    icon: CoachIcon },
+  { href: '/train',    label: 'Learning Center', shortLabel: 'Learn', icon: TrainIcon },
+  { href: '/wins',     label: 'Wins',     icon: WinsIcon },
+]
+
+const isActiveHref = (pathname: string, href: string) => pathname === href || pathname.startsWith(href + '/')
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// GLOBAL SEARCH (header)
+// ═══════════════════════════════════════════════════════════════════════════════
+
+const PAGE_INDEX: { label: string; href: string }[] = [
+  ...TOP_NAV.map(i => ({ label: i.label, href: i.href })),
+  ...REP_SECTIONS.flatMap(s => s.items.map(i => ({ label: i.label, href: i.href }))),
+  { label: 'Settings', href: '/settings' }, { label: 'Notifications', href: '/notifications' },
+]
+
+function GlobalSearch() {
+  const supabase = createClient()
+  const router = useRouter()
+  const [q, setQ] = useState('')
+  const [open, setOpen] = useState(false)
+  const [results, setResults] = useState<{ group: string; label: string; href: string }[]>([])
+  const timer = useRef<any>(null)
+  const boxRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    const onDoc = (e: MouseEvent) => { if (boxRef.current && !boxRef.current.contains(e.target as Node)) setOpen(false) }
+    document.addEventListener('mousedown', onDoc)
+    return () => document.removeEventListener('mousedown', onDoc)
+  }, [])
+
+  useEffect(() => {
+    if (timer.current) clearTimeout(timer.current)
+    const term = q.trim()
+    if (!term) { setResults([]); return }
+    timer.current = setTimeout(async () => {
+      const like = `%${term}%`
+      const pages = PAGE_INDEX.filter(p => p.label.toLowerCase().includes(term.toLowerCase())).slice(0, 3).map(p => ({ group: 'Go to', label: p.label, href: p.href }))
+      const [{ data: partners }, { data: tasks }, { data: notes }] = await Promise.all([
+        supabase.from('partner_onboarding').select('id, partner_name').ilike('partner_name', like).limit(4),
+        supabase.from('tasks').select('id, title').eq('done', false).ilike('title', like).limit(4),
+        supabase.from('notes').select('id, title').ilike('title', like).eq('archived', false).limit(4),
+      ])
+      const r: any[] = [...pages]
+      for (const p of (partners ?? []) as any[]) r.push({ group: 'Partners', label: p.partner_name, href: `/partners/${p.id}` })
+      for (const t of (tasks ?? []) as any[]) r.push({ group: 'Tasks', label: t.title, href: '/tasks' })
+      for (const n of (notes ?? []) as any[]) r.push({ group: 'Notes', label: n.title || 'Untitled note', href: '/notes' })
+      setResults(r)
+    }, 220)
+  }, [q]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  const go = (href: string) => { setOpen(false); setQ(''); setResults([]); router.push(href) }
+
+  return (
+    <div ref={boxRef} className="relative w-full max-w-[520px]">
+      <SearchIcon size={16} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-gray" />
+      <input
+        value={q}
+        onChange={e => { setQ(e.target.value); setOpen(true) }}
+        onFocus={() => setOpen(true)}
+        placeholder="Search partners, tasks, notes, pages…"
+        className="w-full rounded-lg border border-border bg-bdrbg py-2 pl-9 pr-8 text-[13px] outline-none focus:border-navy/40 focus:bg-card focus:ring-2 focus:ring-navy/30"
+      />
+      {q && <button onClick={() => { setQ(''); setResults([]) }} aria-label="Clear" className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray hover:text-dark-text"><CloseIcon size={14} /></button>}
+      {open && q.trim() && (
+        <div className="absolute left-0 right-0 top-full z-[60] mt-1 max-h-[60vh] overflow-y-auto rounded-xl border border-border bg-card p-1.5 shadow-modal">
+          {results.length === 0 ? (
+            <div className="px-3 py-3 text-center text-[12px] text-gray">No matches</div>
+          ) : results.map((r, i) => (
+            <button key={i} onClick={() => go(r.href)} className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left hover:bg-bdrbg">
+              <span className="w-[58px] shrink-0 text-[10px] font-[800] uppercase tracking-wide text-gray">{r.group}</span>
+              <span className="min-w-0 flex-1 truncate text-[13px] text-dark-text">{r.label}</span>
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// GLOBAL HEADER (every page)
+// ═══════════════════════════════════════════════════════════════════════════════
+
+export function AppHeader({ user, unreadCount = 0 }: { user?: User | null; unreadCount?: number }) {
+  const Bell = unreadCount > 0 ? BellDotIcon : BellIcon
+  return (
+    <header className="sticky top-0 z-40 flex items-center gap-3 border-b border-border bg-card/95 px-4 py-2.5 backdrop-blur supports-[backdrop-filter]:bg-card/80 desktop:px-6">
+      <div className="flex-1"><GlobalSearch /></div>
+
+      {/* User name + role (desktop) */}
+      <Link href="/settings/profile" className="hidden items-center gap-2 rounded-lg px-2 py-1 hover:bg-bdrbg desktop:flex">
+        <Avatar src={user?.avatar_url ?? null} name={user?.name ?? ''} size={30} />
+        <div className="leading-tight">
+          <div className="text-[12px] font-[700] text-dark-text">{user?.name ?? ''}</div>
+          <div className="text-[10px] capitalize text-gray">{user?.role}</div>
+        </div>
+      </Link>
+
+      <Link href="/settings" aria-label="Settings" className="hidden h-9 w-9 items-center justify-center rounded-lg text-gray hover:bg-bdrbg hover:text-navy desktop:flex">
+        <SettingsIcon size={19} />
+      </Link>
+
+      <Link href="/notifications" aria-label={unreadCount > 0 ? `${unreadCount} unread notifications` : 'Notifications'}
+        className="relative flex h-9 w-9 items-center justify-center rounded-lg text-gray hover:bg-bdrbg hover:text-navy">
+        <Bell size={20} className={unreadCount > 0 ? 'text-navy animate-ring' : ''} />
+        {unreadCount > 0 && (
+          <span className="absolute right-1 top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-error px-1 text-[9px] font-[800] text-white">{unreadCount > 9 ? '9+' : unreadCount}</span>
+        )}
+      </Link>
+
+      {/* Avatar → settings (mobile) */}
+      <Link href="/settings" aria-label="Settings & profile" className="desktop:hidden">
+        <Avatar src={user?.avatar_url ?? null} name={user?.name ?? ''} size={30} />
+      </Link>
+    </header>
+  )
+}
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // BOTTOM NAV (mobile)
 // ═══════════════════════════════════════════════════════════════════════════════
 
-interface BottomNavProps {
-  user?: User | null
-  unreadCount?: number
-}
-
-export function BottomNav({ user, unreadCount = 0 }: BottomNavProps) {
+export function BottomNav({ user }: { user?: User | null; unreadCount?: number }) {
   const pathname = usePathname()
-  const navItems = BOTTOM_NAV
   const [moreOpen, setMoreOpen] = useState(false)
   const { canView } = usePermissions()
 
   const role = user?.role ?? 'rep'
   const isManager = ['manager', 'owner'].includes(role)
-  // Hide a route only if its feature is explicitly disabled for this role (fail-open).
   const allowed = (item: NavItem) => { const f = featureForHref(item.href); return !f || canView(f) }
   const inBottom = (href: string) => BOTTOM_NAV.some(b => b.href === href)
-  // Everything not in the 5-slot bottom bar, so phones can reach every route —
-  // including primary pages bumped off the bar (e.g. Today).
+  // Everything not on the bar (Settings + Notifications live in the header now).
   const moreItems: NavItem[] = [
-    ...REP_NAV.filter(i => !inBottom(i.href)),
-    ...TOOLS_NAV.filter(allowed).filter(i => !inBottom(i.href)),
-    ...(isManager ? MANAGER_EXTRA_NAV.filter(allowed) : []),
-    { href: '/notifications', label: 'Notifications', icon: unreadCount > 0 ? BellDotIcon : BellIcon },
-    { href: '/settings', label: 'Settings', icon: SettingsIcon },
+    ...TOP_NAV.filter(i => !inBottom(i.href)),
+    ...REP_SECTIONS.flatMap(s => s.items).filter(allowed).filter(i => !inBottom(i.href)),
+    ...(isManager ? MANAGER_ITEMS.filter(allowed) : []),
   ]
-  // "More" reads as active whenever the current route lives in the sheet.
-  const moreActive = moreItems.some(i => pathname === i.href || pathname.startsWith(i.href + '/'))
+  const moreActive = moreItems.some(i => isActiveHref(pathname, i.href))
 
   return (
     <>
-      {/* Slide-up "More" sheet */}
       {moreOpen && (
         <div className="fixed inset-0 z-nav desktop:hidden" aria-modal="true" role="dialog">
-          <button
-            aria-label="Close menu"
-            onClick={() => setMoreOpen(false)}
-            className="absolute inset-0 bg-dark-text/40"
-          />
-          <div className="absolute bottom-[60px] left-0 right-0 rounded-t-2xl bg-card border-t border-border p-3 pb-[max(12px,env(safe-area-inset-bottom))] shadow-modal">
+          <button aria-label="Close menu" onClick={() => setMoreOpen(false)} className="absolute inset-0 bg-dark-text/40" />
+          <div className="absolute bottom-[60px] left-0 right-0 max-h-[70vh] overflow-y-auto rounded-t-2xl border-t border-border bg-card p-3 pb-[max(12px,env(safe-area-inset-bottom))] shadow-modal">
             <div className="mx-auto mb-2 h-1 w-10 rounded-full bg-border" />
             <div className="grid grid-cols-4 gap-1">
               {moreItems.map(item => {
-                const isActive = pathname === item.href || pathname.startsWith(item.href + '/')
+                const isActive = isActiveHref(pathname, item.href)
                 const Icon = item.icon
                 return (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    onClick={() => setMoreOpen(false)}
-                    className={cn(
-                      'flex flex-col items-center justify-center gap-1 rounded-lg px-1 py-3 text-center',
-                      isActive ? 'bg-teal/8 text-teal' : 'text-mid-text hover:bg-bdrbg'
-                    )}
-                    aria-current={isActive ? 'page' : undefined}
-                  >
+                  <Link key={item.href} href={item.href} onClick={() => setMoreOpen(false)}
+                    className={cn('flex flex-col items-center justify-center gap-1 rounded-lg px-1 py-3 text-center', isActive ? 'bg-teal/8 text-teal' : 'text-mid-text hover:bg-bdrbg')}
+                    aria-current={isActive ? 'page' : undefined}>
                     <Icon size={22} />
                     <span className="text-[10px] font-[700] leading-tight">{item.label}</span>
                   </Link>
@@ -171,73 +233,24 @@ export function BottomNav({ user, unreadCount = 0 }: BottomNavProps) {
         </div>
       )}
 
-      <nav
-        className={cn(
-          'fixed bottom-0 left-0 right-0 z-nav',
-          'bg-card border-t border-border',
-          'flex items-center justify-around',
-          'px-2 pb-safe pt-1',
-          'h-[60px] pb-[max(8px,env(safe-area-inset-bottom))]',
-          // Mobile only — desktop uses the side navigation
-          'desktop:hidden'
-        )}
-        aria-label="Main navigation"
-      >
-        {navItems.map((item) => {
-          const isActive = pathname === item.href || pathname.startsWith(item.href + '/')
+      <nav className={cn('fixed bottom-0 left-0 right-0 z-nav bg-card border-t border-border flex items-center justify-around px-2 pb-safe pt-1 h-[60px] pb-[max(8px,env(safe-area-inset-bottom))] desktop:hidden')} aria-label="Main navigation">
+        {BOTTOM_NAV.map(item => {
+          const isActive = isActiveHref(pathname, item.href)
           const Icon = item.icon
-
           return (
-            <Link
-              key={item.href}
-              href={item.href}
-              onClick={() => setMoreOpen(false)}
-              className={cn(
-                'flex flex-col items-center justify-center gap-0.5',
-                'min-w-[44px] min-h-[44px] px-3 rounded-lg',
-                'transition-colors duration-[150ms]',
-                isActive ? 'text-teal' : 'text-gray hover:text-navy'
-              )}
-              aria-current={isActive ? 'page' : undefined}
-            >
+            <Link key={item.href} href={item.href} onClick={() => setMoreOpen(false)}
+              className={cn('flex flex-col items-center justify-center gap-0.5 min-w-[44px] min-h-[44px] px-3 rounded-lg transition-colors duration-[150ms]', isActive ? 'text-teal' : 'text-gray hover:text-navy')}
+              aria-current={isActive ? 'page' : undefined}>
               <Icon size={22} className={cn('transition-transform duration-200', isActive && 'scale-110')} />
-              <span
-                className={cn(
-                  'text-[10px] font-[700] uppercase tracking-[0.05em]',
-                  isActive ? 'text-teal' : 'text-gray'
-                )}
-              >
-                {item.shortLabel ?? item.label}
-              </span>
-              {/* Active indicator dot */}
-              {isActive && (
-                <span className="absolute -bottom-0.5 h-1 w-1 animate-pop rounded-full bg-teal" />
-              )}
+              <span className={cn('text-[10px] font-[700] uppercase tracking-[0.05em]', isActive ? 'text-teal' : 'text-gray')}>{item.shortLabel ?? item.label}</span>
+              {isActive && <span className="absolute -bottom-0.5 h-1 w-1 animate-pop rounded-full bg-teal" />}
             </Link>
           )
         })}
-
-        {/* More — opens the sheet with every other route */}
-        <button
-          onClick={() => setMoreOpen(o => !o)}
-          aria-label="More"
-          aria-expanded={moreOpen}
-          className={cn(
-            'flex flex-col items-center justify-center gap-0.5',
-            'min-w-[44px] min-h-[44px] px-3 rounded-lg',
-            'transition-colors duration-[150ms]',
-            moreOpen || moreActive ? 'text-teal' : 'text-gray hover:text-navy'
-          )}
-        >
+        <button onClick={() => setMoreOpen(o => !o)} aria-label="More" aria-expanded={moreOpen}
+          className={cn('flex flex-col items-center justify-center gap-0.5 min-w-[44px] min-h-[44px] px-3 rounded-lg transition-colors duration-[150ms]', moreOpen || moreActive ? 'text-teal' : 'text-gray hover:text-navy')}>
           <MoreIcon size={22} />
-          <span
-            className={cn(
-              'text-[10px] font-[700] uppercase tracking-[0.05em]',
-              moreOpen || moreActive ? 'text-teal' : 'text-gray'
-            )}
-          >
-            More
-          </span>
+          <span className={cn('text-[10px] font-[700] uppercase tracking-[0.05em]', moreOpen || moreActive ? 'text-teal' : 'text-gray')}>More</span>
         </button>
       </nav>
     </>
@@ -245,172 +258,85 @@ export function BottomNav({ user, unreadCount = 0 }: BottomNavProps) {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// SIDEBAR (desktop)
+// SIDEBAR (desktop) — accordion sections
 // ═══════════════════════════════════════════════════════════════════════════════
 
-interface SidebarProps {
-  user?: User | null
-  unreadCount?: number
-}
-
-export function Sidebar({ user, unreadCount = 0 }: SidebarProps) {
+export function Sidebar({ user }: { user?: User | null; unreadCount?: number }) {
   const pathname = usePathname()
   const role = user?.role ?? 'rep'
   const isManager = ['manager', 'owner'].includes(role)
   const { canView } = usePermissions()
-
-  // Hide a route only if its feature is explicitly disabled for this role (fail-open).
   const allowed = (item: NavItem) => { const f = featureForHref(item.href); return !f || canView(f) }
-  const repItems = REP_NAV
-  const toolGroups = TOOLS_GROUPS
-    .map(g => ({ title: g.title, items: g.items.filter(allowed) }))
-    .filter(g => g.items.length > 0)
-  const managerItems = (isManager ? MANAGER_EXTRA_NAV : []).filter(allowed)
+
+  const sections = [
+    ...REP_SECTIONS.map(s => ({ title: s.title, items: s.items.filter(allowed) })),
+    ...(isManager ? [{ title: 'Manager', items: MANAGER_ITEMS.filter(allowed) }] : []),
+  ].filter(s => s.items.length > 0)
+
+  // Accordion: one open at a time; default collapsed but auto-open the section
+  // that contains the current route so the active page is always visible.
+  const sectionOf = (path: string) => sections.find(s => s.items.some(i => isActiveHref(path, i.href)))?.title ?? null
+  const [open, setOpen] = useState<string | null>(null)
+  useEffect(() => { const s = sectionOf(pathname); if (s) setOpen(s) }, [pathname]) // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
-    <aside
-      className={cn(
-        'fixed left-0 top-0 bottom-0 z-sidebar',
-        'w-[240px] bg-card border-r border-border',
-        'flex flex-col',
-        'hidden desktop:flex'
-      )}
-    >
-      {/* Logo / Brand */}
-      <div className="px-5 py-5 border-b border-border">
-        <div className="flex items-center gap-3">
+    <aside className={cn('fixed left-0 top-0 bottom-0 z-sidebar w-[240px] bg-card border-r border-border flex flex-col hidden desktop:flex')}>
+      <div className="px-5 py-4 border-b border-border">
+        <Link href="/home" className="flex items-center gap-3">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src="/consumerdirect-mark.svg" alt="ConsumerDirect" className="w-9 h-9 shrink-0" />
           <div className="leading-tight">
             <span className="block text-[15px] font-[900] text-navy">BDR Hub</span>
             <span className="block text-[11px] font-[700] text-gray uppercase tracking-[0.08em]">ConsumerDirect</span>
           </div>
-        </div>
-      </div>
-
-      {/* User info */}
-      <div className="px-4 py-3 border-b border-border">
-        <Link
-          href="/settings/profile"
-          className="flex items-center gap-3 p-2 rounded-lg hover:bg-bdrbg transition-colors group"
-        >
-          <Avatar src={user?.avatar_url ?? null} name={user?.name ?? ''} size={36} />
-          <div className="flex-1 min-w-0">
-            <p className="text-[13px] font-[700] text-dark-text truncate">{user?.name ?? ''}</p>
-            <p className="text-[11px] text-gray capitalize">{user?.role}</p>
-          </div>
         </Link>
       </div>
 
-      {/* Main nav */}
       <div className="flex-1 overflow-y-auto py-3 px-3">
-        <NavSection items={repItems} pathname={pathname} />
+        {/* Always-visible quick destinations */}
+        <div className="space-y-0.5">
+          {TOP_NAV.map(item => <SidebarItem key={item.href} item={item} pathname={pathname} />)}
+        </div>
 
-        {isManager && (
-          <>
-            <div className="mt-4 mb-2 px-3">
-              <span className="label text-[10px]">Manager</span>
-            </div>
-            <NavSection items={managerItems} pathname={pathname} />
-          </>
-        )}
-
-        {/* Tools — grouped by Sell / Plan / Grow */}
-        {toolGroups.map(g => (
-          <div key={g.title}>
-            <div className="mt-4 mb-2 px-3">
-              <span className="label text-[10px]">{g.title}</span>
-            </div>
-            <NavSection items={g.items} pathname={pathname} />
-          </div>
-        ))}
-      </div>
-
-      {/* Bottom: notifications + settings */}
-      <div className="border-t border-border p-3 space-y-1">
-        <SidebarItem
-          href="/notifications"
-          label="Notifications"
-          icon={unreadCount > 0 ? BellDotIcon : BellIcon}
-          pathname={pathname}
-          badge={unreadCount > 0 ? unreadCount : undefined}
-        />
-        <SidebarItem
-          href="/settings"
-          label="Settings"
-          icon={SettingsIcon}
-          pathname={pathname}
-        />
+        {/* Accordion sections */}
+        <div className="mt-3 space-y-1">
+          {sections.map(s => {
+            const isOpen = open === s.title
+            const hasActive = s.items.some(i => isActiveHref(pathname, i.href))
+            return (
+              <div key={s.title}>
+                <button onClick={() => setOpen(o => o === s.title ? null : s.title)} aria-expanded={isOpen}
+                  className={cn('flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left transition-colors',
+                    hasActive ? 'text-navy' : 'text-mid-text hover:bg-bdrbg')}>
+                  <span className="flex-1 text-[11px] font-[800] uppercase tracking-[0.08em]">{s.title}</span>
+                  {hasActive && !isOpen && <span className="h-1.5 w-1.5 rounded-full bg-teal" />}
+                  <ChevronDownIcon size={15} className={cn('text-gray transition-transform', isOpen && 'rotate-180')} />
+                </button>
+                {isOpen && (
+                  <div className="mt-0.5 space-y-0.5">
+                    {s.items.map(item => <SidebarItem key={item.href} item={item} pathname={pathname} />)}
+                  </div>
+                )}
+              </div>
+            )
+          })}
+        </div>
       </div>
     </aside>
   )
 }
 
-// ── Sidebar nav item ──────────────────────────────────────────────────────────
-
-function SidebarItem({
-  href,
-  label,
-  icon: Icon,
-  pathname,
-  badge,
-}: {
-  href: string
-  label: string
-  icon: React.ComponentType<{ size?: number; className?: string }>
-  pathname: string
-  badge?: number
-}) {
-  const isActive = pathname === href || pathname.startsWith(href + '/')
-
+function SidebarItem({ item, pathname }: { item: NavItem; pathname: string }) {
+  const Icon = item.icon
+  const isActive = isActiveHref(pathname, item.href)
   return (
-    <Link
-      href={href}
-      className={cn(
-        'flex items-center gap-3 px-3 py-2.5 rounded-lg',
-        'min-h-[44px] w-full',
-        'text-[14px] font-[600]',
-        'transition-all duration-[150ms]',
-        isActive
-          ? 'bg-teal/8 text-teal font-[700]'
-          : 'text-mid-text hover:bg-bdrbg hover:text-navy'
-      )}
-      aria-current={isActive ? 'page' : undefined}
-    >
-      {/* Left accent bar */}
-      <div
-        className={cn(
-          'absolute left-3 w-[3px] h-5 rounded-full transition-all',
-          isActive ? 'bg-teal opacity-100' : 'opacity-0'
-        )}
-      />
+    <Link href={item.href}
+      className={cn('relative flex items-center gap-3 px-3 py-2.5 rounded-lg min-h-[42px] w-full text-[14px] font-[600] transition-all duration-[150ms]',
+        isActive ? 'bg-teal/8 text-teal font-[700]' : 'text-mid-text hover:bg-bdrbg hover:text-navy')}
+      aria-current={isActive ? 'page' : undefined}>
+      <div className={cn('absolute left-3 w-[3px] h-5 rounded-full transition-all', isActive ? 'bg-teal opacity-100' : 'opacity-0')} />
       <Icon size={18} />
-      <span className="flex-1">{label}</span>
-      {badge !== undefined && badge > 0 && (
-        <span
-          className="ml-auto flex items-center justify-center
-                     min-w-[20px] h-5 px-1.5 rounded-full
-                     bg-teal text-white text-[10px] font-[800]"
-        >
-          {badge > 99 ? '99+' : badge}
-        </span>
-      )}
+      <span className="flex-1">{item.label}</span>
     </Link>
-  )
-}
-
-function NavSection({ items, pathname }: { items: NavItem[]; pathname: string }) {
-  return (
-    <div className="space-y-0.5">
-      {items.map(item => (
-        <SidebarItem
-          key={item.href}
-          href={item.href}
-          label={item.label}
-          icon={item.icon}
-          pathname={pathname}
-        />
-      ))}
-    </div>
   )
 }

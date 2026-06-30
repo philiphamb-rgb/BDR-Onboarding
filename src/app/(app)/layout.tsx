@@ -1,5 +1,5 @@
 // @ts-nocheck
-import { BottomNav, Sidebar } from '@/components/nav'
+import { BottomNav, Sidebar, AppHeader } from '@/components/nav'
 import { BeltWatcher } from '@/components/gamification'
 import { CoachDock } from '@/components/CoachDock'
 import { ServiceWorkerRegister } from '@/components/ServiceWorkerRegister'
@@ -44,7 +44,9 @@ export default async function AppLayout({ children }: { children: React.ReactNod
 
       {/* Main content */}
       <main className="flex-1 desktop:ml-[240px] min-h-screen pb-[calc(72px+env(safe-area-inset-bottom))] desktop:pb-0">
-        <div className="max-w-3xl mx-auto px-4 py-6 desktop:max-w-5xl desktop:px-10 desktop:py-10">
+        {/* Global header — search + profile + settings + notifications, every page */}
+        <AppHeader user={user} unreadCount={unreadCount} />
+        <div className="max-w-3xl mx-auto px-4 py-5 desktop:max-w-5xl desktop:px-10 desktop:py-8">
           {children}
         </div>
       </main>

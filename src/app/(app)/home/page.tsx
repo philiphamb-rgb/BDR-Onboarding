@@ -250,20 +250,10 @@ export default function HomePage() {
 
   return (
     <div className="space-y-4 stagger-rise">
-      {/* Header */}
-      <div className="flex items-center justify-between mb-2">
-        <div>
-          <p className="text-sm text-gray">{greeting()},</p>
-          <h1 className="text-h1 text-dark-text">{userName || 'BDR'}</h1>
-        </div>
-        <Link href="/notifications" className="relative p-2" aria-label={unread > 0 ? `${unread} unread notifications` : 'Notifications'}>
-          <svg className={cn('h-6 w-6', unread > 0 ? 'text-navy animate-ring' : 'text-gray')} fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-          </svg>
-          {unread > 0 && (
-            <span className="absolute right-1 top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-error px-1 text-[9px] font-[800] text-white">{unread > 9 ? '9+' : unread}</span>
-          )}
-        </Link>
+      {/* Greeting */}
+      <div className="mb-2">
+        <p className="text-sm text-gray">{greeting()},</p>
+        <h1 className="text-h1 text-dark-text">{userName || 'BDR'}</h1>
       </div>
 
       {/* Shift first — the very first thing each day, until it's set (or defaulted) */}
