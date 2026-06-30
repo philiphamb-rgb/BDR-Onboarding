@@ -64,7 +64,9 @@ const nextConfig = {
       source: '/(.*)',
       headers: [
         { key: 'X-Content-Type-Options',   value: 'nosniff' },
-        { key: 'X-Frame-Options',           value: 'DENY' },
+        // SAMEORIGIN (not DENY) so the app can embed its own same-origin tools
+        // (e.g. the income calculator iframe) while still blocking cross-origin clickjacking.
+        { key: 'X-Frame-Options',           value: 'SAMEORIGIN' },
         { key: 'X-XSS-Protection',          value: '1; mode=block' },
         { key: 'Referrer-Policy',           value: 'strict-origin-when-cross-origin' },
         {
