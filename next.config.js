@@ -1,3 +1,16 @@
+const fs = require('fs')
+const path = require('path')
+
+// Per-deploy build id (git sha on Vercel, else a build timestamp). It's written
+// to a static file the client polls to detect when a new version has shipped,
+// and baked into the client bundle (NEXT_PUBLIC_BUILD_ID) so the running tab
+// knows its own version. Mismatch → the "new version available" refresh banner.
+const BUILD_ID = (process.env.VERCEL_GIT_COMMIT_SHA || '').slice(0, 7) || String(Date.now())
+try {
+  fs.mkdirSync(path.join(__dirname, 'public'), { recursive: true })
+  fs.writeFileSync(path.join(__dirname, 'public', 'version.json'), JSON.stringify({ id: BUILD_ID, released: new Date().toISOString() }))
+} catch (e) { /* non-fatal: banner just won't trigger */ }
+
 /** @type {import('next').NextConfig} */
 const withPWA = require('next-pwa')({
   dest: 'public',
@@ -47,6 +60,7 @@ const withPWA = require('next-pwa')({
 const nextConfig = {
   reactStrictMode: true,
   swcMinify: true,
+  env: { NEXT_PUBLIC_BUILD_ID: BUILD_ID },
   images: {
     remotePatterns: [
       {

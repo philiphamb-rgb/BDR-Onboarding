@@ -4,6 +4,8 @@ import { BeltWatcher } from '@/components/gamification'
 import { CoachDock } from '@/components/CoachDock'
 import { ServiceWorkerRegister } from '@/components/ServiceWorkerRegister'
 import { OfflineBanner } from '@/lib/hooks/OfflineBanner'
+import { UpdateBanner } from '@/components/UpdateBanner'
+import { ReleaseNotesWizard } from '@/components/ReleaseNotesWizard'
 import { createClient } from '@/lib/supabase/server'
 
 export const dynamic = 'force-dynamic'
@@ -38,6 +40,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   return (
     <div className="flex min-h-screen bg-bdrbg">
       <OfflineBanner />
+      <UpdateBanner />
 
       {/* Desktop side navigation (back-office style) */}
       <Sidebar user={user} unreadCount={unreadCount} />
@@ -62,6 +65,9 @@ export default async function AppLayout({ children }: { children: React.ReactNod
 
       {/* Registers the push-only service worker (Web Push + PWA) */}
       <ServiceWorkerRegister />
+
+      {/* "What's new" walkthrough — auto-opens once per release */}
+      <ReleaseNotesWizard />
     </div>
   )
 }

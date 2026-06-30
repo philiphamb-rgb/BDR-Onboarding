@@ -16,6 +16,7 @@ import { goalStats, buildActions } from '@/lib/priorityEngine'
 import { autoPlan, fmtEst } from '@/lib/triageEngine'
 import { stageMeta } from '@/lib/partnerChecklist'
 import { askCoach } from '@/lib/coachBus'
+import { openReleaseNotes, APP_VERSION } from '@/lib/releaseNotes'
 import { Belt3D } from '@/components/Belt3D'
 import { GoalCockpit } from '@/components/GoalCockpit'
 import { CountUp } from '@/components/CountUp'
@@ -598,9 +599,9 @@ export default function HomePage() {
         </Card>
       )}
 
-      <p className="text-center text-[11px] text-gray pt-2">
-        BDR Hub · Version 2.0.0
-      </p>
+      <button onClick={openReleaseNotes} className="block w-full pt-2 text-center text-[11px] text-gray hover:text-navy">
+        BDR Hub · Version {APP_VERSION} · <span className="font-[700] underline-offset-2 hover:underline">What&apos;s new</span>
+      </button>
 
       <Tour tourKey="home" steps={HOME_TOUR} />
     </div>

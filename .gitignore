@@ -36,3 +36,6 @@ yarn-debug.log*
 yarn-error.log*
 .idea/
 .vscode/
+
+# Generated per-build by next.config.js
+public/version.json
