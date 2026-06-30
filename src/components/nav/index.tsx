@@ -28,6 +28,7 @@ import {
   CoinIcon,
   ChecklistIcon,
   ShieldIcon,
+  DocumentIcon,
 } from '@/components/icons'
 import type { User } from '@/types/database'
 import { Avatar } from '@/components/ui'
@@ -76,7 +77,8 @@ const TOOLS_GROUPS: { title: string; items: NavItem[] }[] = [
     { href: '/calculator',  label: 'Income Calculator', icon: CoinIcon },
   ] },
   { title: 'Plan', items: [
-    { href: '/schedule',    label: 'Time Blocks',     icon: ClockIcon },
+    { href: '/notes',       label: 'Notes',             icon: DocumentIcon },
+    { href: '/schedule',    label: 'Time Blocks',       icon: ClockIcon },
     { href: '/tasks',       label: 'Tasks',             icon: ChecklistIcon },
   ] },
   { title: 'Grow', items: [

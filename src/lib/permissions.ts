@@ -34,6 +34,7 @@ export const FEATURES: Feature[] = [
   { key: 'partners',     label: 'Partners',        group: 'Sell',     scope: 'rep', href: '/partners' },
   { key: 'analytics',    label: 'Analytics',       group: 'Sell',     scope: 'rep', href: '/analytics' },
   { key: 'calculator',   label: 'Income Calculator', group: 'Sell',   scope: 'rep', href: '/calculator' },
+  { key: 'notes',        label: 'Notes',           group: 'Focus',    scope: 'rep', href: '/notes' },
   { key: 'time_blocking',label: 'Time Blocks',   group: 'Focus',    scope: 'rep', href: '/schedule' },
   { key: 'tasks',        label: 'Tasks',           group: 'Focus',    scope: 'rep', href: '/tasks' },
   { key: 'wins',         label: 'Wins',            group: 'Engage',   scope: 'rep', href: '/wins' },
