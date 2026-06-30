@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { useProgress, useHabits } from '@/lib/hooks/useProgress'
 import { Card, ProgressBar, Badge, Skeleton, Button, toast } from '@/components/ui'
-import { FlameIcon, TrophyIcon, XpIcon, BeltIcon, ChartRisingIcon, PhoneIcon, ChecklistIcon, TargetIcon, ArrowRightIcon, LightningIcon, BookIcon, CoachIcon, HandshakeIcon, ClockIcon, CheckIcon } from '@/components/icons'
+import { FlameIcon, TrophyIcon, XpIcon, BeltIcon, ChartRisingIcon, PhoneIcon, ChecklistIcon, TargetIcon, ArrowRightIcon, LightningIcon, BookIcon, CoachIcon, HandshakeIcon, ClockIcon, CheckIcon, CoinIcon } from '@/components/icons'
 import { cn, formatXP, pluralize } from '@/lib/utils'
 import { currentBlock, fmtClock } from '@/lib/schedule'
 import { Tour } from '@/components/tour'
@@ -281,36 +281,30 @@ export default function HomePage() {
         </Link>
       )}
 
-      {/* Continue your path — the single next best action */}
-      {nextStep && (
-        <Card data-tour="home-path" variant={nextStep.type === 'done' ? 'completed' : 'active'}>
-          <div className="flex items-center gap-2 mb-1">
-            <LightningIcon size={15} className="text-teal" />
-            <span className="text-label text-teal">{nextStep.type === 'done' ? 'Curriculum complete' : 'Continue your path'}</span>
-          </div>
-          {nextStep.type === 'done' ? (
-            <>
-              <p className="text-[14px] font-[700] text-dark-text">You've finished every module. Outstanding.</p>
-              <p className="text-[12px] text-gray mt-0.5 mb-3">Claim your certificate, then keep your edge sharp in the Drill.</p>
-              <div className="flex gap-2">
-                <Link href="/certificate" className="flex-1"><Button variant="conversion" fullWidth icon={<TrophyIcon size={18} />} iconPosition="right">Certificate</Button></Link>
-                <Link href="/drill" className="flex-1"><Button variant="ghost" fullWidth icon={<TargetIcon size={18} />} iconPosition="right">Drill</Button></Link>
-              </div>
-            </>
-          ) : (
-            <>
-              <p className="text-[12px] text-gray">Module {nextStep.moduleOrder} · {nextStep.moduleTitle}</p>
-              <p className="text-[15px] font-[800] text-dark-text mt-0.5 mb-3">
-                {nextStep.type === 'quiz' ? 'Take the ' : ''}{nextStep.title}
-              </p>
-              <Link href={nextStep.href}>
-                <Button variant="conversion" fullWidth icon={<ArrowRightIcon size={18} />} iconPosition="right">
-                  {nextStep.type === 'quiz' ? 'Start quiz' : 'Continue learning'}
-                </Button>
-              </Link>
-            </>
-          )}
-        </Card>
+      {/* Continue your path — compressed to a single scannable row */}
+      {nextStep && nextStep.type !== 'done' && (
+        <Link href={nextStep.href}>
+          <Card hover data-tour="home-path" className="flex items-center gap-3 !p-3">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-teal/10 text-teal"><LightningIcon size={18} /></div>
+            <div className="min-w-0 flex-1">
+              <div className="label text-teal">Next up · Module {nextStep.moduleOrder}</div>
+              <div className="truncate text-[14px] font-[700] text-dark-text">{nextStep.type === 'quiz' ? `${nextStep.moduleTitle} Quiz` : nextStep.title}</div>
+            </div>
+            <span className="shrink-0 text-[12px] font-[700] text-teal">{nextStep.type === 'quiz' ? 'Start' : 'Continue'} →</span>
+          </Card>
+        </Link>
+      )}
+      {nextStep?.type === 'done' && (
+        <Link href="/certificate">
+          <Card hover data-tour="home-path" variant="completed" className="flex items-center gap-3 !p-3">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-success/10 text-success"><TrophyIcon size={18} /></div>
+            <div className="min-w-0 flex-1">
+              <div className="label text-success">Curriculum complete</div>
+              <div className="truncate text-[14px] font-[700] text-dark-text">Claim your certificate</div>
+            </div>
+            <span className="shrink-0 text-[12px] font-[700] text-teal">Open →</span>
+          </Card>
+        </Link>
       )}
 
       {/* Today Summary */}
@@ -352,24 +346,42 @@ export default function HomePage() {
         </div>
       </Card>
 
-      {/* Quick Actions */}
-      <div className="grid grid-cols-2 gap-3">
-        {[
-          { href: '/partners',        Icon: HandshakeIcon, label: 'Partners',  sub: 'Onboarding checklist',    gradient: 'from-teal to-navy' },
-          { href: '/today',          Icon: ChecklistIcon, label: 'Check In',  sub: 'Log today\'s habits',     gradient: 'from-teal to-teal-dark' },
-          { href: '/wins?action=new', Icon: TrophyIcon,    label: 'Log Win',   sub: 'Call · Demo · Deal',      gradient: 'from-navy to-navy-dark' },
-          { href: '/train',           Icon: BookIcon,      label: 'Learning Center', sub: 'Continue learning',     gradient: 'from-purple-600 to-purple-800' },
-          { href: '/coach',           Icon: CoachIcon,     label: 'Coach AI',  sub: 'Get personalized tips',   gradient: 'from-gold to-orange-500' },
-        ].map(a => (
-          <Link key={a.href} href={a.href}
-            className={cn('bg-gradient-to-br rounded-2xl p-4 flex flex-col gap-2 shadow-card active:scale-95 transition-transform', a.gradient)}>
-            <div className="w-8 h-8 bg-white/20 rounded-xl flex items-center justify-center"><a.Icon size={18} className="text-white" /></div>
-            <div>
-              <div className="text-sm font-bold text-white">{a.label}</div>
-              <div className="text-xs text-white/70">{a.sub}</div>
+      {/* Quick actions — a featured AI-forward Coach button + distinct action tiles */}
+      <div className="space-y-3">
+        <Link href="/coach" className="block">
+          <div className="relative overflow-hidden rounded-2xl bg-gradient-hero p-4 shadow-card transition-transform active:scale-[0.99]">
+            <div className="flex items-center gap-3">
+              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white/15"><CoachIcon size={22} className="text-white" /></div>
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-1.5">
+                  <span className="text-[15px] font-[800] text-white">Ask your AI Coach</span>
+                  <LightningIcon size={14} className="text-white/80" />
+                </div>
+                <div className="text-[12px] text-white/75">Personalized tips on hitting your number</div>
+              </div>
+              <ArrowRightIcon size={18} className="shrink-0 text-white/80" />
             </div>
-          </Link>
-        ))}
+          </div>
+        </Link>
+
+        <div className="grid grid-cols-2 gap-3">
+          {[
+            { href: '/partners',        Icon: HandshakeIcon, label: 'Partners',        sub: 'Work your pipeline', tint: 'bg-teal/10 text-teal',       accent: '#00C2B2' },
+            { href: '/train',           Icon: BookIcon,      label: 'Learning Center', sub: 'Continue learning',  tint: 'bg-navy/10 text-navy',       accent: '#003087' },
+            { href: '/wins?action=new', Icon: TrophyIcon,    label: 'Log a Win',       sub: 'Call · Demo · Deal', tint: 'bg-gold/10 text-gold',       accent: '#CA8A04' },
+            { href: '/calculator',      Icon: CoinIcon,      label: 'Income Calc',     sub: 'Plan your goal',     tint: 'bg-success/10 text-success', accent: '#16A34A' },
+          ].map(a => (
+            <Link key={a.href} href={a.href}
+              className="flex items-center gap-3 rounded-xl border border-l-4 border-border bg-card p-3 shadow-card transition-transform active:scale-95"
+              style={{ borderLeftColor: a.accent }}>
+              <div className={cn('flex h-9 w-9 shrink-0 items-center justify-center rounded-xl', a.tint)}><a.Icon size={18} /></div>
+              <div className="min-w-0">
+                <div className="text-[13px] font-[800] leading-tight text-dark-text">{a.label}</div>
+                <div className="text-[11px] leading-tight text-gray">{a.sub}</div>
+              </div>
+            </Link>
+          ))}
+        </div>
       </div>
 
       {/* Leaderboard preview */}
