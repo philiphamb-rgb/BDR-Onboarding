@@ -5,37 +5,103 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import { useProgress, useHabits } from '@/lib/hooks/useProgress'
-import { Card, Button, ProgressBar, Skeleton } from '@/components/ui'
-import { CheckIcon, FlameIcon, XpIcon, PhoneIcon, TargetIcon, HandshakeIcon, ClockIcon, ArrowRightIcon, LightningIcon } from '@/components/icons'
+import { Card, ProgressBar, Skeleton } from '@/components/ui'
+import { CheckIcon, FlameIcon, XpIcon, PhoneIcon, TargetIcon, HandshakeIcon, ClockIcon, ArrowRightIcon, LightningIcon, CoachIcon } from '@/components/icons'
 import { cn, formatXP, formatDateShort } from '@/lib/utils'
 import { toast } from '@/components/ui'
 import { AiTip } from '@/components/AiTip'
 import { askCoach } from '@/lib/coachBus'
+import { GoalRing } from '@/components/GoalRing'
+import { CountUp } from '@/components/CountUp'
+import { goalStats, strategyLine, buildActions } from '@/lib/priorityEngine'
+import { autoPlan, fmtEst } from '@/lib/triageEngine'
+import { stageMeta } from '@/lib/partnerChecklist'
+import { OPTIMIZED_DAY, parseHM } from '@/lib/schedule'
 
 export default function TodayPage() {
   const supabase = createClient()
   const [userId, setUserId] = useState<string>()
   const [completing, setCompleting] = useState<string | null>(null)
-  const [planned, setPlanned] = useState<any[]>([])     // tasks scheduled into today's blocks
-  const [unplannedCount, setUnplannedCount] = useState(0)
+  const [tasks, setTasks] = useState<any[]>([])          // all open top-level tasks (the brain)
+  const [partners, setPartners] = useState<any[]>([])
+  const [goal, setGoal] = useState<number | null>(null)
+  const [dealsThisMonth, setDealsThisMonth] = useState(0)
+  const [dayBlocks, setDayBlocks] = useState<any[]>([])
+  const [triageBusy, setTriageBusy] = useState(false)
+  const [doneTaskId, setDoneTaskId] = useState<string | null>(null)
   const { habits, loading: habitsLoading, refresh: refreshHabits } = useHabits(userId)
   const { progress, refresh: refreshProgress } = useProgress(userId)
-  const today = new Date().toISOString().split('T')[0]
+
+  // Local (not UTC) date key so "today" matches the rep's calendar day.
+  const localToday = () => {
+    const d = new Date()
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+  }
+  const today = localToday()
 
   useEffect(() => {
-    supabase.auth.getUser().then(({ data: { user } }) => { if (user) { setUserId(user.id); loadPlan(user.id) } })
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (!user) return
+      setUserId(user.id)
+      loadTasks(user.id)
+      loadDayBlocks(user.id)
+      supabase.from('partner_onboarding').select('id, partner_name, stage, temperature, updated_at').eq('user_id', user.id)
+        .then(({ data }) => setPartners(data ?? []))
+      supabase.from('goals').select('monthly_deal_goal').eq('user_id', user.id).maybeSingle().then(({ data }) => setGoal(data?.monthly_deal_goal ?? null))
+      supabase.from('user_progress').select('deals_this_month').eq('user_id', user.id).single().then(({ data }) => setDealsThisMonth(data?.deals_this_month ?? 0))
+    })
   }, [])
 
-  const loadPlan = async (uid: string) => {
-    const { data } = await supabase.from('tasks').select('id, title, done, estimated_minutes, scheduled_day, scheduled_block')
-      .eq('user_id', uid).is('parent_id', null).or(`done.eq.false,scheduled_day.eq.${today}`)
-    const all = data ?? []
-    setPlanned(all.filter(t => t.scheduled_day === today && t.scheduled_block != null))
-    setUnplannedCount(all.filter(t => !t.done && !(t.scheduled_day === today && t.scheduled_block != null)).length)
+  // All open top-level tasks with the fields the priority engine needs.
+  const loadTasks = async (uid: string) => {
+    const { data } = await supabase.from('tasks')
+      .select('id, title, done, priority, due_date, estimated_minutes, created_at, scheduled_day, scheduled_block, snoozed_until')
+      .eq('user_id', uid).eq('done', false).is('parent_id', null)
+    setTasks(data ?? [])
   }
-  const togglePlanTask = (id: string, done: boolean) => {
-    setPlanned(prev => prev.map(t => t.id === id ? { ...t, done } : t))
-    supabase.from('tasks').update({ done, updated_at: new Date().toISOString() }).eq('id', id).then(() => {})
+  // Today's schedulable blocks (template + overrides + custom) for on-Today auto-plan.
+  const loadDayBlocks = async (uid: string) => {
+    const [{ data: u }, { data: rows }] = await Promise.all([
+      supabase.from('users').select('settings').eq('id', uid).single(),
+      supabase.from('schedule_blocks').select('block_key, type, start_min, dur_min').eq('user_id', uid).eq('day', localToday()),
+    ])
+    const start = (u?.settings as any)?.shift || '08:00'
+    const base = parseHM(start)
+    const ov: Record<string, any> = {}; const customs: any[] = []
+    for (const r of rows ?? []) { if (/^\d+$/.test(r.block_key)) ov[r.block_key] = r; else customs.push({ key: r.block_key, type: r.type, start: r.start_min, dur: r.dur_min }) }
+    const template = OPTIMIZED_DAY.map((b, i) => ({ key: String(i), type: b.type, start: ov[i]?.start_min ?? base + b.off, dur: ov[i]?.dur_min ?? b.dur }))
+    const nowMin = new Date().getHours() * 60 + new Date().getMinutes()
+    const slots = [...template, ...customs].filter(b => ['plan', 'focus', 'admin'].includes(b.type))
+      .sort((a, b) => { const ap = (a.start + a.dur) <= nowMin ? 1 : 0, bp = (b.start + b.dur) <= nowMin ? 1 : 0; return ap - bp || a.start - b.start })
+      .map(b => ({ key: b.key, type: b.type, capacity: b.dur }))
+    setDayBlocks(slots)
+  }
+
+  // Auto-triage today: pack open tasks into time blocks by priority.
+  const autoPlanToday = async () => {
+    if (triageBusy || !userId) return
+    setTriageBusy(true)
+    try {
+      const now = new Date()
+      const assign = autoPlan(tasks, dayBlocks, now, { reflow: false })
+      const t = localToday()
+      const updates = tasks.filter(x => assign[x.id] != null && (x.scheduled_day !== t || String(x.scheduled_block) !== String(assign[x.id])))
+      setTasks(prev => prev.map(x => assign[x.id] != null ? { ...x, scheduled_day: t, scheduled_block: String(assign[x.id]) } : x))
+      await Promise.all(updates.map(x => supabase.from('tasks').update({ scheduled_day: t, scheduled_block: String(assign[x.id]), updated_at: new Date().toISOString() }).eq('id', x.id)))
+      const n = Object.keys(assign).length
+      toast.success(n ? `Planned ${n} task${n > 1 ? 's' : ''} into your day` : 'Nothing to plan right now')
+    } finally { setTriageBusy(false) }
+  }
+
+  // Complete a planned task inline — celebrate the check, then clear it from the day.
+  const completeTask = (id: string) => {
+    if (doneTaskId) return
+    setDoneTaskId(id)
+    supabase.from('tasks').update({ done: true, updated_at: new Date().toISOString() }).eq('id', id).then(() => {})
+    setTimeout(() => {
+      setTasks(prev => prev.map(t => t.id === id ? { ...t, done: true } : t))
+      setDoneTaskId(prev => (prev === id ? null : prev))
+    }, 450)
   }
 
   const completeHabit = async (habitId: string, habitLabel: string) => {
@@ -95,6 +161,19 @@ export default function TodayPage() {
     }
   }
 
+  // ── Priority brain: live goal math + the single ranked action list ───────────
+  const nowDate = new Date()
+  const gstats = goalStats(goal, dealsThisMonth, nowDate)
+  const actions = buildActions({ tasks, partners, g: gstats, now: nowDate, stageLabel: (s) => stageMeta(s).label })
+  const focus = actions[0] ?? null
+  const STATUS_LABEL: Record<string, string> = { hit: 'Goal hit 🎯', ahead: 'Ahead of pace', on: 'On track', behind: `${gstats.behind} behind pace`, none: '' }
+
+  // Today's time-blocked tasks (the day's execution list).
+  const planned = tasks.filter(t => t.scheduled_day === today && t.scheduled_block != null)
+  const plannedDone = planned.filter(t => t.done).length
+  const plannedMins = planned.reduce((s, t) => s + (t.estimated_minutes || 30), 0)
+  const unplanned = tasks.filter(t => !t.done && !(t.scheduled_day === today && t.scheduled_block != null))
+
   const completedCount = habits.filter(h => h.completed_today).length
   const totalCount = habits.length
   const completionPct = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0
@@ -113,51 +192,135 @@ export default function TodayPage() {
       </div>
 
       <AiTip id="today-plan" title="Start the day with an AI game plan" prompt="Give me my game plan for today: where I stand, my biggest opportunity, and the top 3 things to do." tryLabel="Get today's game plan">
-        Ask the coach to triage your day from your goal, pipeline, and tasks — then open <span className="font-[700]">Time Blocks</span> and tap Auto-plan to schedule it all.
+        Ask the coach to triage your day from your goal, pipeline, and tasks — then tap <span className="font-[700]">Auto-plan my day</span> to schedule it all into your time blocks.
       </AiTip>
 
-      {/* Today's plan — tasks scheduled into your time blocks */}
+      {/* ── Day cockpit — goal pace + today at a glance ── */}
+      <Card className="overflow-hidden !p-0">
+        <div className="bg-gradient-hero p-4 text-white">
+          <div className="mb-3 flex items-center gap-2">
+            <TargetIcon size={15} className="text-white" />
+            <span className="text-[13px] font-[800]">Where you stand</span>
+            {gstats.hasGoal && <span className="ml-auto rounded-full bg-white/15 px-2 py-0.5 text-[11px] font-[700] tabular-nums">{gstats.daysLeft}d left</span>}
+          </div>
+          {gstats.hasGoal ? (
+            <div className="flex items-center gap-4">
+              <GoalRing pct={gstats.pct} />
+              <div className="min-w-0 flex-1">
+                <div className="text-[20px] font-[800] leading-none"><CountUp value={gstats.done} />/{gstats.goal} <span className="text-[12px] font-[700] text-white/70">deals</span></div>
+                <div className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] text-white/80">
+                  <span className={cn('rounded-full px-2 py-0.5 font-[800]', gstats.status === 'behind' ? 'bg-error/30' : (gstats.status === 'hit' || gstats.status === 'ahead') ? 'bg-success/30' : 'bg-white/15')}>{STATUS_LABEL[gstats.status]}</span>
+                  <span>Projected {gstats.projection}</span>
+                  {gstats.remaining > 0 && <span>· {gstats.perDayNeeded.toFixed(1)}/day to goal</span>}
+                </div>
+              </div>
+            </div>
+          ) : (
+            <Link href="/analytics" className="flex items-center gap-2 rounded-xl bg-white/10 p-3 text-[13px] font-[700] hover:bg-white/15">
+              <TargetIcon size={16} className="shrink-0" /> Set your monthly deal goal to unlock your game plan <ArrowRightIcon size={14} className="ml-auto shrink-0" />
+            </Link>
+          )}
+        </div>
+        {gstats.hasGoal && (
+          <div className="flex items-start gap-2 px-3 py-2.5">
+            <LightningIcon size={14} className="mt-0.5 shrink-0 text-teal" />
+            <p className="text-[12px] leading-relaxed text-mid-text">{strategyLine(gstats)}</p>
+          </div>
+        )}
+        {/* Today at a glance — plan, habits, streak */}
+        <div className="grid grid-cols-3 gap-px border-t border-border bg-border">
+          {[
+            { label: 'Plan', value: `${plannedDone}/${planned.length}`, sub: planned.length ? 'time-blocked' : 'nothing yet', done: planned.length > 0 && plannedDone >= planned.length },
+            { label: 'Habits', value: `${completedCount}/${totalCount}`, sub: allDone ? 'all done' : 'routines', done: allDone },
+            { label: 'Streak', value: String(progress?.current_streak ?? 0), sub: 'days', done: (progress?.current_streak ?? 0) > 0 },
+          ].map(s => (
+            <div key={s.label} className={cn('flex flex-col items-center justify-center bg-card py-2.5', s.done && 'bg-teal/5')}>
+              <div className={cn('text-[16px] font-[800] tabular-nums', s.done ? 'text-teal' : 'text-dark-text')}>{s.value}</div>
+              <div className="text-[10px] font-[700] uppercase tracking-wide text-gray">{s.label}</div>
+              <div className="text-[10px] text-gray">{s.sub}</div>
+            </div>
+          ))}
+        </div>
+      </Card>
+
+      {/* ── Do this now — the single most important action, alive ── */}
+      {focus ? (
+        <Link href={focus.href} className="relative block overflow-hidden rounded-2xl border-2 border-teal bg-card p-4 shadow-card animate-glow transition-transform active:scale-[0.99]">
+          <div className="flex items-center gap-3">
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-gradient-hero text-white animate-bob"><LightningIcon size={22} /></div>
+            <div className="min-w-0 flex-1">
+              <div className="text-label text-teal">Do this now</div>
+              <div className="truncate text-[16px] font-[800] text-dark-text">{focus.title}</div>
+              <div className="truncate text-[12px] text-gray">{focus.why}{focus.est ? ` · ~${fmtEst(focus.est)}` : ''}</div>
+            </div>
+            <span className="flex shrink-0 items-center gap-1 rounded-full bg-teal px-3 py-1.5 text-[12px] font-[800] text-white">{focus.cta} <ArrowRightIcon size={14} className="animate-nudge-x" /></span>
+          </div>
+        </Link>
+      ) : (
+        <div className="rounded-2xl border-2 border-success/40 bg-success/[0.06] p-4">
+          <div className="flex items-center gap-3">
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-success/15 text-success"><CheckIcon size={22} /></div>
+            <div className="min-w-0">
+              <div className="text-[15px] font-[800] text-dark-text">You&apos;re all caught up</div>
+              <div className="text-[12px] text-gray">No urgent actions — prospect, learn, or log a win below.</div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Today's plan — tasks scheduled into your time blocks ── */}
       <Card>
         <div className="mb-3 flex items-center justify-between">
           <h2 className="text-h3 text-dark-text">Today&apos;s plan</h2>
           <Link href="/schedule" className="flex items-center gap-1 text-sm font-medium text-navy">Time Blocks <ArrowRightIcon className="h-4 w-4" /></Link>
         </div>
         {planned.length === 0 ? (
-          <div>
-            <p className="text-sm text-gray">Nothing time-blocked yet{unplannedCount > 0 ? ` — you have ${unplannedCount} unplanned task${unplannedCount > 1 ? 's' : ''}.` : '.'}</p>
-            <div className="mt-3 flex flex-wrap gap-2">
-              <Link href="/schedule" className="flex items-center gap-1.5 rounded-lg bg-navy px-3 py-2 text-[13px] font-[800] text-white"><LightningIcon size={14} /> Plan in Time Blocks</Link>
-              <button onClick={() => askCoach('Give me my game plan for today and tell me what to time-block first.')} className="rounded-lg bg-bdrbg px-3 py-2 text-[13px] font-[700] text-mid-text hover:bg-border/40">Ask the coach</button>
-            </div>
+          <div className="rounded-xl border border-dashed border-border bg-bdrbg p-3">
+            <p className="text-sm text-gray">Nothing time-blocked yet{unplanned.length > 0 ? ` — you have ${unplanned.length} task${unplanned.length > 1 ? 's' : ''} ready to schedule.` : '.'}</p>
           </div>
         ) : (
           <>
             <div className="mb-1.5 flex items-center justify-between text-xs text-gray">
-              <span className="tabular-nums">{planned.filter(t => t.done).length}/{planned.length} done</span>
-              <span className="tabular-nums">{planned.reduce((s, t) => s + (t.estimated_minutes || 30), 0)}m planned</span>
+              <span className="tabular-nums">{plannedDone}/{planned.length} done</span>
+              <span className="tabular-nums">{plannedMins >= 60 ? `${(plannedMins / 60).toFixed(plannedMins % 60 ? 1 : 0)}h` : `${plannedMins}m`} planned</span>
             </div>
-            <ProgressBar value={planned.filter(t => t.done).length} max={planned.length} className="mb-3" />
+            <ProgressBar value={plannedDone} max={planned.length} className="mb-3" />
             <div className="space-y-2">
-              {planned.slice(0, 6).map(t => (
-                <div key={t.id} className="flex items-center gap-3 rounded-xl border border-border bg-bdrbg p-3">
-                  <button onClick={() => togglePlanTask(t.id, !t.done)} aria-label={t.done ? 'Mark incomplete' : 'Complete task'}
-                    className={cn('flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 transition-colors', t.done ? 'border-success bg-success text-white' : 'border-border text-transparent hover:border-teal')}>
-                    <CheckIcon className="h-3 w-3" />
-                  </button>
-                  <span className={cn('flex-1 truncate text-sm font-medium', t.done ? 'text-gray line-through' : 'text-dark-text')}>{t.title}</span>
-                  <span className="shrink-0 text-xs text-gray tabular-nums">{(t.estimated_minutes || 30) >= 60 ? `${(t.estimated_minutes || 30) / 60}h` : `${t.estimated_minutes || 30}m`}</span>
-                </div>
-              ))}
+              {planned.slice(0, 6).map(t => {
+                const isDone = t.done || doneTaskId === t.id
+                return (
+                  <div key={t.id} className={cn('flex items-center gap-3 rounded-xl border bg-bdrbg p-3 transition-all duration-300', isDone ? 'border-teal/40 opacity-70' : 'border-border')}>
+                    <button onClick={() => completeTask(t.id)} disabled={isDone} aria-label={isDone ? 'Completed' : 'Complete task'}
+                      className={cn('flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 transition-colors', isDone ? 'border-teal bg-teal' : 'border-border hover:border-teal hover:bg-teal/10')}>
+                      <CheckIcon className={cn('h-3 w-3', isDone ? 'text-white' : 'text-transparent', doneTaskId === t.id && 'animate-pop')} />
+                    </button>
+                    <span className={cn('flex-1 truncate text-sm font-medium', isDone ? 'text-gray line-through' : 'text-dark-text')}>{t.title}</span>
+                    <span className="shrink-0 text-xs text-gray tabular-nums">{(t.estimated_minutes || 30) >= 60 ? `${(t.estimated_minutes || 30) / 60}h` : `${t.estimated_minutes || 30}m`}</span>
+                  </div>
+                )
+              })}
             </div>
           </>
         )}
+        {/* Auto-triage controls — shared brain with Home */}
+        <div className="mt-3 grid grid-cols-2 gap-2">
+          <button onClick={autoPlanToday} disabled={triageBusy}
+            className="relative flex items-center justify-center gap-1.5 overflow-hidden rounded-lg bg-gradient-hero py-2.5 text-[13px] font-[800] text-white transition-transform active:scale-[0.99] disabled:opacity-60">
+            <span className="pointer-events-none absolute inset-y-0 left-0 w-1/4 animate-shimmer bg-white/25 blur-md" aria-hidden="true" />
+            <LightningIcon size={14} className="relative text-white" /><span className="relative">{triageBusy ? 'Planning…' : 'Auto-plan my day'}</span>
+          </button>
+          <button onClick={() => askCoach('Triage my day from my goal, pipeline, and tasks. What are the top 3 things to do right now, in order, and why?')}
+            className="flex items-center justify-center gap-1.5 rounded-lg border border-navy/30 bg-navy/5 py-2.5 text-[13px] font-[800] text-navy hover:bg-navy/10">
+            <CoachIcon size={14} /> Coach my day
+          </button>
+        </div>
       </Card>
 
       {/* Streak banner */}
       {(progress?.current_streak ?? 0) > 0 && (
         <div className={cn('flex items-center gap-3 px-4 py-3 rounded-2xl border',
           progress?.streakStatus === 'at-risk' ? 'bg-yellow-50 border-yellow-200' : 'bg-orange-50 border-orange-200')}>
-          <FlameIcon className="text-orange-500 w-5 h-5" />
+          <FlameIcon className="text-orange-500 w-5 h-5 animate-bob" />
           <div>
             <span className="text-sm font-bold text-orange-700">{progress?.current_streak} Day Streak</span>
             {progress?.streakStatus === 'at-risk' && (
@@ -167,7 +330,7 @@ export default function TodayPage() {
         </div>
       )}
 
-      {/* Habits */}
+      {/* Daily Habits & routines */}
       <Card variant={allDone ? 'completed' : 'default'}>
         <div className="flex items-center justify-between mb-3">
           <div>

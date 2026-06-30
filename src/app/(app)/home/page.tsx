@@ -11,12 +11,12 @@ import { cn, formatXP, pluralize } from '@/lib/utils'
 import { currentBlock, fmtClock, fmtShift, SHIFT_OPTIONS, OPTIMIZED_DAY, parseHM } from '@/lib/schedule'
 import { Tour } from '@/components/tour'
 import { HOME_TOUR } from '@/lib/tours'
-import { monthPaceFraction } from '@/lib/winsEngine'
 import { goalStats, strategyLine, buildActions } from '@/lib/priorityEngine'
 import { autoPlan, fmtEst } from '@/lib/triageEngine'
 import { stageMeta } from '@/lib/partnerChecklist'
 import { askCoach } from '@/lib/coachBus'
 import { Belt3D } from '@/components/Belt3D'
+import { GoalRing } from '@/components/GoalRing'
 import { CountUp } from '@/components/CountUp'
 import { AiTip } from '@/components/AiTip'
 import Link from 'next/link'
@@ -42,21 +42,6 @@ const BELT_LADDER: { key: string; label: string; day: number; blurb: string }[] 
   { key: 'purple', label: 'Purple', day: 70, blurb: 'Advanced — coaching-level fundamentals.' },
   { key: 'black',  label: 'Black',  day: 90, blurb: 'Mastery — 90+ days of proven performance.' },
 ]
-
-// Compact progress ring for the goal cockpit.
-function GoalRing({ pct }: { pct: number }) {
-  const r = 24, c = 2 * Math.PI * r
-  const off = c * (1 - Math.min(100, Math.max(0, pct)) / 100)
-  return (
-    <div className="relative h-[60px] w-[60px] shrink-0">
-      <svg width="60" height="60" viewBox="0 0 60 60" className="-rotate-90">
-        <circle cx="30" cy="30" r={r} fill="none" stroke="rgba(255,255,255,0.22)" strokeWidth="5" />
-        <circle cx="30" cy="30" r={r} fill="none" stroke="white" strokeWidth="5" strokeLinecap="round" strokeDasharray={c} strokeDashoffset={off} style={{ transition: 'stroke-dashoffset 0.9s ease' }} />
-      </svg>
-      <span className="absolute inset-0 flex items-center justify-center text-[14px] font-[800] text-white">{pct}%</span>
-    </div>
-  )
-}
 
 export default function HomePage() {
   const supabase = createClient()
