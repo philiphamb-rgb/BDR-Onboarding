@@ -589,6 +589,11 @@ export function ProgressBar({
 }: ProgressBarProps) {
   const pct = Math.min(100, Math.max(0, (value / max) * 100))
 
+  // Fill from 0 to the target on mount (and when the value changes) so progress
+  // visibly "draws in". Reduced-motion users effectively see the final width.
+  const [w, setW] = useState(0)
+  useEffect(() => { const t = setTimeout(() => setW(pct), 80); return () => clearTimeout(t) }, [pct])
+
   return (
     <div className={className}>
       {(label || showValue) && (
@@ -607,12 +612,12 @@ export function ProgressBar({
       >
         <div
           className={cn(
-            'h-full rounded-full transition-all duration-500',
+            'h-full rounded-full transition-all duration-700 ease-out',
             animated && 'animate-pulse-teal',
             !color && 'bg-gradient-primary'
           )}
           style={{
-            width: `${pct}%`,
+            width: `${w}%`,
             ...(color ? { backgroundColor: color } : {}),
           }}
         />

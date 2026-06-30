@@ -10,6 +10,7 @@ import { cn, formatXP, formatRelativeTime } from '@/lib/utils'
 import { toast } from '@/components/ui'
 import { Tour } from '@/components/tour'
 import { WINS_TOUR } from '@/lib/tours'
+import { CountUp } from '@/components/CountUp'
 
 const WIN_TYPES = [
   { type: 'call',   label: 'Call',  Icon: PhoneIcon,      xp: 10,  color: 'bg-blue-100 text-blue-700' },
@@ -109,7 +110,7 @@ function WinsContent() {
           return (
             <div key={wt.type} className="bg-white rounded-xl border border-border p-3 text-center shadow-card">
               <div className="mb-1 flex justify-center"><wt.Icon size={20} className="text-navy" /></div>
-              <div className="text-h3 font-bold text-dark-text">{count}</div>
+              <div className="text-h3 font-bold text-dark-text"><CountUp value={count} /></div>
               <div className="text-xs text-gray">{wt.label}s</div>
             </div>
           )
