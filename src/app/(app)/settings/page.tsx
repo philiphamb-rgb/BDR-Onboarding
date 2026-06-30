@@ -11,7 +11,7 @@ import { resetTours } from '@/components/tour'
 import { cn } from '@/lib/utils'
 import { toast } from '@/components/ui'
 
-type Section = 'main' | 'profile' | 'notifications' | 'data' | 'help'
+type Section = 'main' | 'notifications' | 'data' | 'help'
 
 const FAQ_ITEMS = [
   { q: 'How is my belt rank calculated?', a: 'Your belt rank advances automatically based on days since your start date. White Belt: Day 0, Black Belt: Day 90.' },
@@ -27,8 +27,6 @@ export default function SettingsPage() {
   const [section, setSection] = useState<Section>('main')
   const [user, setUser] = useState<any>(null)
   const [authId, setAuthId] = useState<string | null>(null)
-  const [saving, setSaving] = useState(false)
-  const [form, setForm] = useState({ name: '', phone: '' })
   const { permission, subscribed, supported, loading: pushLoading, requestPermission, unsubscribe } = usePushNotifications()
   const [notifPrefs, setNotifPrefs] = useState({
     push_enabled: true, email_enabled: true, habit_reminder: true,
@@ -47,18 +45,8 @@ export default function SettingsPage() {
     const { data } = await supabase.from('users').select('name, email, phone, role, avatar_url, notification_preferences').eq('id', auth.id).single()
     if (data) {
       setUser(data)
-      setForm({ name: data.name ?? '', phone: data.phone ?? '' })
       if (data.notification_preferences) setNotifPrefs(p => ({ ...p, ...data.notification_preferences }))
     }
-  }
-
-  const saveProfile = async () => {
-    setSaving(true)
-    const { data: { user: auth } } = await supabase.auth.getUser()
-    if (!auth) { setSaving(false); return }
-    const { error } = await supabase.from('users').update({ name: form.name, phone: form.phone || null }).eq('id', auth.id)
-    setSaving(false)
-    if (!error) { await loadUser(); toast.success('Profile saved') } else toast.error('Failed to save')
   }
 
   const saveNotifPrefs = async () => {
@@ -157,28 +145,6 @@ export default function SettingsPage() {
         className="w-full flex items-center justify-center gap-2 p-4 bg-error/5 text-error rounded-2xl border border-error/20 font-medium text-sm hover:bg-error/10 transition-colors">
         <LogoutIcon />Sign Out
       </button>
-    </div>
-  )
-
-  if (section === 'profile') return (
-    <div className="space-y-4">
-      <button onClick={() => setSection('main')} className="text-sm text-navy font-medium">← Back</button>
-      <h1 className="text-h1 text-dark-text">Edit Profile</h1>
-      <Card className="space-y-4">
-        {[['Full Name','name','text'], ['Phone','phone','tel']].map(([label, key, type]) => (
-          <div key={key}>
-            <label className="text-label text-mid-text mb-1 block">{label}</label>
-            <input type={type} value={form[key]} onChange={e => setForm(p => ({ ...p, [key]: e.target.value }))}
-              className="w-full px-4 py-3 rounded-xl border border-border text-sm focus:outline-none focus:ring-2 focus:ring-navy" />
-          </div>
-        ))}
-        <div>
-          <label className="text-label text-mid-text mb-1 block">Email</label>
-          <input disabled value={user?.email ?? ''} className="w-full px-4 py-3 rounded-xl border border-border text-sm bg-bdrbg text-gray" />
-          <p className="text-xs text-gray mt-1">Email cannot be changed</p>
-        </div>
-        <Button onClick={saveProfile} loading={saving} className="w-full">Save Profile</Button>
-      </Card>
     </div>
   )
 
