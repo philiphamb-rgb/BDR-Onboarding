@@ -24,7 +24,7 @@ const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 // belt level, pipeline funnel, day structure, and recent wins.
 async function buildUserContext(supabase, uid: string) {
   const [{ data: userData }, { data: progress }, { data: recentWins }, { data: partners }] = await Promise.all([
-    supabase.from('users').select('name, first_name, start_date, settings').eq('id', uid).single(),
+    supabase.from('users').select('name, first_name, start_date, settings, team_id').eq('id', uid).single(),
     supabase.from('user_progress')
       .select('total_xp, current_streak, days_active, calls_this_week, demos_this_week, deals_this_month')
       .eq('user_id', uid).single(),
@@ -33,7 +33,13 @@ async function buildUserContext(supabase, uid: string) {
     supabase.from('partner_onboarding').select('partner_name, stage, checklist, temperature')
       .eq('user_id', uid).order('updated_at', { ascending: false }).limit(20),
   ])
-  const { data: goal } = await supabase.from('goals').select('monthly_deal_goal').eq('user_id', uid).maybeSingle()
+  const { data: goal } = await supabase.from('goals').select('monthly_deal_goal, leads_per_week_goal, close_rate_goal').eq('user_id', uid).maybeSingle()
+  // Growth OS: the team's live AI Team roster, so the coach can reason about
+  // which automations are working the funnel (one source of truth, not a guess).
+  const { data: autos } = userData?.team_id
+    ? await supabase.from('automations').select('id, status, category').eq('team_id', userData.team_id)
+    : { data: [] }
+  const liveAutos = (autos ?? []).filter((a: any) => a.status === 'live')
   const todayStr = new Date().toISOString().split('T')[0]
   const [{ data: openTasks }, { data: recentNotes }, { data: incomePlanRow }] = await Promise.all([
     supabase.from('tasks').select('title, done, priority, due_date, estimated_minutes, scheduled_day, scheduled_block')
@@ -62,6 +68,16 @@ async function buildUserContext(supabase, uid: string) {
 - Projected year-1 ${fmt(ip.y1total)}${ip.goalMonth ? ` · on pace to hit goal ~month ${ip.goalMonth}` : ''}
 - Weeks logged: ${weeks.length}${ins ? `\n- Current insight: ${ins.text}` : ''}`
   }
+
+  // Growth OS goals + AI Team summary — so the coach speaks to the rep's growth
+  // engine (leads/week, close-rate target) and the automations actually running.
+  const hotCount = (partners ?? []).filter((p: any) => (p.temperature ?? 'cold') === 'hot').length
+  const growthBits: string[] = []
+  if (goal?.leads_per_week_goal) growthBits.push(`leads/week goal ${goal.leads_per_week_goal}`)
+  if (goal?.close_rate_goal) growthBits.push(`close-rate goal ${goal.close_rate_goal}%`)
+  const growthBlock = (growthBits.length || autos?.length)
+    ? `\nGROWTH OS:${growthBits.length ? `\n- Growth goals: ${growthBits.join(' · ')}${hotCount ? ` · ${hotCount} hot leads in pipeline` : ''}` : ''}${autos?.length ? `\n- AI Team: ${liveAutos.length}/${autos.length} automation agents live (${[...new Set(liveAutos.map((a: any) => a.category))].join(', ') || 'none'}). When relevant, point them to Growth OS to activate the right agent.` : ''}`
+    : ''
 
   const firstName = userData?.first_name || (userData?.name ?? 'BDR').split(' ')[0]
   const days = progress?.days_active ?? 0
@@ -102,7 +118,7 @@ ${partners?.length ? `\nPARTNERS IN ONBOARDING (reference by name when relevant)
   return `\nTASKS — they manage tasks in this app; reference real titles and help them prioritize/time-block:\n- Planned into today's blocks: ${planned.length} · Unplanned: ${unplanned.length}` +
     (planned.length ? `\nTODAY'S PLAN:\n${planned.slice(0, 8).map(line).join('\n')}` : '') +
     (unplanned.length ? `\nTOP UNPLANNED:\n${unplanned.slice(0, 8).map(line).join('\n')}` : '')
-})()}${recentNotes?.length ? `\nRECENT NOTES (Plan tab):\n${recentNotes.map(n => `- ${n.title || 'Untitled'}${n.category ? ` [${n.category}]` : ''}`).join('\n')}` : ''}${incomeBlock}`
+})()}${recentNotes?.length ? `\nRECENT NOTES (Plan tab):\n${recentNotes.map(n => `- ${n.title || 'Untitled'}${n.category ? ` [${n.category}]` : ''}`).join('\n')}` : ''}${incomeBlock}${growthBlock}`
 
   return { firstName, belt, days, block }
 }

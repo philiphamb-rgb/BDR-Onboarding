@@ -9,7 +9,7 @@ import {
   HomeIcon, TodayIcon, TrainIcon, WinsIcon, CoachIcon, DashboardIcon, XpIcon,
   BellIcon, BellDotIcon, SettingsIcon, LeaderboardIcon, TeamIcon, BarChartIcon,
   BookIcon, HandshakeIcon, ClockIcon, MoreIcon, CoinIcon,
-  ChecklistIcon, ShieldIcon, SearchIcon, ChevronDownIcon, CloseIcon,
+  ChecklistIcon, ShieldIcon, SearchIcon, ChevronDownIcon, CloseIcon, GrowIcon,
 } from '@/components/icons'
 import type { User } from '@/types/database'
 import { usePermissions } from '@/components/usePermissions'
@@ -40,6 +40,7 @@ const REP_SECTIONS: { title: string; items: NavItem[] }[] = [
     { href: '/commissions', label: 'Commissions', icon: CoinIcon },
   ] },
   { title: 'Grow', items: [
+    { href: '/grow',        label: 'Growth OS',       icon: GrowIcon, match: ['/grow'] },
     { href: '/train',       label: 'Learning Center', shortLabel: 'Learn', icon: TrainIcon, match: ['/train', '/progress'] },
     { href: '/wins',        label: 'Wins',            icon: WinsIcon },
     { href: '/leaderboard', label: 'Leaderboard',     icon: LeaderboardIcon },
@@ -81,6 +82,7 @@ const PAGE_INDEX: { label: string; href: string }[] = [
   // Workspace sub-views whose nav entry is the workspace itself.
   { label: 'Notes', href: '/notes' }, { label: 'Tasks', href: '/tasks' }, { label: 'Time Blocks', href: '/schedule' },
   { label: 'Progress', href: '/progress' },
+  { label: 'AI Team', href: '/grow/team' }, { label: 'Content Engine', href: '/grow/content' }, { label: 'Build Phases', href: '/grow/build' },
   { label: 'Settings', href: '/settings' }, { label: 'Notifications', href: '/notifications' },
 ]
 
