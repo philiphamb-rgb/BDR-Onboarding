@@ -51,21 +51,36 @@ export default function SandlerTrainingPage() {
     },
   }
 
+  // Full-screen immersive takeover: a fixed, full-viewport scroll container so the
+  // course renders edge-to-edge (escaping the hub's centered content column) and
+  // sits above the nav/sidebar (z 100/200). The course's own overlays (z 900-9999)
+  // still layer correctly inside it, and its built-in Exit returns to the hub.
   return (
-    <SandlerRules
-      embedded
-      injectedUser={user}
-      storageAdapter={storageAdapter}
-      onCertified={async (c: any) => {
-        await supabase.from('module_certifications').insert({
-          user_id: uid,
-          module: c.module,
-          score: c.score,
-          total: c.total,
-          perfect: c.perfect,
-        })
+    <div
+      style={{
+        position: 'fixed',
+        inset: 0,
+        zIndex: 600,
+        overflowY: 'auto',
+        WebkitOverflowScrolling: 'touch',
+        background: '#EEF3FC',
       }}
-      onExit={() => router.push('/train')}
-    />
+    >
+      <SandlerRules
+        embedded
+        injectedUser={user}
+        storageAdapter={storageAdapter}
+        onCertified={async (c: any) => {
+          await supabase.from('module_certifications').insert({
+            user_id: uid,
+            module: c.module,
+            score: c.score,
+            total: c.total,
+            perfect: c.perfect,
+          })
+        }}
+        onExit={() => router.push('/train')}
+      />
+    </div>
   )
 }
