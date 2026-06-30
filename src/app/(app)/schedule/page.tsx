@@ -190,6 +190,13 @@ export default function SchedulePage() {
   const goalGap = goal && goal > 0 ? Math.max(0, goal - dealsThisMonth) : 0
   const stuck = partners.filter(p => p.stage === 'proposal_sent' || p.stage === 'contract_signed').length
 
+  // Work blocks whose time has passed but that aren't checked done yet — the Hub
+  // proactively suggests marking these complete.
+  const isWorkBlock = (t: string) => ['plan', 'focus', 'admin'].includes(t)
+  const needsCheck = (blk: any) => !blk.done && isWorkBlock(blk.type) && (blk.start + blk.dur) <= now
+  const endedUndone = blocks.filter(needsCheck).sort((a, b) => a.start - b.start)
+  const markAllEndedDone = async () => { for (const b of endedUndone) await saveBlock(b, { done: true }) }
+
   const daysSince = (iso?: string) => iso ? Math.max(0, Math.floor((nowDate.getTime() - new Date(iso).getTime()) / 86400000)) : null
   const openTitles = tasks.map(t => (t.title || '').toLowerCase())
   const hasTitle = (needle: string) => openTitles.some(t => t.includes(needle.toLowerCase()))
@@ -551,6 +558,21 @@ export default function SchedulePage() {
         </div>
       )}
 
+      {/* Proactive nudge: blocks whose time has passed but aren't checked done */}
+      {endedUndone.length > 0 && (
+        <div className="flex items-center gap-3 rounded-2xl border border-gold/40 bg-gold/[0.08] p-3">
+          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gold/20 text-[#A06C00]"><ClockIcon size={18} /></span>
+          <div className="min-w-0 flex-1">
+            <div className="text-[13px] font-[800] text-dark-text">{endedUndone.length} time block{endedUndone.length > 1 ? 's have' : ' has'} ended</div>
+            <div className="text-[11px] text-gray">Check off what you finished to keep your day accurate.</div>
+          </div>
+          <button onClick={markAllEndedDone}
+            className="flex shrink-0 items-center gap-1.5 rounded-lg bg-[#A06C00] px-3 py-2 text-[12px] font-[800] text-white active:scale-[0.99]">
+            <CheckIcon size={13} /> Mark all done
+          </button>
+        </div>
+      )}
+
       {/* Calendar day view */}
       <div ref={scrollRef} data-tour="rhythm-timeline"
         className="overflow-y-auto rounded-2xl border border-border bg-card shadow-card"
@@ -586,6 +608,7 @@ export default function SchedulePage() {
               const tiny = height < 30
               const compact = height < 52
               const isCurrent = now >= start && now < start + dur
+              const suggestDone = needsCheck(blk)
               const dragging = preview?.key === key
               const bTasks = blockTasks[key] ?? []
               const { col, cols: ncols } = cols[key] ?? { col: 0, cols: 1 }
@@ -600,7 +623,7 @@ export default function SchedulePage() {
                   onDrop={dragTaskId ? (e) => onBlockDrop(e, key) : undefined}
                   className={cn('group absolute select-none overflow-hidden rounded-lg border-l-[3px] px-1.5 py-1 shadow-sm transition-shadow touch-none',
                     done ? 'opacity-60' : '', dragging ? 'z-30 shadow-modal ring-2 ring-navy/40' : 'z-10 hover:shadow-card cursor-grab',
-                    isDrop && 'ring-2 ring-teal')}
+                    suggestDone && !dragging && 'ring-1 ring-gold/60', isDrop && 'ring-2 ring-teal')}
                   style={{
                     top, height,
                     left: `${(col / ncols) * 100}%`,
@@ -613,10 +636,10 @@ export default function SchedulePage() {
                       {!tiny && (
                         <button onPointerDown={e => e.stopPropagation()} onClick={e => { e.stopPropagation(); toggleDone(blk) }}
                           aria-label={done ? 'Mark not done' : 'Mark done'}
-                          className={cn('flex h-4 w-4 shrink-0 items-center justify-center rounded-full border-[1.5px] transition-all',
-                            done ? 'border-success bg-success text-white' : 'bg-card text-transparent')}
-                          style={!done ? { borderColor: st.color } : undefined}>
-                          <CheckIcon size={10} />
+                          className={cn('flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded-[5px] border-[1.5px] transition-all',
+                            done ? 'border-success bg-success text-white' : 'bg-card text-transparent', suggestDone && 'animate-attention')}
+                          style={!done ? { borderColor: suggestDone ? '#F5A623' : st.color } : undefined}>
+                          <CheckIcon size={11} />
                         </button>
                       )}
                       <span className={cn('truncate text-left font-[700] leading-tight', tiny ? 'text-[11px]' : 'text-[12px]', done ? 'text-gray line-through' : 'text-dark-text')}>{blk.label}</span>
@@ -629,6 +652,7 @@ export default function SchedulePage() {
                         <span className="tabular-nums">{fmtClock(start)}–{fmtClock(start + dur)}</span>
                         {blk.edited && !dragging && <span className="text-teal">· edited</span>}
                         {isCurrent && !done && <span className="rounded-full bg-teal px-1.5 text-[9px] font-[800] text-white">NOW</span>}
+                        {suggestDone && <span className="rounded-full bg-gold/25 px-1.5 text-[9px] font-[800] text-[#A06C00]">Mark done?</span>}
                         {bTasks.length > 0 && !showPills && <span className="text-gray">· {bTasks.filter(t => t.done).length}/{bTasks.length} tasks</span>}
                       </div>
                     )}
@@ -637,7 +661,7 @@ export default function SchedulePage() {
                         {bTasks.slice(0, maxPills).map(tk => (
                           <div key={tk.id} onPointerDown={e => e.stopPropagation()} onClick={e => { e.stopPropagation(); toggleTaskDone(tk.id, !tk.done) }}
                             className="flex items-center gap-1 rounded bg-white/70 px-1.5 py-0.5 text-left">
-                            <span className={cn('flex h-3 w-3 shrink-0 items-center justify-center rounded-full border', tk.done ? 'border-success bg-success text-white' : 'border-gray/50 text-transparent')}><CheckIcon size={8} /></span>
+                            <span className={cn('flex h-3.5 w-3.5 shrink-0 items-center justify-center rounded-[3px] border', tk.done ? 'border-success bg-success text-white' : 'border-gray/50 text-transparent')}><CheckIcon size={9} /></span>
                             <span className={cn('truncate text-[10px] font-[600]', tk.done ? 'text-gray line-through' : 'text-dark-text')}>{tk.title}</span>
                           </div>
                         ))}
@@ -713,8 +737,8 @@ export default function SchedulePage() {
                   onDragEnd={() => { setDragTaskId(null); setDropKey(null) }}
                   className="flex items-center gap-2 rounded-lg border border-border bg-bdrbg px-2.5 py-2">
                   <button onClick={() => toggleTaskDone(t.id, true)} aria-label="Complete task"
-                    className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full border-[1.5px] border-border text-transparent transition-colors hover:border-teal hover:bg-teal/10">
-                    <CheckIcon size={10} />
+                    className="flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded-[5px] border-[1.5px] border-border text-transparent transition-colors hover:border-teal hover:bg-teal/10">
+                    <CheckIcon size={11} />
                   </button>
                   <span className={cn('shrink-0 rounded-full px-1.5 py-0.5 text-[9px] font-[800]',
                     u.tone === 'high' ? 'bg-error/10 text-error' : u.tone === 'med' ? 'bg-gold/15 text-[#A06C00]' : 'bg-bdrbg text-gray')}>{u.label}</span>
@@ -771,8 +795,9 @@ export default function SchedulePage() {
 
             <div className="flex flex-wrap gap-2">
               <button onClick={() => toggleDone(sel)}
-                className={cn('flex items-center gap-1.5 rounded-lg px-3 py-2 text-[13px] font-[700]', sel.done ? 'bg-success/10 text-success' : 'bg-bdrbg text-dark-text hover:bg-border/40')}>
-                <CheckIcon size={15} />{sel.done ? 'Completed' : 'Mark done'}
+                className={cn('flex items-center gap-1.5 rounded-lg px-3 py-2 text-[13px] font-[700]',
+                  sel.done ? 'bg-success/10 text-success' : needsCheck(sel) ? 'bg-gold/15 text-[#A06C00] ring-1 ring-gold/50' : 'bg-bdrbg text-dark-text hover:bg-border/40')}>
+                <CheckIcon size={15} />{sel.done ? 'Completed' : needsCheck(sel) ? 'Mark done?' : 'Mark done'}
               </button>
               {sel.href && (
                 <Link href={sel.href} className="flex items-center gap-1.5 rounded-lg bg-teal/10 px-3 py-2 text-[13px] font-[700] text-teal hover:bg-teal/15">
@@ -815,8 +840,8 @@ export default function SchedulePage() {
                 {(blockTasks[sel.key] ?? []).map(tk => (
                   <div key={tk.id} className="flex items-center gap-2 rounded-md bg-bdrbg px-2.5 py-2">
                     <button onClick={() => toggleTaskDone(tk.id, !tk.done)} aria-label={tk.done ? 'Mark task incomplete' : 'Complete task'}
-                      className={cn('flex h-4 w-4 shrink-0 items-center justify-center rounded-full border-[1.5px]', tk.done ? 'border-success bg-success text-white' : 'border-border text-transparent')}>
-                      <CheckIcon size={10} />
+                      className={cn('flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded-[5px] border-[1.5px]', tk.done ? 'border-success bg-success text-white' : 'border-border text-transparent')}>
+                      <CheckIcon size={11} />
                     </button>
                     <span className={cn('flex-1 text-[13px]', tk.done ? 'text-gray line-through' : 'text-mid-text')}>{tk.title}</span>
                     {tk.priority && <StarFilledIcon size={13} className="text-gold shrink-0" />}
