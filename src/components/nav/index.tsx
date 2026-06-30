@@ -8,7 +8,7 @@ import { createClient } from '@/lib/supabase/client'
 import {
   HomeIcon, TodayIcon, TrainIcon, WinsIcon, CoachIcon, DashboardIcon, XpIcon,
   BellIcon, BellDotIcon, SettingsIcon, LeaderboardIcon, TeamIcon, BarChartIcon,
-  BookIcon, MedalIcon, HandshakeIcon, ClockIcon, MoreIcon,
+  BookIcon, HandshakeIcon, ClockIcon, MoreIcon,
   ChecklistIcon, ShieldIcon, SearchIcon, ChevronDownIcon, CloseIcon,
 } from '@/components/icons'
 import type { User } from '@/types/database'
@@ -39,10 +39,9 @@ const REP_SECTIONS: { title: string; items: NavItem[] }[] = [
     { href: '/analytics', label: 'Analytics', icon: BarChartIcon },
   ] },
   { title: 'Grow', items: [
-    { href: '/train',       label: 'Learning Center', shortLabel: 'Learn', icon: TrainIcon },
+    { href: '/train',       label: 'Learning Center', shortLabel: 'Learn', icon: TrainIcon, match: ['/train', '/progress'] },
     { href: '/wins',        label: 'Wins',            icon: WinsIcon },
     { href: '/leaderboard', label: 'Leaderboard',     icon: LeaderboardIcon },
-    { href: '/progress',    label: 'Progress',        icon: MedalIcon },
     { href: '/resources',   label: 'Resources',       icon: BookIcon },
   ] },
 ]
@@ -78,8 +77,9 @@ const matchNav = (pathname: string, item: NavItem) => isActiveHref(pathname, ite
 const PAGE_INDEX: { label: string; href: string }[] = [
   ...TOP_NAV.map(i => ({ label: i.label, href: i.href })),
   ...REP_SECTIONS.flatMap(s => s.items.map(i => ({ label: i.label, href: i.href }))),
-  // Plan workspace views (the Plan top-nav entry is the workspace itself).
+  // Workspace sub-views whose nav entry is the workspace itself.
   { label: 'Notes', href: '/notes' }, { label: 'Tasks', href: '/tasks' }, { label: 'Time Blocks', href: '/schedule' },
+  { label: 'Progress', href: '/progress' },
   { label: 'Settings', href: '/settings' }, { label: 'Notifications', href: '/notifications' },
 ]
 
@@ -289,7 +289,7 @@ export function Sidebar({ user }: { user?: User | null; unreadCount?: number }) 
 
   // Accordion: one open at a time; default collapsed but auto-open the section
   // that contains the current route so the active page is always visible.
-  const sectionOf = (path: string) => sections.find(s => s.items.some(i => isActiveHref(path, i.href)))?.title ?? null
+  const sectionOf = (path: string) => sections.find(s => s.items.some(i => matchNav(path, i)))?.title ?? null
   const [open, setOpen] = useState<string | null>(null)
   useEffect(() => { const s = sectionOf(pathname); if (s) setOpen(s) }, [pathname]) // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -316,7 +316,7 @@ export function Sidebar({ user }: { user?: User | null; unreadCount?: number }) 
         <div className="mt-3 space-y-1">
           {sections.map(s => {
             const isOpen = open === s.title
-            const hasActive = s.items.some(i => isActiveHref(pathname, i.href))
+            const hasActive = s.items.some(i => matchNav(pathname, i))
             return (
               <div key={s.title}>
                 <button onClick={() => setOpen(o => o === s.title ? null : s.title)} aria-expanded={isOpen}

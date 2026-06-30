@@ -9,6 +9,7 @@ import { MedalIcon, LockIcon, BookIcon, DownloadIcon, BeltIcon, FlameIcon, XpIco
 import { cn, formatXP } from '@/lib/utils'
 import { BELTS, normalizeBelt, beltIndex } from '@/lib/belts'
 import { passedModuleSet, isModuleComplete } from '@/lib/moduleProgress'
+import { LearnTabs } from '@/components/LearnTabs'
 import Link from 'next/link'
 
 // Progress = your personal development hub: belt journey, completion certificate,
@@ -56,6 +57,7 @@ export default function ProgressPage() {
 
   return (
     <div className="space-y-5 pb-4 stagger-rise">
+      <LearnTabs />
       <div className="flex items-start justify-between gap-3 no-print">
         <div>
           <h1 className="text-h1 text-dark-text">Progress</h1>

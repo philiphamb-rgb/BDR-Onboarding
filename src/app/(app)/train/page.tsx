@@ -14,6 +14,7 @@ import { cn, percentage } from '@/lib/utils'
 import { passedModuleSet } from '@/lib/moduleProgress'
 import { Tour } from '@/components/tour'
 import { TRAIN_TOUR } from '@/lib/tours'
+import { LearnTabs } from '@/components/LearnTabs'
 import Link from 'next/link'
 
 interface ModuleRow {
@@ -93,6 +94,7 @@ export default function TrainPage() {
 
   return (
     <div className="space-y-4 stagger-rise">
+      <LearnTabs />
       <div>
         <h1 className="text-h1 text-dark-text">Learning Center</h1>
         <p className="text-sm text-gray">{completedModules} of {modules.length} modules complete</p>
