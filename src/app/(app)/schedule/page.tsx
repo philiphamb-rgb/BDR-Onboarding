@@ -254,13 +254,16 @@ export default function SchedulePage() {
 
   // ── Block persistence (template + custom, keyed by block.key) ────────────────
   const saveBlock = async (blk: any, patch: any) => {
+    // Merge onto the FRESHEST block (not the passed snapshot) so a done-toggle
+    // can't clobber a concurrent move/resize of the same block.
+    const cur = blockByKey(blk.key) ?? blk
     const merged = {
-      label: patch.label ?? blk.label,
-      type: patch.type ?? blk.type,
-      start_min: patch.start_min ?? blk.start,
-      dur_min: patch.dur_min ?? blk.dur,
-      note: patch.note !== undefined ? patch.note : blk.note,
-      done: patch.done !== undefined ? patch.done : blk.done,
+      label: patch.label ?? cur.label,
+      type: patch.type ?? cur.type,
+      start_min: patch.start_min ?? cur.start,
+      dur_min: patch.dur_min ?? cur.dur,
+      note: patch.note !== undefined ? patch.note : cur.note,
+      done: patch.done !== undefined ? patch.done : cur.done,
     }
     if (blk.custom) {
       setCustomBlocks(prev => prev.map(c => c.key === blk.key ? { ...c, label: merged.label, type: merged.type, start: merged.start_min, dur: merged.dur_min, note: merged.note, done: merged.done } : c))
