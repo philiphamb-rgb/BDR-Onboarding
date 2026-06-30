@@ -7,7 +7,7 @@ import { createClient } from '@/lib/supabase/client'
 import { SkeletonList, toast } from '@/components/ui'
 import { SearchIcon, PlusIcon, TrashIcon, CheckIcon, LightningIcon, ChecklistIcon, ClockIcon, ArrowRightIcon, DocumentIcon, BackIcon } from '@/components/icons'
 import { cn } from '@/lib/utils'
-import { OPTIMIZED_DAY } from '@/lib/schedule'
+import { OPTIMIZED_DAY, BLOCK_STYLE, parseHM, fmtClock, DEFAULT_SHIFT } from '@/lib/schedule'
 import { smartTaskDefaults, suggestNoteMeta, looksActionable, cleanTaskTitle, NOTE_CATEGORIES, CATEGORY_COLOR } from '@/lib/noteTriage'
 import { fmtEst } from '@/lib/triageEngine'
 
@@ -27,6 +27,9 @@ export default function NotesPage() {
   const [organizing, setOrganizing] = useState(false)
   const [aiTasks, setAiTasks] = useState<any[] | null>(null)
   const [focusId, setFocusId] = useState<string | null>(null)
+  const [dayBlocks, setDayBlocks] = useState<any[]>([])     // today's schedulable blocks (drop targets)
+  const [noteTasks, setNoteTasks] = useState<any[]>([])     // tasks created from the active note
+  const [dropKey, setDropKey] = useState<string | null>(null)
   const saveTimer = useRef<any>(null)
   const today = new Date().toISOString().split('T')[0]
 
@@ -40,10 +43,41 @@ export default function NotesPage() {
           setNotes(list)
           setLoading(false)
         })
+      loadDayBlocks(user.id)
     })
   }, [])
 
+  // Today's schedulable blocks (template + overrides + custom) as drop targets.
+  const loadDayBlocks = async (uid: string) => {
+    const [{ data: u }, { data: rows }] = await Promise.all([
+      supabase.from('users').select('settings').eq('id', uid).single(),
+      supabase.from('schedule_blocks').select('block_key, label, type, start_min, dur_min').eq('user_id', uid).eq('day', today),
+    ])
+    const shift = (u?.settings as any)?.shift || DEFAULT_SHIFT
+    const base = parseHM(shift)
+    const ov: Record<string, any> = {}; const customs: any[] = []
+    for (const r of rows ?? []) {
+      if (/^\d+$/.test(r.block_key)) ov[r.block_key] = r
+      else customs.push({ key: r.block_key, label: r.label, type: r.type, start: r.start_min, dur: r.dur_min })
+    }
+    const template = OPTIMIZED_DAY.map((b, i) => ({ key: String(i), label: b.label, type: b.type, start: ov[i]?.start_min ?? base + b.off, dur: ov[i]?.dur_min ?? b.dur }))
+    const all = [...template, ...customs].filter(b => ['plan', 'focus', 'admin'].includes(b.type)).sort((a, b) => a.start - b.start)
+    setDayBlocks(all)
+  }
+
   const active = notes.find(n => n.id === activeId) || null
+
+  // Tasks spawned from the active note — the note's living plan.
+  useEffect(() => {
+    if (!activeId || !userId) { setNoteTasks([]); return }
+    supabase.from('tasks').select('id, title, done, estimated_minutes, scheduled_day, scheduled_block').eq('source_note_id', activeId).order('created_at', { ascending: true })
+      .then(({ data }) => setNoteTasks(data ?? []))
+  }, [activeId, userId]) // eslint-disable-line react-hooks/exhaustive-deps
+  const refreshNoteTasks = () => {
+    if (!activeId) return
+    supabase.from('tasks').select('id, title, done, estimated_minutes, scheduled_day, scheduled_block').eq('source_note_id', activeId).order('created_at', { ascending: true })
+      .then(({ data }) => setNoteTasks(data ?? []))
+  }
 
   // ── Persistence (debounced) ──────────────────────────────────────────────────
   const scheduleSave = (note: any) => {
@@ -108,17 +142,20 @@ export default function NotesPage() {
     const { data: created } = await supabase.from('task_lists').insert({ user_id: userId, name: 'My Tasks', order_index: 0 }).select('id').single()
     return created?.id
   }
-  const createTask = async (text: string, opts: { plan?: boolean } = {}) => {
+  const createTask = async (text: string, opts: { plan?: boolean; blockKey?: string } = {}) => {
     const title = cleanTaskTitle(text)
     if (!title || !userId) return
     const d = smartTaskDefaults(text)
     const tags = Array.from(new Set([...(active?.tags ?? []), ...d.tags]))
     const category = active?.category || d.category
     const list_id = await ensureList()
-    const row: any = { user_id: userId, list_id, title, estimated_minutes: d.estimated_minutes, priority: d.priority, category, tags }
-    if (opts.plan) { row.scheduled_day = today; row.scheduled_block = CATEGORY_BLOCK[category] ?? '1' }
+    const row: any = { user_id: userId, list_id, title, estimated_minutes: d.estimated_minutes, priority: d.priority, category, tags, source_note_id: active?.id ?? null }
+    if (opts.blockKey) { row.scheduled_day = today; row.scheduled_block = opts.blockKey }
+    else if (opts.plan) { row.scheduled_day = today; row.scheduled_block = CATEGORY_BLOCK[category] ?? '1' }
     await supabase.from('tasks').insert(row)
-    toast.success(opts.plan ? `Planned · ${fmtEst(d.estimated_minutes)}${d.priority ? ' · priority' : ''}` : `Task created · ${d.category} · ${fmtEst(d.estimated_minutes)}`)
+    refreshNoteTasks()
+    const where = opts.blockKey ? (dayBlocks.find(b => b.key === opts.blockKey)?.label ?? 'block') : null
+    toast.success(opts.blockKey ? `Added to ${where} · ${fmtEst(d.estimated_minutes)}` : opts.plan ? `Planned · ${fmtEst(d.estimated_minutes)}${d.priority ? ' · priority' : ''}` : `Task created · ${d.category} · ${fmtEst(d.estimated_minutes)}`)
   }
 
   // ── Live deterministic suggestion + AI organize ───────────────────────────────
@@ -141,9 +178,14 @@ export default function NotesPage() {
   const addAiTask = async (t: any) => {
     if (!userId) return
     const list_id = await ensureList()
-    await supabase.from('tasks').insert({ user_id: userId, list_id, title: t.title, estimated_minutes: t.estimate, priority: t.priority, category: active?.category || 'General', tags: active?.tags ?? [] })
+    await supabase.from('tasks').insert({ user_id: userId, list_id, title: t.title, estimated_minutes: t.estimate, priority: t.priority, category: active?.category || 'General', tags: active?.tags ?? [], source_note_id: active?.id ?? null })
     setAiTasks(prev => (prev ?? []).filter(x => x !== t))
+    refreshNoteTasks()
     toast.success('Task added')
+  }
+  const toggleNoteTask = (id: string, done: boolean) => {
+    setNoteTasks(prev => prev.map(t => t.id === id ? { ...t, done } : t))
+    supabase.from('tasks').update({ done, updated_at: new Date().toISOString() }).eq('id', id).then(() => {})
   }
 
   // ── Filtering / search ────────────────────────────────────────────────────────
@@ -247,7 +289,11 @@ export default function NotesPage() {
                 const actionable = looksActionable(b.text)
                 return (
                   <div key={b.id} className="group flex items-start gap-1 rounded-lg px-1 hover:bg-bdrbg/60">
-                    <span className="mt-2 select-none text-[12px] leading-none text-border">•</span>
+                    <span
+                      draggable={!!b.text.trim()}
+                      onDragStart={e => { e.dataTransfer.setData('text/plain', b.text); e.dataTransfer.effectAllowed = 'copy' }}
+                      title={b.text.trim() ? 'Drag into a time block below' : undefined}
+                      className={cn('mt-1.5 select-none text-[13px] leading-none', b.text.trim() ? 'cursor-grab text-gray/50 hover:text-navy' : 'text-border')}>⠿</span>
                     <textarea
                       ref={el => { if (!el) return; el.style.height = 'auto'; el.style.height = el.scrollHeight + 'px'; if (focusId === b.id) { el.focus(); setFocusId(null) } }}
                       value={b.text}
@@ -267,8 +313,51 @@ export default function NotesPage() {
                 )
               })}
             </div>
-            <p className="mt-3 px-1 text-[11px] text-gray">Hover a line → <CheckIcon size={11} className="inline text-teal" /> make a task · <ClockIcon size={11} className="inline" /> make a task &amp; plan it into today. Or hit <span className="font-[700]">Organize</span> to auto-tag and pull out every action item.</p>
+            {/* Tasks spawned from this note — the living plan */}
+            {noteTasks.length > 0 && (
+              <div className="mt-4 rounded-xl border border-border bg-bdrbg/60 p-2.5">
+                <div className="mb-1.5 flex items-center gap-1.5 text-[11px] font-[800] uppercase tracking-wide text-gray">
+                  <ChecklistIcon size={12} /> Tasks from this note <span className="tabular-nums">· {noteTasks.filter(t => t.done).length}/{noteTasks.length}</span>
+                </div>
+                <div className="space-y-1">
+                  {noteTasks.map(t => (
+                    <div key={t.id} className="flex items-center gap-2 rounded-lg bg-card px-2.5 py-1.5">
+                      <button onClick={() => toggleNoteTask(t.id, !t.done)} aria-label={t.done ? 'Mark incomplete' : 'Complete'}
+                        className={cn('flex h-4 w-4 shrink-0 items-center justify-center rounded-full border-[1.5px]', t.done ? 'border-success bg-success text-white' : 'border-border text-transparent')}><CheckIcon size={10} /></button>
+                      <span className={cn('min-w-0 flex-1 truncate text-[13px]', t.done ? 'text-gray line-through' : 'text-dark-text')}>{t.title}</span>
+                      {t.scheduled_day === today && t.scheduled_block != null && <ClockIcon size={12} className="shrink-0 text-teal" />}
+                      <span className="shrink-0 text-[11px] font-[600] text-gray tabular-nums">{fmtEst(t.estimated_minutes || 30)}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+            <p className="mt-3 px-1 text-[11px] text-gray">Hover a line → <CheckIcon size={11} className="inline text-teal" /> make a task · <ClockIcon size={11} className="inline" /> plan it today. Drag the <span className="font-[700]">⠿</span> handle onto a block below. Or <span className="font-[700]">Organize</span> to auto-tag + extract every action item.</p>
           </div>
+
+          {/* Drop rail — drag a note line onto today's blocks */}
+          {dayBlocks.length > 0 && (
+            <div className="border-t border-border p-2">
+              <div className="mb-1 px-1 text-[10px] font-[800] uppercase tracking-wide text-gray">Drag a line into today ↓</div>
+              <div className="flex gap-1.5 overflow-x-auto pb-1">
+                {dayBlocks.map(b => {
+                  const st = BLOCK_STYLE[b.type] ?? BLOCK_STYLE.focus
+                  const isDrop = dropKey === b.key
+                  return (
+                    <div key={b.key}
+                      onDragOver={e => { e.preventDefault(); setDropKey(b.key) }}
+                      onDragLeave={() => setDropKey(k => k === b.key ? null : k)}
+                      onDrop={e => { e.preventDefault(); const text = e.dataTransfer.getData('text/plain'); if (text && text.trim()) createTask(text, { blockKey: b.key }); setDropKey(null) }}
+                      className={cn('flex shrink-0 items-center gap-1.5 rounded-lg border px-2.5 py-1.5 transition-colors', isDrop ? 'border-teal bg-teal/10 ring-2 ring-teal/40' : 'border-border bg-bdrbg')}>
+                      <span className="h-2 w-2 shrink-0 rounded-full" style={{ backgroundColor: st.color }} />
+                      <span className="whitespace-nowrap text-[11px] font-[700] text-dark-text">{b.label.split(' — ')[0]}</span>
+                      <span className="shrink-0 text-[10px] tabular-nums text-gray">{fmtClock(b.start)}</span>
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+          )}
         </div>
       ) : (
         <div className="hidden flex-1 flex-col items-center justify-center rounded-2xl border border-dashed border-border bg-card text-center desktop:flex">

@@ -106,15 +106,19 @@ function GlobalSearch() {
     timer.current = setTimeout(async () => {
       const like = `%${term}%`
       const pages = PAGE_INDEX.filter(p => p.label.toLowerCase().includes(term.toLowerCase())).slice(0, 3).map(p => ({ group: 'Go to', label: p.label, href: p.href }))
-      const [{ data: partners }, { data: tasks }, { data: notes }] = await Promise.all([
+      const [{ data: partners }, { data: tasks }, { data: notes }, { data: lessons }, { data: wins }] = await Promise.all([
         supabase.from('partner_onboarding').select('id, partner_name').ilike('partner_name', like).limit(4),
         supabase.from('tasks').select('id, title').eq('done', false).ilike('title', like).limit(4),
         supabase.from('notes').select('id, title').ilike('title', like).eq('archived', false).limit(4),
+        supabase.from('lessons').select('id, module_id, title').eq('is_published', true).ilike('title', like).limit(4),
+        supabase.from('wins').select('id, description').ilike('description', like).limit(3),
       ])
       const r: any[] = [...pages]
       for (const p of (partners ?? []) as any[]) r.push({ group: 'Partners', label: p.partner_name, href: `/partners/${p.id}` })
       for (const t of (tasks ?? []) as any[]) r.push({ group: 'Tasks', label: t.title, href: '/tasks' })
       for (const n of (notes ?? []) as any[]) r.push({ group: 'Notes', label: n.title || 'Untitled note', href: '/notes' })
+      for (const l of (lessons ?? []) as any[]) r.push({ group: 'Learn', label: l.title, href: `/train/${l.module_id}/${l.id}` })
+      for (const w of (wins ?? []) as any[]) r.push({ group: 'Wins', label: w.description, href: '/wins' })
       setResults(r)
     }, 220)
   }, [q]) // eslint-disable-line react-hooks/exhaustive-deps
