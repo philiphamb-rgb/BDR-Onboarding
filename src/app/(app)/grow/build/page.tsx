@@ -58,6 +58,9 @@ export default function GrowthBuildPage() {
       return { done: [...set] }
     })
   }
+  // Action steps (e.g. "ask Coach") only ever complete — never un-complete on a
+  // repeat tap — so re-using the action can't silently wipe the final step.
+  const markDone = id => save(p => ({ done: [...new Set([...(p.done || []), id])] }))
 
   const allSteps = PHASES.flatMap(p => p.steps)
   const completed = loading ? 0 : allSteps.filter(isDone).length
@@ -124,7 +127,7 @@ export default function GrowthBuildPage() {
                       </div>
                     )
                     if (step.action === 'coach') {
-                      return <button key={step.id} onClick={() => { toggle({ ...step, auto: false }); askCoach("Give me my Growth OS plan: based on my leads/week and close-rate goals, my pipeline by temperature, and my live AI Team, what are the top 3 moves to grow my number this week?") }} className="block w-full text-left">{Row}</button>
+                      return <button key={step.id} onClick={() => { markDone(step.id); askCoach("Give me my Growth OS plan: based on my leads/week and close-rate goals, my pipeline by temperature, and my live AI Team, what are the top 3 moves to grow my number this week?") }} className="block w-full text-left">{Row}</button>
                     }
                     return step.href
                       ? <Link key={step.id} href={step.href} className="block">{Row}</Link>

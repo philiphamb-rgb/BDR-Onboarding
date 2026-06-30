@@ -28,7 +28,7 @@ function Ring({ pct, label, sub, tone = '#00C2B2' }: { pct: number; label: strin
           <circle cx="32" cy="32" r={r} fill="none" stroke="rgba(255,255,255,0.18)" strokeWidth="6" />
           <circle cx="32" cy="32" r={r} fill="none" stroke={tone} strokeWidth="6" strokeLinecap="round" strokeDasharray={c} strokeDashoffset={off} className="transition-all duration-700" />
         </svg>
-        <div className="absolute inset-0 flex items-center justify-center text-[14px] font-[900] text-white tabular-nums">{Math.round(pct)}%</div>
+        <div className="absolute inset-0 flex items-center justify-center text-[14px] font-[900] text-white tabular-nums">{Math.round(Math.min(100, Math.max(0, pct)))}%</div>
       </div>
       <div className="min-w-0">
         <div className="text-[20px] font-[900] leading-none text-white">{label}</div>
@@ -96,7 +96,7 @@ export default function GrowthOverviewPage() {
           ) : hasGoals ? (
             <div className={cn('grid gap-3', lpw > 0 && crGoal > 0 ? 'grid-cols-2' : 'grid-cols-1')}>
               {lpw > 0 && <Ring pct={leadPct} label={<><CountUp value={leads.newThisWeek} />/{lpw}</>} sub={`new leads this week`} />}
-              {crGoal > 0 && <Ring pct={crPct} label={`${leads.closeRate}%`} sub={`close rate · goal ${crGoal}%`} tone="#F5A623" />}
+              {crGoal > 0 && <Ring pct={crPct} label={`${leads.closeRate}%`} sub={`all-time close · goal ${crGoal}%`} tone="#F5A623" />}
             </div>
           ) : (
             <button onClick={() => setEditing(true)} className="flex w-full items-center gap-2 rounded-xl bg-white/10 p-3 text-[13px] font-[700] text-white hover:bg-white/15">
