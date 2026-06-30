@@ -5,10 +5,11 @@ import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { Card, Button, SkeletonCard, toast } from '@/components/ui'
 import { PageHeader } from '@/components/manager'
-import { CheckIcon, PlusIcon, TrashIcon, StarFilledIcon, ClockIcon, ChevronRightIcon, CalendarIcon } from '@/components/icons'
+import { CheckIcon, PlusIcon, TrashIcon, StarFilledIcon, ClockIcon, ChevronRightIcon, CalendarIcon, LightningIcon } from '@/components/icons'
 import { cn } from '@/lib/utils'
 import { OPTIMIZED_DAY } from '@/lib/schedule'
 import { urgency, urgencyLabel } from '@/lib/triageEngine'
+import { smartTaskDefaults } from '@/lib/noteTriage'
 import { AiTip } from '@/components/AiTip'
 
 export default function TasksPage() {
@@ -44,6 +45,27 @@ export default function TasksPage() {
   const patch = async (id: string, p: any) => {
     setTasks(prev => prev.map(t => t.id === id ? { ...t, ...p } : t))
     await supabase.from('tasks').update({ ...p, updated_at: new Date().toISOString() }).eq('id', id)
+  }
+
+  // One-tap AI tidy: fill gaps only — infer category (if unset), a smarter time
+  // estimate (if still the default 30), and flag clearly-urgent tasks. Never
+  // overwrites values the rep has already chosen.
+  const aiTidy = async () => {
+    const open = tasks.filter(t => !t.done && !t.parent_id)
+    const updates: { id: string; p: any }[] = []
+    for (const t of open) {
+      const d = smartTaskDefaults(t.title || '')
+      const p: any = {}
+      if (!t.category) p.category = d.category
+      if ((t.estimated_minutes ?? 30) === 30 && d.estimated_minutes !== 30) p.estimated_minutes = d.estimated_minutes
+      if (!t.priority && d.priority) p.priority = true
+      if ((t.tags ?? []).length === 0 && d.tags.length) p.tags = d.tags
+      if (Object.keys(p).length) updates.push({ id: t.id, p })
+    }
+    if (!updates.length) { toast.info('Everything already looks tidy ✨'); return }
+    setTasks(prev => prev.map(t => { const u = updates.find(x => x.id === t.id); return u ? { ...t, ...u.p } : t }))
+    await Promise.all(updates.map(u => supabase.from('tasks').update({ ...u.p, updated_at: new Date().toISOString() }).eq('id', u.id)))
+    toast.success(`AI tidied ${updates.length} task${updates.length > 1 ? 's' : ''} ✨`)
   }
 
   const addTask = async () => {
@@ -107,6 +129,10 @@ export default function TasksPage() {
       <AiTip id="tasks-ai" title="AI does the busywork" prompt="Look at all my open tasks and prioritize them for me — what's most important and what should I time-block today?" tryLabel="Prioritize with AI">
         Every task gets an AI-estimated time and an urgency score (priority + due date + age) automatically. Open a task to fine-tune its estimate, or ask the coach to prioritize your whole list.
       </AiTip>
+
+      <button onClick={aiTidy} className="flex w-full items-center justify-center gap-1.5 rounded-xl border border-teal/40 bg-teal/[0.06] py-2.5 text-[13px] font-[800] text-teal transition-colors hover:bg-teal/10">
+        <LightningIcon size={15} /> AI tidy — fill estimates, categories &amp; flag what&apos;s urgent
+      </button>
 
       {/* Lists */}
       <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
