@@ -75,7 +75,7 @@ export default function TasksPage() {
 
   const assignToBlock = async (id: string, blockKey: string) => {
     await patch(id, { scheduled_day: today, scheduled_block: blockKey })
-    toast.success('Added to today’s Time Blocking')
+    toast.success('Added to today’s Time Blocks')
   }
 
   // Drag-to-reorder (desktop).
@@ -100,7 +100,7 @@ export default function TasksPage() {
 
   return (
     <div className="space-y-4 pb-4">
-      <PageHeader title="Tasks" subtitle="Plan your work, then drop tasks into Time Blocking." />
+      <PageHeader title="Tasks" subtitle="Plan your work, then drop tasks into Time Blocks." />
 
       {/* Lists */}
       <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
@@ -191,7 +191,7 @@ export default function TasksPage() {
 
                   {/* Assign to a time block today */}
                   <div>
-                    <div className="text-[11px] font-[700] text-gray mb-1">Add to today’s Time Blocking</div>
+                    <div className="text-[11px] font-[700] text-gray mb-1">Add to today’s Time Blocks</div>
                     <div className="flex flex-wrap gap-1.5">
                       {OPTIMIZED_DAY.filter(b => b.type === 'focus' || b.type === 'plan' || b.type === 'admin').map((b) => {
                         const idx = OPTIMIZED_DAY.indexOf(b)

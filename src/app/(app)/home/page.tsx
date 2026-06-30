@@ -167,7 +167,7 @@ export default function HomePage() {
   }
 
   // Confirm today's shift from Home. Optionally make it the daily default so the
-  // prompt never reappears (still adjustable on Time Blocking).
+  // prompt never reappears (still adjustable on Time Blocks).
   const confirmShift = async (start: string) => {
     if (!userId || savingShift) return
     setSavingShift(true)
@@ -428,7 +428,7 @@ export default function HomePage() {
           <Card hover data-tour="home-rhythm" className="flex items-center gap-3 !p-3">
             <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-navy/10 text-navy"><ClockIcon size={18} /></div>
             <div className="min-w-0 flex-1">
-              <div className="label text-gray">Time Blocking</div>
+              <div className="label text-gray">Time Blocks</div>
               <div className="text-[14px] font-[700] text-dark-text">{rhythm?.status === 'before' ? `Your day starts at ${fmtClock(rhythm.startsAt)}` : 'Shift complete — nice work'}</div>
             </div>
             <span className="shrink-0 text-[12px] font-[700] text-teal">View →</span>

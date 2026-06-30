@@ -23,10 +23,8 @@ export const PARTNER_DETAIL_TOUR: TourStep[] = [
 ]
 
 export const RHYTHM_TOUR: TourStep[] = [
-  { emoji: '⏱️', title: 'Engineer your perfect day', body: 'A pro-optimized schedule built around your selling hours. Make it yours in seconds.' },
-  { selector: '[data-tour="rhythm-shift"]', emoji: '🕐', title: 'Pick your shift', body: 'Choose your hours once — the entire day re-times around you.' },
-  { selector: '[data-tour="rhythm-selling"]', emoji: '📞', title: 'Protect your selling time', body: 'These blocks are the point of the day: live conversations, zero admin.' },
-  { selector: '[data-tour="rhythm-timeline"]', emoji: '✏️', title: 'Yours to shape', body: 'Edit any block’s time, add notes, and jump straight to where that work happens.' },
+  { emoji: '⏱️', title: 'Engineer your perfect day', body: 'A pro-optimized, calendar-style day built around your selling hours.' },
+  { selector: '[data-tour="rhythm-timeline"]', emoji: '🗓️', title: 'Drag, resize, tap', body: 'Drag a block to move it, drag its bottom edge to resize, and tap any block for notes, tasks, and a jump-to link.' },
 ]
 
 export const TRAIN_TOUR: TourStep[] = [

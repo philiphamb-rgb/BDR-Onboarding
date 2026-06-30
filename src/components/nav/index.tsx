@@ -76,7 +76,7 @@ const TOOLS_GROUPS: { title: string; items: NavItem[] }[] = [
     { href: '/calculator',  label: 'Income Calculator', icon: CoinIcon },
   ] },
   { title: 'Plan', items: [
-    { href: '/schedule',    label: 'Time Blocking',     icon: ClockIcon },
+    { href: '/schedule',    label: 'Time Blocks',     icon: ClockIcon },
     { href: '/tasks',       label: 'Tasks',             icon: ChecklistIcon },
   ] },
   { title: 'Grow', items: [
@@ -92,7 +92,7 @@ const MANAGER_EXTRA_NAV: NavItem[] = [
   { href: '/manager/dashboard',    label: 'Dashboard',    icon: DashboardIcon,  managerOnly: true },
   { href: '/manager/team',         label: 'Team',          icon: TeamIcon,       managerOnly: true },
   { href: '/manager/partners',     label: 'Team Partners', icon: HandshakeIcon,  managerOnly: true },
-  { href: '/manager/rhythm',       label: 'Team Time Blocking', icon: ClockIcon, managerOnly: true },
+  { href: '/manager/rhythm',       label: 'Team Time Blocks', icon: ClockIcon, managerOnly: true },
   { href: '/manager/analytics',    label: 'Analytics',     icon: BarChartIcon,   managerOnly: true },
   { href: '/manager/broadcast',    label: 'Broadcast',     icon: BellIcon,       managerOnly: true },
   { href: '/manager/resources',    label: 'Resources',     icon: BookIcon,       managerOnly: true },
