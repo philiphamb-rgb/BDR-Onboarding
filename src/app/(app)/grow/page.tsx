@@ -8,14 +8,16 @@ export const dynamic = 'force-dynamic'
 // temperature snapshot of the real partner pipeline, and the pulse of your AI
 // Team. Everything links into the real screens — no parallel pipeline, one coach.
 
+import { useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Card, Skeleton } from '@/components/ui'
 import { CountUp } from '@/components/CountUp'
 import { GrowthTabs } from '@/components/GrowthTabs'
 import { GrowthChrome } from '@/components/growth/GrowthChrome'
-import { GrowthIntro } from '@/components/growth/GrowthIntro'
 import { FlameIcon, HandshakeIcon, IntegrationIcon, EditIcon, ArrowRightIcon, ChartRisingIcon, LightningIcon } from '@/components/icons'
 import { useGrowthOS } from '@/lib/hooks/useGrowthOS'
+import { useModuleKV } from '@/lib/hooks/useModuleKV'
 import { askCoach } from '@/lib/coachBus'
 import { cn } from '@/lib/utils'
 
@@ -39,7 +41,15 @@ function Ring({ pct, label, sub, tone = 'rgb(var(--teal))' }: { pct: number; lab
 }
 
 export default function GrowthOverviewPage() {
+  const router = useRouter()
   const { loading, roster, liveCount, leads, goals } = useGrowthOS()
+  const { loading: welcomeLoading, value: welcome } = useModuleKV('growth_welcome', { seen: false })
+
+  // First-ever visit to Agentic CRM → the full-screen "Meet your AI team"
+  // orientation, once per user. Replayable any time from the info icon below.
+  useEffect(() => {
+    if (!welcomeLoading && !welcome.seen) router.replace('/grow/welcome')
+  }, [welcomeLoading, welcome.seen, router])
 
   const lpw = goals.leads_per_week_goal || 0
   const crGoal = goals.close_rate_goal != null ? Number(goals.close_rate_goal) : 0
@@ -47,11 +57,14 @@ export default function GrowthOverviewPage() {
   const crPct = crGoal > 0 ? (leads.closeRate / crGoal) * 100 : 0
   const hasGoals = lpw > 0 || crGoal > 0
 
+  if (welcomeLoading || !welcome.seen) return (
+    <div className="space-y-4"><Skeleton className="h-40 rounded-2xl" /><Skeleton className="h-28 rounded-2xl" /></div>
+  )
+
   return (
     <div className="space-y-4 stagger-rise">
       <GrowthChrome />
       <GrowthTabs />
-      <GrowthIntro />
 
       {loading ? (
         <><Skeleton className="h-40 rounded-2xl" /><Skeleton className="h-28 rounded-2xl" /></>

@@ -12,8 +12,8 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { Card } from '@/components/ui'
 import {
-  GrowIcon, TargetIcon, LightningIcon, FlameIcon, ChecklistIcon, IntegrationIcon,
-  ChartRisingIcon, StarIcon, CoinIcon, EditIcon, CheckIcon, CloseIcon,
+  RaceCarIcon, TargetIcon, LightningIcon, FlameIcon, ChecklistIcon, IntegrationIcon,
+  ChartRisingIcon, StarIcon, CoinIcon, EditIcon, CheckIcon, CloseIcon, InfoIcon,
 } from '@/components/icons'
 import { FeedbackButton } from '@/components/growth/FeedbackButton'
 import { useGrowthOS } from '@/lib/hooks/useGrowthOS'
@@ -96,11 +96,15 @@ export function GrowthChrome({ compact = false }: { compact?: boolean }) {
     <div className="space-y-3">
       {/* Title + health */}
       <div className="flex items-center gap-2">
-        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-hero text-white"><GrowIcon size={18} /></span>
+        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-hero text-white"><RaceCarIcon size={18} /></span>
         <div className="min-w-0 flex-1">
           <h1 className="text-h2 leading-tight text-dark-text">Agentic CRM</h1>
           <p className="text-[12px] text-gray">Your AI agent workforce</p>
         </div>
+        <Link href="/grow/welcome" aria-label="Meet your AI team — replay the intro" title="Meet your AI team"
+          className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-gray hover:bg-bdrbg hover:text-navy-ink">
+          <InfoIcon size={15} />
+        </Link>
         <span className={cn('flex shrink-0 items-center gap-1.5 rounded-full px-2.5 py-1.5 text-[11px] font-[700]', TONE[health].bg, TONE[health].chipText)}>
           <span className={cn('h-1.5 w-1.5 rounded-full', TONE[health].dot)} />{healthLabel}
         </span>
