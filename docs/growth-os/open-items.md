@@ -44,11 +44,21 @@ backed by a team-scoped manager update policy). **Reporting drill-through**
 (ReportsPanel — funnel rollup, weighted pipeline, win rate, avg deal; click any
 stage/KPI → underlying records → CRM drawer; manager team-scope toggle).
 
-Still open on the CRM parity track:
-- **Contacts as a first-class object** (their own index/detail, not only nested in a
-  company) + full contact↔company↔deal association UI.
+Delivered since: **Contacts as a first-class object** (ContactsBoard — standalone
+People index with search, add-with-company-picker, set-primary, delete, and a
+contact → company → deal association that opens the record drawer).
+
+The CRM object model is now materially at parity: Companies (partner_onboarding),
+Contacts (crm_contacts, first-class + associated), Deals (deal props on the
+company), Activities (typed growth_notes timeline), list views + saved filters +
+RBAC bulk ops, and reporting drill-through.
+
+Still open:
 - **Naming rollout** — swap "Growth OS" → the chosen brand across nav/headers/copy
   (awaiting the final name).
+- **Feedback-loop nightly synthesis** — capture + changelog live; the scheduled
+  Manager Digest → approve/reject → versioned instruction-update job remains
+  (partly infra).
 - **Feedback-loop nightly synthesis** — the Manager Digest → approve/reject →
   versioned instruction-update job (capture + changelog already live).
 
