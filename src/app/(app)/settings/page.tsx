@@ -12,33 +12,78 @@ import { resetTours } from '@/components/tour'
 import { cn } from '@/lib/utils'
 import { toast } from '@/components/ui'
 import { roleLabel } from '@/lib/permissions'
-import { getTheme, setTheme, type ThemeChoice } from '@/lib/theme'
+import { getStoredTheme, applyTheme, setStoredTheme, type BaseMode, type Accent } from '@/lib/theme'
+
+const CD_SWATCHES = ['#3B6299', '#5CD1F3', '#FFC46C', '#FD6738', '#4E3B5E']
 
 function AppearanceCard() {
-  const [theme, setThemeState] = useState<ThemeChoice>('dark')
-  useEffect(() => { setThemeState(getTheme()) }, [])
-  const choose = (t: ThemeChoice) => { setThemeState(t); setTheme(t) }
-  const OPTS: { key: ThemeChoice; label: string; sub: string; swatch: string }[] = [
-    { key: 'dark',   label: 'Dark',   sub: 'The space look (default)', swatch: 'bg-[#0A0E15] border-[#262E3B]' },
-    { key: 'light',  label: 'Light',  sub: 'Bright, high-contrast',    swatch: 'bg-[#F0F5FA] border-[#E4ECF2]' },
-    { key: 'system', label: 'System', sub: 'Match your device',        swatch: 'bg-gradient-to-br from-[#0A0E15] to-[#F0F5FA] border-border' },
+  const supabase = createClient()
+  const [base, setBase] = useState<BaseMode>('dark')
+  const [accent, setAccent] = useState<Accent>('brand')
+  const [custom, setCustom] = useState('#3B6299')   // last custom hex, for the picker
+
+  useEffect(() => {
+    const t = getStoredTheme()
+    setBase(t.base); setAccent(t.accent)
+    if (t.accent !== 'brand') setCustom(t.accent)
+  }, [])
+
+  // Persist to Supabase (source of truth across devices) + localStorage, and
+  // re-theme the whole app immediately with a smooth cross-fade.
+  const commit = (nextBase: BaseMode, nextAccent: Accent) => {
+    setBase(nextBase); setAccent(nextAccent)
+    setStoredTheme(nextBase, nextAccent)
+    applyTheme(nextBase, nextAccent, true)
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (user) supabase.from('users').update({ theme: nextBase, accent_color: nextAccent }).eq('id', user.id).then(() => {})
+    })
+  }
+
+  const BASES: { key: BaseMode; label: string; swatch: string }[] = [
+    { key: 'light',  label: 'Light',  swatch: 'bg-[#F0F5FA] border-[#E4ECF2]' },
+    { key: 'dark',   label: 'Dark',   swatch: 'bg-[#0A0E15] border-[#262E3B]' },
+    { key: 'system', label: 'System', swatch: 'bg-gradient-to-br from-[#0A0E15] to-[#F0F5FA] border-border' },
   ]
+  const isCustom = accent !== 'brand'
+
   return (
     <Card>
       <h2 className="text-h3 text-dark-text mb-1">Appearance</h2>
-      <p className="text-xs text-gray mb-3">Choose how BDR Hub looks. Applies instantly and is remembered on this device.</p>
+      <p className="text-xs text-gray mb-3">Applies instantly, syncs across your devices.</p>
+
+      {/* Base */}
+      <div className="mb-1.5 text-[11px] font-[800] uppercase tracking-wide text-gray">Base</div>
       <div className="grid grid-cols-3 gap-2">
-        {OPTS.map(o => {
-          const active = theme === o.key
-          return (
-            <button key={o.key} onClick={() => choose(o.key)} aria-pressed={active}
-              className={cn('flex flex-col items-start gap-2 rounded-xl border p-3 text-left transition-all', active ? 'border-navy ring-2 ring-navy/30' : 'border-border hover:border-navy/40')}>
-              <span className={cn('h-8 w-full rounded-lg border', o.swatch)} />
-              <span className="text-[13px] font-[800] text-dark-text">{o.label}</span>
-              <span className="text-[11px] leading-tight text-gray">{o.sub}</span>
-            </button>
-          )
-        })}
+        {BASES.map(o => (
+          <button key={o.key} onClick={() => commit(o.key, accent)} aria-pressed={base === o.key}
+            className={cn('flex flex-col items-start gap-2 rounded-xl border p-2.5 text-left transition-all', base === o.key ? 'border-navy ring-2 ring-navy/30' : 'border-border hover:border-navy/40')}>
+            <span className={cn('h-7 w-full rounded-lg border', o.swatch)} />
+            <span className="text-[12.5px] font-[800] text-dark-text">{o.label}</span>
+          </button>
+        ))}
+      </div>
+
+      {/* Accent */}
+      <div className="mt-4 mb-1.5 text-[11px] font-[800] uppercase tracking-wide text-gray">Accent color</div>
+      <div className="grid grid-cols-2 gap-2">
+        <button onClick={() => commit(base, 'brand')} aria-pressed={!isCustom}
+          className={cn('flex flex-col gap-2 rounded-xl border p-2.5 text-left transition-all', !isCustom ? 'border-navy ring-2 ring-navy/30' : 'border-border hover:border-navy/40')}>
+          <span className="flex gap-1">{CD_SWATCHES.map(c => <span key={c} className="h-6 flex-1 rounded" style={{ backgroundColor: c }} />)}</span>
+          <span className="text-[12.5px] font-[800] text-dark-text">ConsumerDirect</span>
+          <span className="text-[11px] leading-tight text-gray">Brand palette (default)</span>
+        </button>
+        <label className={cn('flex cursor-pointer flex-col gap-2 rounded-xl border p-2.5 text-left transition-all', isCustom ? 'border-navy ring-2 ring-navy/30' : 'border-border hover:border-navy/40')}>
+          <span className="flex items-center gap-2">
+            <span className="h-6 w-6 shrink-0 rounded-full border border-border" style={{ backgroundColor: isCustom ? accent : custom }} />
+            <span className="flex-1 rounded" style={{ height: 24, background: 'linear-gradient(90deg,#f00,#ff0,#0f0,#0ff,#00f,#f0f,#f00)' }} />
+            {/* Native color wheel — updates the live preview swatch as you drag. */}
+            <input type="color" value={isCustom ? accent : custom}
+              onChange={e => { setCustom(e.target.value); commit(base, e.target.value) }}
+              className="h-7 w-8 cursor-pointer rounded border border-border bg-transparent p-0" aria-label="Pick a custom accent color" />
+          </span>
+          <span className="text-[12.5px] font-[800] text-dark-text">Custom</span>
+          <span className="text-[11px] leading-tight text-gray">{isCustom ? accent.toUpperCase() : 'Any color you like'}</span>
+        </label>
       </div>
     </Card>
   )

@@ -16,12 +16,14 @@ const config: Config = {
           dark:    'rgb(var(--navy-dark) / <alpha-value>)',
           mid:     'rgb(var(--navy-mid) / <alpha-value>)',
         },
+        // Supporting accents — themeable via the accent scheme (brand vs custom)
         teal: {
-          DEFAULT: '#00C2B2',
-          dark:    '#009E8B',
+          DEFAULT: 'rgb(var(--teal) / <alpha-value>)',
+          dark:    'rgb(var(--teal-dark) / <alpha-value>)',
         },
         mint:    '#00C97A',
-        gold:    '#F5A623',
+        gold:    'rgb(var(--gold) / <alpha-value>)',
+        plum:    'rgb(var(--plum) / <alpha-value>)',
         // UI colors — themeable (dark default / light option)
         bdrbg:   'rgb(var(--bg) / <alpha-value>)',
         card:    'rgb(var(--card) / <alpha-value>)',
@@ -33,7 +35,7 @@ const config: Config = {
         gray:        'rgb(var(--text-muted) / <alpha-value>)',
         // Status
         success: '#16A34A',
-        error:   '#DC2626',
+        error:   'rgb(var(--error) / <alpha-value>)',
         blue:    '#1D4ED8',
         purple:  '#6D28D9',
         // Belt colors
@@ -86,16 +88,16 @@ const config: Config = {
       boxShadow: {
         'card':   '0 2px 8px rgba(0,0,0,0.06)',
         'modal':  '0 8px 32px rgba(0,0,0,0.12)',
-        'button': '0 4px 16px rgba(229,72,77,0.30)',
+        'button': '0 4px 16px rgba(59,98,153,0.28)',
         'none':   'none',
       },
 
       // ─── Background Gradients ──────────────────────────────────────────────
       backgroundImage: {
-        'gradient-primary': 'linear-gradient(135deg, #00C2B2, #009E8B)',
-        'gradient-hero':    'linear-gradient(135deg, #B93438, #E5484D)',
-        'gradient-gold':    'linear-gradient(135deg, #F5A623, #FFB300)',
-        'gradient-belt':    'linear-gradient(90deg, #00C2B2, #00C97A)',
+        'gradient-primary': 'linear-gradient(135deg, rgb(var(--teal)), rgb(var(--teal-dark)))',
+        'gradient-hero':    'linear-gradient(135deg, rgb(var(--navy-dark)), rgb(var(--navy)))',
+        'gradient-gold':    'linear-gradient(135deg, rgb(var(--gold)), #FFB300)',
+        'gradient-belt':    'linear-gradient(90deg, rgb(var(--teal)), #00C97A)',
         'gradient-purple':  'linear-gradient(135deg, #6D28D9, #4C1D95)',
       },
 

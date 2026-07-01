@@ -5,13 +5,20 @@
 @tailwind utilities;
 
 /* ── Design System Tokens (themeable) ─────────────────────────────────────────
-   Neutrals are space-separated RGB CHANNELS so Tailwind's `rgb(var(--x)/<alpha>)`
-   opacity modifiers keep working (bg-card/10, text-navy/40, …). DARK is the
-   default theme (the space/red look); `.light` on <html> flips to light. The
-   brand primary (`--navy`) is a vivid red in BOTH themes. */
+   Two independent axes, both driven by CSS channels (space-separated RGB so
+   Tailwind's `rgb(var(--x)/<alpha>)` opacity modifiers keep working):
+
+     • BASE (neutrals): DARK by default (:root); `.light` on <html> → light.
+     • ACCENT: the ConsumerDirect brand palette by default (below). Selecting a
+       custom color overrides --navy/--teal/--gold inline on <html> (see theme.ts);
+       clearing it falls back to these brand defaults.
+
+   ConsumerDirect palette (exact, from the logo):
+     deep-blue #3B6299 (primary) · light-blue #5CD1F3 · yellow #FFC46C ·
+     red #FD6738 · plum #4E3B5E (secondary/heading). */
 :root {
   color-scheme: dark;
-  /* neutrals — DARK (default) */
+  /* neutrals — DARK (default base) */
   --bg:         10 14 21;
   --card:       20 26 36;
   --border:     38 46 59;
@@ -19,10 +26,15 @@
   --text:       237 241 247;
   --text-mid:   194 203 216;
   --text-muted: 135 146 163;
-  /* brand primary (red) — identical across themes */
-  --navy:       229 72 77;
-  --navy-dark:  193 59 63;
-  --navy-mid:   240 96 95;
+  /* accent scheme — ConsumerDirect BRAND (default) */
+  --navy:       59 98 153;    /* #3B6299 deep-blue — dominant/primary accent */
+  --navy-dark:  45 76 122;
+  --navy-mid:   90 140 200;
+  --teal:       92 209 243;   /* #5CD1F3 light-blue — "new / info" accent */
+  --teal-dark:  47 170 210;
+  --gold:       255 196 108;  /* #FFC46C yellow — "in progress / warning" accent */
+  --error:      253 103 56;   /* #FD6738 red — "urgent / hot" accent */
+  --plum:       78 59 94;     /* #4E3B5E — secondary / heading accent */
   --font-sans:  'Inter', system-ui, sans-serif;
   /* legacy aliases used within this stylesheet — follow the channels above */
   --color-bg:     rgb(var(--bg));
@@ -30,7 +42,7 @@
   --color-border: rgb(var(--border));
   --color-gray:   rgb(var(--text-muted));
   --color-navy:   rgb(var(--navy));
-  --color-teal:   #00C2B2;
+  --color-teal:   rgb(var(--teal));
 }
 
 .light {
@@ -42,6 +54,13 @@
   --text:       13 27 42;
   --text-mid:   55 65 81;
   --text-muted: 100 116 139;
+}
+
+/* One-shot cross-fade applied while a theme change commits (added by theme.ts,
+   removed ~350ms later) — smooth repaint instead of an abrupt flip. */
+.theme-transition, .theme-transition *,
+.theme-transition *::before, .theme-transition *::after {
+  transition: background-color .3s ease, border-color .3s ease, color .3s ease, fill .3s ease, stroke .3s ease !important;
 }
 
 /* ── Base Resets ──────────────────────────────────────────────────────────── */

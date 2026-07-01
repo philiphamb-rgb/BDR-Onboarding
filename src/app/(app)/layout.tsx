@@ -6,6 +6,7 @@ import { ServiceWorkerRegister } from '@/components/ServiceWorkerRegister'
 import { OfflineBanner } from '@/lib/hooks/OfflineBanner'
 import { UpdateBanner } from '@/components/UpdateBanner'
 import { GuidedTour } from '@/components/GuidedTour'
+import { ThemeSync } from '@/components/ThemeSync'
 import { createClient } from '@/lib/supabase/server'
 
 export const dynamic = 'force-dynamic'
@@ -24,7 +25,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     const [{ data: profile }, { count }] = await Promise.all([
       supabase
         .from('users')
-        .select('id, name, role, avatar_url')
+        .select('id, name, role, avatar_url, theme, accent_color')
         .eq('id', authUser.id)
         .single(),
       supabase
@@ -39,6 +40,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
 
   return (
     <div className="flex min-h-screen bg-bdrbg">
+      <ThemeSync base={user?.theme} accent={user?.accent_color} />
       <OfflineBanner />
       <UpdateBanner />
 
