@@ -57,14 +57,27 @@ export default function RolesPage() {
     }, { onConflict: 'team_id,role,feature_key' })
   }
 
+  // Role writes on other users run through the admin-set-role Edge Function
+  // (service role, admin-gated) — direct table writes are correctly blocked by RLS.
+  const callSetRole = async (targetId: string, role: string): Promise<{ error?: string }> => {
+    const { data: { session } } = await supabase.auth.getSession()
+    if (!session) return { error: 'Your session expired — sign in again.' }
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/admin-set-role`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}` },
+        body: JSON.stringify({ target_user_id: targetId, role }),
+      })
+      const j = await res.json().catch(() => ({}))
+      return res.ok ? {} : { error: j.error || 'Could not update role.' }
+    } catch { return { error: 'Network error — try again.' } }
+  }
+
   const changeMemberRole = async (id: string, role: string) => {
     if (!isAdmin) return
     const prevMembers = members
     setMembers(prev => prev.map(m => m.id === id ? { ...m, role: dbRoleFor(role) } : m))
-    const { error } = await supabase.from('users').update({ role: dbRoleFor(role) }).eq('id', id)
-    // Don't claim success the DB rejected — role writes on other users need a
-    // privileged (service-role) path; surface that instead of a false success.
-    if (error) { setMembers(prevMembers); toast.error('Could not change role — this needs elevated server permissions.'); return }
+    const { error } = await callSetRole(id, role)
+    if (error) { setMembers(prevMembers); toast.error(error); return }
     toast.success('Role updated')
   }
 
@@ -74,13 +87,14 @@ export default function RolesPage() {
     try {
       const { data: existing } = await supabase.from('users').select('id').eq('email', email.trim().toLowerCase()).single()
       if (existing) {
-        await supabase.from('team_members').upsert({ team_id: me.team_id, user_id: existing.id, status: 'active' }, { onConflict: 'team_id,user_id' })
-        const { error: roleErr } = await supabase.from('users').update({ role: dbRoleFor(inviteRole), team_id: me.team_id }).eq('id', existing.id)
-        if (roleErr) toast.error(`${email} couldn’t be assigned a role — that needs elevated server permissions.`)
-        else toast.success(`${email} added as ${inviteRole}`)
+        const { error: roleErr } = await callSetRole(existing.id, inviteRole)
+        if (roleErr) toast.error(`${email} couldn’t be added: ${roleErr}`)
+        else {
+          toast.success(`${email} added as ${inviteRole}`)
+          const { data: mem } = await supabase.from('users').select('id, name, email, role').eq('team_id', me.team_id)
+          setMembers(mem ?? [])
+        }
         setEmail('')
-        const { data: mem } = await supabase.from('users').select('id, name, email, role').eq('team_id', me.team_id)
-        setMembers(mem ?? [])
       } else {
         toast.info('Invite noted — they join with this role when they sign up.')
         setEmail('')
@@ -109,7 +123,7 @@ export default function RolesPage() {
           </div>
           <select value={inviteRole} onChange={e => setInviteRole(e.target.value)}
             className="rounded-md border border-border px-3 py-2.5 text-sm font-[600] text-dark-text focus:outline-none focus:ring-2 focus:ring-navy">
-            {ROLES.map(r => <option key={r.key} value={r.key}>{r.label}</option>)}
+            {ROLES.filter(r => r.key !== 'admin').map(r => <option key={r.key} value={r.key}>{r.label}</option>)}
           </select>
           <Button onClick={sendInvite} loading={inviting} disabled={!email.includes('@') || !isAdmin}>Invite</Button>
         </div>
@@ -173,7 +187,7 @@ export default function RolesPage() {
                 {isAdmin ? (
                   <select value={effectiveRole(m.role)} onChange={e => changeMemberRole(m.id, e.target.value)}
                     className="rounded-md border border-border px-2 py-1.5 text-[12px] font-[700] text-dark-text focus:outline-none focus:ring-2 focus:ring-navy">
-                    {ROLES.map(r => <option key={r.key} value={r.key}>{r.label}</option>)}
+                    {ROLES.filter(r => r.key !== 'admin').map(r => <option key={r.key} value={r.key}>{r.label}</option>)}
                   </select>
                 ) : (
                   <Badge variant="navy">{ROLES.find(r => r.key === effectiveRole(m.role))?.label}</Badge>

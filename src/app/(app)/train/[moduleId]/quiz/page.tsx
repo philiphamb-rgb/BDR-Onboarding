@@ -194,7 +194,7 @@ export default function ModuleQuizPage() {
               ))}
             </div>
           </div>
-          <Badge className={cn('text-xs', q.question_type === 'scenario' ? 'bg-blue-100 text-blue-700' : 'bg-purple-100 text-purple-700')}>
+          <Badge className={cn('text-xs', q.question_type === 'scenario' ? 'bg-blue-500/15 text-blue-300' : 'bg-purple-500/15 text-purple-300')}>
             {q.question_type}
           </Badge>
         </div>
@@ -206,7 +206,7 @@ export default function ModuleQuizPage() {
               let cls = 'border-border bg-bdrbg hover:bg-bdrbg text-mid-text'
               if (isAnswered) {
                 if (idx === q.correct_answer) cls = 'border-teal bg-teal/5 text-teal font-medium'
-                else if (idx === userAnswer) cls = 'border-red-400 bg-red-50 text-error'
+                else if (idx === userAnswer) cls = 'border-error/50 bg-error/10 text-error'
                 else cls = 'border-border bg-bdrbg opacity-40 text-gray'
               } else if (idx === userAnswer) {
                 cls = 'border-navy bg-navy/5 text-navy'
@@ -222,7 +222,7 @@ export default function ModuleQuizPage() {
 
           {isAnswered && (
             <div className={cn('mt-4 p-3 rounded-xl border', userAnswer === q.correct_answer
-              ? 'bg-teal/5 border-teal/30' : 'bg-red-50 border-red-200')}>
+              ? 'bg-teal/5 border-teal/30' : 'bg-error/10 border-red-200')}>
               <div className={cn('text-xs font-bold mb-1', userAnswer === q.correct_answer ? 'text-teal' : 'text-error')}>
                 {userAnswer === q.correct_answer ? 'Correct!' : 'Incorrect'}
               </div>
@@ -248,7 +248,7 @@ export default function ModuleQuizPage() {
   if (phase === 'result' && result) return (
     <div className="space-y-4">
       {result.passed && <Confetti />}
-      <Card className={cn('text-center py-8', result.passed ? 'border-teal/30 bg-teal/5' : 'border-red-200 bg-red-50')}>
+      <Card className={cn('text-center py-8', result.passed ? 'border-teal/30 bg-teal/5' : 'border-red-200 bg-error/10')}>
         <div className="mb-3 flex justify-center">{result.passed ? <TrophyIcon size={44} className="text-gold" /> : <BookIcon size={44} className="text-navy" />}</div>
         <h2 className="text-h2 text-dark-text mb-2">{result.passed ? 'Passed!' : 'Keep studying'}</h2>
         <div className="text-4xl font-bold text-dark-text mb-1">{result.pct}%</div>
@@ -268,7 +268,7 @@ export default function ModuleQuizPage() {
             const ans = answers[q.id]
             const isCorrect = ans === q.correct_answer
             return (
-              <div key={q.id} className={cn('p-3 rounded-xl border text-sm', isCorrect ? 'border-teal/30 bg-teal/5' : 'border-red-200 bg-red-50')}>
+              <div key={q.id} className={cn('p-3 rounded-xl border text-sm', isCorrect ? 'border-teal/30 bg-teal/5' : 'border-red-200 bg-error/10')}>
                 <div className="flex items-start gap-2">
                   <div className={cn('w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5',
                     isCorrect ? 'bg-teal/20' : 'bg-red-200')}>

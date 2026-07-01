@@ -24,13 +24,13 @@ import { AiTip } from '@/components/AiTip'
 import Link from 'next/link'
 
 const BELT_STYLES: Record<string, { bg: string; bar: string; label: string }> = {
-  white:  { bg: 'bg-bdrbg',   bar: '#9CA3AF', label: 'White Belt' },
-  yellow: { bg: 'bg-yellow-50',  bar: '#FBBF24', label: 'Yellow Belt' },
-  orange: { bg: 'bg-orange-50',  bar: '#F97316', label: 'Orange Belt' },
-  green:  { bg: 'bg-green-50',   bar: '#22C55E', label: 'Green Belt' },
-  blue:   { bg: 'bg-blue-50',    bar: '#3B82F6', label: 'Blue Belt' },
-  purple: { bg: 'bg-purple-50',  bar: '#9333EA', label: 'Purple Belt' },
-  black:  { bg: 'bg-gray-900',   bar: '#111827', label: 'Black Belt' },
+  white:  { bg: 'bg-bdrbg',        bar: '#9CA3AF', label: 'White Belt' },
+  yellow: { bg: 'bg-yellow-400/15', bar: '#FBBF24', label: 'Yellow Belt' },
+  orange: { bg: 'bg-orange-400/15', bar: '#F97316', label: 'Orange Belt' },
+  green:  { bg: 'bg-green-400/15',  bar: '#22C55E', label: 'Green Belt' },
+  blue:   { bg: 'bg-blue-400/15',   bar: '#3B82F6', label: 'Blue Belt' },
+  purple: { bg: 'bg-purple-400/15', bar: '#9333EA', label: 'Purple Belt' },
+  black:  { bg: 'bg-gray-500/20',   bar: '#111827', label: 'Black Belt' },
 }
 
 // The belt ladder — each rank is a milestone in your days active in BDR Hub.
