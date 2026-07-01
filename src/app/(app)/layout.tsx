@@ -1,6 +1,7 @@
 // @ts-nocheck
 import { BottomNav, Sidebar, AppHeader } from '@/components/nav'
 import { BeltWatcher } from '@/components/gamification'
+import { MilestoneWatcher } from '@/components/MilestoneWatcher'
 import { CoachDock } from '@/components/CoachDock'
 import { ServiceWorkerRegister } from '@/components/ServiceWorkerRegister'
 import { OfflineBanner } from '@/lib/hooks/OfflineBanner'
@@ -63,6 +64,9 @@ export default async function AppLayout({ children }: { children: React.ReactNod
 
       {/* Fires a confetti celebration on a genuine belt advance */}
       <BeltWatcher userId={user?.id} />
+
+      {/* Celebrates newly-unlocked achievement milestones */}
+      <MilestoneWatcher userId={user?.id} />
 
       {/* The AI Coach in your pocket — reachable from every screen */}
       <CoachDock />

@@ -5,9 +5,10 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Card, Button, Badge, SkeletonCard } from '@/components/ui'
-import { MedalIcon, LockIcon, BookIcon, DownloadIcon, BeltIcon, FlameIcon, XpIcon } from '@/components/icons'
+import { MedalIcon, LockIcon, BookIcon, DownloadIcon, BeltIcon, FlameIcon, XpIcon, PhoneIcon, TargetIcon, HandshakeIcon, TrophyIcon } from '@/components/icons'
 import { cn, formatXP } from '@/lib/utils'
 import { BELTS, normalizeBelt, beltIndex } from '@/lib/belts'
+import { computeAchievements, TIER_COLOR } from '@/lib/achievements'
 import { passedModuleSet, isModuleComplete } from '@/lib/moduleProgress'
 import { LearnTabs } from '@/components/LearnTabs'
 import Link from 'next/link'
@@ -32,7 +33,7 @@ export default function ProgressPage() {
     const [{ data: u }, { data: mods }, { data: prog }, { data: attempts }] = await Promise.all([
       supabase.from('users').select('name').eq('id', uid).single(),
       supabase.from('modules').select('id, order_index, lessons(id)').eq('is_published', true),
-      supabase.from('user_progress').select('completed_lessons, total_xp, current_streak, belt_rank').eq('user_id', uid).single(),
+      supabase.from('user_progress').select('completed_lessons, total_xp, current_streak, belt_rank, total_calls, total_demos, total_deals, longest_streak').eq('user_id', uid).single(),
       supabase.from('quiz_attempts').select('module_id, percentage').eq('user_id', uid),
     ])
     const done = new Set<string>(prog?.completed_lessons ?? [])
@@ -44,6 +45,10 @@ export default function ProgressPage() {
       xp: prog?.total_xp ?? 0,
       streak: prog?.current_streak ?? 0,
       belt: prog?.belt_rank ?? 'White Belt',
+      stats: {
+        total_calls: prog?.total_calls ?? 0, total_demos: prog?.total_demos ?? 0, total_deals: prog?.total_deals ?? 0,
+        current_streak: prog?.current_streak ?? 0, longest_streak: prog?.longest_streak ?? 0, total_xp: prog?.total_xp ?? 0,
+      },
     })
     setLoading(false)
   }
@@ -155,6 +160,9 @@ export default function ProgressPage() {
         </div>
       )}
 
+      {/* Achievement wall */}
+      <AchievementWall stats={data.stats} />
+
       {/* Belt journey — your development ladder */}
       <Card className="no-print">
         <h2 className="text-h3 text-dark-text">Belt Journey</h2>
@@ -180,5 +188,43 @@ export default function ProgressPage() {
         </div>
       </Card>
     </div>
+  )
+}
+
+const ACH_ICON: Record<string, any> = { phone: PhoneIcon, target: TargetIcon, handshake: HandshakeIcon, trophy: TrophyIcon, flame: FlameIcon, xp: XpIcon }
+
+function AchievementWall({ stats }: { stats: any }) {
+  const badges = computeAchievements(stats)
+  const earnedCount = badges.filter(b => b.earned).length
+  return (
+    <Card className="no-print">
+      <div className="flex items-center justify-between">
+        <h2 className="text-h3 text-dark-text">Achievements</h2>
+        <span className="text-[12px] font-[800] text-gray tabular-nums">{earnedCount}/{badges.length}</span>
+      </div>
+      <div className="mt-3 grid grid-cols-3 gap-2 sm:grid-cols-4">
+        {badges.map(b => {
+          const Icon = ACH_ICON[b.icon] || TrophyIcon
+          const color = TIER_COLOR[b.tier]
+          return (
+            <div key={b.id} title={b.desc}
+              className={cn('flex flex-col items-center gap-1 rounded-xl border p-2.5 text-center transition-all',
+                b.earned ? 'border-border bg-card' : 'border-dashed border-border bg-bdrbg/50')}>
+              <span className="flex h-10 w-10 items-center justify-center rounded-full"
+                style={{ backgroundColor: b.earned ? color : 'rgb(var(--border))', opacity: b.earned ? 1 : 0.5 }}>
+                {b.earned ? <Icon size={18} className="text-white" /> : <LockIcon size={15} className="text-gray" />}
+              </span>
+              <div className={cn('text-[11px] font-[800] leading-tight', b.earned ? 'text-dark-text' : 'text-gray')}>{b.label}</div>
+              {!b.earned && (
+                <div className="mt-0.5 w-full">
+                  <div className="h-1 overflow-hidden rounded-full bg-border"><div className="h-full rounded-full bg-navy-mid" style={{ width: `${b.pct}%` }} /></div>
+                  <div className="mt-0.5 text-[9px] font-[700] tabular-nums text-gray">{b.have}/{b.need}</div>
+                </div>
+              )}
+            </div>
+          )
+        })}
+      </div>
+    </Card>
   )
 }
