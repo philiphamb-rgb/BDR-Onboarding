@@ -235,7 +235,7 @@ export function CoachDock() {
               {messages.length === 0 ? (
                 <div className="space-y-4">
                   <div className="rounded-2xl border border-border bg-bdrbg p-4">
-                    <p className="text-[14px] font-[700] text-dark-text">Hey{firstName ? `, ${firstName}` : ''} 👋</p>
+                    <p className="text-[14px] font-[700] text-dark-text">Hey{firstName ? `, ${firstName}` : ''} </p>
                     <p className="mt-1 text-[13px] leading-relaxed text-mid-text">
                       I&apos;m your coach in your pocket — I already know your belt, your pace to goal, your pipeline, and your wins. Ask me anything, anytime.
                     </p>

@@ -21,7 +21,7 @@ const C={navy:'rgb(var(--navy))',navyD:'#001F5B',navyL:'#1A5098',teal:'rgb(var(-
 
 const XP_VALUES={lesson_complete:25,quiz_pass:50,quiz_perfect:75,assessment_pass:150,assessment_perfect:250,final_pass:500,final_perfect:750};
 const BELTS=[{min:0,max:300,name:'White Belt',color:'#E8E8E8',textColor:'#333'},{min:300,max:700,name:'Yellow Belt',color:'#F5C200',textColor:'#333'},{min:700,max:1200,name:'Orange Belt',color:'#F07820',textColor:'#fff'},{min:1200,max:1800,name:'Green Belt',color:'#16A34A',textColor:'#fff'},{min:1800,max:2600,name:'Blue Belt',color:'#1A5098',textColor:'#fff'},{min:2600,max:3600,name:'Brown Belt',color:'#7C4D00',textColor:'#fff'},{min:3600,max:9999,name:'Black Belt',color:'#0A1628',textColor:'#F5C200'}];
-const BADGES=[{id:'first_rule',icon:'🎯',name:'First Step',desc:'Complete your first Sandler lesson'},{id:'halfway',icon:'🌟',name:'Halfway There',desc:'Complete 25 rules'},{id:'part1_done',icon:'🔑',name:'Core Concepts',desc:'Complete all 6 Part One rules'},{id:'part2_done',icon:'⚡',name:'Executor',desc:'Complete all 27 Part Two rules'},{id:'part3_done',icon:'🧭',name:'Course Corrector',desc:'Complete all 16 Part Three rules'},{id:'perfect_quiz',icon:'💯',name:'Perfect Score',desc:'Score 3/3 on any quiz'},{id:'triple_perfect',icon:'🔥',name:'On Fire',desc:'3 perfect quizzes in a row'},{id:'no_stopper',icon:'💪',name:'No Stopper',desc:'Pass 10 quizzes'},{id:'quiz_all',icon:'🧠',name:'Quiz Master',desc:'Pass all 49 rule quizzes'},{id:'week_streak',icon:'📅',name:'Consistent',desc:'Maintain a 7-day training streak'},{id:'certified',icon:'🏆',name:'Course Certified',desc:'Pass the final certification exam'},{id:'black_belt',icon:'🥋',name:'Black Belt',desc:'Earn 3,600+ XP and master the system'}];
+const BADGES=[{id:'first_rule',icon:'',name:'First Step',desc:'Complete your first Sandler lesson'},{id:'halfway',icon:'',name:'Halfway There',desc:'Complete 25 rules'},{id:'part1_done',icon:'',name:'Core Concepts',desc:'Complete all 6 Part One rules'},{id:'part2_done',icon:'',name:'Executor',desc:'Complete all 27 Part Two rules'},{id:'part3_done',icon:'',name:'Course Corrector',desc:'Complete all 16 Part Three rules'},{id:'perfect_quiz',icon:'',name:'Perfect Score',desc:'Score 3/3 on any quiz'},{id:'triple_perfect',icon:'',name:'On Fire',desc:'3 perfect quizzes in a row'},{id:'no_stopper',icon:'',name:'No Stopper',desc:'Pass 10 quizzes'},{id:'quiz_all',icon:'',name:'Quiz Master',desc:'Pass all 49 rule quizzes'},{id:'week_streak',icon:'',name:'Consistent',desc:'Maintain a 7-day training streak'},{id:'certified',icon:'',name:'Course Certified',desc:'Pass the final certification exam'},{id:'black_belt',icon:'',name:'Black Belt',desc:'Earn 3,600+ XP and master the system'}];
 const getBelt=xp=>BELTS.find(b=>xp>=b.min&&xp<b.max)||BELTS[BELTS.length-1];
 const getXpToNext=xp=>{const b=getBelt(xp);return b.max===9999?null:b.max-xp;};
 
@@ -729,7 +729,7 @@ const AudioControls=({text,color=C.navy,label="Listen to this lesson",compact=fa
       style={{background:"none",border:"none",cursor:"pointer",fontSize:16,
         color:sp.on?color:C.faint,padding:"0 3px",verticalAlign:"middle",
         display:"inline-flex",alignItems:"center",flexShrink:0}}>
-      {sp.on&&!sp.paused?"⏸":sp.on&&sp.paused?"▶":"🔊"}
+      {sp.on&&!sp.paused?"⏸":sp.on&&sp.paused?"▶":""}
     </button>
   );
   const cur=sp.voices.find(v=>v.voiceURI===sp.voiceURI);
@@ -741,7 +741,7 @@ const AudioControls=({text,color=C.navy,label="Listen to this lesson",compact=fa
           color:sp.on?"#fff":color,fontSize:18,cursor:"pointer",flexShrink:0,
           display:"flex",alignItems:"center",justifyContent:"center",
           transition:"all .2s",boxShadow:sp.on?`0 0 14px ${color}55`:"none"}}>
-          {sp.on&&!sp.paused?"⏸":sp.on&&sp.paused?"▶":"🔊"}
+          {sp.on&&!sp.paused?"⏸":sp.on&&sp.paused?"▶":""}
         </button>
         {sp.on&&<button onClick={sp.stop} style={{width:32,height:32,borderRadius:"50%",
           background:"none",border:`1px solid ${color}44`,color:C.muted,fontSize:14,cursor:"pointer",
@@ -762,7 +762,7 @@ const AudioControls=({text,color=C.navy,label="Listen to this lesson",compact=fa
             style={{padding:"5px 10px",borderRadius:7,border:`1px solid ${color}44`,
               background:openV?`${color}18`:"transparent",cursor:"pointer",fontSize:11,fontWeight:700,
               color,display:"flex",alignItems:"center",gap:5,flexShrink:0}}>
-            🗣 {cur?voiceLabel(cur):"Voice"} <span style={{fontSize:9,opacity:.7}}>{openV?"▲":"▼"}</span>
+            {cur?voiceLabel(cur):"Voice"} <span style={{fontSize:9,opacity:.7}}>{openV?"▲":"▼"}</span>
           </button>
         )}
       </div>
@@ -779,7 +779,7 @@ const AudioControls=({text,color=C.navy,label="Listen to this lesson",compact=fa
                   fontSize:12,fontWeight:active?700:500,color:active?color:C.mid,
                   display:"flex",justifyContent:"space-between",alignItems:"center",gap:8}}>
                 <span style={{overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{v.name}</span>
-                {active&&<span style={{fontSize:11}}>✓</span>}
+                {active&&<span style={{fontSize:11}}></span>}
               </button>
             );
           })}
@@ -1084,7 +1084,7 @@ const XPToast=({xp,visible,onHide})=>{
       transition:'all .3s cubic-bezier(.175,.885,.32,1.275)',
       transform:visible?'translateY(0) scale(1)':'translateY(-14px) scale(.85)',
       opacity:visible?1:0}}>
-      ⭐ +{xp} XP earned!
+      +{xp} XP earned!
     </div>
   );
 };
@@ -1099,9 +1099,9 @@ const BadgeToast=({badge,visible,onHide})=>{
       boxShadow:'0 8px 28px rgba(0,48,135,.5),0 0 0 1px rgba(255,255,255,.1)',
       pointerEvents:'none',transition:'all .45s cubic-bezier(.175,.885,.32,1.275)',
       opacity:visible?1:0}}>
-      <div style={{fontSize:9,fontWeight:700,color:'rgba(255,255,255,.45)',letterSpacing:1.5,marginBottom:6}}>🎖️ BADGE UNLOCKED</div>
+      <div style={{fontSize:9,fontWeight:700,color:'rgba(255,255,255,.45)',letterSpacing:1.5,marginBottom:6}}>BADGE UNLOCKED</div>
       <div style={{display:'flex',alignItems:'center',gap:12}}>
-        <span style={{fontSize:30,lineHeight:1,flexShrink:0}}>{badge?.icon||'🏆'}</span>
+        <span style={{fontSize:30,lineHeight:1,flexShrink:0}}>{badge?.icon||''}</span>
         <div>
           <div style={{fontSize:15,fontWeight:900,lineHeight:1.2}}>{badge?.name}</div>
           <div style={{fontSize:11,color:'rgba(255,255,255,.6)',marginTop:2,lineHeight:1.4}}>{badge?.desc}</div>
@@ -1120,7 +1120,7 @@ const LevelUpBanner=({belt,onClose})=>{
       <div style={{background:'#fff',borderRadius:20,padding:40,textAlign:'center',
         maxWidth:360,width:'90%',boxShadow:'0 24px 64px rgba(0,0,0,.4)',
         animation:'lu .45s cubic-bezier(.175,.885,.32,1.275)'}}>
-        <div style={{fontSize:56,marginBottom:6}}>🥋</div>
+        <div style={{fontSize:56,marginBottom:6}}></div>
         <div style={{fontSize:11,fontWeight:700,letterSpacing:3,color:C.muted,marginBottom:6}}>BELT PROMOTION!</div>
         <div style={{fontSize:28,fontWeight:900,color:C.dark,marginBottom:12}}>{belt.name}</div>
         <div style={{padding:'10px 24px',borderRadius:12,background:belt.color,
@@ -1196,7 +1196,7 @@ const SearchModal=({onClose,onNavigate,progress})=>{
         boxShadow:"0 32px 80px rgba(0,0,0,.4)",animation:"fadeUp .22s ease",flexShrink:0}}>
         <div style={{padding:"13px 16px",borderBottom:`1px solid ${C.border}`,
           display:"flex",alignItems:"center",gap:10,background:C.surface}}>
-          <span style={{fontSize:15,opacity:.45,userSelect:"none"}}>🔍</span>
+          <span style={{fontSize:15,opacity:.45,userSelect:"none"}}></span>
           <input ref={inp} value={q} onChange={e=>setQ(e.target.value)}
             placeholder="Search all 49 rules — title, number, or keyword…"
             style={{flex:1,border:"none",outline:"none",fontSize:14,color:C.dark,
@@ -1222,14 +1222,14 @@ const SearchModal=({onClose,onNavigate,progress})=>{
                   background:done?`${C.success}1a`:p.color,
                   flexShrink:0,display:"flex",alignItems:"center",justifyContent:"center",
                   fontSize:12,fontWeight:800,color:done?C.success:"#fff"}}>
-                  {done?"✓":r.num}
+                  {done?"":r.num}
                 </div>
                 <div style={{flex:1,minWidth:0}}>
                   <div style={{fontSize:13,fontWeight:700,color:C.dark,marginBottom:1}}>{r.title}</div>
                   <div style={{fontSize:11,color:C.muted,overflow:"hidden",textOverflow:"ellipsis",
                     whiteSpace:"nowrap",fontStyle:"italic",marginBottom:2}}>{HOOKS[r.id]}</div>
                   <div style={{fontSize:10,color:p.color,fontWeight:700}}>
-                    Pt.{p.num} · p.{r.page}{qs?.passed?" · ✓ Quizzed":""}
+                    Pt.{p.num} · p.{r.page}{qs?.passed?" · Quizzed":""}
                   </div>
                 </div>
                 <div style={{color:C.faint,fontSize:16,alignSelf:"center",flexShrink:0}}>›</div>
@@ -1316,7 +1316,7 @@ function LandingScreen({onStart,onManager}){
           {mode==='student'?(
             <>
               <div style={{display:'flex',borderRadius:10,overflow:'hidden',border:`1px solid ${C.border}`,marginBottom:20}}>
-                {[{n:'3',l:'Parts',c:C.navy},{n:'49',l:'Rules',c:C.teal},{n:'~2.5h',l:'To Certify',c:C.teal},{n:'🏆',l:'Included',c:C.gold}].map((s,i)=>(
+                {[{n:'3',l:'Parts',c:C.navy},{n:'49',l:'Rules',c:C.teal},{n:'~2.5h',l:'To Certify',c:C.teal},{n:'',l:'Included',c:C.gold}].map((s,i)=>(
                   <div key={s.l} style={{flex:1,textAlign:'center',padding:'10px 4px',
                     borderRight:i<2?`1px solid ${C.border}`:'none',
                     background:i===1?C.bg:'#fff'}}>
@@ -1334,9 +1334,9 @@ function LandingScreen({onStart,onManager}){
                     border:`2px solid ${foc?C.navy:name.trim()?C.teal:C.border}`,
                     fontSize:15,fontFamily:'Arial,sans-serif',outline:'none',
                     boxSizing:'border-box',color:C.dark,transition:'border-color .15s',background:'#fff'}}/>
-                {name.trim()&&<div style={{position:'absolute',right:14,top:'50%',transform:'translateY(-50%)',color:C.teal,fontSize:18,fontWeight:900}}>✓</div>}
+                {name.trim()&&<div style={{position:'absolute',right:14,top:'50%',transform:'translateY(-50%)',color:C.teal,fontSize:18,fontWeight:900}}></div>}
               </div>
-              {err&&<div style={{color:C.fail,fontSize:13,marginBottom:10,display:'flex',alignItems:'center',gap:5}}>⚠ {err}</div>}
+              {err&&<div style={{color:C.fail,fontSize:13,marginBottom:10,display:'flex',alignItems:'center',gap:5}}>{err}</div>}
               <Btn onClick={go} full size='lg' sx={{borderRadius:10}}>Begin Training →</Btn>
               <div style={{marginTop:14,display:'flex',justifyContent:'space-between',alignItems:'center'}}>
                 <span style={{fontSize:12,color:C.faint}}>Auto-saves · No account needed</span>
@@ -1355,7 +1355,7 @@ function LandingScreen({onStart,onManager}){
                 style={{width:'100%',padding:'13px 14px',borderRadius:10,border:`2px solid ${C.border}`,
                   fontSize:15,fontFamily:'Arial,sans-serif',outline:'none',boxSizing:'border-box',
                   marginBottom:err?8:14,color:C.dark,background:'#fff'}}/>
-              {err&&<div style={{color:C.fail,fontSize:13,marginBottom:12}}>⚠ {err}</div>}
+              {err&&<div style={{color:C.fail,fontSize:13,marginBottom:12}}>{err}</div>}
               <Btn onClick={mgo} full v='teal' sx={{borderRadius:10}}>Access Manager Dashboard →</Btn>
               <div style={{textAlign:'center',marginTop:12}}>
                 <span onClick={()=>{setMode('student');setErr('');}} style={{fontSize:13,color:C.muted,cursor:'pointer'}}>← Back to training</span>
@@ -1423,13 +1423,13 @@ function FlashcardScreen({progress,onBack}){
                 <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
                   <div style={{fontSize:10,color:C.teal,letterSpacing:2,fontWeight:700}}>RULE #{rule.num} &middot; PAGE {rule.page}</div>
                   <div style={{display:"flex",gap:6}}>
-                    {done&&<span style={{fontSize:10,color:C.teal,fontWeight:700}}>✓ Studied</span>}
-                    {qs?.passed&&<span style={{fontSize:10,color:C.gold,fontWeight:700}}>💯 Quiz</span>}
+                    {done&&<span style={{fontSize:10,color:C.teal,fontWeight:700}}>Studied</span>}
+                    {qs?.passed&&<span style={{fontSize:10,color:C.gold,fontWeight:700}}>Quiz</span>}
                   </div>
                 </div>
                 <div style={{fontSize:22,fontWeight:900,color:"#fff",lineHeight:1.3,marginBottom:16}}>{rule.title}</div>
                 <div style={{padding:"12px 14px",borderRadius:10,background:"rgba(0,194,178,.12)",border:"1px solid rgba(0,194,178,.32)"}}>
-                  <div style={{fontSize:9,color:C.teal,fontWeight:700,letterSpacing:1.5,marginBottom:4}}>💡 REMEMBER THIS</div>
+                  <div style={{fontSize:9,color:C.teal,fontWeight:700,letterSpacing:1.5,marginBottom:4}}>REMEMBER THIS</div>
                   <div style={{fontSize:14,color:"rgba(255,255,255,.9)",fontWeight:700,lineHeight:1.55,fontStyle:"italic"}}>
                     {HOOKS[rule.id]||rule.title}
                   </div>
@@ -1454,7 +1454,7 @@ function FlashcardScreen({progress,onBack}){
               </div>
               <div>
                 <div style={{padding:"10px 14px",borderRadius:10,background:`${C.gold}20`,border:`1px solid ${C.gold}44`,marginBottom:8}}>
-                  <div style={{fontSize:9,color:C.gold,fontWeight:700,letterSpacing:1,marginBottom:3}}>🎯 APPLY IT TODAY</div>
+                  <div style={{fontSize:9,color:C.gold,fontWeight:700,letterSpacing:1,marginBottom:3}}>APPLY IT TODAY</div>
                   <div style={{fontSize:12,color:"rgba(255,255,255,.75)",lineHeight:1.5}}>{AT[rule.id]||""}</div>
                 </div>
                 <div style={{textAlign:"center",fontSize:11,color:"rgba(255,255,255,.3)"}}>Tap to flip back</div>
@@ -1510,7 +1510,7 @@ function DashboardScreen({user,progress,onPart,onManager,onLogout,onCertificate,
         <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,.65)",zIndex:500,
           display:"flex",alignItems:"center",justifyContent:"center",padding:20}}>
           <Card sx={{maxWidth:340,width:"100%",textAlign:"center",padding:28}}>
-            <div style={{fontSize:44,marginBottom:10}}>⚠️</div>
+            <div style={{fontSize:44,marginBottom:10}}></div>
             <div style={{fontSize:16,fontWeight:900,color:C.dark,marginBottom:6}}>Reset All Progress?</div>
             <div style={{fontSize:13,color:C.muted,lineHeight:1.6,marginBottom:20}}>Your XP, quiz scores, and belt rank will be permanently erased. This cannot be undone.</div>
             <div style={{display:"flex",gap:10}}>
@@ -1525,7 +1525,7 @@ function DashboardScreen({user,progress,onPart,onManager,onLogout,onCertificate,
         <CDLogo size={32} light text={false}/>
         <div style={{flex:1,minWidth:0}}>
           <div style={{color:"rgba(255,255,255,.55)",fontSize:12,fontWeight:600,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>
-            {user.name}{streak>=2?` · 🔥 ${streak}-day streak!`:""}
+            {user.name}{streak>=2?` · ${streak}-day streak!`:""}
             <span style={{opacity:.4,fontWeight:400}}> · {new Date().toLocaleDateString("en-US",{weekday:"short",month:"short",day:"numeric"})}</span>
           </div>
           <Prog value={xp} max={belt.max===9999?xp+500:belt.max} color={C.gold} h={6} sx={{background:'rgba(255,255,255,.2)'}}/>
@@ -1543,7 +1543,7 @@ function DashboardScreen({user,progress,onPart,onManager,onLogout,onCertificate,
           <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",flexWrap:"wrap",gap:12,marginBottom:14}}>
             <div style={{flex:1}}>
               <div style={{fontSize:19,fontWeight:900,lineHeight:1.25}}>
-                {completed===0?"Start your training.":finalPassed?"Course Complete. 🏆":
+                {completed===0?"Start your training.":finalPassed?"Course Complete. ":
                 completed<49&&nextRule?`Next: Rule #${nextRule.num}`:"Complete the final exam."}
               </div>
               <div style={{fontSize:12,opacity:.5,marginTop:3}}>
@@ -1561,9 +1561,9 @@ function DashboardScreen({user,progress,onPart,onManager,onLogout,onCertificate,
           <div style={{fontSize:11,opacity:.4,marginTop:5}}>{completed}/49 rules · {partsPassed}/3 assessments</div>
           <div style={{marginTop:14,display:"flex",gap:8,flexWrap:"wrap"}}>
             {nextRule&&<Btn onClick={()=>onPart(nextRule.part,nextRule.id)} v="teal" size="sm">Continue: Rule #{nextRule.num} →</Btn>}
-            <Btn onClick={onFlashcard} v="ghost" size="sm">🃏 Flashcard Review</Btn>
-            <Btn onClick={()=>setShowSearch(true)} v="ghost" size="sm">🔍 Search Rules</Btn>
-            {finalPassed&&<Btn onClick={onCertificate} v="gold" size="sm">🏆 Certificate</Btn>}
+            <Btn onClick={onFlashcard} v="ghost" size="sm">Flashcard Review</Btn>
+            <Btn onClick={()=>setShowSearch(true)} v="ghost" size="sm">Search Rules</Btn>
+            {finalPassed&&<Btn onClick={onCertificate} v="gold" size="sm">Certificate</Btn>}
           </div>
         </div>
         {nextRule&&nextPart&&(
@@ -1623,7 +1623,7 @@ function DashboardScreen({user,progress,onPart,onManager,onLogout,onCertificate,
           <Card sx={{padding:"14px 16px"}}>
             <div style={{fontSize:10,color:C.muted,fontWeight:700,letterSpacing:.5,marginBottom:4}}>DAY STREAK</div>
             <div style={{fontSize:24,fontWeight:900,color:streak>=3?C.red:C.muted,lineHeight:1}}>
-              {streak>=1?`${streak} 🔥`:"0 days"}
+              {streak>=1?`${streak} `:"0 days"}
             </div>
             <div style={{fontSize:11,color:C.faint,marginTop:3}}>{streak>=2?"days in a row!":streak===1?"day started!":"log in daily"}</div>
           </Card>
@@ -1645,7 +1645,7 @@ function DashboardScreen({user,progress,onPart,onManager,onLogout,onCertificate,
                   <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:7}}>
                     <span style={{fontSize:12,color:C.muted}}>{p.done}/{p.total} rules</span>
                     <span style={{fontSize:11,fontWeight:700,color:p.aScore?.passed?C.success:assessReady?C.warn:C.faint}}>
-                      {p.aScore?.passed?"✓ Passed":assessReady?"🟡 Take Assessment":"In Progress"}
+                      {p.aScore?.passed?"Passed":assessReady?"Take Assessment":"In Progress"}
                     </span>
                   </div>
                   <Prog value={p.done} max={p.total} color={p.color}/>
@@ -1659,9 +1659,9 @@ function DashboardScreen({user,progress,onPart,onManager,onLogout,onCertificate,
           <Card sx={{background:`${C.gold}0e`,border:`2px solid ${C.gold}55`,marginBottom:12,padding:"16px 18px"}}>
             <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",flexWrap:"wrap",gap:12}}>
               <div>
-                <div style={{fontSize:15,fontWeight:800,color:C.dark,marginBottom:2}}>🏆 Final Certification Exam</div>
+                <div style={{fontSize:15,fontWeight:800,color:C.dark,marginBottom:2}}>Final Certification Exam</div>
                 <div style={{fontSize:12,color:C.muted}}>20 questions · 75% to pass · Earns your certificate</div>
-                {progress.finalScore&&<div style={{fontSize:12,marginTop:3,color:finalPassed?C.success:C.fail,fontWeight:600}}>Last: {progress.finalScore.score}/20 · {finalPassed?"Certified ✓":"Retake available"}</div>}
+                {progress.finalScore&&<div style={{fontSize:12,marginTop:3,color:finalPassed?C.success:C.fail,fontWeight:600}}>Last: {progress.finalScore.score}/20 · {finalPassed?"Certified ":"Retake available"}</div>}
               </div>
               <Btn onClick={()=>onPart("final",null)} v="gold">{progress.finalScore?"Retake":"Take Exam"} →</Btn>
             </div>
@@ -1719,7 +1719,7 @@ function PartScreen({partId,progress,onChapter,onAssessment,onBack}){
           <Prog value={doneCt} max={rules.length} color='#fff' h={7} sx={{background:'rgba(0,0,0,.24)'}}/>
           <div style={{display:'flex',gap:14,marginTop:6,fontSize:11,color:'rgba(255,255,255,.5)'}}>
             <span>{quizzesPassed}/{rules.length} quizzes passed</span>
-            <span>{aScore?.passed?'✓ Assessment passed':allDone?'Ready for assessment':'Complete all rules to unlock'}</span>
+            <span>{aScore?.passed?'Assessment passed':allDone?'Ready for assessment':'Complete all rules to unlock'}</span>
           </div>
         </div>
       </div>
@@ -1743,14 +1743,14 @@ function PartScreen({partId,progress,onChapter,onAssessment,onBack}){
                   display:'flex',alignItems:'center',justifyContent:'center',
                   fontSize:done?17:14,fontWeight:800,
                   color:done?C.success:isNext?part.textColor:C.faint}}>
-                  {done?'✓':r.num}
+                  {done?'':r.num}
                 </div>
                 <div style={{flex:1,minWidth:0}}>
                   <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:2}}>
                     <div style={{fontSize:14,fontWeight:700,color:C.dark,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',flex:1}}>Rule #{r.num}: {r.title}</div>
                     {qs&&<div style={{padding:'2px 8px',borderRadius:8,fontSize:11,fontWeight:700,flexShrink:0,
                       background:qs.passed?`${C.success}18`:`${C.fail}18`,
-                      color:qs.passed?C.success:C.fail}}>{qs.perfect?'💯':''}{qs.score}/3</div>}
+                      color:qs.passed?C.success:C.fail}}>{qs.perfect?'':''}{qs.score}/3</div>}
                     <div style={{color:C.faint,fontSize:18,flexShrink:0}}>›</div>
                   </div>
                   <div style={{fontSize:11,color:C.faint,marginBottom:HOOKS[r.id]?3:0}}>
@@ -1768,11 +1768,11 @@ function PartScreen({partId,progress,onChapter,onAssessment,onBack}){
             <div>
               <div style={{fontSize:15,fontWeight:800,color:allDone?C.dark:C.faint,marginBottom:2}}>Part {part.num} Assessment</div>
               <div style={{fontSize:12,color:C.muted}}>8 questions · 75% to pass{!allDone?' · Complete all rules to unlock':''}</div>
-              {aScore&&<div style={{fontSize:12,marginTop:3,color:aScore.passed?C.success:C.fail,fontWeight:600}}>{aScore.score}/8 · {aScore.passed?'Passed ✓':'Retake available'}</div>}
+              {aScore&&<div style={{fontSize:12,marginTop:3,color:aScore.passed?C.success:C.fail,fontWeight:600}}>{aScore.score}/8 · {aScore.passed?'Passed ':'Retake available'}</div>}
             </div>
             {allDone?
               <Btn onClick={onAssessment} sx={{background:part.color,color:part.textColor}}>{aScore?'Retake':'Start Assessment'} →</Btn>:
-              <div style={{padding:'6px 12px',borderRadius:8,background:C.borderL,color:C.faint,fontSize:12,fontWeight:700}}>🔒 {rules.length-doneCt} rule{rules.length-doneCt!==1?"s":""} to unlock</div>}
+              <div style={{padding:'6px 12px',borderRadius:8,background:C.borderL,color:C.faint,fontSize:12,fontWeight:700}}>{rules.length-doneCt} rule{rules.length-doneCt!==1?"s":""} to unlock</div>}
           </div>
         </Card>
       </div>
@@ -1841,7 +1841,7 @@ function LessonScreen({ruleId,progress,onQuiz,onBack,onNavigateRule}){
       <Card sx={{borderLeft:`4px solid ${part.color}`}}>
         <div style={{fontSize:14,color:C.mid,fontStyle:"italic",lineHeight:1.7,marginBottom:14}}>{principle(rule.msg)}</div>
         <div style={{padding:"12px 14px",borderRadius:10,background:`${part.color}10`,border:`1px solid ${part.color}33`,display:"flex",gap:10,alignItems:"flex-start"}}>
-          <span style={{fontSize:20,lineHeight:1}}>💡</span>
+          <span style={{fontSize:20,lineHeight:1}}></span>
           <div>
             <div style={{fontSize:9,fontWeight:700,color:part.color,letterSpacing:1.5,marginBottom:4}}>REMEMBER THIS — YOUR MENTAL ANCHOR</div>
             <div style={{fontSize:15,fontWeight:800,color:C.dark,lineHeight:1.45}}>{HOOKS[rule.id]||rule.title}</div>
@@ -1862,7 +1862,7 @@ function LessonScreen({ruleId,progress,onQuiz,onBack,onNavigateRule}){
     return(
       <div style={{borderRadius:14,overflow:"hidden",border:`2px solid ${C.gold}66`,background:"#fff",boxShadow:`0 2px 12px ${C.gold}1a`}}>
         <div style={{background:`${C.gold}1a`,padding:"9px 16px"}}>
-          <div className="cd-d" style={{fontSize:11,fontWeight:800,color:C.goldD,letterSpacing:1}}>⚡ YOUR NEXT CALL — SAY IT, DO IT, AVOID IT</div>
+          <div className="cd-d" style={{fontSize:11,fontWeight:800,color:C.goldD,letterSpacing:1}}>YOUR NEXT CALL — SAY IT, DO IT, AVOID IT</div>
         </div>
         <div style={{padding:"12px 16px",display:"flex",flexDirection:"column",gap:10}}>
           {[["SAY",C.success,SCRIPTS[rule.id]||rule.msg,true],["DO",C.navy,AT[rule.id],false],["AVOID",C.red,MISTAKES[rule.id],false]].map(([lab,col,txt,ital])=>(
@@ -1888,7 +1888,7 @@ function LessonScreen({ruleId,progress,onQuiz,onBack,onNavigateRule}){
             </div>
             <div style={{flexShrink:0,padding:"5px 10px",borderRadius:20,fontSize:10,fontWeight:800,
               background:done?C.gold:"rgba(255,255,255,.14)",color:done?C.dark:"rgba(255,255,255,.85)"}}>
-              {done?"✓ COMPLETE":allRevealed?"QUIZ LEFT":"IN PROGRESS"}
+              {done?"COMPLETE":allRevealed?"QUIZ LEFT":"IN PROGRESS"}
             </div>
           </div>
           <div style={{marginTop:10,display:"flex",alignItems:"center",gap:10}}>
@@ -1915,7 +1915,7 @@ function LessonScreen({ruleId,progress,onQuiz,onBack,onNavigateRule}){
 
         {allRevealed&&(
           <Card sx={{textAlign:"center",marginTop:6,background:`${part.color}0c`,border:`2px solid ${part.color}44`}}>
-            <div style={{fontSize:30,marginBottom:6}}>{done?"✅":"🎯"}</div>
+            <div style={{fontSize:30,marginBottom:6}}>{done?"":""}</div>
             <div className="cd-d" style={{fontSize:16,fontWeight:800,color:C.dark,marginBottom:4}}>
               {done?"You've completed this module":"You've read all 4 steps"}
             </div>
@@ -1925,7 +1925,7 @@ function LessonScreen({ruleId,progress,onQuiz,onBack,onNavigateRule}){
             {qs&&(<div style={{display:"inline-block",padding:"7px 14px",borderRadius:10,marginBottom:14,
               background:qs.passed?`${C.success}1e`:`${C.fail}1e`,border:`1px solid ${qs.passed?C.success:C.fail}44`,
               fontSize:13,color:qs.passed?C.success:C.fail,fontWeight:700}}>
-              {qs.passed?`✓ Quiz passed · ${qs.score}/3`:`Last attempt ${qs.score}/3 — retake to pass`}
+              {qs.passed?`Quiz passed · ${qs.score}/3`:`Last attempt ${qs.score}/3 — retake to pass`}
             </div>)}
             <Btn onClick={onQuiz} full size="lg" v={done?"outline":"gold"}>
               {done?"Review Quiz":qs?"Retake Chapter Quiz":"Take Chapter Quiz"} →
@@ -1976,7 +1976,7 @@ function QuizScreen({questions,title,subtitle,passing,nextRule,onComplete,onBack
     return(
       <div style={{minHeight:"100vh",background:C.bg,display:"flex",alignItems:"center",justifyContent:"center",padding:20,fontFamily:"Arial,sans-serif"}}>
         <div style={{maxWidth:480,width:"100%",textAlign:"center"}}>
-          <div style={{fontSize:perfect?72:58,marginBottom:8,transition:"font-size .3s"}}>{perfect?"🏆":passed?"🎯":"💪"}</div>
+          <div style={{fontSize:perfect?72:58,marginBottom:8,transition:"font-size .3s"}}>{perfect?"":passed?"":""}</div>
           <Card>
             <div style={{fontSize:22,fontWeight:900,color:passed?C.success:C.fail,marginBottom:3}}>
               {perfect?"Perfect Score!":passed?"Passed!":"Keep Learning!"}
@@ -1992,15 +1992,15 @@ function QuizScreen({questions,title,subtitle,passing,nextRule,onComplete,onBack
                   border:`2px solid ${correct?C.success:C.fail}`,
                   display:"flex",alignItems:"center",justifyContent:"center",
                   fontSize:14,fontWeight:700,color:correct?C.success:C.fail}}>
-                  {correct?"✓":"✗"}
+                  {correct?"":""}
                 </div>
               ))}
             </div>
-            {xp>0&&<div style={{padding:"8px 14px",borderRadius:10,background:`${C.gold}22`,color:C.goldD,fontSize:14,fontWeight:700,marginBottom:12}}>⭐ +{xp} XP earned!</div>}
+            {xp>0&&<div style={{padding:"8px 14px",borderRadius:10,background:`${C.gold}22`,color:C.goldD,fontSize:14,fontWeight:700,marginBottom:12}}>+{xp} XP earned!</div>}
             {hookRule&&HOOKS[hookRule.id]&&(
               <div style={{padding:"12px 14px",borderRadius:10,background:`${C.teal}12`,
                 border:`1px solid ${C.teal}33`,marginBottom:14,textAlign:"left"}}>
-                <div style={{fontSize:9,fontWeight:700,color:C.teal,letterSpacing:1,marginBottom:4}}>💡 LOCK IT IN</div>
+                <div style={{fontSize:9,fontWeight:700,color:C.teal,letterSpacing:1,marginBottom:4}}>LOCK IT IN</div>
                 <div style={{fontSize:14,fontWeight:800,color:C.dark,lineHeight:1.5,marginBottom:8}}>{HOOKS[hookRule.id]}</div>
                 <AudioControls text={`Lock it in: ${HOOKS[hookRule.id]}`} color={C.teal} label="Hear your key takeaway"/>
               </div>
@@ -2072,23 +2072,23 @@ function QuizScreen({questions,title,subtitle,passing,nextRule,onComplete,onBack
             <div role="status" aria-live="polite" style={{marginTop:14,padding:"12px 16px",borderRadius:10,
               background:C.successBg,border:`1px solid ${C.success}44`,
               fontSize:13,color:C.mid,lineHeight:1.6}}>
-              <strong style={{color:C.success}}>✓ {encMsg} </strong>{q.ex}
+              <strong style={{color:C.success}}>{encMsg} </strong>{q.ex}
             </div>
           )}
           {answered&&sel!==q.a&&(
             <div style={{marginTop:14,borderRadius:12,overflow:"hidden",border:`2px solid ${C.fail}55`}}>
               <div style={{background:`${C.fail}12`,padding:"9px 14px",display:"flex",alignItems:"center",justifyContent:"space-between",gap:8,flexWrap:"wrap"}}>
-                <div style={{fontSize:11,fontWeight:800,color:C.fail,letterSpacing:.8}}>📌 COACHING MOMENT — LET'S LOCK THIS IN</div>
+                <div style={{fontSize:11,fontWeight:800,color:C.fail,letterSpacing:.8}}>COACHING MOMENT — LET'S LOCK THIS IN</div>
                 <AudioControls text={`Let's review this one. The correct answer is ${String.fromCharCode(65+q.a)}. ${q.opts[q.a]}. ${q.ex} You chose ${String.fromCharCode(65+sel)}, ${q.opts[sel]}. That option doesn't apply the rule the way the correct answer does. Compare them side by side and lock in the difference.`} color={C.fail} compact={true}/>
               </div>
               <div style={{padding:"12px 14px",background:"#fff",display:"flex",flexDirection:"column",gap:10}}>
                 <div style={{padding:"10px 12px",borderRadius:9,background:C.successBg,border:`1px solid ${C.success}44`}}>
-                  <div style={{fontSize:10,fontWeight:800,color:C.success,letterSpacing:.5,marginBottom:3}}>✓ CORRECT ANSWER · {String.fromCharCode(65+q.a)}</div>
+                  <div style={{fontSize:10,fontWeight:800,color:C.success,letterSpacing:.5,marginBottom:3}}>CORRECT ANSWER · {String.fromCharCode(65+q.a)}</div>
                   <div style={{fontSize:13,fontWeight:700,color:C.dark,lineHeight:1.45,marginBottom:6}}>{q.opts[q.a]}</div>
                   <div style={{fontSize:12.5,color:C.mid,lineHeight:1.6}}><strong style={{color:C.success}}>Why it's right: </strong>{q.ex}</div>
                 </div>
                 <div style={{padding:"10px 12px",borderRadius:9,background:C.failBg,border:`1px solid ${C.fail}44`}}>
-                  <div style={{fontSize:10,fontWeight:800,color:C.fail,letterSpacing:.5,marginBottom:3}}>✗ YOU CHOSE · {String.fromCharCode(65+sel)}</div>
+                  <div style={{fontSize:10,fontWeight:800,color:C.fail,letterSpacing:.5,marginBottom:3}}>YOU CHOSE · {String.fromCharCode(65+sel)}</div>
                   <div style={{fontSize:13,fontWeight:700,color:C.dark,lineHeight:1.45,marginBottom:6}}>{q.opts[sel]}</div>
                   <div style={{fontSize:12.5,color:C.mid,lineHeight:1.6}}><strong style={{color:C.fail}}>Why it's off: </strong>{traps&&traps[idx]?traps[idx]:"It's a tempting choice, but it doesn't apply this rule the way the correct answer does. Read both side by side — the gap between them is exactly what this rule is teaching you."}</div>
                 </div>
@@ -2195,7 +2195,7 @@ function ManagerScreen({onBack}){
         </div>
         {loading&&<div style={{textAlign:'center',padding:32}}><Spin/></div>}
         {!loading&&users.length===0&&(<Card sx={{textAlign:'center',padding:36}}>
-          <div style={{fontSize:36,marginBottom:10}}>👥</div>
+          <div style={{fontSize:36,marginBottom:10}}></div>
           <div style={{fontSize:15,fontWeight:700,color:C.dark,marginBottom:4}}>No team members yet.</div>
           <div style={{fontSize:13,color:C.muted,lineHeight:1.6}}>When your team opens this app and enters their name, their progress will appear here automatically.</div>
           <div style={{marginTop:12,fontSize:12,color:C.faint}}>Progress syncs when they complete lessons and quizzes.</div>
@@ -2208,7 +2208,7 @@ function ManagerScreen({onBack}){
               <div style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>
                 <div>
                   <div style={{fontWeight:700,color:C.dark,fontSize:13}}>{u.name||'Unknown'}</div>
-                  <div style={{fontSize:11,color:C.muted}}>{u.lastUpdated?new Date(u.lastUpdated).toLocaleDateString():'No activity'}{u.streak>=2?` · 🔥 ${u.streak}-day streak`:''}</div>
+                  <div style={{fontSize:11,color:C.muted}}>{u.lastUpdated?new Date(u.lastUpdated).toLocaleDateString():'No activity'}{u.streak>=2?` · ${u.streak}-day streak`:''}</div>
                 </div>
                 <div style={{display:'flex',gap:6,alignItems:'center'}}>
                   {u.certified&&<div style={{padding:'2px 7px',borderRadius:8,background:`${C.gold}33`,color:C.goldD,fontSize:10,fontWeight:700}}>CERTIFIED</div>}

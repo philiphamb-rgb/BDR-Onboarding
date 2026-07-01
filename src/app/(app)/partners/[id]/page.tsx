@@ -126,9 +126,9 @@ export default function PartnerDetailPage() {
                 <button key={t} onClick={() => changeTemp(t)}
                   className={cn('rounded-full border px-2 py-0.5 text-[11px] font-[700] transition-all',
                     (partner.temperature ?? 'cold') === t
-                      ? (t === 'warm' ? 'border-orange-300 bg-orange-50 text-orange-600' : 'border-blue-200 bg-blue-50 text-blue-600')
+                      ? (t === 'warm' ? 'border-orange-500/40 bg-orange-500/10 text-orange-400' : 'border-blue-500/40 bg-blue-500/10 text-blue-400')
                       : 'border-border text-gray hover:border-navy/40')}>
-                  {t === 'warm' ? '🔥 Warm' : '❄️ Cold'}
+                  {t === 'warm' ? 'Warm' : 'Cold'}
                 </button>
               ))}
             </div>

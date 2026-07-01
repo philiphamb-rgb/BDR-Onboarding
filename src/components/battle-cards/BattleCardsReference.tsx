@@ -77,8 +77,8 @@ export function BattleCardsReference({ progress, save, onReplay }: any) {
       if (arr.length >= total && !celebrated.includes(key)) {
         celebrated.push(key)
         const all9 = COMP_ENTRIES.every(([k, c]) => (k === key ? arr.length : nextChecks[k]?.length ?? 0) >= c.blocks.length)
-        if (all9 && !celebrated.includes('all')) { celebrated.push('all'); setTimeout(() => toast.success('🏆 All 9 competitors mastered — you’re battle-ready.'), 250) }
-        else setTimeout(() => toast.success(`✓ ${COMPETITORS[key].name} mastered`), 100)
+        if (all9 && !celebrated.includes('all')) { celebrated.push('all'); setTimeout(() => toast.success('All 9 competitors mastered — you’re battle-ready.'), 250) }
+        else setTimeout(() => toast.success(`${COMPETITORS[key].name} mastered`), 100)
       }
       return { checks: nextChecks, celebrated }
     })

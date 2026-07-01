@@ -10,11 +10,11 @@ import { cn } from '@/lib/utils'
 import { toast } from '@/components/ui'
 
 const TYPE_ICONS: Record<string, React.ReactNode> = {
-  document: <DocumentIcon className="text-blue-600" />,
-  doc: <DocumentIcon className="text-blue-600" />,
-  pdf: <DocumentIcon className="text-red-600" />,
-  link: <LinkIcon className="text-green-600" />,
-  video: <VideoIcon className="text-purple-600" />,
+  document: <DocumentIcon className="text-blue-400" />,
+  doc: <DocumentIcon className="text-blue-400" />,
+  pdf: <DocumentIcon className="text-red-400" />,
+  link: <LinkIcon className="text-green-400" />,
+  video: <VideoIcon className="text-purple-400" />,
 }
 const TYPES = [
   { value: 'pdf', label: 'PDF' },

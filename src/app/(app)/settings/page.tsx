@@ -243,7 +243,7 @@ export default function SettingsPage() {
           </div>
           {supported ? (
             subscribed
-              ? <button onClick={unsubscribe} className="text-xs text-error font-medium px-3 py-1 border border-red-200 rounded-lg">Disable</button>
+              ? <button onClick={unsubscribe} className="text-xs text-error font-medium px-3 py-1 border border-red-500/40 rounded-lg">Disable</button>
               : <button onClick={requestPermission} disabled={pushLoading} className="text-sm text-white font-medium bg-teal px-3 py-1 rounded-lg">
                   {pushLoading ? '…' : 'Enable'}
                 </button>
@@ -299,7 +299,7 @@ export default function SettingsPage() {
         <div className="text-xs text-gray mb-3">Download all your activity, wins, and progress as JSON.</div>
         <Button onClick={exportData} variant="secondary" size="sm">Export Data</Button>
       </Card>
-      <Card className="border-red-200">
+      <Card className="border-red-500/40">
         <div className="text-sm font-semibold text-dark-text mb-1">Delete Account</div>
         <div className="text-xs text-gray mb-3">Permanently delete your account. This cannot be undone.</div>
         <button onClick={() => toast.error('Contact your manager to delete your account.')}

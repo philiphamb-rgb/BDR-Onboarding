@@ -115,7 +115,7 @@ ${partners?.length ? `\nPARTNERS IN ONBOARDING (reference by name when relevant)
   if (!tasks.length) return ''
   const planned = tasks.filter(t => t.scheduled_day === todayStr && t.scheduled_block != null)
   const unplanned = tasks.filter(t => !(t.scheduled_day === todayStr && t.scheduled_block != null))
-  const line = (t) => `- ${t.priority ? '★ ' : ''}${t.title}${t.due_date ? ` (due ${t.due_date})` : ''} [~${t.estimated_minutes ?? 30}m]`
+  const line = (t) => `- ${t.priority ? '' : ''}${t.title}${t.due_date ? ` (due ${t.due_date})` : ''} [~${t.estimated_minutes ?? 30}m]`
   return `\nTASKS — they manage tasks in this app; reference real titles and help them prioritize/time-block:\n- Planned into today's blocks: ${planned.length} · Unplanned: ${unplanned.length}` +
     (planned.length ? `\nTODAY'S PLAN:\n${planned.slice(0, 8).map(line).join('\n')}` : '') +
     (unplanned.length ? `\nTOP UNPLANNED:\n${unplanned.slice(0, 8).map(line).join('\n')}` : '')

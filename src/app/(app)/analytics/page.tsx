@@ -65,8 +65,8 @@ export default function AnalyticsPage() {
 
   const tiles = [
     { label: 'Total partners', value: partners.length },
-    { label: '🔥 Warm', value: warm.length },
-    { label: '❄️ Cold', value: cold.length },
+    { label: 'Warm', value: warm.length },
+    { label: 'Cold', value: cold.length },
     { label: 'Won', value: won },
   ]
 
@@ -129,8 +129,8 @@ export default function AnalyticsPage() {
             <div className="grid grid-cols-3 gap-3 text-center">
               {[
                 { l: 'Overall', v: rate(partners), c: 'rgb(var(--navy))' },
-                { l: '🔥 Warm', v: rate(warm), c: '#EA580C' },
-                { l: '❄️ Cold', v: rate(cold), c: '#2563EB' },
+                { l: 'Warm', v: rate(warm), c: '#EA580C' },
+                { l: 'Cold', v: rate(cold), c: '#2563EB' },
               ].map(x => (
                 <div key={x.l}>
                   <div className="text-[26px] font-[900] tabular-nums" style={{ color: x.c }}>{x.v}%</div>

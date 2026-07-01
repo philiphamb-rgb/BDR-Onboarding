@@ -434,7 +434,7 @@ export default function HomePage() {
           <Link href="/progress" data-tour="home-path" className="flex items-center gap-3 bg-gradient-hero px-5 py-3.5 text-white transition-transform active:scale-[0.99]">
             <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white/15"><TrophyIcon size={20} className="text-white" /></div>
             <div className="min-w-0 flex-1">
-              <div className="text-[11px] font-[800] uppercase tracking-wide text-white/70">Curriculum complete 🎓</div>
+              <div className="text-[11px] font-[800] uppercase tracking-wide text-white/70">Curriculum complete </div>
               <div className="truncate text-[15px] font-[800]">See your progress & certificate</div>
             </div>
             <span className="flex shrink-0 items-center gap-1 rounded-full bg-white/20 px-3 py-1.5 text-[12px] font-[800]">Open <ArrowRightIcon size={14} /></span>

@@ -43,9 +43,17 @@ export default function TasksPage() {
     })
   }, [])
 
+  const reloadTasks = async () => {
+    if (!userId) return
+    const { data } = await supabase.from('tasks').select('*').eq('user_id', userId).order('order_index')
+    setTasks(data ?? [])
+  }
+
   const patch = async (id: string, p: any) => {
     setTasks(prev => prev.map(t => t.id === id ? { ...t, ...p } : t))
-    await supabase.from('tasks').update({ ...p, updated_at: new Date().toISOString() }).eq('id', id)
+    const { error } = await supabase.from('tasks').update({ ...p, updated_at: new Date().toISOString() }).eq('id', id)
+    // Don't leave the UI showing a change the DB rejected — resync from server.
+    if (error) { toast.error('Could not save — refreshing.'); reloadTasks() }
   }
 
   // One-tap AI tidy: fill gaps only — infer category (if unset), a smarter time
@@ -63,10 +71,10 @@ export default function TasksPage() {
       if ((t.tags ?? []).length === 0 && d.tags.length) p.tags = d.tags
       if (Object.keys(p).length) updates.push({ id: t.id, p })
     }
-    if (!updates.length) { toast.info('Everything already looks tidy ✨'); return }
+    if (!updates.length) { toast.info('Everything already looks tidy'); return }
     setTasks(prev => prev.map(t => { const u = updates.find(x => x.id === t.id); return u ? { ...t, ...u.p } : t }))
     await Promise.all(updates.map(u => supabase.from('tasks').update({ ...u.p, updated_at: new Date().toISOString() }).eq('id', u.id)))
-    toast.success(`AI tidied ${updates.length} task${updates.length > 1 ? 's' : ''} ✨`)
+    toast.success(`AI tidied ${updates.length} task${updates.length > 1 ? 's' : ''}`)
   }
 
   const addTask = async () => {
@@ -84,13 +92,16 @@ export default function TasksPage() {
     const title = newSub.trim()
     if (!title || !userId) return
     setNewSub('')
-    const { data } = await supabase.from('tasks').insert({ user_id: userId, list_id: activeList, parent_id: parentId, title }).select().single()
-    if (data) setTasks(prev => [...prev, data])
+    const { data, error } = await supabase.from('tasks').insert({ user_id: userId, list_id: activeList, parent_id: parentId, title }).select().single()
+    if (error || !data) { toast.error('Could not add that subtask. Try again.'); setNewSub(title); return }
+    setTasks(prev => [...prev, data])
   }
 
   const del = async (id: string) => {
-    setTasks(prev => prev.filter(t => t.id !== id && t.parent_id !== id))
-    await supabase.from('tasks').delete().eq('id', id)
+    const prev = tasks
+    setTasks(cur => cur.filter(t => t.id !== id && t.parent_id !== id))
+    const { error } = await supabase.from('tasks').delete().eq('id', id)
+    if (error) { setTasks(prev); toast.error('Could not delete that task. Try again.') }
   }
 
   const addList = async () => {

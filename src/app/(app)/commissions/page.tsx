@@ -338,7 +338,7 @@ export default function CommissionsPage() {
       <Card className="border-teal/40">
         <div className="mb-1 flex items-center justify-between">
           <div className="flex items-center gap-2"><ChartRisingIcon size={15} className="text-teal" /><span className="label">Weekly pace tracker</span></div>
-          {stats.streak >= 2 && <span className="flex items-center gap-1 text-[11px] font-[800] text-orange-600"><FlameIcon size={12} />{stats.streak}-week streak</span>}
+          {stats.streak >= 2 && <span className="flex items-center gap-1 text-[11px] font-[800] text-orange-400"><FlameIcon size={12} />{stats.streak}-week streak</span>}
         </div>
         <div className="mb-3 flex items-center justify-between rounded-lg bg-bdrbg px-3 py-2">
           <span className="text-[12px] font-[700] text-gray">Week {checkIns.length + 1}</span>

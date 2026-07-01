@@ -45,12 +45,12 @@ export async function POST(req: NextRequest) {
   const stats = trackerSummary(plan, checkIns)
   const name = userRow?.name ?? 'A BDR'
   const onPace = stats.deficit <= 0
-  const statusEmoji = onPace ? '🟢' : stats.deficit < target_contacts * 0.5 ? '🟡' : '🔴'
+  const statusEmoji = onPace ? '' : stats.deficit < target_contacts * 0.5 ? '' : ''
 
   // In-app notification (the bell) on streak milestones — celebratory, low-noise.
   if ([3, 6, 10].includes(stats.streak)) {
     await admin.from('notifications').insert({
-      user_id, type: 'streak', title: `🔥 ${stats.streak}-week pace streak!`,
+      user_id, type: 'streak', title: `${stats.streak}-week pace streak!`,
       body: `You've hit your weekly contact target ${stats.streak} weeks running. Consistency is what turns your plan into ${fmt(plan.target)}.`,
     }).then(() => {}, () => {})
   }
@@ -61,7 +61,7 @@ export async function POST(req: NextRequest) {
       `${statusEmoji} *${name}* logged Week ${week_number}: ${contacts} contacts, ${closes} closes (target ${target_contacts}).`,
       onPace ? `On pace${stats.deficit < 0 ? `, ${-stats.deficit} ahead` : ''} — ${stats.actual.toLocaleString()} of ${stats.expected.toLocaleString()} contacts so far.`
         : `${stats.deficit.toLocaleString()} contacts behind across ${stats.n} weeks.`,
-      stats.streak >= 2 ? `🔥 ${stats.streak}-week streak.` : '',
+      stats.streak >= 2 ? `${stats.streak}-week streak.` : '',
     ].filter(Boolean).join('\n')
     await fetch(process.env.SLACK_WEBHOOK_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ text }) }).catch(() => {})
   }

@@ -133,7 +133,7 @@ export function GuidedTour() {
   const header = (
     <div className="flex items-center justify-between">
       <span className="inline-flex items-center gap-1.5 rounded-full bg-teal/10 px-2 py-0.5 text-[11px] font-[800] text-teal">
-        <span>{step.emoji ?? '👉'}</span> Step {i + 1} of {total}
+        <span>{step.emoji ?? ''}</span> Step {i + 1} of {total}
       </span>
       <button onClick={finish} className="text-[11px] font-[700] text-gray hover:text-dark-text">Skip tour</button>
     </div>
@@ -155,7 +155,7 @@ export function GuidedTour() {
         <div className="absolute inset-0 bg-dark-text/70 backdrop-blur-[2px]" />
         <div key={`c${i}`} className="relative w-full max-w-[360px] overflow-hidden rounded-2xl bg-card shadow-modal" style={{ animation: 'bdrIn .28s cubic-bezier(.2,.8,.2,1)' }}>
           <div className="bg-gradient-hero px-5 py-6 text-center text-white">
-            <div className="mx-auto mb-2 text-[34px] leading-none">{step.emoji ?? '✨'}</div>
+            <div className="mx-auto mb-2 text-[34px] leading-none">{step.emoji ?? ''}</div>
             <h3 className="text-[19px] font-[900]">{step.title}</h3>
           </div>
           <div className="px-5 py-4">

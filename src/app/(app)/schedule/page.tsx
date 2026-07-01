@@ -599,7 +599,7 @@ export default function SchedulePage() {
           <div className="rounded-xl bg-white/10 px-2.5 py-2">
             <div className="text-[11px] text-white/70">Goal</div>
             <div className="text-[15px] font-[800] leading-tight">{goal ? `${dealsThisMonth}/${goal}` : '—'}</div>
-            <div className="text-[10px] text-white/60">{goal ? (goalGap > 0 ? `${goalGap} to go` : 'hit 🎯') : 'set in Analytics'}</div>
+            <div className="text-[10px] text-white/60">{goal ? (goalGap > 0 ? `${goalGap} to go` : 'hit ') : 'set in Analytics'}</div>
           </div>
           <div className="rounded-xl bg-white/10 px-2.5 py-2">
             <div className="text-[11px] text-white/70">Pipeline</div>
@@ -652,7 +652,7 @@ export default function SchedulePage() {
             {suggestions.map(s => (
               <div key={s.id} className="flex items-center gap-2 rounded-lg bg-card px-2.5 py-2 shadow-sm">
                 <span className={cn('flex h-6 w-6 shrink-0 items-center justify-center rounded-lg',
-                  s.kind === 'goal' ? 'bg-gold/15 text-gold' : s.kind === 'warm' ? 'bg-orange-100 text-orange-600' : 'bg-navy/10 text-navy')}>
+                  s.kind === 'goal' ? 'bg-gold/15 text-gold' : s.kind === 'warm' ? 'bg-orange-500/15 text-orange-400' : 'bg-navy/10 text-navy')}>
                   {s.kind === 'goal' ? <TargetIcon size={13} /> : s.kind === 'warm' ? <PhoneIcon size={13} /> : <ArrowRightIcon size={13} />}
                 </span>
                 <div className="min-w-0 flex-1">
@@ -853,7 +853,7 @@ export default function SchedulePage() {
             className="shrink-0 rounded-lg bg-navy px-3 py-2 text-[12px] font-[800] text-white disabled:opacity-50">Add &amp; plan</button>
         </div>
         {unscheduled.length === 0 ? (
-          <p className="py-2 text-center text-[12px] text-gray">Everything’s planned. Nice. 🎯</p>
+          <p className="py-2 text-center text-[12px] text-gray">Everything’s planned. Nice. </p>
         ) : (
           <div className="space-y-1.5">
             {unscheduled.slice(0, 12).map(t => {

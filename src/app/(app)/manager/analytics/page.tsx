@@ -114,8 +114,8 @@ export default function AnalyticsPage() {
               <div className="grid grid-cols-3 gap-3 text-center">
                 {[
                   { l: 'Overall close', v: wonRate(leads), c: 'rgb(var(--navy))' },
-                  { l: '🔥 Warm close', v: wonRate(warmLeads), c: '#EA580C' },
-                  { l: '❄️ Cold close', v: wonRate(coldLeads), c: '#2563EB' },
+                  { l: 'Warm close', v: wonRate(warmLeads), c: '#EA580C' },
+                  { l: 'Cold close', v: wonRate(coldLeads), c: '#2563EB' },
                 ].map(x => (
                   <div key={x.l} className="rounded-md border border-border bg-bdrbg p-3">
                     <div className="text-[22px] font-[800] tabular-nums" style={{ color: x.c }}>{x.v}%</div>

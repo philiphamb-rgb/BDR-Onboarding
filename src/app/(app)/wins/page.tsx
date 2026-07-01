@@ -13,11 +13,11 @@ import { WINS_TOUR } from '@/lib/tours'
 import { CountUp } from '@/components/CountUp'
 
 const WIN_TYPES = [
-  { type: 'call',   label: 'Call',  Icon: PhoneIcon,      xp: 10,  color: 'bg-blue-100 text-blue-700' },
-  { type: 'demo',   label: 'Demo',  Icon: TargetIcon,     xp: 25,  color: 'bg-purple-100 text-purple-700' },
-  { type: 'deal',   label: 'Deal',  Icon: HandshakeIcon,  xp: 100, color: 'bg-green-100 text-green-700' },
-  { type: 'post',   label: 'Post',  Icon: LightningIcon,  xp: 15,  color: 'bg-orange-100 text-orange-700' },
-  { type: 'client', label: 'Client',Icon: StarFilledIcon, xp: 15,  color: 'bg-yellow-100 text-yellow-700' },
+  { type: 'call',   label: 'Call',  Icon: PhoneIcon,      xp: 10,  color: 'bg-blue-500/15 text-blue-400' },
+  { type: 'demo',   label: 'Demo',  Icon: TargetIcon,     xp: 25,  color: 'bg-purple-500/15 text-purple-400' },
+  { type: 'deal',   label: 'Deal',  Icon: HandshakeIcon,  xp: 100, color: 'bg-green-500/15 text-green-400' },
+  { type: 'post',   label: 'Post',  Icon: LightningIcon,  xp: 15,  color: 'bg-orange-500/15 text-orange-400' },
+  { type: 'client', label: 'Client',Icon: StarFilledIcon, xp: 15,  color: 'bg-yellow-500/15 text-yellow-700' },
 ]
 
 interface WinRow {
@@ -153,7 +153,7 @@ function WinsContent() {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-0.5">
                       <Badge className={cn('text-xs', wt.color)}>{wt.label}</Badge>
-                      {win.amount && <span className="text-xs font-medium text-green-600">${Number(win.amount).toLocaleString()}</span>}
+                      {win.amount && <span className="text-xs font-medium text-green-400">${Number(win.amount).toLocaleString()}</span>}
                       {win.xp_earned > 0 && <span className="text-xs text-gold font-medium ml-auto flex items-center gap-0.5"><XpIcon className="w-3 h-3" />+{win.xp_earned}</span>}
                     </div>
                     <p className="text-sm text-mid-text truncate">{win.description}</p>

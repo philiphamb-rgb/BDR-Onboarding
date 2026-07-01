@@ -12,7 +12,7 @@ import { strategyLine, type GoalStats } from '@/lib/priorityEngine'
 
 function statusLabel(g: GoalStats): string {
   switch (g.status) {
-    case 'hit': return 'Goal hit 🎯'
+    case 'hit': return 'Goal hit '
     case 'ahead': return 'Ahead of pace'
     case 'on': return 'On track'
     case 'behind': return `${g.behind} behind pace`

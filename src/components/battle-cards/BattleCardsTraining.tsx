@@ -117,7 +117,7 @@ export function BattleCardsTraining({ progress, save, certify, onEnter }: any) {
       <div className="mx-auto max-w-2xl space-y-4">
         <Card className="overflow-hidden !p-0">
           <div className="bg-gradient-hero p-6 text-center text-white">
-            <div className="mx-auto mb-2 text-[40px]">{perfect ? '🏆' : '🎓'}</div>
+            <div className="mx-auto mb-2 text-[40px]">{perfect ? '' : ''}</div>
             <h1 className="text-[22px] font-[900]">{step.title}</h1>
             <p className="mx-auto mt-1 max-w-md text-[13px] text-white/85">{step.body}</p>
             <div className="mx-auto mt-4 inline-flex items-baseline gap-1 rounded-full bg-white/15 px-4 py-1.5">

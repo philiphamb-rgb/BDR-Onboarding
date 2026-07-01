@@ -45,7 +45,7 @@ export function deriveAutoWins(i: WinsInput, paceFraction: number): AutoWin[] {
     const expected = i.monthlyDealGoal * paceFraction
     const p = pct(i.dealsThisMonth, i.monthlyDealGoal)
     if (i.dealsThisMonth >= i.monthlyDealGoal) {
-      wins.push({ id: 'goal', tone: 'win', title: `Goal smashed — ${i.dealsThisMonth}/${i.monthlyDealGoal} deals 🎯`, detail: `You hit your monthly deal goal. Anything now is upside.`, href: '/analytics' })
+      wins.push({ id: 'goal', tone: 'win', title: `Goal smashed — ${i.dealsThisMonth}/${i.monthlyDealGoal} deals `, detail: `You hit your monthly deal goal. Anything now is upside.`, href: '/analytics' })
     } else if (i.dealsThisMonth >= expected) {
       wins.push({ id: 'goal', tone: 'pace', title: `On pace — ${i.dealsThisMonth}/${i.monthlyDealGoal} deals (${p}%)`, detail: `Right where you should be this far into the month. Keep the cadence.`, href: '/analytics' })
     } else {
@@ -81,12 +81,12 @@ export function deriveAutoWins(i: WinsInput, paceFraction: number): AutoWin[] {
 
   // Streak.
   if (i.streak >= 3) {
-    wins.push({ id: 'streak', tone: 'win', title: `${i.streak}-day streak 🔥`, detail: `Consistency is the #1 predictor of ramp speed. Don't break the chain.`, href: '/today' })
+    wins.push({ id: 'streak', tone: 'win', title: `${i.streak}-day streak `, detail: `Consistency is the #1 predictor of ramp speed. Don't break the chain.`, href: '/today' })
   }
 
   // Curriculum.
   if (i.modulesTotal > 0 && i.modulesDone >= i.modulesTotal) {
-    wins.push({ id: 'learn', tone: 'win', title: `Curriculum complete 🎓`, detail: `Every module done — see your progress and certificate, and keep sharpening in the Drill.`, href: '/progress' })
+    wins.push({ id: 'learn', tone: 'win', title: `Curriculum complete `, detail: `Every module done — see your progress and certificate, and keep sharpening in the Drill.`, href: '/progress' })
   }
 
   // Rank by usefulness: goal pace first, then wins, then nudges.

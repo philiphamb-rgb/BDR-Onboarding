@@ -301,12 +301,12 @@ export default function TodayPage() {
       {/* Streak banner */}
       {(progress?.current_streak ?? 0) > 0 && (
         <div className={cn('flex items-center gap-3 px-4 py-3 rounded-2xl border',
-          progress?.streakStatus === 'at-risk' ? 'bg-yellow-50 border-yellow-200' : 'bg-orange-50 border-orange-200')}>
+          progress?.streakStatus === 'at-risk' ? 'bg-yellow-500/10 border-yellow-200' : 'bg-orange-500/10 border-orange-500/40')}>
           <FlameIcon className="text-orange-500 w-5 h-5 animate-bob" />
           <div>
-            <span className="text-sm font-bold text-orange-700">{progress?.current_streak} Day Streak</span>
+            <span className="text-sm font-bold text-orange-400">{progress?.current_streak} Day Streak</span>
             {progress?.streakStatus === 'at-risk' && (
-              <span className="text-xs text-orange-600 ml-2">— complete habits to keep it!</span>
+              <span className="text-xs text-orange-400 ml-2">— complete habits to keep it!</span>
             )}
           </div>
         </div>

@@ -27,14 +27,14 @@ import { RESOURCES_TOUR } from '@/lib/tours'
 
 // ─── Tools & Access ──────────────────────────────────────────────────────────
 const TOOLS = [
-  { name: 'HubSpot', purpose: 'CRM & pipeline management', url: 'https://hubspot.com', contact: 'Anthony Medina', Icon: HubspotIcon, tint: 'bg-orange-50 text-orange-600' },
+  { name: 'HubSpot', purpose: 'CRM & pipeline management', url: 'https://hubspot.com', contact: 'Anthony Medina', Icon: HubspotIcon, tint: 'bg-orange-500/10 text-orange-400' },
   { name: 'Seamless.AI', purpose: 'Prospecting & lead research (with LinkedIn)', url: 'https://seamless.ai', contact: 'Sales Operations', Icon: SearchIcon, tint: 'bg-teal-50 text-teal' },
   { name: 'Onit', purpose: 'Order forms & e-signature (opened from the HubSpot deal)', url: 'https://onit.com', contact: 'Sales Ops · orderform@consumerdirect.com', Icon: DocumentIcon, tint: 'bg-navy/5 text-navy' },
-  { name: 'Nextiva', purpose: 'Voice & communications', url: 'https://nextiva.com', contact: '#partner_support-and-sales_team', Icon: PhoneIcon, tint: 'bg-blue-50 text-blue-600' },
+  { name: 'Nextiva', purpose: 'Voice & communications', url: 'https://nextiva.com', contact: '#partner_support-and-sales_team', Icon: PhoneIcon, tint: 'bg-blue-500/10 text-blue-400' },
   { name: 'PartnerHub', purpose: 'Partner management dashboard', url: 'https://partnerhub.consumerdirect.com', contact: 'Chris Peery · #partnerhub-client-manager-issues', Icon: HubIcon, tint: 'bg-teal-50 text-teal' },
   { name: 'Developer Docs', purpose: 'Partner API reference & integration guides', url: 'https://developer.consumerdirect.io', contact: 'partnerintegration@consumerdirect.com', Icon: LightningIcon, tint: 'bg-navy/5 text-navy' },
   { name: 'Dropbox', purpose: 'File sharing & storage', url: 'https://dropbox.com', contact: 'Nikka Gerodias', Icon: DatabaseIcon, tint: 'bg-sky-50 text-sky-600' },
-  { name: 'Slack', purpose: 'Team communication', url: 'https://consumerdirect.slack.com', contact: 'Nikka Gerodias', Icon: SlackIcon, tint: 'bg-purple-50 text-purple-600' },
+  { name: 'Slack', purpose: 'Team communication', url: 'https://consumerdirect.slack.com', contact: 'Nikka Gerodias', Icon: SlackIcon, tint: 'bg-purple-500/10 text-purple-400' },
   { name: 'JIRA', purpose: 'Project tracking & requests', url: 'https://jira.com', contact: '#jira', Icon: PipelineIcon, tint: 'bg-indigo-50 text-indigo-600' },
 ]
 

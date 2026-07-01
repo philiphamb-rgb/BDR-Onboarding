@@ -144,7 +144,7 @@ export default function PartnersPage() {
           <div>
             <label className="label mb-1 block">Lead temperature</label>
             <div className="grid grid-cols-2 gap-2">
-              {[{ k: 'warm', l: '🔥 Warm', d: 'Referral / inbound / engaged' }, { k: 'cold', l: '❄️ Cold', d: 'Prospected / outbound' }].map(t => (
+              {[{ k: 'warm', l: 'Warm', d: 'Referral / inbound / engaged' }, { k: 'cold', l: 'Cold', d: 'Prospected / outbound' }].map(t => (
                 <button key={t.k} type="button" onClick={() => setForm(f => ({ ...f, temperature: t.k }))}
                   className={cn('rounded-md border px-3 py-2 text-left transition-all',
                     form.temperature === t.k ? 'border-navy bg-navy/5' : 'border-border hover:border-navy/40')}>
