@@ -9,20 +9,43 @@ export const dynamic = 'force-dynamic'
 // every task + phase has an "AI Help" that hands the exact context to the coach.
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { Card, Skeleton, ProgressBar } from '@/components/ui'
 import { GrowthTabs } from '@/components/GrowthTabs'
 import { GrowthChrome } from '@/components/growth/GrowthChrome'
-import { CheckIcon, ChevronDownIcon, ClockIcon, ChecklistIcon, LightningIcon, ArrowRightIcon, IntegrationIcon } from '@/components/icons'
+import { CheckIcon, ChevronDownIcon, ClockIcon, ChecklistIcon, LightningIcon, ArrowRightIcon, IntegrationIcon, LockIcon } from '@/components/icons'
 import { useModuleKV } from '@/lib/hooks/useModuleKV'
+import { usePermissions } from '@/components/usePermissions'
+import { NoteButton } from '@/components/growth/NoteButton'
 import { PHASES, PHASE_TONE, buildProgress, TOTAL_HOURS } from '@/lib/modules/growth-os/phases'
 import { askCoach } from '@/lib/coachBus'
 import { cn } from '@/lib/utils'
 
 export default function GrowthBuildPage() {
+  const router = useRouter()
+  const { canView, ready } = usePermissions()
   const { loading, value, save } = useModuleKV('growth_build', { done: [] })
   const [open, setOpen] = useState<string | null>(null)
   const done = new Set(value.done || [])
   const bp = buildProgress(value.done || [])
+
+  // Hard lock: the Build tab is Admin/Manager only. A standard user who reaches
+  // this URL directly sees a restricted state (and never the build mechanics).
+  const allowed = !ready || canView('growth_build')
+  if (ready && !allowed) {
+    return (
+      <div className="space-y-4 stagger-rise">
+        <GrowthChrome />
+        <GrowthTabs />
+        <Card className="!py-12 text-center">
+          <span className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-bdrbg text-gray"><LockIcon size={22} /></span>
+          <h2 className="text-[16px] font-[800] text-dark-text">Build is manager-only</h2>
+          <p className="mx-auto mt-1 max-w-xs text-[13px] leading-relaxed text-gray">Standing up the AI team + growth system is restricted to Admins and Managers. Ask your team lead if you need access.</p>
+          <button onClick={() => router.push('/grow')} className="mt-4 rounded-lg bg-navy px-4 py-2 text-[13px] font-[700] text-white">Back to Growth OS</button>
+        </Card>
+      </div>
+    )
+  }
 
   const toggle = (id: string) => save(p => {
     const s = new Set(p.done || [])
@@ -114,7 +137,8 @@ export default function GrowthBuildPage() {
                                 <CheckIcon size={11} />
                               </button>
                               <span onClick={() => toggle(task.id)} className={cn('flex-1 cursor-pointer text-[12.5px]', d ? 'text-gray line-through' : 'text-mid-text')}>{task.t}</span>
-                              <span className="shrink-0 rounded-md border border-border bg-bdrbg px-1.5 py-0.5 text-[10px] text-gray"><ClockIcon size={9} className="mr-0.5 inline" />{task.hrs}h · {task.tool}</span>
+                              <span className="hidden shrink-0 rounded-md border border-border bg-bdrbg px-1.5 py-0.5 text-[10px] text-gray sm:inline"><ClockIcon size={9} className="mr-0.5 inline" />{task.hrs}h · {task.tool}</span>
+                              <NoteButton compact entityType="phase-task" entityId={task.id} label={task.t} context={`Phase ${ph.n} ${ph.name}, ${task.hrs}h via ${task.tool}`} />
                               <button onClick={() => askCoach(`Help me complete this task for my ConsumerDirect Co-Brand PLUS+ Growth OS build, Phase ${ph.n} (${ph.name}): "${task.t}". Estimated ${task.hrs}h using ${task.tool}. Give a step-by-step plan with specific, ready-to-use output.`)}
                                 className="flex shrink-0 items-center gap-1 rounded-md border border-border bg-bdrbg px-2 py-1 text-[10px] font-[600] text-gray hover:text-navy">
                                 <IntegrationIcon size={9} /> AI Help
@@ -127,6 +151,7 @@ export default function GrowthBuildPage() {
                       <div className="mb-3 flex flex-wrap items-center gap-1.5">
                         <span className="text-[10px] font-[800] uppercase tracking-wide text-gray">Deliverables:</span>
                         {ph.del.map(d => <span key={d} className={cn('rounded-md px-2 py-0.5 text-[11px] font-[600]', tone.bg, tone.text)}>{d}</span>)}
+                        <div className="ml-auto"><NoteButton entityType="phase" entityId={ph.n} label={`Phase ${ph.n} — ${ph.name}`} context={ph.whatYouGet} /></div>
                       </div>
 
                       <button onClick={() => askCoach(`I'm working on Phase ${ph.n} (${ph.name}) of my ConsumerDirect Co-Brand PLUS+ Growth OS build. Help me produce the key deliverables: ${ph.del.join(', ')}. Start with the most important one and give a complete, ready-to-use output.`)}

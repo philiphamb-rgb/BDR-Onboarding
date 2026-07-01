@@ -35,6 +35,10 @@ export const FEATURES: Feature[] = [
   { key: 'analytics',    label: 'Analytics',       group: 'Sell',     scope: 'rep', href: '/analytics' },
   { key: 'commissions',  label: 'Commissions',     group: 'Sell',     scope: 'rep', href: '/commissions' },
   { key: 'growth',       label: 'Growth OS',       group: 'Grow',     scope: 'rep', href: '/grow' },
+  // Manager-scope: the Build tab + AI team-building mechanics are hard-locked to
+  // Admin/Manager. Standard reps get view:false by default (manager scope) so the
+  // tab is entirely hidden from their nav — see GrowthTabs + the /grow/build guard.
+  { key: 'growth_build', label: 'Growth OS — Build', group: 'Grow',   scope: 'manager', href: '/grow/build' },
   { key: 'notes',        label: 'Notes',           group: 'Focus',    scope: 'rep', href: '/notes' },
   { key: 'time_blocking',label: 'Time Blocks',   group: 'Focus',    scope: 'rep', href: '/schedule' },
   { key: 'tasks',        label: 'Tasks',           group: 'Focus',    scope: 'rep', href: '/tasks' },

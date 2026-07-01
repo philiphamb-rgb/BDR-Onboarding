@@ -14,6 +14,7 @@ import { useState } from 'react'
 import { Card, Skeleton, Badge } from '@/components/ui'
 import { GrowthTabs } from '@/components/GrowthTabs'
 import { GrowthChrome } from '@/components/growth/GrowthChrome'
+import { NoteButton } from '@/components/growth/NoteButton'
 import { GrowIcon, IntegrationIcon, LockIcon, InfoIcon, CopyIcon, CheckIcon, ChevronDownIcon, ArrowRightIcon, TargetIcon, LightningIcon, BookIcon, CoinIcon } from '@/components/icons'
 import { useGrowthOS } from '@/lib/hooks/useGrowthOS'
 import { CATEGORIES, STATUS_META, MASTER_SETUP_PROMPT, monthlyCost } from '@/lib/modules/growth-os/roster'
@@ -66,6 +67,7 @@ function AgentCard({ agent, isManager, onSet, isOpen, onToggle }: any) {
           </div>
           <p className="mt-1 text-[12.5px] leading-relaxed text-mid-text">{agent.job}</p>
         </div>
+        <div onClick={e => e.stopPropagation()}><NoteButton compact entityType="agent" entityId={agent.id} label={agent.name} context={agent.tagline} /></div>
         <ChevronDownIcon size={16} className={cn('mt-1 shrink-0 text-gray transition-transform', isOpen && 'rotate-180')} />
       </div>
 

@@ -13,6 +13,7 @@ import { Card, Skeleton } from '@/components/ui'
 import { CountUp } from '@/components/CountUp'
 import { GrowthTabs } from '@/components/GrowthTabs'
 import { GrowthChrome } from '@/components/growth/GrowthChrome'
+import { GrowthIntro } from '@/components/growth/GrowthIntro'
 import { FlameIcon, HandshakeIcon, IntegrationIcon, EditIcon, ArrowRightIcon, ChartRisingIcon, LightningIcon } from '@/components/icons'
 import { useGrowthOS } from '@/lib/hooks/useGrowthOS'
 import { askCoach } from '@/lib/coachBus'
@@ -50,6 +51,7 @@ export default function GrowthOverviewPage() {
     <div className="space-y-4 stagger-rise">
       <GrowthChrome />
       <GrowthTabs />
+      <GrowthIntro />
 
       {loading ? (
         <><Skeleton className="h-40 rounded-2xl" /><Skeleton className="h-28 rounded-2xl" /></>

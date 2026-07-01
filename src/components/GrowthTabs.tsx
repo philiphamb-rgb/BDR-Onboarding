@@ -7,22 +7,27 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { cn } from '@/lib/utils'
+import { usePermissions } from '@/components/usePermissions'
 import { DashboardIcon, EditIcon, TargetIcon, LightningIcon, IntegrationIcon, ChecklistIcon } from '@/components/icons'
 
 const GROWTH_VIEWS = [
-  { href: '/grow',            label: 'Overview',    icon: DashboardIcon },
-  { href: '/grow/content',    label: 'Content',     icon: EditIcon },
-  { href: '/grow/leadgen',    label: 'Lead Gen',    icon: TargetIcon },
-  { href: '/grow/automations',label: 'Automations', icon: LightningIcon },
-  { href: '/grow/team',       label: 'AI Team',     icon: IntegrationIcon },
-  { href: '/grow/build',      label: 'Build',       icon: ChecklistIcon },
+  { href: '/grow',            label: 'Overview',    icon: DashboardIcon,   feature: 'growth' },
+  { href: '/grow/content',    label: 'Content',     icon: EditIcon,        feature: 'growth' },
+  { href: '/grow/leadgen',    label: 'Lead Gen',    icon: TargetIcon,      feature: 'growth' },
+  { href: '/grow/automations',label: 'Automations', icon: LightningIcon,   feature: 'growth' },
+  { href: '/grow/team',       label: 'AI Team',     icon: IntegrationIcon, feature: 'growth' },
+  // Build is hard-locked to Admin/Manager — hidden entirely from standard users.
+  { href: '/grow/build',      label: 'Build',       icon: ChecklistIcon,   feature: 'growth_build', lock: true },
 ]
 
 export function GrowthTabs() {
   const pathname = usePathname()
+  const { canView, ready } = usePermissions()
+  // Until perms resolve, hide the locked tab rather than flashing it to a rep.
+  const views = GROWTH_VIEWS.filter(v => v.feature === 'growth' || (ready && canView(v.feature)))
   return (
     <div className="no-print flex gap-1 overflow-x-auto rounded-xl bg-bdrbg p-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" role="tablist" aria-label="Growth OS">
-      {GROWTH_VIEWS.map(v => {
+      {views.map(v => {
         const active = v.href === '/grow' ? pathname === '/grow' : (pathname === v.href || pathname.startsWith(v.href + '/'))
         const Icon = v.icon
         return (

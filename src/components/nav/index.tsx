@@ -14,6 +14,7 @@ import {
 import type { User } from '@/types/database'
 import { usePermissions } from '@/components/usePermissions'
 import { featureForHref } from '@/lib/permissions'
+import { askCoach } from '@/lib/coachBus'
 
 interface NavItem {
   href: string
@@ -174,6 +175,13 @@ export function AppHeader({ user, unreadCount = 0 }: { user?: User | null; unrea
   return (
     <header className="sticky top-0 z-40 flex items-center gap-3 border-b border-border bg-card/95 px-4 py-2.5 backdrop-blur supports-[backdrop-filter]:bg-card/80 desktop:px-6">
       <div className="flex-1"><GlobalSearch /></div>
+
+      {/* Ask Coach — desktop trigger lives in the header (no floating button on
+          the back-office canvas, so it never overlaps page content). */}
+      <button onClick={() => askCoach()} aria-label="Ask your AI Coach"
+        className="hidden shrink-0 items-center gap-1.5 rounded-lg bg-gradient-hero px-3 py-2 text-[12px] font-[800] text-white shadow-card transition-transform active:scale-95 desktop:flex">
+        <CoachIcon size={16} /> Ask Coach
+      </button>
 
       {/* User name + role (desktop) */}
       <Link href="/settings/profile" className="hidden items-center gap-2 rounded-lg px-2 py-1 hover:bg-bdrbg desktop:flex">

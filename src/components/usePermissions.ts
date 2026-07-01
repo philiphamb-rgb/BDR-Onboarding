@@ -11,25 +11,30 @@ import { effectiveRole, resolvePerms, canView as cv, canEdit as ce } from '@/lib
 export function usePermissions() {
   const supabase = createClient()
   const [perms, setPerms] = useState<any>(null) // null = not loaded yet → allow
+  const [role, setRole] = useState<'admin' | 'manager' | 'rep' | null>(null)
+  const [ready, setReady] = useState(false)
 
   useEffect(() => {
     let active = true
     supabase.auth.getUser().then(async ({ data: { user } }) => {
-      if (!user || !active) return
+      if (!user || !active) { if (active) setReady(true); return }
       const { data: u } = await supabase.from('users').select('role, team_id').eq('id', user.id).single()
-      const role = effectiveRole(u?.role)
+      const r = effectiveRole(u?.role)
       let overrides: any[] = []
       if (u?.team_id) {
         const { data } = await supabase.from('role_permissions').select('role, feature_key, can_view, can_edit').eq('team_id', u.team_id)
         overrides = data ?? []
       }
-      if (active) setPerms(resolvePerms(role, overrides))
+      if (active) { setRole(r); setPerms(resolvePerms(r, overrides)); setReady(true) }
     })
     return () => { active = false }
   }, [])
 
   return {
     perms,
+    role,
+    ready,                       // true once the real perms have loaded
+    isManager: role === 'manager' || role === 'admin',
     canView: (key: string) => cv(perms, key),
     canEdit: (key: string) => ce(perms, key),
   }

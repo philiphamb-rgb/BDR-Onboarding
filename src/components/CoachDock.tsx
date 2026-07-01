@@ -45,6 +45,46 @@ export function CoachDock() {
   const inputRef = useRef<HTMLTextAreaElement>(null)
   const [pending, setPending] = useState<string | null>(null)   // prompt waiting to send (e.g. until userId loads)
 
+  // Mobile draggable launcher — the FAB can be repositioned anywhere so it never
+  // blocks text or a scroll container. Position persists across sessions.
+  const [fabPos, setFabPos] = useState<{ x: number; y: number } | null>(null)
+  const fabRef = useRef<HTMLButtonElement>(null)
+  const dragRef = useRef<{ sx: number; sy: number; ox: number; oy: number; w: number; h: number; moved: boolean; dragging: boolean }>({ sx: 0, sy: 0, ox: 0, oy: 0, w: 0, h: 0, moved: false, dragging: false })
+
+  useEffect(() => {
+    try { const raw = localStorage.getItem('coach-fab-pos'); if (raw) setFabPos(JSON.parse(raw)) } catch {}
+  }, [])
+  // Keep it on-screen after a viewport resize/rotate.
+  useEffect(() => {
+    const onResize = () => setFabPos(p => {
+      if (!p) return p
+      const el = fabRef.current; const w = el?.offsetWidth ?? 56; const h = el?.offsetHeight ?? 56
+      return { x: Math.min(p.x, window.innerWidth - w - 8), y: Math.min(p.y, window.innerHeight - h - 8) }
+    })
+    window.addEventListener('resize', onResize)
+    return () => window.removeEventListener('resize', onResize)
+  }, [])
+
+  const onFabDown = (e: React.PointerEvent) => {
+    const el = fabRef.current; if (!el) return
+    const r = el.getBoundingClientRect()
+    dragRef.current = { sx: e.clientX, sy: e.clientY, ox: r.left, oy: r.top, w: r.width, h: r.height, moved: false, dragging: true }
+    el.setPointerCapture?.(e.pointerId)
+  }
+  const onFabMove = (e: React.PointerEvent) => {
+    const d = dragRef.current; if (!d.dragging) return
+    const dx = e.clientX - d.sx, dy = e.clientY - d.sy
+    if (!d.moved && Math.abs(dx) + Math.abs(dy) > 6) d.moved = true
+    if (!d.moved) return
+    const x = Math.min(Math.max(8, d.ox + dx), window.innerWidth - d.w - 8)
+    const y = Math.min(Math.max(8, d.oy + dy), window.innerHeight - d.h - 8)
+    setFabPos({ x, y })
+  }
+  const onFabUp = () => {
+    const d = dragRef.current; d.dragging = false
+    if (d.moved) setFabPos(p => { if (p) { try { localStorage.setItem('coach-fab-pos', JSON.stringify(p)) } catch {} } return p })
+  }
+
   // The full Coach screen and the live Drill own the conversation there — no
   // floating duplicate on those routes.
   const hidden = pathname?.startsWith('/coach') || pathname?.startsWith('/drill')
@@ -140,13 +180,22 @@ export function CoachDock() {
 
   return (
     <>
-      {/* Floating launcher — the coach, always one tap away */}
+      {/* Floating launcher — mobile only (desktop uses the header trigger, so
+          nothing floats over the back-office canvas). Draggable: reposition it
+          anywhere; a tap opens, a drag never does. */}
       {!open && (
         <button
-          onClick={() => setOpen(true)}
-          aria-label="Ask your AI Coach"
-          className="group fixed right-4 z-[390] flex items-center gap-2 rounded-full bg-gradient-hero px-4 py-3 text-white shadow-modal transition-transform active:scale-95 desktop:right-6
-                     bottom-[calc(84px+env(safe-area-inset-bottom))] desktop:bottom-6"
+          ref={fabRef}
+          onPointerDown={onFabDown}
+          onPointerMove={onFabMove}
+          onPointerUp={onFabUp}
+          onClick={() => { if (!dragRef.current.moved) setOpen(true) }}
+          aria-label="Ask your AI Coach — drag to reposition"
+          style={fabPos ? { left: fabPos.x, top: fabPos.y, right: 'auto', bottom: 'auto', touchAction: 'none' } : { touchAction: 'none' }}
+          className={cn(
+            'group fixed z-[390] flex items-center gap-2 rounded-full bg-gradient-hero px-4 py-3 text-white shadow-modal transition-transform active:scale-95 desktop:hidden',
+            !fabPos && 'right-4 bottom-[calc(84px+env(safe-area-inset-bottom))]',
+          )}
         >
           <span className="absolute inset-0 rounded-full bg-teal/40 animate-coach-pulse" aria-hidden="true" />
           <CoachIcon size={20} className="relative text-white" />
