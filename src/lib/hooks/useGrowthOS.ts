@@ -46,7 +46,7 @@ export function useGrowthOS() {
     const [{ data: autos }, { data: goalRow }, { data: pp }] = await Promise.all([
       tid ? supabase.from('automations').select('id, status, updated_at, updated_by').eq('team_id', tid) : Promise.resolve({ data: [] }),
       supabase.from('goals').select('leads_per_week_goal, close_rate_goal, monthly_deal_goal, monthly_income_goal').eq('user_id', user.id).maybeSingle(),
-      supabase.from('partner_onboarding').select('stage, temperature, created_at, updated_at, partner_name').eq('user_id', user.id).limit(500),
+      supabase.from('partner_onboarding').select('id, stage, temperature, created_at, updated_at, partner_name').eq('user_id', user.id).limit(500),
     ])
     setAutoRows(autos ?? [])
     if (goalRow) setGoals({ leads_per_week_goal: goalRow.leads_per_week_goal, close_rate_goal: goalRow.close_rate_goal, monthly_deal_goal: goalRow.monthly_deal_goal, monthly_income_goal: goalRow.monthly_income_goal })
@@ -90,7 +90,7 @@ export function useGrowthOS() {
       let score = (TEMP_BASE[t] ?? 32) + (STAGE_BUMP[p.stage] ?? 0)
       if (agoMin > 4320) score -= 8              // 3d+ stale
       const stage = p.stage === 'opportunity_won' ? 'converted' : t
-      return { name: p.partner_name || 'Unnamed agency', score: Math.max(1, Math.min(100, score)), stage, temperature: t, rawStage: p.stage, agoMin }
+      return { id: p.id, name: p.partner_name || 'Unnamed agency', score: Math.max(1, Math.min(100, score)), stage, temperature: t, rawStage: p.stage, agoMin }
     }).sort((a, b) => b.score - a.score)
   }, [partners])
 

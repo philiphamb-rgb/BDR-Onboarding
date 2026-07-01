@@ -15,6 +15,7 @@ import { Card, Skeleton, Badge } from '@/components/ui'
 import { CountUp } from '@/components/CountUp'
 import { GrowthTabs } from '@/components/GrowthTabs'
 import { GrowthChrome } from '@/components/growth/GrowthChrome'
+import { NoteButton } from '@/components/growth/NoteButton'
 import { TargetIcon, FlameIcon, LightningIcon, IntegrationIcon, ArrowRightIcon, PlusIcon, SearchIcon, CloseIcon, ChartRisingIcon, InfoIcon } from '@/components/icons'
 import { useGrowthOS } from '@/lib/hooks/useGrowthOS'
 import { GEN_PROMPTS, SCORE_ROUTING, DEMO_CAMPAIGNS, fmtAgo, leadSuggestion } from '@/lib/modules/growth-os/leadgen'
@@ -135,6 +136,7 @@ export default function GrowthLeadGenPage() {
                           <span className="w-6 text-[13px] font-[800] tabular-nums" style={{ color: scoreColor(lead.score) }}>{lead.score}</span>
                         </div>
                         <span className={cn('shrink-0 rounded-md px-2 py-0.5 text-[11px] font-[700]', st.c)}>{st.l}</span>
+                        {lead.id && <NoteButton compact entityType="lead" entityId={lead.id} label={lead.name} context={`Partner lead · ${lead.stage} · score ${lead.score}`} />}
                         <button onClick={() => askCoach(`Write a personalized follow-up strategy for this ConsumerDirect Co-Brand PLUS+ agency lead: ${lead.name}, score ${lead.score}, currently ${lead.stage}, last touched ${fmtAgo(lead.agoMin)}. Give the next 3 specific touchpoints with copy to move them toward a signed partnership.`)}
                           className="flex shrink-0 items-center gap-1 rounded-lg bg-teal/10 px-2.5 py-1.5 text-[11px] font-[700] text-teal"><IntegrationIcon size={11} /> Follow-up</button>
                       </div>
