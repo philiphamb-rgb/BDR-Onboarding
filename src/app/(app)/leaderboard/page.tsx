@@ -8,7 +8,7 @@ export const dynamic = 'force-dynamic'
 // transparent composite Score weights PROACTIVE, self-generated effort (cold
 // calls + self-sourced leads) highest. Polls live so ranks shift in front of you.
 
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { Card, Skeleton, Avatar } from '@/components/ui'
 import { CountUp } from '@/components/CountUp'
@@ -94,8 +94,10 @@ export default function LeaderboardPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [range])
 
-  const ranked = rows.map(r => ({ ...r, s: score(r, range) }))
-  const myIndex = ranked.findIndex(r => r.user_id === userId)
+  // Memoized so the 25s poll / formula-toggle / rank-flash re-renders don't
+  // re-score and re-sort the whole roster every time.
+  const ranked = useMemo(() => rows.map(r => ({ ...r, s: score(r, range) })), [rows, range])
+  const myIndex = useMemo(() => ranked.findIndex(r => r.user_id === userId), [ranked, userId])
   const me = myIndex >= 0 ? ranked[myIndex] : null
   const topScore = ranked[0]?.s || 1
 

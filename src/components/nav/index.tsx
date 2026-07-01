@@ -140,6 +140,7 @@ function GlobalSearch() {
         onChange={e => { setQ(e.target.value); setOpen(true) }}
         onFocus={() => setOpen(true)}
         placeholder="Search partners, tasks, notes, lessons…"
+        aria-label="Search partners, tasks, notes, and lessons"
         className="w-full rounded-lg border border-border bg-bdrbg py-2 pl-9 pr-12 text-[13px] outline-none focus:border-navy/40 focus:bg-card focus:ring-2 focus:ring-navy/30"
       />
       {q ? (
@@ -231,6 +232,14 @@ export function BottomNav({ user }: { user?: User | null; unreadCount?: number }
     ...(isManager ? MANAGER_ITEMS.filter(allowed) : []),
   ]
   const moreActive = moreItems.some(i => matchNav(pathname, i))
+
+  // Escape closes the mobile "More" sheet (keyboard parity with the backdrop).
+  useEffect(() => {
+    if (!moreOpen) return
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setMoreOpen(false) }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [moreOpen])
 
   return (
     <>

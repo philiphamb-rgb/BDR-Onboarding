@@ -100,6 +100,14 @@ export function CoachDock() {
 
   useEffect(() => { if (open) endRef.current?.scrollIntoView({ behavior: 'smooth' }) }, [messages, open])
 
+  // Escape closes the coach drawer (keyboard parity with the backdrop click).
+  useEffect(() => {
+    if (!open) return
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setOpen(false) }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [open])
+
   // Any screen can summon the coach via askCoach() — optionally with a question
   // to answer immediately ("coach me on this metric").
   useEffect(() => {
@@ -300,6 +308,7 @@ export function CoachDock() {
                   onChange={e => setInput(e.target.value)}
                   onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send() } }}
                   placeholder="Ask your coach…"
+                  aria-label="Message your AI coach"
                   rows={1}
                   className="max-h-28 flex-1 resize-none bg-transparent px-2 py-1.5 text-[14px] outline-none placeholder-gray"
                   onInput={e => { const el = e.currentTarget; el.style.height = 'auto'; el.style.height = el.scrollHeight + 'px' }}

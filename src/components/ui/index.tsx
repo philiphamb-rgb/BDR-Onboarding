@@ -256,6 +256,17 @@ export function Modal({
   closeOnOverlay = true,
 }: ModalProps) {
   const open = _open || isOpen || false
+  const panelRef = useRef<HTMLDivElement>(null)
+
+  // Move focus into the dialog on open and restore it to the trigger on close,
+  // so keyboard/screen-reader users don't get stranded behind the overlay.
+  useEffect(() => {
+    if (!open) return
+    const prev = typeof document !== 'undefined' ? (document.activeElement as HTMLElement | null) : null
+    const t = setTimeout(() => panelRef.current?.focus(), 0)
+    return () => { clearTimeout(t); prev?.focus?.() }
+  }, [open])
+
   // Lock body scroll when open
   useEffect(() => {
     if (open) {
@@ -288,10 +299,13 @@ export function Modal({
 
       {/* Modal panel */}
       <div
+        ref={panelRef}
+        tabIndex={-1}
         role="dialog"
         aria-modal="true"
         aria-labelledby={title ? 'modal-title' : undefined}
         className={cn(
+          'outline-none',
           'relative z-10 w-full bg-card',
           'rounded-t-xl sm:rounded-xl',
           'shadow-modal',
