@@ -96,7 +96,7 @@ export function FeedbackDigest() {
     <div className="space-y-4">
       {/* Summary */}
       {agg.total === 0 ? (
-        <div className="rounded-xl bg-bdrbg p-4 text-center text-[13px] text-gray">No team feedback yet. It rolls up here as your reps rate Apex.</div>
+        <div className="rounded-xl bg-bdrbg p-4 text-center text-[13px] text-gray">No team feedback yet. It rolls up here as your reps rate Agentic OS.</div>
       ) : (
         <>
           <div className="grid grid-cols-3 gap-2">

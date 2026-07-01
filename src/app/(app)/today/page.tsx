@@ -23,6 +23,7 @@ import { fetchDaySlots } from '@/lib/daySlots'
 export default function TodayPage() {
   const supabase = createClient()
   const [userId, setUserId] = useState<string>()
+  const [loaded, setLoaded] = useState(false)
   const [completing, setCompleting] = useState<string | null>(null)
   const [tasks, setTasks] = useState<any[]>([])          // all open top-level tasks (the brain)
   const [partners, setPartners] = useState<any[]>([])
@@ -41,16 +42,21 @@ export default function TodayPage() {
   const today = localToday()
 
   useEffect(() => {
-    supabase.auth.getUser().then(({ data: { user } }) => {
-      if (!user) return
+    ;(async () => {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) { setLoaded(true); return }
       setUserId(user.id)
-      loadTasks(user.id)
-      loadDayBlocks(user.id)
-      supabase.from('partner_onboarding').select('id, partner_name, stage, temperature, updated_at').eq('user_id', user.id)
-        .then(({ data }) => setPartners(data ?? []))
-      supabase.from('goals').select('monthly_deal_goal').eq('user_id', user.id).maybeSingle().then(({ data }) => setGoal(data?.monthly_deal_goal ?? null))
-      supabase.from('user_progress').select('deals_this_month').eq('user_id', user.id).single().then(({ data }) => setDealsThisMonth(data?.deals_this_month ?? 0))
-    })
+      // Await the core loads together so the cockpit/streak render with real
+      // numbers instead of flashing zeros on first paint.
+      await Promise.all([
+        loadTasks(user.id),
+        loadDayBlocks(user.id),
+        supabase.from('partner_onboarding').select('id, partner_name, stage, temperature, updated_at').eq('user_id', user.id).then(({ data }) => setPartners(data ?? [])),
+        supabase.from('goals').select('monthly_deal_goal').eq('user_id', user.id).maybeSingle().then(({ data }) => setGoal(data?.monthly_deal_goal ?? null)),
+        supabase.from('user_progress').select('deals_this_month').eq('user_id', user.id).single().then(({ data }) => setDealsThisMonth(data?.deals_this_month ?? 0)),
+      ])
+      setLoaded(true)
+    })()
   }, [])
 
   // All open top-level tasks with the fields the priority engine needs.
@@ -164,12 +170,20 @@ export default function TodayPage() {
   const completionPct = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0
   const allDone = completedCount === totalCount && totalCount > 0
 
+  if (!loaded) return (
+    <div className="space-y-4">
+      <Skeleton className="h-28 rounded-2xl" />
+      <Skeleton className="h-40 rounded-2xl" />
+      <Skeleton className="h-24 rounded-2xl" />
+    </div>
+  )
+
   return (
     <div className="space-y-4 stagger-rise">
       {/* First-visit welcome → launches new users into their baseline setup. */}
       <FirstRunOverlay
         kvKey="today_ftux"
-        eyebrow="Welcome to Apex"
+        eyebrow="Welcome to BDR Hub"
         title="This is your daily race line"
         body="Today is your one screen to win the day: your goal pace, the single highest-value move, your live tasks, and your streak — all in one place. Start by setting your target so everything else calibrates to your number."
         steps={[

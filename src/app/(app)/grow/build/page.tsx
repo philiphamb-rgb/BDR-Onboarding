@@ -50,7 +50,7 @@ export default function GrowthBuildPage() {
           <span className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-bdrbg text-gray"><LockIcon size={22} /></span>
           <h2 className="text-[16px] font-[800] text-dark-text">Build is manager-only</h2>
           <p className="mx-auto mt-1 max-w-xs text-[13px] leading-relaxed text-gray">Standing up the AI team + growth system is restricted to Admins and Managers. Ask your team lead if you need access.</p>
-          <button onClick={() => router.push('/grow')} className="mt-4 rounded-lg bg-navy px-4 py-2 text-[13px] font-[700] text-white">Back to Apex</button>
+          <button onClick={() => router.push('/grow')} className="mt-4 rounded-lg bg-navy px-4 py-2 text-[13px] font-[700] text-white">Back to Agentic OS</button>
         </Card>
       </div>
     )

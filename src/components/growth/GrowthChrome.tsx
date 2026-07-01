@@ -53,7 +53,7 @@ function GoalsEditor({ goals, onSave, onClose }: any) {
           <h2 className="text-[18px] font-[900] text-dark-text">Your goals</h2>
           <button onClick={onClose} aria-label="Close" className="text-gray hover:text-dark-text"><CloseIcon size={18} /></button>
         </div>
-        <p className="mb-5 text-[12.5px] leading-relaxed text-gray">These drive what your Apex tells you to do first, next, and after that — everywhere in the app.</p>
+        <p className="mb-5 text-[12.5px] leading-relaxed text-gray">These drive what your Agentic OS tells you to do first, next, and after that — everywhere in the app.</p>
         {field('Monthly income goal', income, setIncome, 'USD / month')}
         {field('Lead generation goal', leads, setLeads, 'new partner leads / week')}
         {field('Close rate goal', close, setClose, '% of leads closed', 100)}

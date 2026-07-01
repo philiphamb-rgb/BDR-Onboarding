@@ -368,7 +368,7 @@ export default function CommissionsPage() {
         <div className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white/15"><GrowIcon size={20} className="text-white" /></div>
         <div className="relative min-w-0 flex-1">
           <div className="text-[14.5px] font-[900]">Generate strategy via Workspace</div>
-          <div className="text-[11.5px] text-white/80">Turn this number into a game plan — your KPIs + AI agents in Apex</div>
+          <div className="text-[11.5px] text-white/80">Turn this number into a game plan — your KPIs + AI agents in Agentic OS</div>
         </div>
         <ArrowRightIcon size={18} className="relative shrink-0 text-white/85 animate-nudge-x" />
       </Link>
