@@ -162,7 +162,7 @@ export default function LeaderboardPage() {
                 r.user_id === userId && 'ring-2 ring-navy')}
               style={isFirst ? { boxShadow: `0 0 0 1.5px ${medal}66, 0 8px 30px ${medal}33` } : undefined}>
               {isFirst && <div className="pointer-events-none absolute inset-x-0 top-0 h-16 opacity-30" style={{ background: `radial-gradient(60% 100% at 50% 0%, ${medal}, transparent)` }} />}
-              <div className="relative">
+              <div className={cn('relative', isFirst && 'animate-bob')}>
                 <Avatar src={r.avatar_url} name={r.name} size={isFirst ? 56 : 44} />
                 <span className="absolute -bottom-1 -right-1 flex h-6 w-6 items-center justify-center rounded-full text-[11px] font-[900] text-white shadow" style={{ backgroundColor: medal }}>{slot + 1}</span>
               </div>

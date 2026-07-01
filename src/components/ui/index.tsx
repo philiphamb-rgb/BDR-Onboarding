@@ -503,25 +503,49 @@ const toastBorders: Record<ToastVariant, string> = {
   xp:      'border-l-teal',
 }
 
+const toastBars: Record<ToastVariant, string> = {
+  success: 'bg-success',
+  error:   'bg-error',
+  warning: 'bg-gold',
+  info:    'bg-navy',
+  xp:      'bg-teal',
+}
+
 function ToastItem({ item, onDismiss }: { item: ToastItem; onDismiss: () => void }) {
+  const [exiting, setExiting] = useState(false)
+  const duration = item.duration ?? 4000
+
+  // Animate out before actually removing, so the toast slides away instead of
+  // snapping. The remaining toasts then re-flow smoothly.
+  const dismiss = useCallback(() => {
+    setExiting(true)
+    setTimeout(onDismiss, 180)
+  }, [onDismiss])
+
   useEffect(() => {
-    const duration = item.duration ?? 4000
-    const timer = setTimeout(onDismiss, duration)
+    const timer = setTimeout(dismiss, duration)
     return () => clearTimeout(timer)
-  }, [item.duration, onDismiss])
+  }, [duration, dismiss])
 
   return (
     <div
       className={cn(
-        'flex items-start gap-3 w-full max-w-[380px]',
+        'relative overflow-hidden flex items-start gap-3 w-full max-w-[380px]',
         'bg-card rounded-lg shadow-modal',
         'border border-border border-l-4',
         toastBorders[item.variant],
-        'p-4 animate-toast-in'
+        'p-4',
+        exiting ? 'animate-toast-out' : 'animate-toast-in'
       )}
       role="alert"
       aria-live="polite"
     >
+      {/* Time-remaining countdown bar */}
+      <span
+        className={cn('pointer-events-none absolute bottom-0 left-0 h-0.5 w-full origin-left opacity-40', toastBars[item.variant])}
+        style={{ animation: `toast-countdown ${duration}ms linear forwards` }}
+        aria-hidden="true"
+      />
       <div className="shrink-0 mt-0.5">{toastIcons[item.variant]}</div>
       <div className="flex-1 min-w-0">
         <p className="text-[14px] font-[700] text-dark-text">{item.title}</p>
@@ -530,7 +554,7 @@ function ToastItem({ item, onDismiss }: { item: ToastItem; onDismiss: () => void
         )}
         {item.action && (
           <button
-            onClick={() => { item.action?.onClick(); onDismiss() }}
+            onClick={() => { item.action?.onClick(); dismiss() }}
             className="mt-2 text-[12px] font-[700] text-teal hover:text-teal-dark"
           >
             {item.action.label}
@@ -538,7 +562,7 @@ function ToastItem({ item, onDismiss }: { item: ToastItem; onDismiss: () => void
         )}
       </div>
       <button
-        onClick={onDismiss}
+        onClick={dismiss}
         className="shrink-0 w-6 h-6 flex items-center justify-center text-gray
                    hover:text-dark-text transition-colors"
         aria-label="Dismiss"

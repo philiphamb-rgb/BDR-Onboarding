@@ -149,6 +149,14 @@ const config: Config = {
           '0%':   { opacity: '0', transform: 'translateY(-8px) scale(0.95)' },
           '100%': { opacity: '1', transform: 'translateY(0) scale(1)' },
         },
+        'toast-out': {
+          '0%':   { opacity: '1', transform: 'translateY(0) scale(1)' },
+          '100%': { opacity: '0', transform: 'translateY(-8px) scale(0.95)' },
+        },
+        'toast-countdown': {
+          '0%':   { transform: 'scaleX(1)' },
+          '100%': { transform: 'scaleX(0)' },
+        },
       },
       animation: {
         'fade-up':      'fade-up 250ms ease-out both',
@@ -160,6 +168,7 @@ const config: Config = {
         'shimmer':      'shimmer 1.5s infinite linear',
         'pulse-teal':   'pulse-teal 2s infinite',
         'toast-in':     'toast-in 200ms ease-out both',
+        'toast-out':    'toast-out 180ms ease-in both',
       },
 
       // ─── Screen breakpoints ────────────────────────────────────────────────
