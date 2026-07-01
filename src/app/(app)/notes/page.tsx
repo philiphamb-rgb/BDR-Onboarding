@@ -88,9 +88,12 @@ export default function NotesPage() {
   }
   const persist = async (note: any) => {
     if (!note?.id) return
-    await supabase.from('notes').update({
+    const { error } = await supabase.from('notes').update({
       title: note.title, blocks: note.blocks, category: note.category, tags: note.tags, updated_at: new Date().toISOString(),
     }).eq('id', note.id)
+    // A debounced note save is the user's typed text — if it fails, say so
+    // instead of silently losing it on the next refresh.
+    if (error) toast.error('Couldn’t save this note — check your connection.')
   }
   const updateActive = (patch: any) => {
     if (!active) return

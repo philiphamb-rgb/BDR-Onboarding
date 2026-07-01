@@ -38,7 +38,8 @@ export default function PartnerDetailPage() {
   }, [id])
 
   const persist = async (patch: Record<string, unknown>) => {
-    await supabase.from('partner_onboarding').update(patch).eq('id', id)
+    const { error } = await supabase.from('partner_onboarding').update(patch).eq('id', id)
+    if (error) toast.error('Could not save that change — check your connection.')
   }
 
   // Rebuild the full checklist from a base array, applying changes to one key.
@@ -81,21 +82,19 @@ export default function PartnerDetailPage() {
       })
       if (res.ok) {
         const d = await res.json()
+        // Only celebrate the first time it's actually awarded — re-checking a
+        // completed checklist is deduped server-side and must stay silent.
         if (d.awarded) toast.xp(d.xp_earned ?? 0, 'Partner fully onboarded!')
-        else toast.success('Partner fully onboarded — every task complete!')
-      } else {
-        toast.success('Partner fully onboarded — every task complete!')
       }
-    } catch {
-      toast.success('Partner fully onboarded — every task complete!')
-    }
+    } catch { /* non-fatal — XP is deduped server-side */ }
   }
 
   const changeStage = (s: string) => { setStage(s); persist({ stage: s }) }
   const changeTemp = (t: string) => { setPartner((p: any) => ({ ...p, temperature: t })); persist({ temperature: t }) }
 
   const remove = async () => {
-    await supabase.from('partner_onboarding').delete().eq('id', id)
+    const { error } = await supabase.from('partner_onboarding').delete().eq('id', id)
+    if (error) { toast.error('Could not remove this partner. Try again.'); return }
     toast.success('Partner removed')
     router.push('/partners')
   }

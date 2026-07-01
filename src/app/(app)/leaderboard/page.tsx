@@ -14,6 +14,7 @@ export default function LeaderboardPage() {
   const supabase = createClient()
   const [userId, setUserId] = useState<string>()
   const [leaders, setLeaders] = useState<Leader[]>([])
+  const [streakLeaders, setStreakLeaders] = useState<Leader[]>([])
   const [tab, setTab] = useState<'xp' | 'streak'>('xp')
   const [loading, setLoading] = useState(true)
 
@@ -23,24 +24,31 @@ export default function LeaderboardPage() {
     })
   }, [])
 
+  const mapRow = (r: any) => ({
+    user_id: r.user_id,
+    name: r.users?.name ?? '—',
+    avatar_url: r.users?.avatar_url ?? null,
+    belt: beltFromDays(r.belt_day ?? 0),
+    total_xp: r.total_xp ?? 0,
+    streak: r.current_streak ?? 0,
+  })
+
   const fetchLeaders = async () => {
-    const { data } = await supabase
-      .from('user_progress')
-      .select('user_id, total_xp, current_streak, belt_day, users!inner(name, avatar_url)')
-      .order('total_xp', { ascending: false })
-      .limit(20)
-    setLeaders((data ?? []).map((r: { user_id: string; total_xp: number; current_streak: number; belt_day: number; users: { name: string; avatar_url: string | null } }) => ({
-      user_id: r.user_id,
-      name: r.users?.name ?? '—',
-      avatar_url: r.users?.avatar_url ?? null,
-      belt: beltFromDays(r.belt_day ?? 0),
-      total_xp: r.total_xp ?? 0,
-      streak: r.current_streak ?? 0,
-    })))
+    const cols = 'user_id, total_xp, current_streak, belt_day, users!inner(name, avatar_url)'
+    // Fetch each board with its OWN ordering — the Streak board must be the top
+    // streaks, not the top-XP set re-sorted (which hides high-streak/low-XP reps).
+    const [{ data: byXp }, { data: byStreak }] = await Promise.all([
+      supabase.from('user_progress').select(cols).order('total_xp', { ascending: false }).limit(20),
+      supabase.from('user_progress').select(cols).order('current_streak', { ascending: false }).limit(20),
+    ])
+    setLeaders((byXp ?? []).map(mapRow))
+    setStreakLeaders((byStreak ?? []).map(mapRow))
     setLoading(false)
   }
 
-  const sorted = [...leaders].sort((a, b) => tab === 'xp' ? b.total_xp - a.total_xp : b.streak - a.streak)
+  const sorted = tab === 'xp'
+    ? [...leaders].sort((a, b) => b.total_xp - a.total_xp)
+    : [...streakLeaders].sort((a, b) => b.streak - a.streak)
   const myRank = sorted.findIndex(l => l.user_id === userId) + 1
 
   return (

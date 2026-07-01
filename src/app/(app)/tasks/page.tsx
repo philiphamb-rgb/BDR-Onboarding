@@ -74,8 +74,10 @@ export default function TasksPage() {
     if (!title || !userId || !activeList) return
     setNewTitle('')
     const order = Math.max(0, ...topLevel.map(t => t.order_index ?? 0)) + 1
-    const { data } = await supabase.from('tasks').insert({ user_id: userId, list_id: activeList, title, order_index: order }).select().single()
-    if (data) setTasks(prev => [...prev, data])
+    const { data, error } = await supabase.from('tasks').insert({ user_id: userId, list_id: activeList, title, order_index: order }).select().single()
+    // Restore the typed title on failure so it isn't silently lost.
+    if (error || !data) { toast.error('Could not add that task. Try again.'); setNewTitle(title); return }
+    setTasks(prev => [...prev, data])
   }
 
   const addSubtask = async (parentId: string) => {

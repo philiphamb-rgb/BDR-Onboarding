@@ -26,7 +26,7 @@ export default function NotificationsPage() {
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => {
-      if (!user) return
+      if (!user) { setLoading(false); return }   // don't hang on the skeleton forever
       supabase.from('notifications').select('id, type, title, body, is_read, created_at')
         .eq('user_id', user.id).order('created_at', { ascending: false }).limit(50)
         .then(({ data }) => {
