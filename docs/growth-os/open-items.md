@@ -54,13 +54,20 @@ company), Activities (typed growth_notes timeline), list views + saved filters +
 RBAC bulk ops, and reporting drill-through.
 
 Done: **Naming rollout** — the product is now **Cortex** across nav, headers, and
-copy. **Feedback Digest** — the manager-facing aggregation read view is live.
+copy. **Feedback loop, end to end** — capture (FeedbackButton) → aggregation
+(manager Feedback Digest) → **synthesis** (Claude clusters feedback into
+agent-scoped proposals via `/api/growth/synthesize`, manager-triggered) →
+**review** (approve/reject in the digest) → **versioned instruction override**
+(`agent_instruction_overrides`) that actually extends the agent's prompt on the AI
+Team tab, with **rollback**. The nightly automation runs the same core via
+`/api/cron/feedback-synthesis` (wired into `vercel.json` crons at 07:00).
 
-Still open:
-- **Feedback-loop nightly synthesis** — capture + changelog + the manager digest
-  read view are all live; only the *automated* nightly job (digest → approve/reject
-  → versioned instruction-update → rollback) remains, and it's partly infra (a
-  scheduled Claude Managed Agent with write access to agent-instruction storage).
+Still open (the ONLY remaining item, and it's deploy config — no code):
+- **Enable the nightly cron in production** — set `CRON_SECRET` +
+  `SUPABASE_SERVICE_ROLE_KEY` in the Vercel project. Until then the cron route
+  returns 501 (never runs unguarded) and managers run synthesis on-demand from the
+  digest. Everything else — schema, synthesis, review, versioned apply, rollback,
+  and prompt-extension — is live.
 
 ## Deferred by design (documented, not blocking)
 

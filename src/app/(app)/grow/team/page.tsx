@@ -10,7 +10,8 @@ export const dynamic = 'force-dynamic'
 // Claude is the reasoning layer for every agent; external tools appear only for
 // the one thing Claude can't do (send an SMS, write a CRM field, hold a slot).
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import { createClient } from '@/lib/supabase/client'
 import { Card, Skeleton, Badge } from '@/components/ui'
 import { GrowthTabs } from '@/components/GrowthTabs'
 import { GrowthChrome } from '@/components/growth/GrowthChrome'
@@ -55,8 +56,14 @@ function StatusControl({ agent, isManager, onSet }: any) {
   )
 }
 
-function AgentCard({ agent, isManager, onSet, isOpen, onToggle }: any) {
+function AgentCard({ agent, isManager, onSet, isOpen, onToggle, overrides = [] }: any) {
   const { copied, copy } = useCopied()
+  // Approved feedback tuning actually extends the prompt the team copies — this is
+  // where the improvement loop closes, not a relabel.
+  const tuning = [...overrides].sort((a, b) => a.version - b.version)
+  const effPrompt = tuning.length
+    ? `${agent.systemPrompt}\n\nTEAM TUNING (approved from rep feedback):\n${tuning.map(o => `- v${o.version}: ${o.addendum}`).join('\n')}`
+    : agent.systemPrompt
   return (
     <Card className={cn('overflow-hidden !p-0 transition-opacity', agent.status === 'paused' && 'opacity-75')}>
       <div className="flex cursor-pointer items-start gap-3 p-3.5" onClick={onToggle}>
@@ -64,6 +71,7 @@ function AgentCard({ agent, isManager, onSet, isOpen, onToggle }: any) {
           <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
             <span className="text-[14px] font-[800] text-dark-text">{agent.name}</span>
             <StatusControl agent={agent} isManager={isManager} onSet={onSet} />
+            {tuning.length > 0 && <span className="rounded bg-teal/10 px-1.5 py-0.5 text-[10px] font-[800] text-teal" title="Extended by approved team feedback">Tuned v{tuning[tuning.length - 1].version}</span>}
           </div>
           <p className="mt-1 text-[12.5px] leading-relaxed text-mid-text">{agent.job}</p>
         </div>
@@ -88,12 +96,12 @@ function AgentCard({ agent, isManager, onSet, isOpen, onToggle }: any) {
           {/* System prompt */}
           <div className="mb-3">
             <div className="mb-1.5 flex items-center justify-between">
-              <span className="text-[10px] font-[800] uppercase tracking-wide text-gray">System prompt — ready to use as-is</span>
-              <button onClick={() => copy(agent.systemPrompt)} className={cn('flex items-center gap-1 text-[11px] font-[700]', copied ? 'text-success' : 'text-teal')}>
+              <span className="text-[10px] font-[800] uppercase tracking-wide text-gray">System prompt{tuning.length > 0 ? ' — incl. team tuning' : ' — ready to use as-is'}</span>
+              <button onClick={() => copy(effPrompt)} className={cn('flex items-center gap-1 text-[11px] font-[700]', copied ? 'text-success' : 'text-teal')}>
                 {copied ? <><CheckIcon size={12} /> Copied</> : <><CopyIcon size={12} /> Copy</>}
               </button>
             </div>
-            <pre className="max-h-64 overflow-y-auto rounded-xl bg-[#0C1929] p-3 text-[11px] leading-relaxed text-[#DDE8F6] [font-family:ui-monospace,monospace] whitespace-pre-wrap">{agent.systemPrompt}</pre>
+            <pre className="max-h-64 overflow-y-auto rounded-xl bg-[#0C1929] p-3 text-[11px] leading-relaxed text-[#DDE8F6] [font-family:ui-monospace,monospace] whitespace-pre-wrap">{effPrompt}</pre>
           </div>
 
           {/* Tools */}
@@ -132,6 +140,18 @@ export default function GrowthTeamPage() {
   const [openId, setOpenId] = useState<string | null>(null)
   const { copied, copy } = useCopied()
   const cost = monthlyCost(roster)
+
+  // Approved instruction overrides (from the feedback loop), grouped by agent —
+  // read by every team member (RLS aio_team_read) and appended to prompts.
+  const [ovByAgent, setOvByAgent] = useState<Record<string, any[]>>({})
+  useEffect(() => {
+    const supabase = createClient()
+    supabase.from('agent_instruction_overrides').select('id, agent_id, addendum, version, created_at').then(({ data }) => {
+      const g: Record<string, any[]> = {}
+      for (const o of data ?? []) (g[o.agent_id] ??= []).push(o)
+      setOvByAgent(g)
+    })
+  }, [])
 
   return (
     <div className="space-y-4 stagger-rise">
@@ -196,7 +216,7 @@ export default function GrowthTeamPage() {
                 </div>
                 <div className="space-y-2">
                   {agents.map(a => (
-                    <AgentCard key={a.id} agent={a} isManager={isManager} onSet={setStatus} isOpen={openId === a.id} onToggle={() => setOpenId(openId === a.id ? null : a.id)} />
+                    <AgentCard key={a.id} agent={a} isManager={isManager} onSet={setStatus} isOpen={openId === a.id} onToggle={() => setOpenId(openId === a.id ? null : a.id)} overrides={ovByAgent[a.id] || []} />
                   ))}
                 </div>
               </div>
