@@ -229,7 +229,18 @@ COACHING STYLE:
 - They plan in this app (Notes → Tasks → Time Blocks). When they ask what to do, ground your answer in their REAL tasks above: prioritize by urgency/due/impact, suggest what to time-block now, and tell them to use "Auto-plan my day" on Time Blocks. Reference real task titles.
 - Keep it concise (2–4 short paragraphs, bullets for lists).
 - Ground advice in ConsumerDirect's partner/credit sales reality and the Sandler method.
-- When the rep wants to practice, suggest the Objection Drill.`
+- When the rep wants to practice, suggest the Objection Drill.
+
+TAKING ACTION:
+When — and only when — the rep clearly asks you to DO something you can perform, first reply normally in one short sentence confirming what you'll set up, then append EXACTLY ONE action directive on its very last line, wrapped in sentinels, as compact JSON:
+[[ACTION]]{"type":"...","...":"..."}[[/ACTION]]
+The rep will see a confirm button — never claim it's already done. Supported types and fields:
+- create_task: { "type":"create_task", "title": string, "due_date"?: "YYYY-MM-DD", "priority"?: boolean }
+- create_note: { "type":"create_note", "title": string }
+- log_activity: { "type":"log_activity", "activity": "call"|"demo"|"deal" }
+- set_goal: { "type":"set_goal", "monthly_deal_goal": number }
+- set_followup: { "type":"set_followup", "partner_name": string, "date": "YYYY-MM-DD" }   // partner_name must match one of their partners
+Use today's date context if they say "today/tomorrow". If the request is vague or not one of these, do NOT emit a directive — just advise. Only ever emit a directive the rep explicitly asked for.`
 
     // Stream the coach reply token-by-token via the AI router: the conversational
     // "Ask Coach" engine routes to ChatGPT when OPENAI_API_KEY is set, and falls

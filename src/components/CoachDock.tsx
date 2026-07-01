@@ -7,7 +7,9 @@ import { usePathname } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { cn } from '@/lib/utils'
 import { COACH_OPEN_EVENT } from '@/lib/coachBus'
-import { CoachIcon, CloseIcon, ArrowRightIcon, LightningIcon } from '@/components/icons'
+import { toast } from '@/components/ui'
+import { triggerXpPop, triggerConfetti } from '@/components/gamification'
+import { CoachIcon, CloseIcon, ArrowRightIcon, LightningIcon, CheckIcon, PlusIcon, PhoneIcon, TargetIcon, HandshakeIcon, DocumentIcon, CalendarIcon, XpIcon } from '@/components/icons'
 
 interface Msg { id: string; role: 'user' | 'assistant'; content: string }
 const uid = () => (typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(36).slice(2)}`)
@@ -44,6 +46,8 @@ export function CoachDock() {
   const endRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
   const [pending, setPending] = useState<string | null>(null)   // prompt waiting to send (e.g. until userId loads)
+  const [action, setAction] = useState<any>(null)                // a coach-proposed action awaiting confirm
+  const [actState, setActState] = useState<'idle' | 'busy' | 'done'>('idle')
 
   // Mobile draggable launcher — the FAB can be repositioned anywhere so it never
   // blocks text or a scroll container. Position persists across sessions.
@@ -164,6 +168,8 @@ export function CoachDock() {
       const decoder = new TextDecoder()
       let acc = ''
       let aiId: string | null = null
+      // Hide the action directive from the visible text (it may stream in mid-token).
+      const visible = (s: string) => s.split('[[ACTION]]')[0].trimEnd()
       while (true) {
         const { done, value } = await reader.read()
         if (done) break
@@ -171,16 +177,64 @@ export function CoachDock() {
         if (!aiId) {
           aiId = uid()
           const id = aiId
-          setMessages(prev => [...prev, { id, role: 'assistant', content: acc }])
+          setMessages(prev => [...prev, { id, role: 'assistant', content: visible(acc) }])
         } else {
-          setMessages(prev => prev.map(m => m.id === aiId ? { ...m, content: acc } : m))
+          setMessages(prev => prev.map(m => m.id === aiId ? { ...m, content: visible(acc) } : m))
         }
       }
       if (!aiId) setMessages(prev => [...prev, { id: uid(), role: 'assistant', content: "I couldn't generate a response — try again." }])
+      // Parse a proposed action from the completed reply and surface a confirm card.
+      const m = acc.match(/\[\[ACTION\]\]([\s\S]*?)\[\[\/ACTION\]\]/)
+      if (m) { try { const a = JSON.parse(m[1].trim()); if (a?.type) { setAction(a); setActState('idle') } } catch {} }
     } catch {
       setMessages(prev => [...prev, { id: uid(), role: 'assistant', content: "I'm having trouble connecting right now. Try again in a moment." }])
     } finally {
       setLoading(false)
+    }
+  }
+
+  // Execute a coach-proposed action — client-side, RLS-backed, only on confirm.
+  const runAction = async () => {
+    if (!action || !userId || actState === 'busy') return
+    setActState('busy')
+    try {
+      if (action.type === 'create_task') {
+        const { error } = await supabase.from('tasks').insert({ user_id: userId, title: String(action.title || 'Task').slice(0, 200), due_date: action.due_date || null, priority: !!action.priority })
+        if (error) throw error
+        toast.success('Task added')
+      } else if (action.type === 'create_note') {
+        const { error } = await supabase.from('notes').insert({ user_id: userId, title: String(action.title || 'Untitled note').slice(0, 200), tags: [] })
+        if (error) throw error
+        toast.success('Note created')
+      } else if (action.type === 'set_goal') {
+        const g = Math.max(0, Math.round(Number(action.monthly_deal_goal) || 0))
+        const { error } = await supabase.from('goals').upsert({ user_id: userId, monthly_deal_goal: g }, { onConflict: 'user_id' })
+        if (error) throw error
+        toast.success(`Monthly deal goal set to ${g}`)
+      } else if (action.type === 'log_activity') {
+        const t = ['call', 'demo', 'deal'].includes(action.activity) ? action.activity : null
+        if (!t) throw new Error('bad activity')
+        const { data: { session } } = await supabase.auth.getSession()
+        const { error } = await supabase.from('wins').insert({ user_id: userId, type: t, description: `${t[0].toUpperCase()}${t.slice(1)} logged from Coach` })
+        if (error) throw error
+        try {
+          const r = await fetch(`${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/calculate-xp`, { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session?.access_token}` }, body: JSON.stringify({ action: `${t}_logged`, user_id: userId }) })
+          if (r.ok) { const { xp_earned } = await r.json(); toast.xp(xp_earned ?? 0, `${t} logged!`); if (xp_earned) triggerXpPop(xp_earned); if (t === 'deal') triggerConfetti() }
+          else toast.success(`${t} logged!`)
+        } catch { toast.success(`${t} logged!`) }
+      } else if (action.type === 'set_followup') {
+        const { data: matches } = await supabase.from('partner_onboarding').select('id, partner_name').eq('user_id', userId).ilike('partner_name', String(action.partner_name || '').trim())
+        const target = (matches ?? [])[0]
+        if (!target) { toast.error(`No partner named "${action.partner_name}"`); setActState('idle'); return }
+        const { error } = await supabase.from('partner_onboarding').update({ next_followup_date: action.date || null, updated_at: new Date().toISOString() }).eq('id', target.id)
+        if (error) throw error
+        toast.success(`Follow-up set for ${target.partner_name}`)
+      } else { throw new Error('unknown action') }
+      setActState('done')
+      setTimeout(() => { setAction(null); setActState('idle') }, 1400)
+    } catch {
+      toast.error('Could not complete that action.')
+      setActState('idle')
     }
   }
 
@@ -299,6 +353,29 @@ export function CoachDock() {
               )}
             </div>
 
+            {/* Proposed action — confirm before it runs */}
+            {action && (
+              <div className="border-t border-border px-3 pt-3">
+                <div className="rounded-xl border border-navy/30 bg-navy/[0.05] p-3">
+                  <div className="flex items-start gap-2.5">
+                    <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-navy/10 text-navy-ink">{actionIcon(action)}</span>
+                    <div className="min-w-0 flex-1">
+                      <div className="text-[10px] font-[800] uppercase tracking-wide text-navy-ink">Coach can do this for you</div>
+                      <div className="text-[13px] font-[700] text-dark-text">{actionLabel(action)}</div>
+                    </div>
+                  </div>
+                  {actState === 'done' ? (
+                    <div className="mt-2.5 flex items-center gap-1.5 text-[12.5px] font-[800] text-success"><CheckIcon size={14} /> Done</div>
+                  ) : (
+                    <div className="mt-2.5 flex gap-2">
+                      <button onClick={runAction} disabled={actState === 'busy'} className="flex-1 rounded-lg bg-navy py-2 text-[12.5px] font-[800] text-white disabled:opacity-60">{actState === 'busy' ? 'Working…' : 'Confirm'}</button>
+                      <button onClick={() => setAction(null)} disabled={actState === 'busy'} className="rounded-lg border border-border px-3 py-2 text-[12.5px] font-[700] text-gray hover:text-dark-text">Dismiss</button>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
             {/* Composer */}
             <div className="border-t border-border p-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))]">
               <div className="flex items-end gap-2 rounded-2xl border border-border bg-bdrbg p-1.5">
@@ -325,4 +402,22 @@ export function CoachDock() {
       )}
     </>
   )
+}
+
+// Human-readable summary + icon for a proposed coach action (confirm card).
+function actionLabel(a: any): string {
+  switch (a?.type) {
+    case 'create_task': return `Create task “${a.title}”${a.due_date ? ` · due ${a.due_date}` : ''}${a.priority ? ' · priority' : ''}`
+    case 'create_note': return `Create note “${a.title}”`
+    case 'set_goal': return `Set monthly deal goal to ${a.monthly_deal_goal}`
+    case 'log_activity': return `Log a ${a.activity}`
+    case 'set_followup': return `Set ${a.partner_name}'s follow-up to ${a.date}`
+    default: return 'Run this action'
+  }
+}
+function actionIcon(a: any) {
+  const map: any = { create_task: PlusIcon, create_note: DocumentIcon, set_goal: TargetIcon, set_followup: CalendarIcon }
+  if (a?.type === 'log_activity') { const I = a.activity === 'deal' ? HandshakeIcon : a.activity === 'demo' ? TargetIcon : PhoneIcon; return <I size={15} /> }
+  const I = map[a?.type] || XpIcon
+  return <I size={15} />
 }
