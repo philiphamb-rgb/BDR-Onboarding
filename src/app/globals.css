@@ -284,6 +284,13 @@ button, a, [role="button"] {
 }
 .animate-tab-bob { animation: tab-bob 2.6s ease-in-out infinite; }
 
+/* Leaderboard: brief highlight + lift when a rep's rank improves on a live refresh. */
+@keyframes rank-flash {
+  0%   { background-color: rgb(var(--navy) / 0.16); transform: translateY(-2px); }
+  100% { background-color: transparent; transform: translateY(0); }
+}
+.animate-rank-flash { animation: rank-flash 1.1s ease-out; }
+
 @keyframes bell-ring {
   0%   { transform: rotate(0); }
   15%  { transform: rotate(14deg); }
