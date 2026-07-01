@@ -110,3 +110,34 @@ migrations applied to prod and verified under real auth.
   quick-add + hotkeys, action-taking coach via tool-use, Partners-board parity
   with LeadsBoard, milestone/achievement celebrations, PWA install nudge) are
   ready-to-build but were left as feature work, not this correctness/polish pass.
+
+## Feature build wave (deferred features → shipped)
+
+Built and shipped the deferred feature set on top of the QA/polish pass. Each
+was build-verified and pushed to main + branches; migrations applied to prod and
+advisor-checked (only the pre-existing benign SECURITY-DEFINER + leaked-password
+WARNs remain).
+
+- **Editable Resource Center** — every tool/person/library-doc/roadmap phase is
+  manager add/edit/delete inline (icon + color pickers), persisted to a
+  team-scoped `team_resource_items` table (RLS: team reads, managers write).
+  Reps get a clean read-only view; defaults render until a manager "Customizes".
+- **Theme-aware navy-ink text token** — small navy text now passes WCAG AA on
+  every theme without changing brand fills (`text-navy` → `text-navy-ink`).
+- **⌘K command palette** — commands (new task/note, log call/demo/deal, ask
+  coach, toggle theme/sidebar, tour, jump-to) + live search; global hotkeys
+  (t/n/c/[/g-then-key/?) guarded against firing in inputs; `?` cheatsheet.
+- **Achievements** — 18 badges (calls/demos/deals/streak/XP), a MilestoneWatcher
+  that celebrates new unlocks once (deduped, first-run baselined), a badge wall
+  on Progress with locked-badge progress bars.
+- **Streak freezes** — `user_progress.streak_freezes`; calculate-xp (v6) earns a
+  freeze per 7-day multiple (cap 3) and spends one to bridge a single missed day
+  (+ notification); shown as a shield on the streak card.
+- **Partners board parity** — search + sort + List⇄Board (stage columns w/
+  click-to-move) + `next_followup_date` (add modal, detail editor, overdue
+  badge) fed into the priority engine as a top next-best-action.
+- **Action-taking coach** — proposes a confirmable action directive; the dock
+  hides it from the chat and shows a confirm card that runs the RLS-backed write
+  (create task/note, set goal, log activity, set partner follow-up).
+- **PWA install nudge** — beforeinstallprompt banner + iOS add-to-home hint,
+  hidden when standalone, dismissal persists.
