@@ -11,8 +11,11 @@
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 
-// Stages that no longer count as open, forward-looking pipeline.
-const CLOSED = new Set(['won', 'closed_won', 'lost', 'closed_lost', 'churned', 'dead'])
+// Stages that no longer count as open, forward-looking pipeline. The live
+// partner pipeline vocabulary (see PIPELINE_STAGES in lib/partnerChecklist) tops
+// out at `opportunity_won` — that's the one terminal state today. The extra
+// strings are defensive in case a lost/churned stage is added later.
+const CLOSED = new Set(['opportunity_won', 'closed_won', 'won', 'lost', 'closed_lost', 'churned', 'dead'])
 
 export function usePipelineMomentum() {
   const supabase = createClient()

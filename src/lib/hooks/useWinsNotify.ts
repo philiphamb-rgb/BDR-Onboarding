@@ -10,7 +10,7 @@
 //   • at most one notification per load (the highest new milestone)
 //   • the first-ever run only baselines existing milestones — no retroactive blast
 
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useModuleKV } from '@/lib/hooks/useModuleKV'
 
@@ -27,22 +27,36 @@ function computeCrossed({ streak = 0, deals = 0, goal = 0 }) {
 
 export function useWinsNotify({ userId, streak, deals, goal }: { userId?: string; streak?: number; deals?: number; goal?: number | null }) {
   const supabase = createClient()
-  const { loading, value, save } = useModuleKV('wins_milestones', { fired: [] })
+  const { loading, value, save } = useModuleKV('wins_milestones', { fired: [], baselined: false })
+  // Synchronous guards, seeded once from committed persisted state. They make the
+  // "already fired" and "already baselined" decisions immune to the state-commit
+  // race a burst of prop changes (streak + deals resolving together) would create.
+  const actedRef = useRef<Set<string> | null>(null)
+  const baselinedRef = useRef(false)
 
   useEffect(() => {
     if (loading || !userId) return
-    const fired = new Set(value.fired || [])
+    if (actedRef.current === null) { actedRef.current = new Set(value.fired || []); baselinedRef.current = !!value.baselined }
+    const acted = actedRef.current
     const crossed = computeCrossed({ streak: streak || 0, deals: deals || 0, goal: goal || 0 })
-    if (crossed.length === 0) return
 
-    // First-ever run: baseline whatever's already achieved, notify nothing.
-    if (fired.size === 0) { save({ fired: crossed.map(c => c.key) }); return }
+    // First observed run for this user: baseline whatever's already achieved (even
+    // if that's nothing yet) and flag it, so the user's FIRST genuine milestone
+    // still notifies rather than being silently swallowed as "pre-existing".
+    if (!baselinedRef.current) {
+      baselinedRef.current = true
+      crossed.forEach(c => acted.add(c.key))
+      save({ fired: crossed.map(c => c.key), baselined: true })
+      return
+    }
 
-    const fresh = crossed.filter(c => !fired.has(c.key))
+    const fresh = crossed.filter(c => !acted.has(c.key))
     if (fresh.length === 0) return
 
-    // Throttle: mark ALL fresh as fired, but log only the single highest.
-    save({ fired: [...fired, ...fresh.map(c => c.key)] })
+    // Claim them synchronously first (blocks a double-insert across a prop burst),
+    // then persist off committed state and log only the single highest new one.
+    fresh.forEach(c => acted.add(c.key))
+    save(prev => ({ fired: [...new Set([...(prev.fired || []), ...fresh.map(c => c.key)])] }))
     const top = fresh.sort((a, b) => a.order - b.order)[fresh.length - 1]
     supabase.from('notifications').insert({ user_id: userId, type: 'win', title: top.title, body: top.body, action_url: top.action_url, tier: 2 }).then(() => {}, () => {})
     // eslint-disable-next-line react-hooks/exhaustive-deps

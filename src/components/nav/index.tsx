@@ -6,7 +6,7 @@ import Link from 'next/link'
 import { cn, Avatar } from '@/components/ui'
 import { createClient } from '@/lib/supabase/client'
 import {
-  HomeIcon, TodayIcon, TrainIcon, WinsIcon, CoachIcon, DashboardIcon, XpIcon,
+  HomeIcon, TodayIcon, TrainIcon, CoachIcon, DashboardIcon, XpIcon,
   BellIcon, BellDotIcon, SettingsIcon, LeaderboardIcon, TeamIcon, BarChartIcon,
   BookIcon, HandshakeIcon, ClockIcon, MoreIcon, CoinIcon,
   ChecklistIcon, ShieldIcon, SearchIcon, ChevronDownIcon, CloseIcon, GrowIcon,
