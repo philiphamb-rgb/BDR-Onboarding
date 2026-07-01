@@ -5,7 +5,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Card, Button, Badge, SkeletonCard } from '@/components/ui'
-import { MedalIcon, LockIcon, BookIcon, DownloadIcon, BeltIcon, FlameIcon, XpIcon, PhoneIcon, TargetIcon, HandshakeIcon, TrophyIcon } from '@/components/icons'
+import { MedalIcon, LockIcon, BookIcon, DownloadIcon, BeltIcon, FlameIcon, XpIcon, PhoneIcon, TargetIcon, HandshakeIcon, TrophyIcon, ShieldIcon } from '@/components/icons'
 import { cn, formatXP } from '@/lib/utils'
 import { BELTS, normalizeBelt, beltIndex } from '@/lib/belts'
 import { computeAchievements, TIER_COLOR } from '@/lib/achievements'
@@ -33,7 +33,7 @@ export default function ProgressPage() {
     const [{ data: u }, { data: mods }, { data: prog }, { data: attempts }] = await Promise.all([
       supabase.from('users').select('name').eq('id', uid).single(),
       supabase.from('modules').select('id, order_index, lessons(id)').eq('is_published', true),
-      supabase.from('user_progress').select('completed_lessons, total_xp, current_streak, belt_rank, total_calls, total_demos, total_deals, longest_streak').eq('user_id', uid).single(),
+      supabase.from('user_progress').select('completed_lessons, total_xp, current_streak, belt_rank, total_calls, total_demos, total_deals, longest_streak, streak_freezes').eq('user_id', uid).single(),
       supabase.from('quiz_attempts').select('module_id, percentage').eq('user_id', uid),
     ])
     const done = new Set<string>(prog?.completed_lessons ?? [])
@@ -44,6 +44,7 @@ export default function ProgressPage() {
       completed, total: (mods ?? []).length,
       xp: prog?.total_xp ?? 0,
       streak: prog?.current_streak ?? 0,
+      freezes: prog?.streak_freezes ?? 0,
       belt: prog?.belt_rank ?? 'White Belt',
       stats: {
         total_calls: prog?.total_calls ?? 0, total_demos: prog?.total_demos ?? 0, total_deals: prog?.total_deals ?? 0,
@@ -87,7 +88,13 @@ export default function ProgressPage() {
           <div className="text-[15px] font-[800] text-dark-text tabular-nums">{formatXP(data.xp).replace(' XP', '')}</div>
           <div className="text-[11px] text-gray">Total XP</div>
         </Card>
-        <Card className="!p-3 text-center">
+        <Card className="!p-3 text-center relative">
+          {data.freezes > 0 && (
+            <span title={`${data.freezes} streak freeze${data.freezes > 1 ? 's' : ''} — each protects one missed day`}
+              className="absolute right-1.5 top-1.5 flex items-center gap-0.5 rounded-full bg-teal/12 px-1.5 py-0.5 text-[10px] font-[800] text-teal">
+              <ShieldIcon size={10} /> {data.freezes}
+            </span>
+          )}
           <FlameIcon size={20} className="mx-auto mb-1 text-orange-500" />
           <div className="text-[15px] font-[800] text-dark-text tabular-nums">{data.streak}</div>
           <div className="text-[11px] text-gray">Day streak</div>

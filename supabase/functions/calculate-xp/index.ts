@@ -165,10 +165,29 @@ serve(async (req: Request) => {
     if (habitsToday >= goal && progress.last_streak_date !== todayStr) {
       const yesterday = new Date(); yesterday.setDate(yesterday.getDate() - 1)
       const yStr = yesterday.toISOString().split('T')[0]
-      const newStreak = progress.last_streak_date === yStr ? (progress.current_streak ?? 0) + 1 : 1
+      const twoAgo = new Date(); twoAgo.setDate(twoAgo.getDate() - 2)
+      const twoAgoStr = twoAgo.toISOString().split('T')[0]
+      let freezes = progress.streak_freezes ?? 0
+      let newStreak
+      if (progress.last_streak_date === yStr) {
+        // Consecutive day — extend.
+        newStreak = (progress.current_streak ?? 0) + 1
+      } else if (progress.last_streak_date === twoAgoStr && freezes > 0) {
+        // Exactly one missed day and a freeze is available → spend it to bridge
+        // the gap and keep the streak alive instead of resetting.
+        freezes -= 1
+        newStreak = (progress.current_streak ?? 0) + 1
+        await supabaseAdmin.from('notifications').insert({ user_id: user.id, type: 'streak_freeze', title: 'Streak saved!', body: 'A streak freeze covered your missed day. Streak intact.', action_url: '/today', tier: 2 })
+      } else {
+        // Longer gap (or no freeze) → start over.
+        newStreak = 1
+      }
+      // Earn a freeze each time the streak reaches a new 7-day multiple (cap 3).
+      if (newStreak > 0 && newStreak % 7 === 0) freezes = Math.min(3, freezes + 1)
       updates.current_streak = newStreak
       updates.longest_streak = Math.max(newStreak, progress.longest_streak ?? 0)
       updates.last_streak_date = todayStr
+      updates.streak_freezes = freezes
     }
   }
 
