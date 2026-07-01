@@ -51,3 +51,62 @@ Verified NOT bugs: weighted-value NaN guards, won-excluded temperature counts, f
   OS state into context).
 - Security advisors re-run after every migration: zero new findings (only the
   pre-existing shared SECURITY-DEFINER helpers + the auth leaked-password setting).
+
+## Autonomous deep-QA + polish pass (multi-agent audit → fixes shipped to prod)
+
+Ran a fleet of parallel adversarial agents (correctness sweeps of every
+unaudited module, a11y+perf audit, UX/"magic" audit, CRM-gap ideation), then
+implemented and shipped the findings across several build-verified waves. All
+pushed to `main` (production) + the working/designated branches. Two DB
+migrations applied to prod and verified under real auth.
+
+### Correctness (data-safety)
+
+| # | Sev | Finding | Resolution |
+|---|---|---|---|
+| 1 | High | `LeadsBoard.bulk()` ignored the update error, then cleared the selection + reloaded — a failed bulk stage/temp/owner change snapped back with no feedback. | Capture `error`, toast, keep the selection to retry; reload to resync. |
+| 2 | High | `LeadDrawer` deal edits were never refetched into the board, so the weighted-pipeline / forecast numbers stayed stale until a full reload. | `useCrmRecord` takes an `onSaved` callback; the drawer passes the board's `reload`, fired after each committed write. |
+| 3 | High | Debounced deal write was dropped on fast drawer close / lead-switch (no flush on unmount or partnerId change). | `flushDeal` runs from a cleanup effect keyed on partnerId and clears the timer; buffered edits always persist. |
+| 4 | High | `setPrimary` (drawer + ContactsBoard) could leave a company with zero primaries if the second write failed; add/remove contact + activity swallowed errors. | Error-check + roll back optimistic state on every path; toast on failure. |
+| 5 | High | Manager broadcast history read `notifications WHERE type='broadcast'`, but RLS only exposes own rows → history always empty; the atomic fan-out could reject on one stale recipient. | New team-scoped `broadcasts` table + RLS for history w/ real recipient count; roster re-fetched at send time. |
+| 6 | Med | `team_leaderboard.pipeline_weighted` wasn't windowed by `p_since`, so lifetime pipeline polluted Today/Week ranks. | Window it by `created_at` like the other metrics; verified all-time + windowed under real auth. |
+| 7 | Med | Manager analytics: funnel conversion could exceed 100%; untriaged (null-temperature) leads folded into "cold" and cratered the cold close-rate. | Clamp conversions at 100%; count only explicitly warm/cold leads. |
+| 8 | Med | Notes sidebar reordered on every keystroke (active note jumped to top mid-word). | Update in place; the list re-sorts by updated_at on next load. |
+| 9 | Low | Schedule block save / task patch / toggle / custom-block create, manager XP-rule toggle + save, manager resources add/delete all swallowed write errors. | Error-check with toast + refetch/rollback; XP-rule editor keeps the typed value on a failed save. |
+
+### Accessibility & performance
+
+- WCAG: aria-labels on the XP save/edit icon buttons, coach message box, and
+  global search; `role="switch"` + `aria-checked` on the XP ON/OFF toggle;
+  `role="alert"` on the login error.
+- Focus management: Modal moves focus into the dialog on open and restores it to
+  the trigger on close; Escape now closes the CoachDock drawer and the mobile
+  "More" sheet.
+- Fixed stacking `setTimeout` in the Sandler XPToast/BadgeToast (missing dep
+  array); memoized leaderboard scoring/sort so the 25s poll doesn't re-score the
+  roster each render.
+
+### Polish & delight (magic)
+
+- Route transitions: a 250ms fade-up replays per navigation (reduced-motion safe).
+- Quick Log: logging an activity floats a +XP burst from the tapped tile; closing
+  a Deal rains confetti (new global `triggerConfetti`/`ConfettiLayer`).
+- Toasts animate out + carry a time-remaining countdown bar; the #1 leaderboard
+  champion's avatar bobs.
+- Theming: `card-active` / `callout-tip` / `callout-warn` used hardcoded teal/gold
+  that no longer matched the themeable `--teal`/`--gold`; now token-driven so
+  tints track every theme. Added rank-flash / belt-confetti / check-draw /
+  xp-float / fade-up to the reduced-motion disable list.
+- Resources search now filters the People Map too and shows a real "no matches"
+  state; mobile bottom-nav active dot correctly anchored to its item.
+
+### Known follow-ups (deliberately deferred — need a visual/product call)
+
+- Systemic small `text-navy` contrast on dark surfaces (~3.1:1) fails AA. The
+  brand-safe fix (split text vs fill; map navy *text* to `--navy-mid`) touches
+  ~160 usages and changes the default brand look, so it wants a visual sign-off
+  rather than a blind mass-edit.
+- Larger CRM-gap features scoped by the ideation agent (command palette / global
+  quick-add + hotkeys, action-taking coach via tool-use, Partners-board parity
+  with LeadsBoard, milestone/achievement celebrations, PWA install nudge) are
+  ready-to-build but were left as feature work, not this correctness/polish pass.
