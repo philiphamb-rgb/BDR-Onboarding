@@ -272,7 +272,7 @@ export function BottomNav({ user }: { user?: User | null; unreadCount?: number }
           const Icon = item.icon
           return (
             <Link key={item.href} href={item.href} onClick={() => setMoreOpen(false)}
-              className={cn('flex flex-col items-center justify-center gap-0.5 min-w-[44px] min-h-[44px] px-3 rounded-lg transition-colors duration-[150ms]', isActive ? 'text-navy' : 'text-gray hover:text-navy')}
+              className={cn('relative flex flex-col items-center justify-center gap-0.5 min-w-[44px] min-h-[44px] px-3 rounded-lg transition-colors duration-[150ms]', isActive ? 'text-navy' : 'text-gray hover:text-navy')}
               aria-current={isActive ? 'page' : undefined}>
               <Icon size={22} className={cn('transition-transform duration-200', isActive && 'scale-110')} />
               <span className={cn('text-[10px] font-[700] uppercase tracking-[0.05em]', isActive ? 'text-navy' : 'text-gray')}>{item.shortLabel ?? item.label}</span>
