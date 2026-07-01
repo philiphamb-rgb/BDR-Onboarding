@@ -96,8 +96,8 @@ function GlobalSearch() {
 
   useEffect(() => {
     const onDoc = (e: MouseEvent) => { if (boxRef.current && !boxRef.current.contains(e.target as Node)) setOpen(false) }
+    // ⌘K is owned by the CommandPalette overlay; here we only close on Escape.
     const onKey = (e: KeyboardEvent) => {
-      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') { e.preventDefault(); inputRef.current?.focus(); setOpen(true) }
       if (e.key === 'Escape') { setOpen(false); inputRef.current?.blur() }
     }
     document.addEventListener('mousedown', onDoc)

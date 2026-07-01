@@ -8,6 +8,7 @@ import { UpdateBanner } from '@/components/UpdateBanner'
 import { GuidedTour } from '@/components/GuidedTour'
 import { ThemeSync } from '@/components/ThemeSync'
 import { PageTransition } from '@/components/PageTransition'
+import { CommandPalette } from '@/components/CommandPalette'
 import { createClient } from '@/lib/supabase/server'
 
 export const dynamic = 'force-dynamic'
@@ -65,6 +66,9 @@ export default async function AppLayout({ children }: { children: React.ReactNod
 
       {/* The AI Coach in your pocket — reachable from every screen */}
       <CoachDock />
+
+      {/* ⌘K command palette + global hotkeys + quick-add */}
+      <CommandPalette />
 
       {/* Registers the push-only service worker (Web Push + PWA) */}
       <ServiceWorkerRegister />
