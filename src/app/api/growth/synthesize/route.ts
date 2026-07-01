@@ -1,5 +1,5 @@
 // @ts-nocheck
-// Cortex — feedback synthesis (interactive trigger). Manager-only: verified
+// Apex — feedback synthesis (interactive trigger). Manager-only: verified
 // server-side by role, not just the client. Turns recent team feedback into
 // agent-scoped instruction PROPOSALS (pending the manager's approval). The same
 // core runs on a schedule via /api/cron/feedback-synthesis.

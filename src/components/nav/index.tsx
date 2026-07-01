@@ -15,6 +15,7 @@ import type { User } from '@/types/database'
 import { usePermissions } from '@/components/usePermissions'
 import { featureForHref } from '@/lib/permissions'
 import { askCoach } from '@/lib/coachBus'
+import { ApexLogo } from '@/components/ApexLogo'
 
 interface NavItem {
   href: string
@@ -26,11 +27,13 @@ interface NavItem {
 
 // Always-visible quick destinations. Plan is one workspace (Capture/Organize/
 // Schedule) — its three views share the in-page PlanTabs switcher.
+// Coach is no longer a tab — it lives in the header (desktop) + a draggable FAB
+// (mobile). Wins is no longer a tab — wins now surface as throttled milestone
+// notifications, scattered through the app instead of a destination.
 const TOP_NAV: NavItem[] = [
   { href: '/home',     label: 'Home',  icon: HomeIcon },
   { href: '/today',    label: 'Today', icon: TodayIcon },
   { href: '/schedule', label: 'Plan',  icon: ChecklistIcon, match: ['/notes', '/tasks', '/schedule'] },
-  { href: '/coach',    label: 'Coach', icon: CoachIcon },
 ]
 
 // Collapsible sections (accordion — one open at a time).
@@ -41,9 +44,8 @@ const REP_SECTIONS: { title: string; items: NavItem[] }[] = [
     { href: '/commissions', label: 'Commissions', icon: CoinIcon },
   ] },
   { title: 'Grow', items: [
-    { href: '/grow',        label: 'Cortex',       icon: GrowIcon, match: ['/grow'] },
+    { href: '/grow',        label: 'Apex',       icon: GrowIcon, match: ['/grow'] },
     { href: '/train',       label: 'Learning Center', shortLabel: 'Learn', icon: TrainIcon, match: ['/train', '/progress'] },
-    { href: '/wins',        label: 'Wins',            icon: WinsIcon },
     { href: '/leaderboard', label: 'Leaderboard',     icon: LeaderboardIcon },
     { href: '/resources',   label: 'Resources',       icon: BookIcon },
   ] },
@@ -61,13 +63,13 @@ const MANAGER_ITEMS: NavItem[] = [
   { href: '/manager/roles',        label: 'Roles & Permissions', icon: ShieldIcon },
 ]
 
-// Mobile bottom bar (5 slots).
+// Mobile bottom bar (5 slots). Coach is the draggable FAB now; Wins is gone.
 const BOTTOM_NAV: NavItem[] = [
   { href: '/home',     label: 'Home',     icon: HomeIcon },
+  { href: '/today',    label: 'Today',    icon: TodayIcon },
   { href: '/partners', label: 'Partners', icon: HandshakeIcon },
-  { href: '/coach',    label: 'Coach',    icon: CoachIcon },
+  { href: '/grow',     label: 'Apex',     icon: GrowIcon, match: ['/grow'] },
   { href: '/train',    label: 'Learning Center', shortLabel: 'Learn', icon: TrainIcon },
-  { href: '/wins',     label: 'Wins',     icon: WinsIcon },
 ]
 
 const isActiveHref = (pathname: string, href: string) => pathname === href || pathname.startsWith(href + '/')
@@ -177,10 +179,13 @@ export function AppHeader({ user, unreadCount = 0 }: { user?: User | null; unrea
       <div className="flex-1"><GlobalSearch /></div>
 
       {/* Ask Coach — desktop trigger lives in the header (no floating button on
-          the back-office canvas, so it never overlaps page content). */}
+          the back-office canvas, so it never overlaps page content). A subtle
+          pulse/flash keeps it discoverable without shouting. */}
       <button onClick={() => askCoach()} aria-label="Ask your AI Coach"
-        className="hidden shrink-0 items-center gap-1.5 rounded-lg bg-gradient-hero px-3 py-2 text-[12px] font-[800] text-white shadow-card transition-transform active:scale-95 desktop:flex">
-        <CoachIcon size={16} /> Ask Coach
+        className="group relative hidden shrink-0 items-center gap-1.5 overflow-visible rounded-lg bg-gradient-hero px-3 py-2 text-[12px] font-[800] text-white shadow-card transition-transform active:scale-95 desktop:flex">
+        <span aria-hidden="true" className="pointer-events-none absolute inset-0 rounded-lg bg-teal/40 animate-coach-pulse" />
+        <span aria-hidden="true" className="pointer-events-none absolute inset-y-0 left-0 w-1/3 animate-shimmer rounded-lg bg-white/25 blur-md" />
+        <CoachIcon size={16} className="relative" /> <span className="relative">Ask Coach</span>
       </button>
 
       {/* User name + role (desktop) */}
@@ -306,14 +311,9 @@ export function Sidebar({ user }: { user?: User | null; unreadCount?: number }) 
 
   return (
     <aside className={cn('fixed left-0 top-0 bottom-0 z-sidebar w-[240px] bg-card border-r border-border flex flex-col hidden desktop:flex')}>
-      <div className="px-5 py-4 border-b border-border">
-        <Link href="/home" className="flex items-center gap-3">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/consumerdirect-mark.svg" alt="ConsumerDirect" className="w-9 h-9 shrink-0" />
-          <div className="leading-tight">
-            <span className="block text-[15px] font-[900] text-navy">BDR Hub</span>
-            <span className="block text-[11px] font-[700] text-gray uppercase tracking-[0.08em]">ConsumerDirect</span>
-          </div>
+      <div className="px-4 py-4 border-b border-border">
+        <Link href="/home" aria-label="Apex home" className="flex items-center transition-transform active:scale-[0.98]">
+          <ApexLogo size={40} />
         </Link>
       </div>
 
@@ -356,10 +356,13 @@ function SidebarItem({ item, pathname }: { item: NavItem; pathname: string }) {
   const isActive = matchNav(pathname, item)
   return (
     <Link href={item.href}
-      className={cn('relative flex items-center gap-3 px-3 py-2.5 rounded-lg min-h-[42px] w-full text-[14px] font-[600] transition-all duration-[150ms]',
+      className={cn('relative flex items-center gap-3 pl-4 pr-3 py-2.5 rounded-lg min-h-[42px] w-full text-[14px] font-[600] transition-all duration-[150ms]',
         isActive ? 'bg-teal/8 text-teal font-[700]' : 'text-mid-text hover:bg-bdrbg hover:text-navy')}
       aria-current={isActive ? 'page' : undefined}>
-      <div className={cn('absolute left-3 w-[3px] h-5 rounded-full transition-all', isActive ? 'bg-teal opacity-100' : 'opacity-0')} />
+      {/* Active indicator: pinned to the far-left edge so it never touches the
+          icon, with a subtle live "bob" that echoes the notification bell. */}
+      <div className={cn('absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 rounded-full bg-teal transition-opacity duration-200',
+        isActive ? 'opacity-100 animate-tab-bob' : 'opacity-0')} />
       <Icon size={18} />
       <span className="flex-1">{item.label}</span>
     </Link>

@@ -3,7 +3,7 @@
 
 // Generic per-user key/value progress hook over the shared `module_progress`
 // table — the same pattern useBattleCards uses, factored out so any lightweight
-// module surface (Cortex Content board, Build phases, …) can persist a small
+// module surface (Apex Content board, Build phases, …) can persist a small
 // JSON blob without a bespoke table. One row per (user, key).
 
 import { useEffect, useRef, useState } from 'react'

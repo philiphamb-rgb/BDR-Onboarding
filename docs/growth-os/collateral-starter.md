@@ -1,4 +1,4 @@
-# Cortex — Marketing / Collateral Starter Set
+# Apex — Marketing / Collateral Starter Set
 
 _Generated through the Content Engine + the agent voice/guardrail layer, so this
 deliverable also demonstrates the system working. All copy is compliant: no

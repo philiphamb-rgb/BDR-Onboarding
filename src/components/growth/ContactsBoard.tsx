@@ -1,7 +1,7 @@
 // @ts-nocheck
 'use client'
 
-// Cortex — Contacts as a first-class object. A standalone index of every
+// Apex — Contacts as a first-class object. A standalone index of every
 // person across the book (crm_contacts), each associated to a Company (a
 // partner_onboarding record) and, through it, to a Deal. Search, add (with a
 // company picker), set-primary, delete, and click any contact to open its

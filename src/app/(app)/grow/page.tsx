@@ -3,7 +3,7 @@
 
 export const dynamic = 'force-dynamic'
 
-// Cortex — Overview. The "where you stand" home: shared chrome (health + KPIs
+// Apex — Overview. The "where you stand" home: shared chrome (health + KPIs
 // + Triage Strip), your growth goals ringed against the live pipeline, a
 // temperature snapshot of the real partner pipeline, and the pulse of your AI
 // Team. Everything links into the real screens — no parallel pipeline, one coach.
@@ -125,7 +125,7 @@ export default function GrowthOverviewPage() {
           </div>
 
           {/* One coach */}
-          <button onClick={() => askCoach("Look at my Cortex: my income, leads-per-week and close-rate goals, my pipeline by temperature, and what my AI Team is doing. What are the 3 highest-leverage moves to grow my number this week?")}
+          <button onClick={() => askCoach("Look at my Apex: my income, leads-per-week and close-rate goals, my pipeline by temperature, and what my AI Team is doing. What are the 3 highest-leverage moves to grow my number this week?")}
             className="relative flex w-full items-center gap-3 overflow-hidden rounded-2xl bg-navy p-4 text-left text-white shadow-card transition-transform active:scale-[0.99]">
             <span className="pointer-events-none absolute inset-y-0 left-0 w-1/4 animate-shimmer bg-white/15 blur-md" aria-hidden="true" />
             <div className="relative flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white/15"><LightningIcon size={18} /></div>

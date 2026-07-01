@@ -237,6 +237,14 @@ button, a, [role="button"] {
 }
 .animate-bob { animation: belt-bob 2.6s ease-in-out infinite; }
 
+/* Active sidebar tab indicator — a subtle, alive vertical bob (echoes the bell).
+   Keeps the -translate-y-1/2 centering while adding a small living offset. */
+@keyframes tab-bob {
+  0%, 100% { transform: translateY(-50%); }
+  50%      { transform: translateY(calc(-50% - 3px)); }
+}
+.animate-tab-bob { animation: tab-bob 2.6s ease-in-out infinite; }
+
 @keyframes bell-ring {
   0%   { transform: rotate(0); }
   15%  { transform: rotate(14deg); }
@@ -334,5 +342,7 @@ button, a, [role="button"] {
   .animate-bob, .animate-ring, .animate-rise, .animate-coach-pulse,
   .animate-glow, .animate-glow-gold, .animate-nudge-x, .animate-attention,
   .animate-breathe, .animate-pop, .animate-shimmer { animation: none !important; }
+  /* Keep the indicator centered (not bobbing) under reduced-motion. */
+  .animate-tab-bob { animation: none !important; transform: translateY(-50%) !important; }
   .stagger-rise > * { animation: none !important; }
 }

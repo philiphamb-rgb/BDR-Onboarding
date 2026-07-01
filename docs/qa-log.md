@@ -1,4 +1,4 @@
-# Cortex — QA Log
+# Apex — QA Log
 
 _Per master-prompt §8. Findings from the adversarial review pass + resolutions.
 Build compiles clean; all pages are `// @ts-nocheck`, so this covers runtime /
@@ -27,7 +27,7 @@ logic / UX correctness._
   (`onConflict: team_id,id`); reps get read-only UI; `saveGoals` never clobbers
   `monthly_deal_goal`.
 
-## Cortex mandate QA (RBAC, coach FAB, notes, CRM parity, feedback digest)
+## Apex mandate QA (RBAC, coach FAB, notes, CRM parity, feedback digest)
 
 Adversarial review pass across the rename + CRM-parity + RBAC mandate. Findings
 and resolutions:

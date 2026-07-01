@@ -23,7 +23,7 @@ function contextFor(pathname: string): { label: string; prompts: string[] } {
   if (p.startsWith('/schedule')) return { label: 'Time Blocks', prompts: ['How do I get the most from my power blocks?', 'Plan my next selling block'] }
   if (p.startsWith('/tasks')) return { label: 'Tasks', prompts: ['Help me prioritize my tasks', 'What should I do first today?'] }
   if (p.startsWith('/notes')) return { label: 'Notes', prompts: ['Pull the action items out of my notes', 'Turn this note into a plan'] }
-  if (p.startsWith('/grow')) return { label: 'Cortex', prompts: ['What are my top 3 growth moves this week?', 'Which AI agents should I lean on right now?'] }
+  if (p.startsWith('/grow')) return { label: 'Apex', prompts: ['What are my top 3 growth moves this week?', 'Which AI agents should I lean on right now?'] }
   if (p.startsWith('/train')) return { label: 'Learning Center', prompts: ['Sum up the key idea I should apply', 'How do I use this on a real call?'] }
   if (p.startsWith('/wins')) return { label: 'Wins log', prompts: ['What pattern do you see in my wins?', 'How do I repeat my best week?'] }
   if (p.startsWith('/progress')) return { label: 'My progress', prompts: ['What should I focus on to rank up?', 'How close am I to my certificate?'] }

@@ -3,7 +3,7 @@
 
 export const dynamic = 'force-dynamic'
 
-// Cortex — Content Engine. The top-of-funnel that tells you exactly what to
+// Apex — Content Engine. The top-of-funnel that tells you exactly what to
 // publish next to attract agency partners, and why it's worth your time —
 // ranked by Expected Value. Next Move hero + ranked queue + income forecast +
 // 30-day funnel, a "What's Working" analytics view, a downloadable Creator

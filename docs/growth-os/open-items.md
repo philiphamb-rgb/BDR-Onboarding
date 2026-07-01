@@ -1,4 +1,4 @@
-# Cortex — Open Items / Integration Requests
+# Apex — Open Items / Integration Requests
 
 _Exactly what's genuinely blocked on external access, so leadership knows what to
 approve. Everything below is built as an interface/contract; each item flips
@@ -53,7 +53,7 @@ Contacts (crm_contacts, first-class + associated), Deals (deal props on the
 company), Activities (typed growth_notes timeline), list views + saved filters +
 RBAC bulk ops, and reporting drill-through.
 
-Done: **Naming rollout** — the product is now **Cortex** across nav, headers, and
+Done: **Naming rollout** — the product is now **Apex** across nav, headers, and
 copy. **Feedback loop, end to end** — capture (FeedbackButton) → aggregation
 (manager Feedback Digest) → **synthesis** (Claude clusters feedback into
 agent-scoped proposals via `/api/growth/synthesize`, manager-triggered) →

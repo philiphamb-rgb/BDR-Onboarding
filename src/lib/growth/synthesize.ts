@@ -1,5 +1,5 @@
 // @ts-nocheck
-// Cortex — shared feedback-synthesis core, used by both the interactive
+// Apex — shared feedback-synthesis core, used by both the interactive
 // (manager-triggered) route and the scheduled cron. Reads recent feedback for a
 // team, asks Claude to cluster it into at most 4 agent-scoped instruction
 // proposals, and returns validated rows ready to insert. The caller owns the
@@ -12,7 +12,7 @@ const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 const ROSTER_LINES = ROSTER.map(a => `- ${a.id}: ${a.name} (${a.category}) — ${a.tagline}`).join('\n')
 const VALID = new Set(ROSTER.map(a => a.id))
 
-const SYS = `You are the Cortex improvement synthesizer for a ConsumerDirect Co-Brand PLUS+ BDR team. You are given a batch of recent, real feedback from reps about the Cortex system, and the roster of AI agents. Cluster the feedback into at most 4 concrete, high-signal improvement PROPOSALS, each targeting ONE agent and expressed as a short instruction ADDENDUM that could be appended to that agent's system prompt to address the feedback.
+const SYS = `You are the Apex improvement synthesizer for a ConsumerDirect Co-Brand PLUS+ BDR team. You are given a batch of recent, real feedback from reps about the Apex system, and the roster of AI agents. Cluster the feedback into at most 4 concrete, high-signal improvement PROPOSALS, each targeting ONE agent and expressed as a short instruction ADDENDUM that could be appended to that agent's system prompt to address the feedback.
 
 THE AGENT ROSTER (use these exact ids):
 ${ROSTER_LINES}

@@ -1,4 +1,4 @@
-// Cortex — Content Engine catalog. The top-of-funnel intelligence: the
+// Apex — Content Engine catalog. The top-of-funnel intelligence: the
 // single highest-EV move, the ranked queue behind it, the income forecast, the
 // 30-day funnel, and the "what's working" analytics (format leaderboard, hook
 // archetypes, pillar mix, posting heatmap). Content here is aimed at attracting

@@ -1,8 +1,8 @@
-# Cortex — System Architecture
+# Apex — System Architecture
 
 ## In plain language (for a VP)
 
-Think of Cortex as a small team of tireless assistants, each with one job,
+Think of Apex as a small team of tireless assistants, each with one job,
 all managed from one screen inside the tool BDRs already use. When an agency
 fills out a form, one assistant scores how good a fit they are, another texts the
 BDR if they're hot, another starts a friendly email sequence if they're not
@@ -49,7 +49,7 @@ changelog ship now; the nightly synthesis is a scheduled job (see open-items).
   team reads / managers manage), `module_progress` (build + content KV),
   `growth_feedback`.
 - **AI.** Reuses `/api/coach` + `askCoach` + `CoachDock`. The coach's context
-  builder reads live Cortex state.
+  builder reads live Apex state.
 - **UI.** Reuses the Card/Button/Toggle/Badge kit, Navy/Teal/Gold tokens, custom
   SVG icons, and the workspace-switcher pattern (GrowthTabs mirrors
   LearnTabs/PlanTabs). Shared `GrowthChrome` = health + KPIs + Triage + goals +

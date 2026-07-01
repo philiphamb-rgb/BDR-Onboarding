@@ -1,5 +1,5 @@
 // @ts-nocheck
-// Cortex — the scheduled nightly feedback synthesis. Runs the same core as the
+// Apex — the scheduled nightly feedback synthesis. Runs the same core as the
 // interactive route across every team with recent feedback, inserting pending
 // proposals for managers to review each morning. Guarded by CRON_SECRET; uses a
 // service-role client so it can iterate all teams.

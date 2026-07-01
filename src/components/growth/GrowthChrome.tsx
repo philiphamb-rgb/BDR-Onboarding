@@ -1,7 +1,7 @@
 // @ts-nocheck
 'use client'
 
-// The shared Cortex chrome that sits atop every Growth surface: the section
+// The shared Apex chrome that sits atop every Growth surface: the section
 // title, an at-a-glance system-health + KPI chip row, and the Triage Strip
 // ("Right Now / Next / After That") prioritized against the BDR's real goals.
 // One definition so all six tabs share the exact same header, like the app's
@@ -53,7 +53,7 @@ function GoalsEditor({ goals, onSave, onClose }: any) {
           <h2 className="text-[18px] font-[900] text-dark-text">Your goals</h2>
           <button onClick={onClose} aria-label="Close" className="text-gray hover:text-dark-text"><CloseIcon size={18} /></button>
         </div>
-        <p className="mb-5 text-[12.5px] leading-relaxed text-gray">These drive what your Cortex tells you to do first, next, and after that — everywhere in the app.</p>
+        <p className="mb-5 text-[12.5px] leading-relaxed text-gray">These drive what your Apex tells you to do first, next, and after that — everywhere in the app.</p>
         {field('Monthly income goal', income, setIncome, 'USD / month')}
         {field('Lead generation goal', leads, setLeads, 'new partner leads / week')}
         {field('Close rate goal', close, setClose, '% of leads closed', 100)}
@@ -98,7 +98,7 @@ export function GrowthChrome({ compact = false }: { compact?: boolean }) {
       <div className="flex items-center gap-2">
         <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-hero text-white"><GrowIcon size={18} /></span>
         <div className="min-w-0 flex-1">
-          <h1 className="text-h2 leading-tight text-dark-text">Cortex</h1>
+          <h1 className="text-h2 leading-tight text-dark-text">Apex</h1>
           <p className="text-[12px] text-gray">Your AI-powered growth engine</p>
         </div>
         <span className={cn('flex shrink-0 items-center gap-1.5 rounded-full px-2.5 py-1.5 text-[11px] font-[700]', TONE[health].bg, TONE[health].chipText)}>

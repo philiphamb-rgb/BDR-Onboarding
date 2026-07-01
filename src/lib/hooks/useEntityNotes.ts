@@ -1,7 +1,7 @@
 // @ts-nocheck
 'use client'
 
-// Historical reference logs for any Cortex entity. Loads/attaches notes keyed
+// Historical reference logs for any Apex entity. Loads/attaches notes keyed
 // by (entity_type, entity_id) on the shared growth_notes table (RLS: you own
 // your notes; managers can read the team's). Also exposes a per-entity unread-ish
 // count so the UI can badge items that already have context attached.

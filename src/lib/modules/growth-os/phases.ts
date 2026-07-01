@@ -1,4 +1,4 @@
-// Cortex — the 8-phase build roadmap for standing up the Co-Brand PLUS+
+// Apex — the 8-phase build roadmap for standing up the Co-Brand PLUS+
 // partner-growth system. Each task carries an hour estimate and the tool it uses
 // so the whole build is legible; per-phase "what you'll have" + deliverables make
 // every phase a real milestone, not a vague step. Completion persists per-user

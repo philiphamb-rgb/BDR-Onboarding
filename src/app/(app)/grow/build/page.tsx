@@ -3,7 +3,7 @@
 
 export const dynamic = 'force-dynamic'
 
-// Cortex — Build Phases. The 8-phase roadmap to stand up the Co-Brand PLUS+
+// Apex — Build Phases. The 8-phase roadmap to stand up the Co-Brand PLUS+
 // partner-growth system, with per-task hours + tool, per-phase "what you'll
 // have" and deliverables. Task completion persists per-user in module_progress;
 // every task + phase has an "AI Help" that hands the exact context to the coach.
@@ -50,7 +50,7 @@ export default function GrowthBuildPage() {
           <span className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-bdrbg text-gray"><LockIcon size={22} /></span>
           <h2 className="text-[16px] font-[800] text-dark-text">Build is manager-only</h2>
           <p className="mx-auto mt-1 max-w-xs text-[13px] leading-relaxed text-gray">Standing up the AI team + growth system is restricted to Admins and Managers. Ask your team lead if you need access.</p>
-          <button onClick={() => router.push('/grow')} className="mt-4 rounded-lg bg-navy px-4 py-2 text-[13px] font-[700] text-white">Back to Cortex</button>
+          <button onClick={() => router.push('/grow')} className="mt-4 rounded-lg bg-navy px-4 py-2 text-[13px] font-[700] text-white">Back to Apex</button>
         </Card>
       </div>
     )
@@ -148,7 +148,7 @@ export default function GrowthBuildPage() {
                               <span onClick={() => toggle(task.id)} className={cn('flex-1 cursor-pointer text-[12.5px]', d ? 'text-gray line-through' : 'text-mid-text')}>{task.t}</span>
                               <span className="hidden shrink-0 rounded-md border border-border bg-bdrbg px-1.5 py-0.5 text-[10px] text-gray sm:inline"><ClockIcon size={9} className="mr-0.5 inline" />{task.hrs}h · {task.tool}</span>
                               <NoteButton compact entityType="phase-task" entityId={task.id} label={task.t} context={`Phase ${ph.n} ${ph.name}, ${task.hrs}h via ${task.tool}`} />
-                              <button onClick={() => askCoach(`Help me complete this task for my ConsumerDirect Co-Brand PLUS+ Cortex build, Phase ${ph.n} (${ph.name}): "${task.t}". Estimated ${task.hrs}h using ${task.tool}. Give a step-by-step plan with specific, ready-to-use output.`)}
+                              <button onClick={() => askCoach(`Help me complete this task for my ConsumerDirect Co-Brand PLUS+ Apex build, Phase ${ph.n} (${ph.name}): "${task.t}". Estimated ${task.hrs}h using ${task.tool}. Give a step-by-step plan with specific, ready-to-use output.`)}
                                 className="flex shrink-0 items-center gap-1 rounded-md border border-border bg-bdrbg px-2 py-1 text-[10px] font-[600] text-gray hover:text-navy">
                                 <IntegrationIcon size={9} /> AI Help
                               </button>
@@ -163,7 +163,7 @@ export default function GrowthBuildPage() {
                         <div className="ml-auto"><NoteButton entityType="phase" entityId={ph.n} label={`Phase ${ph.n} — ${ph.name}`} context={ph.whatYouGet} /></div>
                       </div>
 
-                      <button onClick={() => askCoach(`I'm working on Phase ${ph.n} (${ph.name}) of my ConsumerDirect Co-Brand PLUS+ Cortex build. Help me produce the key deliverables: ${ph.del.join(', ')}. Start with the most important one and give a complete, ready-to-use output.`)}
+                      <button onClick={() => askCoach(`I'm working on Phase ${ph.n} (${ph.name}) of my ConsumerDirect Co-Brand PLUS+ Apex build. Help me produce the key deliverables: ${ph.del.join(', ')}. Start with the most important one and give a complete, ready-to-use output.`)}
                         className={cn('flex w-full items-center justify-between rounded-lg px-4 py-2.5 text-[12px] font-[700]', tone.bg, tone.text)}>
                         <span>Generate Phase {ph.n} deliverables with AI</span><ArrowRightIcon size={13} />
                       </button>

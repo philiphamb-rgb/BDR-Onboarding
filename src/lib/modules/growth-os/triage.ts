@@ -1,4 +1,4 @@
-// Cortex — the Triage engine. Turns the BDR's real goals (income, leads/week,
+// Apex — the Triage engine. Turns the BDR's real goals (income, leads/week,
 // close rate) + the live pipeline + the AI Team's state + build progress into an
 // always-visible "Right Now / Next / After That" plan. Every item states which
 // goal it serves and why it outranks the alternatives — never a black box.
@@ -40,7 +40,7 @@ export function computeTriage(c: Ctx): TriageItem[] {
     items.push({ tier: 'now', icon: 'LightningIcon', tone: 'teal',
       title: `Turn on "${setupAgents[0].name}"`,
       reason: incomeGoal ? `Tied to your ${money(incomeGoal)}/mo income goal — activating this agent gives you back selling time you're spending on manual work.` : `This agent is built and waiting — activating it does work for you automatically.`,
-      prompt: `Walk me through activating the "${setupAgents[0].name}" in my Cortex, step by step, and what to test before I trust it.` })
+      prompt: `Walk me through activating the "${setupAgents[0].name}" in my Apex, step by step, and what to test before I trust it.` })
   } else {
     items.push({ tier: 'now', icon: 'TargetIcon', tone: 'gold',
       title: 'Publish today\'s highest-value content',
@@ -58,12 +58,12 @@ export function computeTriage(c: Ctx): TriageItem[] {
     items.push({ tier: 'next', icon: 'ChecklistIcon', tone: 'navy',
       title: `Continue Phase ${buildIncomplete.n}: ${buildIncomplete.name}`,
       reason: 'This unlocks the next layer of your growth system and compounds everything after it.',
-      prompt: `Help me complete the next task in Phase ${buildIncomplete.n} (${buildIncomplete.name}) of my Cortex build.` })
+      prompt: `Help me complete the next task in Phase ${buildIncomplete.n} (${buildIncomplete.name}) of my Apex build.` })
   } else {
     items.push({ tier: 'next', icon: 'IntegrationIcon', tone: 'teal',
       title: 'Review your AI Team\'s performance',
       reason: 'Keep what\'s working, tune what isn\'t — small adjustments compound over time.',
-      prompt: 'Review my live Cortex agents and suggest one specific improvement to each.' })
+      prompt: 'Review my live Apex agents and suggest one specific improvement to each.' })
   }
 
   // ── AFTER THAT ──
@@ -76,7 +76,7 @@ export function computeTriage(c: Ctx): TriageItem[] {
     items.push({ tier: 'after', icon: 'ChecklistIcon', tone: 'navy',
       title: `Plan ahead: Phase ${buildIncomplete.n}`,
       reason: 'Stay one step ahead of your own build instead of reacting to it.',
-      prompt: `Give me a clear overview of what's involved in Phase ${buildIncomplete.n} of my Cortex build.` })
+      prompt: `Give me a clear overview of what's involved in Phase ${buildIncomplete.n} of my Apex build.` })
   } else {
     items.push({ tier: 'after', icon: 'LightningIcon', tone: 'navy',
       title: 'Test a new outreach angle',

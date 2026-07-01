@@ -1,7 +1,7 @@
 // @ts-nocheck
 'use client'
 
-// Cortex — the manager Feedback Digest: the aggregation AND application halves of
+// Apex — the manager Feedback Digest: the aggregation AND application halves of
 // the improvement loop. Rolls up team feedback (sentiment split, 14-day trend,
 // highest-signal items), and closes the loop: run synthesis → review agent-scoped
 // PROPOSALS → approve into a VERSIONED instruction override that actually extends
@@ -96,7 +96,7 @@ export function FeedbackDigest() {
     <div className="space-y-4">
       {/* Summary */}
       {agg.total === 0 ? (
-        <div className="rounded-xl bg-bdrbg p-4 text-center text-[13px] text-gray">No team feedback yet. It rolls up here as your reps rate Cortex.</div>
+        <div className="rounded-xl bg-bdrbg p-4 text-center text-[13px] text-gray">No team feedback yet. It rolls up here as your reps rate Apex.</div>
       ) : (
         <>
           <div className="grid grid-cols-3 gap-2">

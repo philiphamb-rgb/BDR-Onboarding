@@ -1,7 +1,7 @@
 // @ts-nocheck
 'use client'
 
-// Attach historical reference notes to any Cortex item (a phase, a task, an
+// Attach historical reference notes to any Apex item (a phase, a task, an
 // agent, an automation, a lead). Shows a compact trigger that badges the note
 // count; opens a log where you can read past notes, add one, or have the AI
 // auto-suggest a context-aware note you can accept, edit, or discard. The
@@ -33,8 +33,8 @@ export function NoteButton({ entityType, entityId, label, context = '', compact 
       const res = await fetch('/api/coach', {
         method: 'POST', headers: { 'Content-Type': 'application/json' }, signal: ctrl.signal,
         body: JSON.stringify({
-          message: `Draft ONE short reference note (1–2 sentences, first person, no preamble, no markdown) I can save against this item in my Cortex: "${label}". Context: ${context || 'general'}. Write it as a practical log/insight I'd want to remember next time I look at this — concrete and specific.`,
-          pageContext: 'Cortex notes',
+          message: `Draft ONE short reference note (1–2 sentences, first person, no preamble, no markdown) I can save against this item in my Apex: "${label}". Context: ${context || 'general'}. Write it as a practical log/insight I'd want to remember next time I look at this — concrete and specific.`,
+          pageContext: 'Apex notes',
         }),
       })
       if (res.ok && res.body) {

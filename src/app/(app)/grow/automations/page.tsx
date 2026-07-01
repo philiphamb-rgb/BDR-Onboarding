@@ -3,7 +3,7 @@
 
 export const dynamic = 'force-dynamic'
 
-// Cortex — Automations. The operational lens on the AI Team: the same agents,
+// Apex — Automations. The operational lens on the AI Team: the same agents,
 // shown as when→then workflows with a researched ROI, live tool-connection
 // status, and the handful of settings a manager actually tunes. Status writes to
 // the real team-scoped `automations` table (RLS-gated to managers); per-agent
@@ -153,7 +153,7 @@ export default function GrowthAutomationsPage() {
                           </div>
                         </div>
 
-                        <button onClick={() => import('@/lib/coachBus').then(({ askCoach }) => askCoach(`Walk me through setting up the "${a.name}" automation for my ConsumerDirect Co-Brand PLUS+ Cortex using ${m.tools.map(t => t.name).join(' + ')}. Give exact setup steps for each tool and what to test first.`))}
+                        <button onClick={() => import('@/lib/coachBus').then(({ askCoach }) => askCoach(`Walk me through setting up the "${a.name}" automation for my ConsumerDirect Co-Brand PLUS+ Apex using ${m.tools.map(t => t.name).join(' + ')}. Give exact setup steps for each tool and what to test first.`))}
                           className="flex w-full items-center justify-between rounded-lg bg-teal/[0.08] px-4 py-2.5 text-[12px] font-[700] text-teal">
                           <span>Walk me through setup with AI</span><ArrowRightIcon size={13} />
                         </button>
