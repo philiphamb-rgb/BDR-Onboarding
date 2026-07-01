@@ -15,6 +15,7 @@ import {
   GrowIcon, TargetIcon, LightningIcon, FlameIcon, ChecklistIcon, IntegrationIcon,
   ChartRisingIcon, StarIcon, CoinIcon, EditIcon, CheckIcon, CloseIcon,
 } from '@/components/icons'
+import { FeedbackButton } from '@/components/growth/FeedbackButton'
 import { useGrowthOS } from '@/lib/hooks/useGrowthOS'
 import { useModuleKV } from '@/lib/hooks/useModuleKV'
 import { monthlyCost } from '@/lib/modules/growth-os/roster'
@@ -119,6 +120,7 @@ export function GrowthChrome({ compact = false }: { compact?: boolean }) {
             {goals.close_rate_goal ? ` · ${Number(goals.close_rate_goal)}% close` : ''}
             <EditIcon size={11} />
           </button>
+          <FeedbackButton />
         </div>
       )}
 
