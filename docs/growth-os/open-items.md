@@ -38,13 +38,15 @@ detail **drawer** (score + editable deal + contacts + activities + coach next-st
 and a **weighted pipeline** forecast (Σ amount × probability). RBAC: editing your own
 record is a standard rep action; bulk/team operations remain manager-gated.
 
+Delivered since: **List views / saved filters + RBAC-gated bulk operations**
+(LeadsBoard — bulk stage/temperature gated on canEdit, manager-only Assign owner
+backed by a team-scoped manager update policy). **Reporting drill-through**
+(ReportsPanel — funnel rollup, weighted pipeline, win rate, avg deal; click any
+stage/KPI → underlying records → CRM drawer; manager team-scope toggle).
+
 Still open on the CRM parity track:
 - **Contacts as a first-class object** (their own index/detail, not only nested in a
   company) + full contact↔company↔deal association UI.
-- **List views / saved filters + bulk operations** (bulk stage-change / assign),
-  each bulk action gated on `canEdit` per RBAC.
-- **Reporting drill-through** — click any metric → underlying records; manager funnel
-  rollup with weighted pipeline value.
 - **Naming rollout** — swap "Growth OS" → the chosen brand across nav/headers/copy
   (awaiting the final name).
 - **Feedback-loop nightly synthesis** — the Manager Digest → approve/reject →

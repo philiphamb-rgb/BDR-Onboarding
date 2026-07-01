@@ -17,6 +17,7 @@ import { GrowthTabs } from '@/components/GrowthTabs'
 import { GrowthChrome } from '@/components/growth/GrowthChrome'
 import { LeadDrawer } from '@/components/growth/LeadDrawer'
 import { LeadsBoard } from '@/components/growth/LeadsBoard'
+import { ReportsPanel } from '@/components/growth/ReportsPanel'
 import { FlameIcon, LightningIcon, IntegrationIcon, ArrowRightIcon, PlusIcon, ChartRisingIcon, InfoIcon, CoinIcon } from '@/components/icons'
 import { useGrowthOS } from '@/lib/hooks/useGrowthOS'
 import { GEN_PROMPTS, DEMO_CAMPAIGNS, fmtAgo } from '@/lib/modules/growth-os/leadgen'
@@ -114,12 +115,16 @@ export default function GrowthLeadGenPage() {
           )}
 
           {/* sub-view switcher */}
-          <div className="flex w-fit gap-0.5 rounded-lg border border-border bg-bdrbg p-1">
-            {[['leads', 'Leads'], ['campaigns', 'Campaigns'], ['generate', 'Generate']].map(([id, l]) => subBtn(id, l))}
+          <div className="flex w-fit gap-0.5 overflow-x-auto rounded-lg border border-border bg-bdrbg p-1">
+            {[['leads', 'Leads'], ['reports', 'Reports'], ['campaigns', 'Campaigns'], ['generate', 'Generate']].map(([id, l]) => subBtn(id, l))}
           </div>
 
           {view === 'leads' && (
             <LeadsBoard leadList={leadList || []} onOpenLead={setOpenLead} reload={reload} />
+          )}
+
+          {view === 'reports' && (
+            <ReportsPanel myLeads={leadList || []} onOpenLead={setOpenLead} />
           )}
 
           {view === 'campaigns' && (
