@@ -5,6 +5,7 @@ import { NextResponse } from 'next/server'
 import { completion, stageMeta, PIPELINE_STAGES } from '@/lib/partnerChecklist'
 import { computePlan, computeInsight, fmt } from '@/lib/income/engine'
 import { COMPETITORS, COMMISSION_COMPARISON } from '@/lib/modules/battle-cards'
+import { streamText, routedLabel } from '@/lib/ai/router'
 
 // Compact competitive intel from the Battle Cards module, so the Coach answers
 // competitor objections with the real battlecard — one source of truth.
@@ -230,35 +231,20 @@ COACHING STYLE:
 - Ground advice in ConsumerDirect's partner/credit sales reality and the Sandler method.
 - When the rep wants to practice, suggest the Objection Drill.`
 
-    // Stream the coach reply token-by-token for a live typing experience.
-    const stream = await anthropic.messages.create({
-      model: 'claude-sonnet-4-6',
-      max_tokens: 500,
+    // Stream the coach reply token-by-token via the AI router: the conversational
+    // "Ask Coach" engine routes to ChatGPT when OPENAI_API_KEY is set, and falls
+    // back to Claude otherwise — same streaming UX either way.
+    const readable = await streamText({
+      task: 'coach',
       system: systemPrompt,
-      stream: true,
+      maxTokens: 500,
       messages: [
         ...history.map((h) => ({ role: h.role, content: h.content })),
         { role: 'user', content: message },
       ],
     })
-    const encoder = new TextEncoder()
-    const readable = new ReadableStream({
-      async start(controller) {
-        try {
-          for await (const event of stream) {
-            if (event.type === 'content_block_delta' && event.delta?.type === 'text_delta') {
-              controller.enqueue(encoder.encode(event.delta.text))
-            }
-          }
-        } catch {
-          controller.enqueue(encoder.encode("\n\n(Connection interrupted — please try again.)"))
-        } finally {
-          controller.close()
-        }
-      },
-    })
     return new Response(readable, {
-      headers: { 'Content-Type': 'text/plain; charset=utf-8', 'Cache-Control': 'no-cache' },
+      headers: { 'Content-Type': 'text/plain; charset=utf-8', 'Cache-Control': 'no-cache', 'X-Apex-Model': routedLabel('coach') },
     })
   } catch (error) {
     console.error('Coach API error:', error)

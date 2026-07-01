@@ -12,6 +12,8 @@ import { toast } from '@/components/ui'
 import { AiTip } from '@/components/AiTip'
 import { askCoach } from '@/lib/coachBus'
 import { GoalCockpit } from '@/components/GoalCockpit'
+import { FirstRunOverlay } from '@/components/FirstRunOverlay'
+import { useWinsNotify } from '@/lib/hooks/useWinsNotify'
 import { goalStats, buildActions } from '@/lib/priorityEngine'
 import { autoPlan, fmtEst } from '@/lib/triageEngine'
 import { stageMeta } from '@/lib/partnerChecklist'
@@ -31,6 +33,10 @@ export default function TodayPage() {
   const [doneTaskId, setDoneTaskId] = useState<string | null>(null)
   const { habits, loading: habitsLoading, refresh: refreshHabits } = useHabits(userId)
   const { progress, refresh: refreshProgress } = useProgress(userId)
+
+  // Wins are now throttled milestone notifications, not a tab — logged as the
+  // user's streak / deals / goal cross thresholds.
+  useWinsNotify({ userId, streak: progress?.current_streak, deals: dealsThisMonth, goal })
 
   const today = localToday()
 
@@ -157,6 +163,21 @@ export default function TodayPage() {
 
   return (
     <div className="space-y-4 stagger-rise">
+      {/* First-visit welcome → launches new users into their baseline setup. */}
+      <FirstRunOverlay
+        kvKey="today_ftux"
+        eyebrow="Welcome to Apex"
+        title="This is your daily race line"
+        body="Today is your one screen to win the day: your goal pace, the single highest-value move, your live tasks, and your streak — all in one place. Start by setting your target so everything else calibrates to your number."
+        steps={[
+          { icon: TargetIcon, label: 'Set your income + deal goals (your baseline)' },
+          { icon: LightningIcon, label: 'Work your top-ranked move first, every day' },
+          { icon: FlameIcon, label: 'Build the streak — wins log themselves as you go' },
+        ]}
+        ctaLabel="Set your goals"
+        ctaHref="/commissions"
+      />
+
       <div className="flex items-start justify-between gap-3">
         <div>
           <h1 className="text-h1 text-dark-text">Today</h1>

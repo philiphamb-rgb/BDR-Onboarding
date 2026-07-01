@@ -11,7 +11,7 @@ import Link from 'next/link'
 import { Card, Button, ProgressBar, Skeleton } from '@/components/ui'
 import { CountUp } from '@/components/CountUp'
 import { AiTip } from '@/components/AiTip'
-import { CoinIcon, LightningIcon, TargetIcon, PhoneIcon, HandshakeIcon, CheckIcon, ArrowRightIcon, ChartRisingIcon, FlameIcon } from '@/components/icons'
+import { CoinIcon, LightningIcon, TargetIcon, PhoneIcon, HandshakeIcon, CheckIcon, ArrowRightIcon, ChartRisingIcon, FlameIcon, GrowIcon } from '@/components/icons'
 import { cn } from '@/lib/utils'
 import { askCoach } from '@/lib/coachBus'
 import { useIncomeCalculator, impliedMonthlyDeals } from '@/lib/hooks/useIncomeCalculator'
@@ -314,13 +314,19 @@ export default function CommissionsPage() {
         )}
       </Card>
 
-      {/* Coach + disclaimer */}
-      <button onClick={() => askCoach('Look at my income plan — am I on track to hit my goal, and what should I focus on this week to close the gap?')}
-        className="flex w-full items-center gap-3 rounded-2xl bg-gradient-hero p-3.5 text-left text-white shadow-card transition-transform active:scale-[0.99]">
-        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white/15"><LightningIcon size={18} className="text-white" /></div>
-        <div className="min-w-0 flex-1"><div className="text-[14px] font-[800]">Coach my plan</div><div className="text-[11px] text-white/75">Get the one move that closes your gap fastest</div></div>
-        <ArrowRightIcon size={16} className="shrink-0 text-white/80 animate-nudge-x" />
-      </button>
+      {/* The bridge to the Apex workspace — this tab handles the money math; the
+          strategy to hit it lives in Apex (KPIs + AI game plans). Kept as one
+          motivating CTA rather than deep coaching inline. */}
+      <Link href="/grow"
+        className="relative flex w-full items-center gap-3 overflow-hidden rounded-2xl bg-gradient-hero p-4 text-left text-white shadow-card transition-transform active:scale-[0.99]">
+        <span aria-hidden="true" className="pointer-events-none absolute inset-y-0 left-0 w-1/4 animate-shimmer bg-white/20 blur-md" />
+        <div className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white/15"><GrowIcon size={20} className="text-white" /></div>
+        <div className="relative min-w-0 flex-1">
+          <div className="text-[14.5px] font-[900]">Generate strategy via Workspace</div>
+          <div className="text-[11.5px] text-white/80">Turn this number into a game plan — your KPIs + AI agents in Apex</div>
+        </div>
+        <ArrowRightIcon size={18} className="relative shrink-0 text-white/85 animate-nudge-x" />
+      </Link>
 
       <p className="px-1 text-[11px] leading-relaxed text-gray">These projections are estimates based on default retail pricing. Actual earnings depend on your specific order form terms, client activity, refunds, and surcharges. Refer to your order form for exact terms.</p>
     </div>
