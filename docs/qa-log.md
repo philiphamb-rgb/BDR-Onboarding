@@ -27,6 +27,23 @@ logic / UX correctness._
   (`onConflict: team_id,id`); reps get read-only UI; `saveGoals` never clobbers
   `monthly_deal_goal`.
 
+## Cortex mandate QA (RBAC, coach FAB, notes, CRM parity, feedback digest)
+
+Adversarial review pass across the rename + CRM-parity + RBAC mandate. Findings
+and resolutions:
+
+| # | Sev | Finding | Resolution |
+|---|---|---|---|
+| 1 | High | `useCrmRecord.updateDeal` debounce sent only the last field's patch, so editing two deal fields within 500ms dropped the earlier write. | Accumulate edits in a `pendingDeal` ref and persist the merged payload; clear after write. |
+| 2 | High | Contact `setPrimary` used `Promise.all` (clear-all + set-one could race → zero primaries); ContactsBoard's add path never set `is_primary`. | Sequential awaits (clear then set); ContactsBoard now marks the first contact of a company primary, matching the drawer. |
+| 3 | Med | `/grow/build` briefly rendered the roadmap to a rep during perms load before the guard engaged (no data leak, but the manager surface flashed). | Render a neutral skeleton while `!ready`; only then branch to roadmap or lock. |
+| 4 | Med | Fail-open `canView`/`canEdit` + client gates could be permissive if perms never load. | Verified NOT a hole — every privileged action is RLS-backed (bulk edits hit own-row policy; Assign owner needs the manager+team update policy). Client gates are UX-only; documented. |
+| 5 | Med | FeedbackDigest 14-day buckets were anchored to now's time-of-day (bars drifted from calendar days); `limit(300)` capped silently. | Anchor buckets to local midnight; show a "latest 300" note when capped. |
+| 6 | Low | `useModuleKV.save` no-op'd if the user id hadn't loaded (a toggle in the first ~100ms was lost). | `persist()` resolves the uid inline when missing, so early saves still write. |
+| 7 | Low | AI-suggest streaming had no abort/mounted guard → setState after unmount when the drawer/modal closed mid-stream. | AbortController aborted on unmount + a mounted-ref guard on the stream's setState. |
+
+Verified NOT bugs: weighted-value NaN guards, won-excluded temperature counts, funnel monotonicity + division guards, embedded null-company rendering, coach FAB tap-vs-drag, `saveGoals` column preservation.
+
 ## Regression / integration
 
 - All six `/grow` routes compile and are reachable; GrowthTabs active-state correct.

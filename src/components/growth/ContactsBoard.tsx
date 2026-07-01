@@ -53,16 +53,17 @@ export function ContactsBoard({ companies, onOpenCompany }: { companies: any[]; 
 
   const addContact = async () => {
     if (!form.name.trim() || !form.partner_id || !uidRef.current) return
-    await supabase.from('crm_contacts').insert({ user_id: uidRef.current, team_id: teamRef.current, partner_id: form.partner_id, name: form.name.trim(), title: form.title || null, email: form.email || null, phone: form.phone || null })
+    // First contact for this company becomes primary — matches the drawer's add path.
+    const firstForCompany = !(contacts || []).some(c => c.partner_id === form.partner_id)
+    await supabase.from('crm_contacts').insert({ user_id: uidRef.current, team_id: teamRef.current, partner_id: form.partner_id, name: form.name.trim(), title: form.title || null, email: form.email || null, phone: form.phone || null, is_primary: firstForCompany })
     setForm({ partner_id: '', name: '', title: '', email: '', phone: '' }); setAdding(false); load()
   }
   const removeContact = async (id: string) => { setContacts(prev => prev.filter(c => c.id !== id)); await supabase.from('crm_contacts').delete().eq('id', id) }
   const setPrimary = async (c: any) => {
     setContacts(prev => prev.map(x => x.partner_id === c.partner_id ? { ...x, is_primary: x.id === c.id } : x))
-    await Promise.all([
-      supabase.from('crm_contacts').update({ is_primary: false }).eq('partner_id', c.partner_id),
-      supabase.from('crm_contacts').update({ is_primary: true }).eq('id', c.id),
-    ])
+    // Sequential to avoid a zero-primaries race.
+    await supabase.from('crm_contacts').update({ is_primary: false }).eq('partner_id', c.partner_id)
+    await supabase.from('crm_contacts').update({ is_primary: true }).eq('id', c.id)
   }
 
   return (

@@ -29,10 +29,19 @@ export default function GrowthBuildPage() {
   const done = new Set(value.done || [])
   const bp = buildProgress(value.done || [])
 
-  // Hard lock: the Build tab is Admin/Manager only. A standard user who reaches
-  // this URL directly sees a restricted state (and never the build mechanics).
-  const allowed = !ready || canView('growth_build')
-  if (ready && !allowed) {
+  // Hard lock: the Build tab is Admin/Manager only. While perms resolve, show a
+  // neutral skeleton — never the roadmap — so a rep hitting the URL directly
+  // doesn't even glimpse the build mechanics before the guard engages.
+  if (!ready) {
+    return (
+      <div className="space-y-4 stagger-rise">
+        <GrowthChrome />
+        <GrowthTabs />
+        <div className="space-y-3">{[1, 2, 3].map(i => <Skeleton key={i} className="h-24 rounded-2xl" />)}</div>
+      </div>
+    )
+  }
+  if (!canView('growth_build')) {
     return (
       <div className="space-y-4 stagger-rise">
         <GrowthChrome />

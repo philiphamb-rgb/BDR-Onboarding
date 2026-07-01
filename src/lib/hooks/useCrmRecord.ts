@@ -19,6 +19,7 @@ export function useCrmRecord(partnerId: string | null) {
   const uidRef = useRef<string | null>(null)
   const teamRef = useRef<string | null>(null)
   const saveTimer = useRef<any>(null)
+  const pendingDeal = useRef<any>({})   // accumulates edited deal fields between debounced writes
 
   const load = useCallback(async () => {
     if (!partnerId) { setLoading(false); return }
@@ -39,17 +40,19 @@ export function useCrmRecord(partnerId: string | null) {
 
   useEffect(() => { load() }, [load])
 
-  // Deal properties — optimistic + debounced (RLS: owner update only).
+  // Deal properties — optimistic + debounced (RLS: owner or team-manager update).
+  // Accumulate every edited field into pendingDeal so rapid edits to different
+  // fields (amount then probability) all persist — not just the last one.
   const updateDeal = useCallback((patch: any) => {
-    setDeal(prev => {
-      const next = { ...prev, ...patch }
-      if (saveTimer.current) clearTimeout(saveTimer.current)
-      saveTimer.current = setTimeout(() => {
-        if (!partnerId) return
-        supabase.from('partner_onboarding').update({ ...patch, updated_at: new Date().toISOString() }).eq('id', partnerId).then(() => {})
-      }, 500)
-      return next
-    })
+    pendingDeal.current = { ...pendingDeal.current, ...patch }
+    setDeal(prev => ({ ...prev, ...patch }))
+    if (saveTimer.current) clearTimeout(saveTimer.current)
+    saveTimer.current = setTimeout(() => {
+      if (!partnerId) return
+      const payload = { ...pendingDeal.current, updated_at: new Date().toISOString() }
+      pendingDeal.current = {}
+      supabase.from('partner_onboarding').update(payload).eq('id', partnerId).then(() => {})
+    }, 500)
   }, [partnerId, supabase])
 
   const addContact = useCallback(async (fields: any) => {
@@ -67,10 +70,10 @@ export function useCrmRecord(partnerId: string | null) {
 
   const setPrimary = useCallback(async (id: string) => {
     setContacts(prev => prev.map(c => ({ ...c, is_primary: c.id === id })))
-    await Promise.all([
-      supabase.from('crm_contacts').update({ is_primary: false }).eq('partner_id', partnerId),
-      supabase.from('crm_contacts').update({ is_primary: true }).eq('id', id),
-    ])
+    // Sequential, not Promise.all: clear all first, THEN set the one — otherwise
+    // the writes can race and leave the record with zero primaries.
+    await supabase.from('crm_contacts').update({ is_primary: false }).eq('partner_id', partnerId)
+    await supabase.from('crm_contacts').update({ is_primary: true }).eq('id', id)
   }, [partnerId, supabase])
 
   const addActivity = useCallback(async (kind: string, body: string, aiSuggested = false) => {

@@ -30,16 +30,19 @@ export function FeedbackDigest() {
     const down = r.filter(x => x.sentiment === 'down').length
     const total = r.length
     const pct = total ? Math.round((up / total) * 100) : 0
-    // 14-day daily trend.
-    const now = Date.now(), day = 86400000
+    // 14-day daily trend, anchored to LOCAL midnight so each bar is a real
+    // calendar day (not offset by the current time-of-day).
+    const day = 86400000
+    const mid = new Date(); mid.setHours(0, 0, 0, 0)
+    const base = mid.getTime()
     const days = Array.from({ length: 14 }, (_, i) => {
-      const d0 = now - (13 - i) * day
-      const dayRows = r.filter(x => { const t = new Date(x.created_at).getTime(); return t >= d0 - day / 2 && t < d0 + day / 2 })
+      const start = base - (13 - i) * day
+      const dayRows = r.filter(x => { const t = new Date(x.created_at).getTime(); return t >= start && t < start + day })
       return { up: dayRows.filter(x => x.sentiment === 'up').length, down: dayRows.filter(x => x.sentiment === 'down').length }
     })
     const withDetail = r.filter(x => (x.detail || '').trim())
     const contributors = new Set(r.map(x => x.user_id)).size
-    return { up, down, total, pct, days, withDetail, contributors }
+    return { up, down, total, pct, days, withDetail, contributors, truncated: r.length >= 300 }
   }, [rows])
 
   const maxDay = Math.max(1, ...agg.days.map(d => d.up + d.down))
@@ -55,6 +58,7 @@ export function FeedbackDigest() {
         <div className="rounded-xl bg-success/8 p-3 text-center"><div className="text-[20px] font-[900] text-success tabular-nums">{agg.pct}%</div><div className="text-[10.5px] text-gray">positive</div></div>
         <div className="rounded-xl bg-error/8 p-3 text-center"><div className="text-[20px] font-[900] text-error tabular-nums">{agg.down}</div><div className="text-[10.5px] text-gray">needs-work flags</div></div>
       </div>
+      {agg.truncated && <p className="text-[10.5px] italic text-gray">Showing the latest 300 signals.</p>}
 
       {/* 14-day trend */}
       <div>

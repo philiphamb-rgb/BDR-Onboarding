@@ -7,7 +7,7 @@
 // (note / call / email / meeting / task) with AI-suggested entries. Every write
 // is RLS-safe; the AI suggestion streams from the ONE existing coach.
 
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import { useCrmRecord } from '@/lib/hooks/useCrmRecord'
 import {
@@ -36,6 +36,9 @@ export function LeadDrawer({ partnerId, name, score, onClose }: { partnerId: str
   const [suggesting, setSuggesting] = useState(false)
   const [showContact, setShowContact] = useState(false)
   const [c, setC] = useState({ name: '', title: '', email: '', phone: '' })
+  const mounted = useRef(true)
+  const abortRef = useRef<AbortController | null>(null)
+  useEffect(() => () => { mounted.current = false; abortRef.current?.abort() }, [])
 
   const amount = deal?.deal_amount != null ? Number(deal.deal_amount) : ''
   const prob = deal?.deal_probability != null ? Number(deal.deal_probability) : ''
@@ -44,13 +47,14 @@ export function LeadDrawer({ partnerId, name, score, onClose }: { partnerId: str
   const suggest = async () => {
     if (suggesting) return
     setSuggesting(true); setBody(''); setAiDraft(true)
+    const ctrl = new AbortController(); abortRef.current = ctrl
     try {
       const res = await fetch('/api/coach', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, signal: ctrl.signal,
         body: JSON.stringify({ message: `Draft ONE short ${kind} log entry (1–2 sentences, first person, no preamble, no markdown) for this ConsumerDirect Co-Brand PLUS+ partner lead "${name}" (stage ${deal?.stage || 'unknown'}). Make it a concrete, useful record of a ${kind} I'd want to remember.`, pageContext: 'CRM activity' }),
       })
-      if (res.ok && res.body) { const rd = res.body.getReader(); const dc = new TextDecoder(); let acc = ''; while (true) { const { done, value } = await rd.read(); if (done) break; acc += dc.decode(value, { stream: true }); setBody(acc.trim()) } }
-    } catch {} finally { setSuggesting(false) }
+      if (res.ok && res.body) { const rd = res.body.getReader(); const dc = new TextDecoder(); let acc = ''; while (true) { const { done, value } = await rd.read(); if (done) break; acc += dc.decode(value, { stream: true }); if (mounted.current) setBody(acc.trim()) } }
+    } catch {} finally { if (mounted.current) setSuggesting(false) }
   }
 
   const logActivity = () => { const t = body.trim(); if (!t) return; addActivity(kind, t, aiDraft); setBody(''); setAiDraft(false) }
