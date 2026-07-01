@@ -29,7 +29,7 @@ export function useGrowthOS() {
   const teamRef = useRef<string | null>(null)
   const [teamId, setTeamId] = useState<string | null>(null)
   const [autoRows, setAutoRows] = useState<any[]>([])
-  const [goals, setGoals] = useState<{ leads_per_week_goal: number | null; close_rate_goal: number | null; monthly_deal_goal: number | null }>({ leads_per_week_goal: null, close_rate_goal: null, monthly_deal_goal: null })
+  const [goals, setGoals] = useState<{ leads_per_week_goal: number | null; close_rate_goal: number | null; monthly_deal_goal: number | null; monthly_income_goal: number | null }>({ leads_per_week_goal: null, close_rate_goal: null, monthly_deal_goal: null, monthly_income_goal: null })
   const [partners, setPartners] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const saveTimer = useRef<any>(null)
@@ -45,11 +45,11 @@ export function useGrowthOS() {
 
     const [{ data: autos }, { data: goalRow }, { data: pp }] = await Promise.all([
       tid ? supabase.from('automations').select('id, status, updated_at, updated_by').eq('team_id', tid) : Promise.resolve({ data: [] }),
-      supabase.from('goals').select('leads_per_week_goal, close_rate_goal, monthly_deal_goal').eq('user_id', user.id).maybeSingle(),
-      supabase.from('partner_onboarding').select('stage, temperature, created_at').eq('user_id', user.id).limit(500),
+      supabase.from('goals').select('leads_per_week_goal, close_rate_goal, monthly_deal_goal, monthly_income_goal').eq('user_id', user.id).maybeSingle(),
+      supabase.from('partner_onboarding').select('stage, temperature, created_at, updated_at, partner_name').eq('user_id', user.id).limit(500),
     ])
     setAutoRows(autos ?? [])
-    if (goalRow) setGoals({ leads_per_week_goal: goalRow.leads_per_week_goal, close_rate_goal: goalRow.close_rate_goal, monthly_deal_goal: goalRow.monthly_deal_goal })
+    if (goalRow) setGoals({ leads_per_week_goal: goalRow.leads_per_week_goal, close_rate_goal: goalRow.close_rate_goal, monthly_deal_goal: goalRow.monthly_deal_goal, monthly_income_goal: goalRow.monthly_income_goal })
     setPartners(pp ?? [])
     setLoading(false)
   }, [supabase])
@@ -74,6 +74,23 @@ export function useGrowthOS() {
     return { total: all.length, hot, warm, cold, newThisWeek, won, closeRate }
   }, [partners])
 
+  // A derived lead list for the Lead Gen board: a deterministic 0–100 pseudo-score
+  // from the REAL pipeline (temperature + stage + recency), badged as derived —
+  // no parallel leads table, no invented data.
+  const leadList = useMemo(() => {
+    const STAGE_BUMP: Record<string, number> = { opportunity_won: 20, contract_signed: 14, proposal_sent: 8, interested: 4, new_lead: 0 }
+    const TEMP_BASE: Record<string, number> = { hot: 74, warm: 54, cold: 32 }
+    const now = Date.now()
+    return (partners ?? []).map((p: any) => {
+      const t = p.temperature ?? 'cold'
+      const agoMin = Math.max(0, Math.round((now - new Date(p.updated_at || p.created_at || now).getTime()) / 60000))
+      let score = (TEMP_BASE[t] ?? 32) + (STAGE_BUMP[p.stage] ?? 0)
+      if (agoMin > 4320) score -= 8              // 3d+ stale
+      const stage = p.stage === 'opportunity_won' ? 'converted' : t
+      return { name: p.partner_name || 'Unnamed agency', score: Math.max(1, Math.min(100, score)), stage, temperature: t, rawStage: p.stage, agoMin }
+    }).sort((a, b) => b.score - a.score)
+  }, [partners])
+
   // Toggle an automation's status (manager-only; RLS enforces it server-side too).
   // Upserts the full row so a team that was never seeded still persists cleanly.
   const setStatus = useCallback(async (agent: { id: string; name: string; category: string }, status: AutomationStatus) => {
@@ -96,14 +113,16 @@ export function useGrowthOS() {
       if (saveTimer.current) clearTimeout(saveTimer.current)
       saveTimer.current = setTimeout(() => {
         if (!userId) return
-        supabase.from('goals').upsert(
-          { user_id: userId, team_id: teamRef.current, leads_per_week_goal: next.leads_per_week_goal, close_rate_goal: next.close_rate_goal, updated_at: new Date().toISOString() },
-          { onConflict: 'user_id' },
-        ).then(() => {})
+        // Only write the growth-goal columns present; never clobber the deal goal
+        // the Commission Planner owns unless explicitly changed here.
+        const payload: any = { user_id: userId, team_id: teamRef.current, leads_per_week_goal: next.leads_per_week_goal, close_rate_goal: next.close_rate_goal, updated_at: new Date().toISOString() }
+        if ('monthly_income_goal' in next && next.monthly_income_goal != null) payload.monthly_income_goal = next.monthly_income_goal
+        if ('monthly_deal_goal' in patch) payload.monthly_deal_goal = next.monthly_deal_goal
+        supabase.from('goals').upsert(payload, { onConflict: 'user_id' }).then(() => {})
       }, 500)
       return next
     })
   }, [userId, supabase])
 
-  return { loading, isManager, roster, liveCount, leads, goals, saveGoals, setStatus, reload: load }
+  return { loading, isManager, roster, liveCount, leads, leadList, goals, saveGoals, setStatus, reload: load }
 }

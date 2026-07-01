@@ -3,19 +3,31 @@
 
 export const dynamic = 'force-dynamic'
 
-// Growth OS — AI Team. The 18-agent automation roster, grouped by what they do
-// for you. Read live state from the team-scoped `automations` table (RLS: every
-// team member reads; only a manager/owner can flip status). Reps see exactly
-// what's working for them; managers run the team's roster from here.
+// Growth OS — AI Team. The 18-agent roster that runs the partner motion. Each
+// card IS the implementation spec: the real, copyable system prompt, its
+// trigger, tool stack, build steps and handoff contract. Live state comes from
+// the team-scoped `automations` table (RLS: team reads; managers flip status).
+// Claude is the reasoning layer for every agent; external tools appear only for
+// the one thing Claude can't do (send an SMS, write a CRM field, hold a slot).
 
+import { useState } from 'react'
 import { Card, Skeleton, Badge } from '@/components/ui'
 import { GrowthTabs } from '@/components/GrowthTabs'
-import { GrowIcon, IntegrationIcon, LockIcon, InfoIcon } from '@/components/icons'
+import { GrowthChrome } from '@/components/growth/GrowthChrome'
+import { GrowIcon, IntegrationIcon, LockIcon, InfoIcon, CopyIcon, CheckIcon, ChevronDownIcon, ArrowRightIcon, TargetIcon, LightningIcon, BookIcon, CoinIcon } from '@/components/icons'
 import { useGrowthOS } from '@/lib/hooks/useGrowthOS'
-import { CATEGORIES, STATUS_META } from '@/lib/modules/growth-os/roster'
+import { CATEGORIES, STATUS_META, MASTER_SETUP_PROMPT, monthlyCost } from '@/lib/modules/growth-os/roster'
 import { cn } from '@/lib/utils'
 
 const STATUSES = ['live', 'setup', 'paused'] as const
+
+function useCopied() {
+  const [copied, setCopied] = useState(false)
+  const copy = async (text: string) => {
+    try { await navigator.clipboard.writeText(text); setCopied(true); setTimeout(() => setCopied(false), 1800) } catch {}
+  }
+  return { copied, copy }
+}
 
 function StatusControl({ agent, isManager, onSet }: any) {
   if (!isManager) {
@@ -34,7 +46,7 @@ function StatusControl({ agent, isManager, onSet }: any) {
         return (
           <button key={s} onClick={() => !active && onSet(agent, s)} style={{ minHeight: 26 }}
             className={cn('rounded-md px-2 py-1 text-[11px] font-[800] capitalize transition-colors', active ? cn('bg-card shadow-sm', m.tone.split(' ')[0]) : 'text-gray hover:text-dark-text')}>
-            {s}
+            {s === 'setup' ? 'Setup' : s}
           </button>
         )
       })}
@@ -42,34 +54,132 @@ function StatusControl({ agent, isManager, onSet }: any) {
   )
 }
 
+function AgentCard({ agent, isManager, onSet, isOpen, onToggle }: any) {
+  const { copied, copy } = useCopied()
+  return (
+    <Card className={cn('overflow-hidden !p-0 transition-opacity', agent.status === 'paused' && 'opacity-75')}>
+      <div className="flex cursor-pointer items-start gap-3 p-3.5" onClick={onToggle}>
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+            <span className="text-[14px] font-[800] text-dark-text">{agent.name}</span>
+            <StatusControl agent={agent} isManager={isManager} onSet={onSet} />
+          </div>
+          <p className="mt-1 text-[12.5px] leading-relaxed text-mid-text">{agent.job}</p>
+        </div>
+        <ChevronDownIcon size={16} className={cn('mt-1 shrink-0 text-gray transition-transform', isOpen && 'rotate-180')} />
+      </div>
+
+      {isOpen && (
+        <div className="border-t border-border px-3.5 pb-4 pt-3.5" onClick={e => e.stopPropagation()}>
+          {/* ROI */}
+          <div className="mb-3 flex gap-2 rounded-xl bg-teal/[0.06] p-3">
+            <TargetIcon size={14} className="mt-0.5 shrink-0 text-teal" />
+            <p className="text-[12px] leading-relaxed text-mid-text">{agent.roi}</p>
+          </div>
+
+          {/* Trigger */}
+          <div className="mb-3 rounded-xl bg-bdrbg p-3">
+            <div className="text-[10px] font-[800] uppercase tracking-wide text-gray">Trigger</div>
+            <div className="mt-0.5 text-[12px] text-dark-text">{agent.trigger}</div>
+          </div>
+
+          {/* System prompt */}
+          <div className="mb-3">
+            <div className="mb-1.5 flex items-center justify-between">
+              <span className="text-[10px] font-[800] uppercase tracking-wide text-gray">System prompt — ready to use as-is</span>
+              <button onClick={() => copy(agent.systemPrompt)} className={cn('flex items-center gap-1 text-[11px] font-[700]', copied ? 'text-success' : 'text-teal')}>
+                {copied ? <><CheckIcon size={12} /> Copied</> : <><CopyIcon size={12} /> Copy</>}
+              </button>
+            </div>
+            <pre className="max-h-64 overflow-y-auto rounded-xl bg-[#0C1929] p-3 text-[11px] leading-relaxed text-[#DDE8F6] [font-family:ui-monospace,monospace] whitespace-pre-wrap">{agent.systemPrompt}</pre>
+          </div>
+
+          {/* Tools */}
+          <div className="mb-3">
+            <div className="mb-1.5 text-[10px] font-[800] uppercase tracking-wide text-gray">Tools needed</div>
+            <div className="flex flex-wrap gap-1.5">
+              {agent.tools.map((t: string) => <Badge key={t} className="!bg-bdrbg !text-mid-text !text-[10.5px]">{t}</Badge>)}
+              <Badge className="!bg-gold/10 !text-[#A06C00] !text-[10.5px]"><CoinIcon size={10} className="mr-0.5 inline" />~${agent.costPerMo}/mo</Badge>
+            </div>
+          </div>
+
+          {/* Build steps */}
+          <div className={cn(agent.handoffTo.length > 0 && 'mb-3')}>
+            <div className="mb-1.5 flex items-center gap-1.5 text-[10px] font-[800] uppercase tracking-wide text-gray"><BookIcon size={11} /> How to build this</div>
+            <ol className="list-decimal space-y-1 pl-4">
+              {agent.buildSteps.map((s: string, i: number) => <li key={i} className="text-[12px] leading-relaxed text-mid-text">{s}</li>)}
+            </ol>
+          </div>
+
+          {/* Handoffs */}
+          {agent.handoffTo.length > 0 && (
+            <div className="flex flex-wrap items-center gap-1.5">
+              <ArrowRightIcon size={12} className="text-gray" />
+              <span className="text-[10.5px] text-gray">Hands off to:</span>
+              {agent.handoffTo.map((id: string) => <Badge key={id} className="!bg-navy/8 !text-navy !text-[10.5px]">{id}</Badge>)}
+            </div>
+          )}
+        </div>
+      )}
+    </Card>
+  )
+}
+
 export default function GrowthTeamPage() {
   const { loading, isManager, roster, liveCount, setStatus } = useGrowthOS()
+  const [openId, setOpenId] = useState<string | null>(null)
+  const { copied, copy } = useCopied()
+  const cost = monthlyCost(roster)
 
   return (
     <div className="space-y-4 stagger-rise">
-      <div className="flex items-center gap-2">
-        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-hero text-white"><GrowIcon size={18} /></span>
-        <div>
-          <h1 className="text-h2 leading-tight text-dark-text">Growth OS</h1>
-          <p className="text-[12px] text-gray">Your AI-powered growth engine</p>
-        </div>
-      </div>
+      <GrowthChrome />
       <GrowthTabs />
 
       {loading ? (
         <div className="space-y-3">{[1, 2, 3].map(i => <Skeleton key={i} className="h-24 rounded-2xl" />)}</div>
       ) : (
         <>
-          <Card className="!p-4">
-            <div className="flex items-center gap-3">
-              <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-teal/10 text-teal"><IntegrationIcon size={22} /></span>
+          {/* Master setup prompt — copy into a fresh Claude chat to build all 18 */}
+          <Card className="!border-none bg-navy !p-5 text-white">
+            <div className="flex flex-wrap items-start gap-3">
+              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white/12"><IntegrationIcon size={20} /></span>
               <div className="min-w-0 flex-1">
-                <div className="text-[14px] font-[800] text-dark-text">{liveCount} of {roster.length} agents live</div>
-                <div className="text-[12px] text-gray">{isManager ? 'Tap a status to run the roster for your team.' : 'Your team lead manages which agents run.'}</div>
+                <div className="text-[15px] font-[800]">Start here: your setup guide</div>
+                <p className="mt-1 text-[12.5px] leading-relaxed text-white/75">Copy this prompt into a brand-new Claude conversation, and Claude will walk you through configuring all 18 agents in the right order — asking what you have access to, guiding each step, and testing before moving on.</p>
               </div>
-              {!isManager && <span className="flex items-center gap-1 rounded-full bg-bdrbg px-2.5 py-1 text-[11px] font-[700] text-gray"><LockIcon size={12} /> View</span>}
+              <button onClick={() => copy(MASTER_SETUP_PROMPT)} className={cn('flex shrink-0 items-center gap-2 rounded-lg px-4 py-2.5 text-[13px] font-[700]', copied ? 'bg-success text-white' : 'bg-white text-navy')}>
+                {copied ? <><CheckIcon size={14} /> Copied — paste into a new chat</> : <><CopyIcon size={14} /> Copy Setup Prompt</>}
+              </button>
             </div>
           </Card>
+
+          {/* Health + cost summary */}
+          <div className="grid grid-cols-2 gap-3">
+            <Card className="!p-4">
+              <div className="flex items-center gap-3">
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-teal/10 text-teal"><IntegrationIcon size={20} /></span>
+                <div className="min-w-0">
+                  <div className="text-[14px] font-[800] text-dark-text">{liveCount} of {roster.length} live</div>
+                  <div className="text-[11.5px] text-gray">{isManager ? 'Tap a status to run the roster' : 'Managed by your team lead'}</div>
+                </div>
+              </div>
+            </Card>
+            <Card className="!p-4">
+              <div className="flex items-center gap-3">
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-gold/12 text-[#A06C00]"><CoinIcon size={20} /></span>
+                <div className="min-w-0">
+                  <div className="text-[14px] font-[800] text-dark-text">~${cost}<span className="text-[12px] font-[600] text-gray">/mo</span></div>
+                  <div className="text-[11.5px] text-gray">Est. run cost, live agents</div>
+                </div>
+              </div>
+            </Card>
+          </div>
+
+          <div className="flex items-start gap-2 rounded-xl bg-teal/[0.06] p-3">
+            <InfoIcon size={14} className="mt-0.5 shrink-0 text-teal" />
+            <p className="text-[11.5px] leading-relaxed text-mid-text"><span className="font-[700] text-dark-text">How to read this:</span> Claude is the brain behind every agent — it reads the situation and decides what to write or do. The other tools are only for the one thing Claude can't: sending a text, writing a CRM field, holding a calendar slot. Open any agent to see its exact system prompt and how to build it for real.</p>
+          </div>
 
           {CATEGORIES.map(cat => {
             const agents = roster.filter(a => a.category === cat.key)
@@ -78,38 +188,18 @@ export default function GrowthTeamPage() {
               <div key={cat.key}>
                 <div className="mb-2 flex items-center justify-between px-0.5">
                   <div>
-                    <h2 className="text-[13px] font-[800] uppercase tracking-wide text-navy">{cat.label}</h2>
+                    <h2 className="text-[13px] font-[800] uppercase tracking-wide text-navy">{cat.label} <span className="text-gray">({live}/{agents.length} live)</span></h2>
                     <p className="text-[11px] text-gray">{cat.blurb}</p>
                   </div>
-                  <span className="text-[11px] font-[700] text-gray tabular-nums">{live}/{agents.length} live</span>
                 </div>
                 <div className="space-y-2">
                   {agents.map(a => (
-                    <Card key={a.id} className={cn('!p-3.5 transition-opacity', a.status === 'paused' && 'opacity-70')}>
-                      <div className="flex items-start gap-3">
-                        <div className="min-w-0 flex-1">
-                          <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-                            <span className="text-[14px] font-[800] text-dark-text">{a.name}</span>
-                            <Badge className="!bg-bdrbg !text-gray !text-[10px]">{a.reads}</Badge>
-                          </div>
-                          <p className="mt-0.5 text-[12.5px] font-[600] text-mid-text">{a.tagline}</p>
-                          <p className="mt-1 text-[12px] leading-relaxed text-gray">{a.detail}</p>
-                        </div>
-                        <StatusControl agent={a} isManager={isManager} onSet={setStatus} />
-                      </div>
-                    </Card>
+                    <AgentCard key={a.id} agent={a} isManager={isManager} onSet={setStatus} isOpen={openId === a.id} onToggle={() => setOpenId(openId === a.id ? null : a.id)} />
                   ))}
                 </div>
               </div>
             )
           })}
-
-          <div className="flex items-start gap-2 rounded-xl border border-border bg-bdrbg p-3">
-            <InfoIcon size={14} className="mt-0.5 shrink-0 text-gray" />
-            <p className="text-[11.5px] leading-relaxed text-gray">
-              Every agent works off your real data already in BDR Hub — your Partners pipeline, Tasks, Wins, goals, Battle Cards, and AI Coach. Status changes are audited to your team's activity log.
-            </p>
-          </div>
         </>
       )}
     </div>

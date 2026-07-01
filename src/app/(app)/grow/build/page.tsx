@@ -3,140 +3,142 @@
 
 export const dynamic = 'force-dynamic'
 
-// Growth OS — Build Phases. The guided roadmap to stand up your growth system.
-// Steps that the app can verify from real data auto-complete (goals set, leads
-// tagged, agents live); the rest are manual checks persisted to module_progress.
-// Every step deep-links into the real screen where the work happens.
+// Growth OS — Build Phases. The 8-phase roadmap to stand up the Co-Brand PLUS+
+// partner-growth system, with per-task hours + tool, per-phase "what you'll
+// have" and deliverables. Task completion persists per-user in module_progress;
+// every task + phase has an "AI Help" that hands the exact context to the coach.
 
-import Link from 'next/link'
+import { useState } from 'react'
 import { Card, Skeleton, ProgressBar } from '@/components/ui'
 import { GrowthTabs } from '@/components/GrowthTabs'
-import { GrowIcon, CheckIcon, ArrowRightIcon, LightningIcon, SuccessIcon } from '@/components/icons'
-import { useGrowthOS } from '@/lib/hooks/useGrowthOS'
+import { GrowthChrome } from '@/components/growth/GrowthChrome'
+import { CheckIcon, ChevronDownIcon, ClockIcon, ChecklistIcon, LightningIcon, ArrowRightIcon, IntegrationIcon } from '@/components/icons'
 import { useModuleKV } from '@/lib/hooks/useModuleKV'
+import { PHASES, PHASE_TONE, buildProgress, TOTAL_HOURS } from '@/lib/modules/growth-os/phases'
 import { askCoach } from '@/lib/coachBus'
 import { cn } from '@/lib/utils'
 
-// Phase plan. `auto(ctx)` → the app verifies it; otherwise it's a manual check.
-const PHASES = [
-  { key: 'foundations', title: 'Foundations', blurb: 'Point the engine at a number.', steps: [
-    { id: 'goals', label: 'Set your growth goals', hint: 'Leads/week + close rate', href: '/grow', auto: c => (c.goals.leads_per_week_goal || 0) > 0 || (Number(c.goals.close_rate_goal) || 0) > 0 },
-    { id: 'income', label: 'Build your income plan', hint: 'Commission Planner sets your deal goal', href: '/commissions', auto: c => (c.goals.monthly_deal_goal || 0) > 0 },
-    { id: 'pipeline', label: 'Load your pipeline', hint: 'At least 5 partners tracked', href: '/partners', auto: c => c.leads.total >= 5 },
-  ] },
-  { key: 'funnel', title: 'Activate the funnel', blurb: 'Put your AI agents to work.', steps: [
-    { id: 'funnel-live', label: 'Turn on your Funnel agents', hint: 'Lead Scorer + Hot-Lead Alert live', href: '/grow/team', auto: c => c.roster.filter(a => a.category === 'funnel' && a.status === 'live').length >= 2 },
-    { id: 'tag-hot', label: 'Tag your hottest leads', hint: 'Mark a partner hot so alerts fire', href: '/partners', auto: c => c.leads.hot >= 1 },
-  ] },
-  { key: 'content', title: 'Content system', blurb: 'Make outreach effortless.', steps: [
-    { id: 'first-draft', label: 'Generate your first outreach', hint: 'Use a Content Engine angle', href: '/grow/content' },
-    { id: 'save-angles', label: 'Save your go-to angles', hint: 'Keep what works on your idea board', href: '/grow/content' },
-  ] },
-  { key: 'retention', title: 'Retention', blurb: 'Protect what you signed.', steps: [
-    { id: 'health-live', label: 'Turn on Account Health', hint: 'Catch partners before they churn', href: '/grow/team', auto: c => c.roster.find(a => a.id === 'health')?.status === 'live' },
-    { id: 'review-risk', label: 'Review your at-risk partners', hint: 'Work the cold end of your book', href: '/partners' },
-  ] },
-  { key: 'scale', title: 'Scale', blurb: 'Compound the system.', steps: [
-    { id: 'forecast', label: 'Check your month-end forecast', hint: 'Know where the month lands', href: '/analytics' },
-    { id: 'coach-plan', label: 'Get your growth plan from Coach', hint: 'Your top 3 moves, from real data', action: 'coach' },
-  ] },
-]
-
 export default function GrowthBuildPage() {
-  const { loading: gLoading, goals, leads, roster, liveCount } = useGrowthOS()
-  const { loading: kvLoading, value, save } = useModuleKV('growth_build', { done: [] })
-  const loading = gLoading || kvLoading
+  const { loading, value, save } = useModuleKV('growth_build', { done: [] })
+  const [open, setOpen] = useState<string | null>(null)
+  const done = new Set(value.done || [])
+  const bp = buildProgress(value.done || [])
 
-  const ctx = { goals, leads, roster, liveCount }
-  const doneSet = new Set(value.done || [])
-  const isDone = step => (step.auto ? !!step.auto(ctx) : doneSet.has(step.id))
-  const toggle = step => {
-    if (step.auto) return
-    save(p => {
-      const set = new Set(p.done || [])
-      set.has(step.id) ? set.delete(step.id) : set.add(step.id)
-      return { done: [...set] }
-    })
-  }
-  // Action steps (e.g. "ask Coach") only ever complete — never un-complete on a
-  // repeat tap — so re-using the action can't silently wipe the final step.
-  const markDone = id => save(p => ({ done: [...new Set([...(p.done || []), id])] }))
-
-  const allSteps = PHASES.flatMap(p => p.steps)
-  const completed = loading ? 0 : allSteps.filter(isDone).length
-  const pct = allSteps.length ? Math.round((completed / allSteps.length) * 100) : 0
+  const toggle = (id: string) => save(p => {
+    const s = new Set(p.done || [])
+    s.has(id) ? s.delete(id) : s.add(id)
+    return { done: [...s] }
+  })
 
   return (
     <div className="space-y-4 stagger-rise">
-      <div className="flex items-center gap-2">
-        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-hero text-white"><GrowIcon size={18} /></span>
-        <div>
-          <h1 className="text-h2 leading-tight text-dark-text">Growth OS</h1>
-          <p className="text-[12px] text-gray">Your AI-powered growth engine</p>
-        </div>
-      </div>
+      <GrowthChrome />
       <GrowthTabs />
 
       {loading ? (
-        <div className="space-y-3">{[1, 2, 3].map(i => <Skeleton key={i} className="h-28 rounded-2xl" />)}</div>
+        <div className="space-y-3">{[1, 2, 3].map(i => <Skeleton key={i} className="h-24 rounded-2xl" />)}</div>
       ) : (
         <>
+          {/* Roadmap totals */}
           <Card className="bg-gradient-hero !p-4 text-white">
-            <div className="mb-1 flex items-end justify-between">
+            <div className="mb-2 flex items-end justify-between">
               <span className="text-[12px] font-[700] text-white/75">BUILD PROGRESS</span>
-              <span className="text-[12px] font-[800] tabular-nums">{completed}/{allSteps.length} steps</span>
+              <span className="text-[12px] font-[800] tabular-nums">{bp.complete}/{bp.total} tasks</span>
             </div>
-            <div className="text-[26px] font-[900] leading-none">{pct}%</div>
-            <ProgressBar value={pct} max={100} color="#5EEAD4" className="mt-2 h-2 !bg-white/20" />
-            <p className="mt-2 text-[12px] text-white/80">{pct === 100 ? 'Your growth system is fully stood up. Now compound it. 🚀' : 'Auto-verified steps tick themselves as you do the work in the app.'}</p>
+            <div className="text-[26px] font-[900] leading-none">{bp.pct}%</div>
+            <ProgressBar value={bp.pct} max={100} color="#5EEAD4" className="mt-2 h-2 !bg-white/20" />
+            <div className="mt-3 grid grid-cols-3 gap-2 text-center">
+              <div><div className="text-[16px] font-[900] tabular-nums">{TOTAL_HOURS}h</div><div className="text-[10px] text-white/70">total build time</div></div>
+              <div><div className="text-[16px] font-[900] tabular-nums">{bp.remainDays}d</div><div className="text-[10px] text-white/70">left at 6 focused hrs/day</div></div>
+              <div><div className="text-[16px] font-[900] tabular-nums">{PHASES.length}</div><div className="text-[10px] text-white/70">phases</div></div>
+            </div>
           </Card>
 
-          {PHASES.map((phase, pi) => {
-            const done = phase.steps.filter(isDone).length
-            const phaseComplete = done === phase.steps.length
-            return (
-              <div key={phase.key}>
-                <div className="mb-2 flex items-center gap-2 px-0.5">
-                  <span className={cn('flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[12px] font-[900]', phaseComplete ? 'bg-teal text-white' : 'bg-navy/10 text-navy')}>
-                    {phaseComplete ? <CheckIcon size={13} /> : pi + 1}
-                  </span>
-                  <div className="flex-1">
-                    <h2 className="text-[14px] font-[800] text-dark-text leading-tight">{phase.title}</h2>
-                    <p className="text-[11px] text-gray">{phase.blurb}</p>
-                  </div>
-                  <span className="text-[11px] font-[700] text-gray tabular-nums">{done}/{phase.steps.length}</span>
-                </div>
-                <div className="space-y-2">
-                  {phase.steps.map(step => {
-                    const done = isDone(step)
-                    const Row = (
-                      <div className={cn('flex items-center gap-3 rounded-2xl border bg-card p-3.5 shadow-card transition-colors',
-                        done ? 'border-teal/30' : 'border-border hover:border-teal/40')}>
-                        <button
-                          onClick={e => { if (!step.auto && !step.action) { e.preventDefault(); toggle(step) } }}
-                          aria-label={done ? 'Completed' : 'Mark complete'} style={{ minHeight: 24 }}
-                          className={cn('flex h-6 w-6 shrink-0 items-center justify-center rounded-md border-[1.5px] transition-colors',
-                            done ? 'border-teal bg-teal text-white' : 'border-gray/40 text-transparent', !step.auto && !step.action && !done && 'hover:border-teal')}>
-                          {step.auto ? (done ? <SuccessIcon size={14} /> : null) : <CheckIcon size={14} />}
-                        </button>
-                        <div className="min-w-0 flex-1">
-                          <div className={cn('text-[13.5px] font-[700] text-dark-text', done && 'line-through opacity-70')}>{step.label}</div>
-                          <div className="text-[12px] text-gray">{step.hint}{step.auto && <span className="ml-1 text-teal">· auto</span>}</div>
-                        </div>
-                        <ArrowRightIcon size={15} className="shrink-0 text-gray" />
+          {/* Mini-map */}
+          <Card className="!p-4">
+            <div className="mb-2 text-[10px] font-[800] uppercase tracking-wide text-gray">Build map</div>
+            <div className="flex gap-1.5">
+              {PHASES.map(ph => {
+                const t = ph.tasks.filter(x => done.has(x.id)).length
+                const pct = Math.round((t / ph.tasks.length) * 100)
+                const tone = PHASE_TONE[ph.tone]
+                return (
+                  <button key={ph.n} onClick={() => setOpen(open === ph.n ? null : ph.n)} title={`Phase ${ph.n}: ${ph.name} (${pct}%)`} className="flex-1">
+                    <div className={cn('h-1.5 rounded-full transition-all', pct === 100 ? tone.bg.replace('/12', '').replace('/10', '').replace('/8', '') + ' ' + tone.text : pct > 0 ? tone.bg : 'bg-border')} style={pct === 100 ? { background: 'currentColor' } : undefined} />
+                    <div className={cn('mt-1 text-center text-[9px] font-[700]', pct > 0 ? tone.text : 'text-gray')}>{ph.n}</div>
+                  </button>
+                )
+              })}
+            </div>
+          </Card>
+
+          {/* Phases */}
+          <div className="space-y-2">
+            {PHASES.map(ph => {
+              const t = ph.tasks.filter(x => done.has(x.id)).length
+              const pct = Math.round((t / ph.tasks.length) * 100)
+              const isOpen = open === ph.n
+              const tone = PHASE_TONE[ph.tone]
+              const phaseHrs = ph.tasks.reduce((s, x) => s + x.hrs, 0)
+              return (
+                <Card key={ph.n} className={cn('overflow-hidden !p-0', isOpen && `border ${tone.ring}`)}>
+                  <button onClick={() => setOpen(isOpen ? null : ph.n)} className="flex w-full items-center gap-3 p-3.5 text-left">
+                    <span className={cn('flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-[12px] font-[900]', pct === 100 ? 'bg-teal text-white' : cn(tone.bg, tone.text))}>
+                      {pct === 100 ? <CheckIcon size={15} /> : ph.n}
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <div className="text-[13.5px] font-[800] text-dark-text">Phase {ph.n} — {ph.name}</div>
+                      <div className="text-[11px] text-gray">{phaseHrs}h estimated · {ph.estDays}d</div>
+                    </div>
+                    <div className="flex shrink-0 items-center gap-2">
+                      <div className="h-1.5 w-14 overflow-hidden rounded-full bg-border"><div className={cn('h-full rounded-full', tone.text)} style={{ width: `${pct}%`, background: 'currentColor' }} /></div>
+                      <span className={cn('w-8 text-right text-[12px] font-[800] tabular-nums', tone.text)}>{pct}%</span>
+                      <ChevronDownIcon size={15} className={cn('text-gray transition-transform', isOpen && 'rotate-180')} />
+                    </div>
+                  </button>
+
+                  {isOpen && (
+                    <div className="px-4 pb-4">
+                      <div className={cn('mb-3 flex gap-2 rounded-xl p-3', tone.bg)}>
+                        <LightningIcon size={14} className={cn('mt-0.5 shrink-0', tone.text)} />
+                        <p className="text-[12px] leading-relaxed text-mid-text"><span className={cn('font-[800]', tone.text)}>What you'll have: </span>{ph.whatYouGet}</p>
                       </div>
-                    )
-                    if (step.action === 'coach') {
-                      return <button key={step.id} onClick={() => { markDone(step.id); askCoach("Give me my Growth OS plan: based on my leads/week and close-rate goals, my pipeline by temperature, and my live AI Team, what are the top 3 moves to grow my number this week?") }} className="block w-full text-left">{Row}</button>
-                    }
-                    return step.href
-                      ? <Link key={step.id} href={step.href} className="block">{Row}</Link>
-                      : <div key={step.id}>{Row}</div>
-                  })}
-                </div>
-              </div>
-            )
-          })}
+
+                      <div className="mb-3">
+                        {ph.tasks.map((task, i) => {
+                          const d = done.has(task.id)
+                          return (
+                            <div key={task.id} className={cn('flex items-center gap-2.5 py-2', i < ph.tasks.length - 1 && 'border-b border-border')}>
+                              <button onClick={() => toggle(task.id)} aria-label={d ? 'Mark incomplete' : 'Mark complete'} style={{ minHeight: 18 }}
+                                className={cn('flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded-md border-[1.5px] transition-colors', d ? 'border-teal bg-teal text-white' : 'border-gray/40 text-transparent hover:border-teal')}>
+                                <CheckIcon size={11} />
+                              </button>
+                              <span onClick={() => toggle(task.id)} className={cn('flex-1 cursor-pointer text-[12.5px]', d ? 'text-gray line-through' : 'text-mid-text')}>{task.t}</span>
+                              <span className="shrink-0 rounded-md border border-border bg-bdrbg px-1.5 py-0.5 text-[10px] text-gray"><ClockIcon size={9} className="mr-0.5 inline" />{task.hrs}h · {task.tool}</span>
+                              <button onClick={() => askCoach(`Help me complete this task for my ConsumerDirect Co-Brand PLUS+ Growth OS build, Phase ${ph.n} (${ph.name}): "${task.t}". Estimated ${task.hrs}h using ${task.tool}. Give a step-by-step plan with specific, ready-to-use output.`)}
+                                className="flex shrink-0 items-center gap-1 rounded-md border border-border bg-bdrbg px-2 py-1 text-[10px] font-[600] text-gray hover:text-navy">
+                                <IntegrationIcon size={9} /> AI Help
+                              </button>
+                            </div>
+                          )
+                        })}
+                      </div>
+
+                      <div className="mb-3 flex flex-wrap items-center gap-1.5">
+                        <span className="text-[10px] font-[800] uppercase tracking-wide text-gray">Deliverables:</span>
+                        {ph.del.map(d => <span key={d} className={cn('rounded-md px-2 py-0.5 text-[11px] font-[600]', tone.bg, tone.text)}>{d}</span>)}
+                      </div>
+
+                      <button onClick={() => askCoach(`I'm working on Phase ${ph.n} (${ph.name}) of my ConsumerDirect Co-Brand PLUS+ Growth OS build. Help me produce the key deliverables: ${ph.del.join(', ')}. Start with the most important one and give a complete, ready-to-use output.`)}
+                        className={cn('flex w-full items-center justify-between rounded-lg px-4 py-2.5 text-[12px] font-[700]', tone.bg, tone.text)}>
+                        <span>Generate Phase {ph.n} deliverables with AI</span><ArrowRightIcon size={13} />
+                      </button>
+                    </div>
+                  )}
+                </Card>
+              )
+            })}
+          </div>
         </>
       )}
     </div>
