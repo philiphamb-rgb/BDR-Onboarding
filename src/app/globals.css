@@ -170,7 +170,7 @@ button, a, [role="button"] {
   /* Active/selected card */
   .card-active {
     @apply bg-card rounded-md border border-teal shadow-card;
-    background-color: rgba(0, 194, 178, 0.03);
+    background-color: rgb(var(--teal) / 0.05);
   }
 
   /* Completed card */
@@ -199,13 +199,13 @@ button, a, [role="button"] {
   /* Tip callout */
   .callout-tip {
     @apply rounded-md border-l-4 border-teal p-md;
-    background-color: rgba(0, 194, 178, 0.06);
+    background-color: rgb(var(--teal) / 0.08);
   }
 
   /* Warning callout */
   .callout-warn {
     @apply rounded-md border-l-4 border-gold p-md;
-    background-color: rgba(245, 166, 35, 0.07);
+    background-color: rgb(var(--gold) / 0.10);
   }
 
   /* Navigation item (active) */
@@ -392,7 +392,9 @@ button, a, [role="button"] {
 @media (prefers-reduced-motion: reduce) {
   .animate-bob, .animate-ring, .animate-rise, .animate-coach-pulse,
   .animate-glow, .animate-glow-gold, .animate-nudge-x, .animate-attention,
-  .animate-breathe, .animate-pop, .animate-shimmer { animation: none !important; }
+  .animate-breathe, .animate-pop, .animate-shimmer,
+  .animate-rank-flash, .animate-belt-confetti, .animate-check-draw,
+  .animate-xp-float, .animate-fade-up { animation: none !important; }
   /* Keep the indicator centered (not bobbing) under reduced-motion. */
   .animate-tab-bob { animation: none !important; transform: translateY(-50%) !important; }
   .stagger-rise > * { animation: none !important; }

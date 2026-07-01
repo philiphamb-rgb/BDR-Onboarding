@@ -234,6 +234,27 @@ export function Confetti({ count = 36, duration = 2600 }: { count?: number; dura
   )
 }
 
+// ─── Global Confetti Trigger ─────────────────────────────────────────────────
+// A one-shot celebratory burst callable from anywhere (e.g. logging a Deal).
+// ConfettiLayer is mounted once in the root layout; triggerConfetti() fires it.
+
+let confettiListeners: ((n: number) => void)[] = []
+export function triggerConfetti(count = 44) {
+  confettiListeners.forEach(l => l(count))
+}
+
+export function ConfettiLayer() {
+  const [burst, setBurst] = useState<{ id: number; count: number } | null>(null)
+  useEffect(() => {
+    let seq = 0
+    const fn = (count: number) => setBurst({ id: ++seq, count })
+    confettiListeners.push(fn)
+    return () => { confettiListeners = confettiListeners.filter(l => l !== fn) }
+  }, [])
+  if (!burst) return null
+  return <Confetti key={burst.id} count={burst.count} />
+}
+
 // ─── Belt Watcher ─────────────────────────────────────────────────────────────
 // Mounted in the app shell. Detects a genuine belt advance (current belt, derived
 // from belt_day, has moved past the last belt we celebrated) and fires the

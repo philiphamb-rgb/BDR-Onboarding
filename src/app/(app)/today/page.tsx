@@ -12,6 +12,7 @@ import { toast } from '@/components/ui'
 import { AiTip } from '@/components/AiTip'
 import { askCoach } from '@/lib/coachBus'
 import { GoalCockpit } from '@/components/GoalCockpit'
+import { triggerXpPop, triggerConfetti } from '@/components/gamification'
 import { FirstRunOverlay } from '@/components/FirstRunOverlay'
 import { useWinsNotify } from '@/lib/hooks/useWinsNotify'
 import { goalStats, buildActions } from '@/lib/priorityEngine'
@@ -123,8 +124,13 @@ export default function TodayPage() {
     } finally { setCompleting(null) }
   }
 
-  const logActivity = async (type: 'call' | 'demo' | 'deal') => {
+  const logActivity = async (type: 'call' | 'demo' | 'deal', ev?: any) => {
     if (!userId) return
+    // Capture where the tapped tile is now, before any await, so the XP burst
+    // floats up from the button the rep actually pressed.
+    let anchor: { x: number; y: number } | null = null
+    const el = ev?.currentTarget
+    if (el?.getBoundingClientRect) { const r = el.getBoundingClientRect(); anchor = { x: r.left + r.width / 2, y: r.top } }
     const { data: { session } } = await supabase.auth.getSession()
     if (!session) return
     const label = `${type[0].toUpperCase()}${type.slice(1)}`
@@ -149,6 +155,9 @@ export default function TodayPage() {
     if (res.ok) {
       const { xp_earned } = await res.json()
       toast.xp(xp_earned ?? 0, `${label} logged!`)
+      if (xp_earned) triggerXpPop(xp_earned, anchor?.x, anchor?.y)
+      // Closing a deal is the biggest moment in a rep's day — make it rain.
+      if (type === 'deal') triggerConfetti()
       refreshProgress()
     }
   }
@@ -359,7 +368,7 @@ export default function TodayPage() {
             { type: 'demo' as const,  label: 'Demo',  Icon: TargetIcon,    xp: 25 },
             { type: 'deal' as const,  label: 'Deal',  Icon: HandshakeIcon, xp: 100 },
           ].map(item => (
-            <button key={item.type} onClick={() => logActivity(item.type)}
+            <button key={item.type} onClick={(e) => logActivity(item.type, e)}
               className="flex flex-col items-center gap-1 p-3 bg-bdrbg hover:bg-bdrbg active:scale-95 rounded-xl border border-border transition-all">
               <item.Icon size={24} className="text-navy" />
               <span className="text-xs font-semibold text-dark-text">{item.label}</span>

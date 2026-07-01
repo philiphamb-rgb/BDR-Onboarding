@@ -1,7 +1,7 @@
 import type { Metadata, Viewport } from 'next'
 import './globals.css'
 import { ToastContainer } from '@/components/ui'
-import { XpPopLayer } from '@/components/gamification'
+import { XpPopLayer, ConfettiLayer } from '@/components/gamification'
 
 export const metadata: Metadata = {
   title: 'BDR Hub',
@@ -51,6 +51,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         {children}
         <ToastContainer />
         <XpPopLayer />
+        <ConfettiLayer />
       </body>
     </html>
   )

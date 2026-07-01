@@ -7,6 +7,7 @@ import { OfflineBanner } from '@/lib/hooks/OfflineBanner'
 import { UpdateBanner } from '@/components/UpdateBanner'
 import { GuidedTour } from '@/components/GuidedTour'
 import { ThemeSync } from '@/components/ThemeSync'
+import { PageTransition } from '@/components/PageTransition'
 import { createClient } from '@/lib/supabase/server'
 
 export const dynamic = 'force-dynamic'
@@ -52,7 +53,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         {/* Global header — search + profile + settings + notifications, every page */}
         <AppHeader user={user} unreadCount={unreadCount} />
         <div className="max-w-3xl mx-auto px-4 py-5 desktop:max-w-5xl desktop:px-10 desktop:py-8">
-          {children}
+          <PageTransition>{children}</PageTransition>
         </div>
       </main>
 

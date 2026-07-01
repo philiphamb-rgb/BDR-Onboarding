@@ -62,12 +62,16 @@ export default function ManagerResourcesPage() {
       setShowModal(false)
       setForm({ title: '', url: '', description: '', type: 'link' })
       fetchResources(teamId)
+    } else {
+      toast.error('Couldn’t add that resource — try again.')
     }
   }
 
   const deleteResource = async (id: string) => {
-    await supabase.from('resources').delete().eq('id', id)
-    setResources(prev => prev.filter(r => r.id !== id))
+    const prev = resources
+    setResources(p => p.filter(r => r.id !== id))
+    const { error } = await supabase.from('resources').delete().eq('id', id)
+    if (error) { setResources(prev); toast.error('Couldn’t remove that resource.'); return }
     toast.success('Resource removed')
   }
 

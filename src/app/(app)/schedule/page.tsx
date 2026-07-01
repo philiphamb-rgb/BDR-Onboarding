@@ -271,12 +271,13 @@ export default function SchedulePage() {
       setOver(prev => ({ ...prev, [blk.key]: { start_min: merged.start_min, dur_min: merged.dur_min, note: merged.note, done: merged.done } }))
     }
     if (!userId) return
-    await supabase.from('schedule_blocks').upsert({
+    const { error } = await supabase.from('schedule_blocks').upsert({
       user_id: userId, day: today, block_key: blk.key,
       label: merged.label, type: merged.type,
       start_min: merged.start_min, dur_min: merged.dur_min,
       note: merged.note || null, done: merged.done, updated_at: new Date().toISOString(),
     }, { onConflict: 'user_id,day,block_key' })
+    if (error) { toast.error('That change didn’t save — try again.'); loadBlocks(userId) }
   }
   const toggleDone = (blk: any) => saveBlock(blk, { done: !blk.done })
 
@@ -287,10 +288,11 @@ export default function SchedulePage() {
     const blk = { key, custom: true, label: 'New block', type: 'focus', start, dur: 30, note: '', done: false }
     setCustomBlocks(prev => [...prev, blk])
     setSelected(key)
-    await supabase.from('schedule_blocks').upsert({
+    const { error } = await supabase.from('schedule_blocks').upsert({
       user_id: userId, day: today, block_key: key, label: 'New block', type: 'focus',
       start_min: start, dur_min: 30, note: null, done: false, updated_at: new Date().toISOString(),
     }, { onConflict: 'user_id,day,block_key' })
+    if (error) { setCustomBlocks(prev => prev.filter(c => c.key !== key)); setSelected(null); toast.error('Couldn’t add that block — try again.') }
   }
   const deleteBlock = async (blk: any) => {
     if (!blk.custom) { // template → reset to default
@@ -314,11 +316,13 @@ export default function SchedulePage() {
   // ── Task actions ─────────────────────────────────────────────────────────────
   const patchTask = async (id: string, patch: any) => {
     setTasks(prev => prev.map(t => t.id === id ? { ...t, ...patch } : t))
-    await supabase.from('tasks').update({ ...patch, updated_at: new Date().toISOString() }).eq('id', id)
+    const { error } = await supabase.from('tasks').update({ ...patch, updated_at: new Date().toISOString() }).eq('id', id)
+    if (error) { toast.error('That change didn’t save — try again.'); if (userId) loadTasks(userId) }
   }
-  const toggleTaskDone = (id: string, done: boolean) => {
+  const toggleTaskDone = async (id: string, done: boolean) => {
     setTasks(prev => prev.map(t => t.id === id ? { ...t, done } : t))
-    supabase.from('tasks').update({ done, updated_at: new Date().toISOString() }).eq('id', id).then(() => {})
+    const { error } = await supabase.from('tasks').update({ done, updated_at: new Date().toISOString() }).eq('id', id)
+    if (error) { toast.error('That change didn’t save — try again.'); if (userId) loadTasks(userId) }
   }
   const assignTask = (id: string, key: string) => patchTask(id, { scheduled_day: today, scheduled_block: key })
   const unassignTask = (id: string) => patchTask(id, { scheduled_day: null, scheduled_block: null })

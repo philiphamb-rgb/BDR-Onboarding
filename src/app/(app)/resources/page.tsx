@@ -113,6 +113,8 @@ export default function ResourcesPage() {
     ...sec,
     items: sec.items.filter((it) => !s || it.title.toLowerCase().includes(s) || sec.category.toLowerCase().includes(s)),
   })).filter((sec) => sec.items.length > 0)
+  const matchPeople = PEOPLE.filter((p) => !s || p.name.toLowerCase().includes(s) || p.role.toLowerCase().includes(s) || p.detail.toLowerCase().includes(s))
+  const noResults = !!s && matchTools.length === 0 && matchLibrary.length === 0 && matchPeople.length === 0
 
   return (
     <div className="space-y-6 stagger-rise">
@@ -175,10 +177,19 @@ export default function ResourcesPage() {
         <input
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          placeholder="Search tools and resources…"
+          placeholder="Search tools, people, and resources…"
           className="w-full pl-9 pr-4 py-3 rounded-xl border border-border text-sm focus:outline-none focus:ring-2 focus:ring-navy bg-card"
         />
       </div>
+
+      {/* No-results state */}
+      {noResults && (
+        <Card className="text-center py-10">
+          <SearchIcon size={26} className="mx-auto mb-2 text-gray" />
+          <p className="text-sm font-[700] text-dark-text">No matches for “{search.trim()}”</p>
+          <p className="text-xs text-gray mt-1">Try a tool name, a teammate, or a document title.</p>
+        </Card>
+      )}
 
       {/* Tools & Access Hub */}
       {matchTools.length > 0 && (
@@ -211,10 +222,11 @@ export default function ResourcesPage() {
       )}
 
       {/* People Map */}
+      {matchPeople.length > 0 && (
       <section>
         <h2 className="text-h3 text-dark-text mb-3">Your People Map</h2>
         <div className="grid grid-cols-1 desktop:grid-cols-2 gap-3">
-          {PEOPLE.map((p) => (
+          {matchPeople.map((p) => (
             <Card key={p.name} className="h-full">
               <div className="flex items-start gap-3">
                 <div className="w-10 h-10 rounded-full bg-navy/10 flex items-center justify-center shrink-0">
@@ -233,6 +245,7 @@ export default function ResourcesPage() {
           ))}
         </div>
       </section>
+      )}
 
       {/* Resources Library */}
       {matchLibrary.length > 0 && (

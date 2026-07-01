@@ -98,7 +98,10 @@ export default function NotesPage() {
   const updateActive = (patch: any) => {
     if (!active) return
     const next = { ...active, ...patch, updated_at: new Date().toISOString() }
-    setNotes(prev => [next, ...prev.filter(n => n.id !== next.id)])  // bump to top
+    // Update in place — do NOT reorder the list on every keystroke (it made the
+    // active note jump to the top of the sidebar mid-word). The list re-sorts by
+    // updated_at naturally on the next load.
+    setNotes(prev => prev.map(n => n.id === next.id ? next : n))
     scheduleSave(next)
   }
 
