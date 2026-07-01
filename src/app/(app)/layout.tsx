@@ -10,6 +10,7 @@ import { GuidedTour } from '@/components/GuidedTour'
 import { ThemeSync } from '@/components/ThemeSync'
 import { PageTransition } from '@/components/PageTransition'
 import { CommandPalette } from '@/components/CommandPalette'
+import { InstallPrompt } from '@/components/InstallPrompt'
 import { createClient } from '@/lib/supabase/server'
 
 export const dynamic = 'force-dynamic'
@@ -73,6 +74,9 @@ export default async function AppLayout({ children }: { children: React.ReactNod
 
       {/* ⌘K command palette + global hotkeys + quick-add */}
       <CommandPalette />
+
+      {/* "Install BDR Hub" nudge (Chrome/Android + iOS instructions) */}
+      <InstallPrompt />
 
       {/* Registers the push-only service worker (Web Push + PWA) */}
       <ServiceWorkerRegister />
