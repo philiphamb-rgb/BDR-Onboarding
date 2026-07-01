@@ -1,4 +1,4 @@
-# Growth OS — Rollout Strategy
+# Cortex — Rollout Strategy
 
 _Prioritized sequence, written to teach the reasoning so it can be explained in
 the room, not just followed._

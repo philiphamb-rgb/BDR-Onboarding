@@ -1,4 +1,4 @@
-# Growth OS — Executive Summary
+# Cortex — Executive Summary
 
 **For:** ConsumerDirect leadership · **From:** Philip Hambrick, BDR
 **What it is:** an agentic operating system built inside BDR Hub that runs the
@@ -12,7 +12,7 @@ next.
 The Co-Brand PLUS+ program grows by signing **agencies** who resell
 ConsumerDirect's credit tools to their own clients, on **recurring** commission.
 Two things cap that growth today: (1) speed and consistency of lead follow-up,
-and (2) how much of a BDR's day goes to manual work instead of selling. Growth OS
+and (2) how much of a BDR's day goes to manual work instead of selling. Cortex
 attacks both:
 
 - **Speed-to-lead.** Leads worked in the first 5 minutes are **21× more likely to
@@ -29,7 +29,7 @@ coach — built native to the tool BDRs already use every day.
 
 ## What was built
 
-A six-view Growth OS workspace inside BDR Hub:
+A six-view Cortex workspace inside BDR Hub:
 
 1. **Overview** — health, KPIs, and a Triage Strip that ranks today's moves
    against the BDR's real income / leads / close-rate goals.

@@ -1,4 +1,4 @@
-// Growth OS — Lead Gen static catalog. The leads themselves come from the REAL
+// Cortex — Lead Gen static catalog. The leads themselves come from the REAL
 // partner_onboarding pipeline (via useGrowthOS.leadList); this file holds the
 // asset-generation prompt library, the score→action routing map, and the demo
 // campaign set (clearly badged Demo until a campaign source is connected). All

@@ -1,4 +1,4 @@
-# Growth OS — QA Log
+# Cortex — QA Log
 
 _Per master-prompt §8. Findings from the adversarial review pass + resolutions.
 Build compiles clean; all pages are `// @ts-nocheck`, so this covers runtime /

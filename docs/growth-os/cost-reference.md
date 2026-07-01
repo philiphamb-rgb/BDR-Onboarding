@@ -1,4 +1,4 @@
-# Growth OS — Cost Reference
+# Cortex — Cost Reference
 
 _Governance figures for budgeting the agentic system. Blended estimates at
 realistic single-BDR volume; adapt as real usage data lands. Mirrors the

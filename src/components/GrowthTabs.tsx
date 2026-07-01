@@ -1,6 +1,6 @@
 'use client'
 
-// The Growth OS switcher — one destination, six views mirroring the agentic
+// The Cortex switcher — one destination, six views mirroring the agentic
 // system: Overview (where you stand), Content Engine, Lead Gen, Automations, AI
 // Team, and Build. Mirrors LearnTabs / PlanTabs so the whole app shares one
 // workspace-switcher pattern; scrolls horizontally on narrow screens.
@@ -26,7 +26,7 @@ export function GrowthTabs() {
   // Until perms resolve, hide the locked tab rather than flashing it to a rep.
   const views = GROWTH_VIEWS.filter(v => v.feature === 'growth' || (ready && canView(v.feature)))
   return (
-    <div className="no-print flex gap-1 overflow-x-auto rounded-xl bg-bdrbg p-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" role="tablist" aria-label="Growth OS">
+    <div className="no-print flex gap-1 overflow-x-auto rounded-xl bg-bdrbg p-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" role="tablist" aria-label="Cortex">
       {views.map(v => {
         const active = v.href === '/grow' ? pathname === '/grow' : (pathname === v.href || pathname.startsWith(v.href + '/'))
         const Icon = v.icon

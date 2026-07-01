@@ -1,4 +1,4 @@
-# Growth OS — Pre-Build Audit
+# Cortex — Pre-Build Audit
 
 _Per master-prompt §0. Recorded before writing the agentic build._
 
@@ -28,7 +28,7 @@ Analytics, Manager suite, Gamification (`user_progress`, `xp_ledger`, belts).
 **Nav.** Sidebar accordion (TOP_NAV + REP_SECTIONS Sell/Grow + Manager),
 BottomNav, `AppHeader` with ⌘K global search + bell; `featureForHref` gating.
 
-**Schema already live for Growth OS** (from the prior turn): `automations`
+**Schema already live for Cortex** (from the prior turn): `automations`
 (team-scoped, RLS: team reads / managers manage), `automation_log` (append-only,
 service-role writes), `ai_coach_messages`, and `goals` extended with
 `leads_per_week_goal` + `close_rate_goal` (alongside existing
@@ -64,7 +64,7 @@ service-role writes), `ai_coach_messages`, and `goals` extended with
 
 ## 4. Information architecture (decided before building)
 
-Growth OS lives under the existing **Grow** nav section (`/grow`) as a six-view
+Cortex lives under the existing **Grow** nav section (`/grow`) as a six-view
 workspace switcher mirroring LearnTabs/PlanTabs: **Overview · Content · Lead Gen
 · Automations · AI Team · Build**. A shared `GrowthChrome` (health + KPI chips +
 Triage Strip + Goals editor + Feedback) sits atop every view. Nothing bolted on;

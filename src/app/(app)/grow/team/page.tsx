@@ -3,7 +3,7 @@
 
 export const dynamic = 'force-dynamic'
 
-// Growth OS — AI Team. The 18-agent roster that runs the partner motion. Each
+// Cortex — AI Team. The 18-agent roster that runs the partner motion. Each
 // card IS the implementation spec: the real, copyable system prompt, its
 // trigger, tool stack, build steps and handoff contract. Live state comes from
 // the team-scoped `automations` table (RLS: team reads; managers flip status).

@@ -34,7 +34,7 @@ async function buildUserContext(supabase, uid: string) {
       .eq('user_id', uid).order('updated_at', { ascending: false }).limit(20),
   ])
   const { data: goal } = await supabase.from('goals').select('monthly_deal_goal, leads_per_week_goal, close_rate_goal').eq('user_id', uid).maybeSingle()
-  // Growth OS: the team's live AI Team roster, so the coach can reason about
+  // Cortex: the team's live AI Team roster, so the coach can reason about
   // which automations are working the funnel (one source of truth, not a guess).
   const { data: autos } = userData?.team_id
     ? await supabase.from('automations').select('id, status, category').eq('team_id', userData.team_id)
@@ -69,14 +69,14 @@ async function buildUserContext(supabase, uid: string) {
 - Weeks logged: ${weeks.length}${ins ? `\n- Current insight: ${ins.text}` : ''}`
   }
 
-  // Growth OS goals + AI Team summary — so the coach speaks to the rep's growth
+  // Cortex goals + AI Team summary — so the coach speaks to the rep's growth
   // engine (leads/week, close-rate target) and the automations actually running.
   const hotCount = (partners ?? []).filter((p: any) => (p.temperature ?? 'cold') === 'hot').length
   const growthBits: string[] = []
   if (goal?.leads_per_week_goal) growthBits.push(`leads/week goal ${goal.leads_per_week_goal}`)
   if (goal?.close_rate_goal) growthBits.push(`close-rate goal ${goal.close_rate_goal}%`)
   const growthBlock = (growthBits.length || autos?.length)
-    ? `\nGROWTH OS:${growthBits.length ? `\n- Growth goals: ${growthBits.join(' · ')}${hotCount ? ` · ${hotCount} hot leads in pipeline` : ''}` : ''}${autos?.length ? `\n- AI Team: ${liveAutos.length}/${autos.length} automation agents live (${[...new Set(liveAutos.map((a: any) => a.category))].join(', ') || 'none'}). When relevant, point them to Growth OS to activate the right agent.` : ''}`
+    ? `\nGROWTH OS:${growthBits.length ? `\n- Growth goals: ${growthBits.join(' · ')}${hotCount ? ` · ${hotCount} hot leads in pipeline` : ''}` : ''}${autos?.length ? `\n- AI Team: ${liveAutos.length}/${autos.length} automation agents live (${[...new Set(liveAutos.map((a: any) => a.category))].join(', ') || 'none'}). When relevant, point them to Cortex to activate the right agent.` : ''}`
     : ''
 
   const firstName = userData?.first_name || (userData?.name ?? 'BDR').split(' ')[0]

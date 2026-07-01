@@ -1,15 +1,15 @@
-# Growth OS — Build Log
+# Cortex — Build Log
 
 _Decisions, assumptions, and defaults, per master-prompt §10. Newest first._
 
 ## Architecture decisions
 
 - **One coach, not two.** Discarded the reference's browser→Anthropic "Sage"
-  chat and `SageChat.tsx`. Every AI action across Growth OS calls the existing
+  chat and `SageChat.tsx`. Every AI action across Cortex calls the existing
   context-aware `/api/coach` via `askCoach()`. Rationale: the reference's own #1
   principle is "don't duplicate what exists," and the app already has a
   streaming, pipeline-aware coach. The coach's context builder was extended to
-  read Growth OS state (goals + live roster).
+  read Cortex state (goals + live roster).
 - **Agency-partner motion, not consumer.** The reference copy targets consumers
   with poor credit; the master prompt says adapt mechanics to the internal
   Co-Brand PLUS+ motion selling to credit-repair **agencies**. All agent prompts,

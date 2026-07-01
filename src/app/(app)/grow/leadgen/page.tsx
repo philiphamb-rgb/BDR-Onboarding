@@ -3,7 +3,7 @@
 
 export const dynamic = 'force-dynamic'
 
-// Growth OS — Lead Gen. Score, route, and convert every partner lead. The leads
+// Cortex — Lead Gen. Score, route, and convert every partner lead. The leads
 // are the REAL partner_onboarding pipeline (with a derived, clearly-labelled
 // score); proactive AI insights are computed live from that pipeline + the AI
 // Team's state; campaigns are demo-badged until a campaign source connects.
@@ -32,7 +32,7 @@ function computeInsights({ leadList, roster }: any) {
   const staleHot = leadList.filter(l => l.temperature === 'hot' && l.stage !== 'converted' && l.agoMin > 60)
   if (staleHot.length) out.push({ icon: FlameIcon, tone: 'error', title: `${staleHot.length} hot lead${staleHot.length > 1 ? 's have' : ' has'}n't been contacted in over an hour`, body: 'Leads contacted within 5 minutes are 21x more likely to qualify than after 30. Every extra hour compounds the loss.', cta: 'Draft outreach now', prompt: `Write urgent, ready-to-send outreach for these hot Co-Brand PLUS+ agency leads that have gone quiet: ${staleHot.slice(0, 5).map(l => `${l.name} (score ${l.score}, ${fmtAgo(l.agoMin)})`).join(', ')}. One SMS and one email each.` })
   const off = roster.filter(a => a.status !== 'live' && a.category === 'funnel')
-  if (off.length) out.push({ icon: LightningIcon, tone: 'teal', title: `${off.length} funnel agent${off.length > 1 ? 's are' : ' is'} not live`, body: 'Turning these on hands the day-to-day lead work to your AI Team instead of doing it by hand.', cta: 'Review automations', prompt: `I have these Growth OS funnel agents turned off: ${off.map(a => a.name).join(', ')}. Which should I activate first based on impact vs setup effort, and walk me through it.` })
+  if (off.length) out.push({ icon: LightningIcon, tone: 'teal', title: `${off.length} funnel agent${off.length > 1 ? 's are' : ' is'} not live`, body: 'Turning these on hands the day-to-day lead work to your AI Team instead of doing it by hand.', cta: 'Review automations', prompt: `I have these Cortex funnel agents turned off: ${off.map(a => a.name).join(', ')}. Which should I activate first based on impact vs setup effort, and walk me through it.` })
   const cold = leadList.filter(l => l.temperature === 'cold').length
   if (cold > leadList.length / 2 && leadList.length > 3) out.push({ icon: ChartRisingIcon, tone: 'gold', title: 'Your pipeline is running cold-heavy', body: `${cold} of ${leadList.length} leads are cold. You need more warm top-of-funnel to keep close rate up.`, cta: 'Get a plan', prompt: 'My partner pipeline is mostly cold leads. Give me 3 specific ways to warm it up and generate hotter agency prospects this week.' })
   return out.slice(0, 4)

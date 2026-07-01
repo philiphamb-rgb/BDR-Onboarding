@@ -1,7 +1,7 @@
 // @ts-nocheck
 'use client'
 
-// The single hook the Growth OS surfaces consume. Owns: the team's AI Team
+// The single hook the Cortex surfaces consume. Owns: the team's AI Team
 // roster (automations table, merged with the static catalog), the rep's growth
 // goals (leads/week + close rate, on the SAME `goals` row the Commission Planner
 // and Goal Cockpit already use — no parallel store), and a live lead snapshot

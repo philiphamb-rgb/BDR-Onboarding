@@ -1,7 +1,7 @@
 // @ts-nocheck
 'use client'
 
-// Growth OS — Reporting with drill-through. A HubSpot-style funnel rollup over
+// Cortex — Reporting with drill-through. A HubSpot-style funnel rollup over
 // the real pipeline: stage counts, stage-to-stage conversion, weighted pipeline
 // value, win rate and average deal size. Every number is traceable — click a
 // stage or a KPI and the underlying records list opens; click a record to open

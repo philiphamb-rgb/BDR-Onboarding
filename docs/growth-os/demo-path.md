@@ -1,4 +1,4 @@
-# Growth OS — Live Demo Path
+# Cortex — Live Demo Path
 
 _The shortest click-path that makes the biggest impression. ~4 minutes._
 

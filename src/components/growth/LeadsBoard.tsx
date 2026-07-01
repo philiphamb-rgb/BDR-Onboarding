@@ -1,7 +1,7 @@
 // @ts-nocheck
 'use client'
 
-// Growth OS — the Leads board: a HubSpot-style list view over the real
+// Cortex — the Leads board: a HubSpot-style list view over the real
 // partner_onboarding pipeline. Search + filter (temperature, score) + sort,
 // saveable named views, and multi-select bulk operations. Every bulk write is
 // RLS-safe and PERMISSION-GATED: bulk stage/temperature edits require

@@ -1,4 +1,4 @@
-// Growth OS — the operational layer for the Automations tab. The AI Team tab
+// Cortex — the operational layer for the Automations tab. The AI Team tab
 // shows each agent's PROMPT + build spec; this map adds the same agents'
 // OPERATIONAL view: the plain-English trigger→action, a researched ROI stat,
 // the tool-connection status, and the handful of tunable settings a manager

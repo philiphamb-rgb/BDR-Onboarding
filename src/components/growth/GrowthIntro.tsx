@@ -1,7 +1,7 @@
 // @ts-nocheck
 'use client'
 
-// First-run orientation for Growth OS — kills the "where do I even start" moment.
+// First-run orientation for Cortex — kills the "where do I even start" moment.
 // A single, dismissible card that maps each tab to a plain-English purpose and
 // points at the one next step. Progressive disclosure: the per-tab legend is
 // tucked behind "What's what" so the default view stays calm. Dismissal persists

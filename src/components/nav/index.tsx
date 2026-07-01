@@ -41,7 +41,7 @@ const REP_SECTIONS: { title: string; items: NavItem[] }[] = [
     { href: '/commissions', label: 'Commissions', icon: CoinIcon },
   ] },
   { title: 'Grow', items: [
-    { href: '/grow',        label: 'Growth OS',       icon: GrowIcon, match: ['/grow'] },
+    { href: '/grow',        label: 'Cortex',       icon: GrowIcon, match: ['/grow'] },
     { href: '/train',       label: 'Learning Center', shortLabel: 'Learn', icon: TrainIcon, match: ['/train', '/progress'] },
     { href: '/wins',        label: 'Wins',            icon: WinsIcon },
     { href: '/leaderboard', label: 'Leaderboard',     icon: LeaderboardIcon },

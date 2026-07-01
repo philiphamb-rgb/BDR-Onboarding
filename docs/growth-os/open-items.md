@@ -1,4 +1,4 @@
-# Growth OS — Open Items / Integration Requests
+# Cortex — Open Items / Integration Requests
 
 _Exactly what's genuinely blocked on external access, so leadership knows what to
 approve. Everything below is built as an interface/contract; each item flips
@@ -53,14 +53,14 @@ Contacts (crm_contacts, first-class + associated), Deals (deal props on the
 company), Activities (typed growth_notes timeline), list views + saved filters +
 RBAC bulk ops, and reporting drill-through.
 
+Done: **Naming rollout** — the product is now **Cortex** across nav, headers, and
+copy. **Feedback Digest** — the manager-facing aggregation read view is live.
+
 Still open:
-- **Naming rollout** — swap "Growth OS" → the chosen brand across nav/headers/copy
-  (awaiting the final name).
-- **Feedback-loop nightly synthesis** — capture + changelog live; the scheduled
-  Manager Digest → approve/reject → versioned instruction-update job remains
-  (partly infra).
-- **Feedback-loop nightly synthesis** — the Manager Digest → approve/reject →
-  versioned instruction-update job (capture + changelog already live).
+- **Feedback-loop nightly synthesis** — capture + changelog + the manager digest
+  read view are all live; only the *automated* nightly job (digest → approve/reject
+  → versioned instruction-update → rollback) remains, and it's partly infra (a
+  scheduled Claude Managed Agent with write access to agent-instruction storage).
 
 ## Deferred by design (documented, not blocking)
 

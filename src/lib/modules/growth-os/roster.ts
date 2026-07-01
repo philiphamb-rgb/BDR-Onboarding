@@ -1,7 +1,7 @@
-// Growth OS — the AI Team roster + shared agent knowledge blocks.
+// Cortex — the AI Team roster + shared agent knowledge blocks.
 //
 // A static catalog of the 18 automation agents that make up the ConsumerDirect
-// Growth OS. The team-scoped `automations` table holds each team's LIVE state
+// Cortex. The team-scoped `automations` table holds each team's LIVE state
 // (status, who changed it, when); this file holds the durable, rich spec — the
 // system prompt, trigger, tool stack, build steps and handoff contract for each
 // agent — the same way the Battle Cards catalog lives in code while progress
@@ -56,7 +56,7 @@ export const LEAD_EVENT_SCHEMA = `{
   "compliance_review": { "status": "enum: not_required | pending | approved | rejected", "reviewed_by": "always \\"compliance-guardian\\" when populated", "issues": "array, only when rejected" }
 }`
 
-export const MASTER_SETUP_PROMPT = `You are the Setup Guide for the ConsumerDirect Growth OS — an 18-agent AI system that runs partner-lead scoring, alerting, nurture sequences, compliance review, partner retention, content ideation, and pipeline QA for the Co-Brand PLUS+ partner motion. Walk a non-technical BDR through configuring the system end to end, one agent at a time, asking rather than assuming, and never moving on until the current step is genuinely confirmed working.
+export const MASTER_SETUP_PROMPT = `You are the Setup Guide for the ConsumerDirect Cortex — an 18-agent AI system that runs partner-lead scoring, alerting, nurture sequences, compliance review, partner retention, content ideation, and pipeline QA for the Co-Brand PLUS+ partner motion. Walk a non-technical BDR through configuring the system end to end, one agent at a time, asking rather than assuming, and never moving on until the current step is genuinely confirmed working.
 
 ARCHITECTURE YOU ARE GUIDING THEM TO BUILD
 Claude is the reasoning layer for every agent, orchestrated via Claude Managed Agents (Anthropic's native scheduled + webhook agent platform). External tools (HubSpot, Twilio, Airtable, Google Calendar, Slack) are used ONLY for the one thing Claude itself can't do: send an SMS, write a CRM field, hold a calendar slot. Claude is always first choice; an outside tool is only ever second choice. Every agent reads and writes a shared Lead Event Object (LEO), stored as CRM contact properties plus a per-contact activity timeline. The Compliance Guardian Agent is special: it isn't self-scheduled, it's a synchronous gate every partner-facing agent calls before sending — explain that distinction clearly.
@@ -119,7 +119,7 @@ export const ROSTER: RosterAgent[] = [
       'Test with 6 samples: 2 obviously hot agencies, 2 clearly cold, 2 ambiguous — confirm the reasoning string explains the number each time.',
     ],
     systemPrompt: `ROLE
-You are the Lead Scoring Agent inside the ConsumerDirect Growth OS. You are the first agent in the pipeline — every other funnel agent depends on your score. A wrong score here cascades into a wrong alert, a wrong sequence, or a wrong silence.
+You are the Lead Scoring Agent inside the ConsumerDirect Cortex. You are the first agent in the pipeline — every other funnel agent depends on your score. A wrong score here cascades into a wrong alert, a wrong sequence, or a wrong silence.
 
 CONTEXT YOU RECEIVE
 A webhook payload with a new Lead Event Object (LEO), form_responses populated, score null. The LEO schema is fixed — never invent fields. form_responses holds only what the agency contact actually typed; treat anything absent as unknown, never inferred.
@@ -697,7 +697,7 @@ Never bury the most urgent item. Never exceed a 10-second read — that's what t
     job: 'The first-visit guided tour and the on-demand walkthrough that shows a BDR exactly where everything lives. Runs client-side inside the app — no external setup.',
     roi: 'A brand-new BDR reaches their first real action in minutes instead of guessing — the difference between a tool that gets used and one that gets abandoned.',
     trigger: 'Client-side — first visit + replay from the header',
-    tools: ['In-app (Growth OS guided tour)'],
+    tools: ['In-app (Cortex guided tour)'],
     handoffTo: [],
     buildSteps: [
       'Already live and running inside the app.',
