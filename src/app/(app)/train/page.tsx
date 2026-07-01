@@ -9,12 +9,12 @@ import {
   HubspotIcon, ChartRisingIcon, PipelineIcon, TeamIcon, DocumentSignIcon,
   HubIcon, CoinIcon, PhoneIcon, ChecklistIcon, IntegrationIcon,
   ProductsIcon, OrgChartIcon, TargetIcon, LockIcon, SearchIcon, CloseIcon, ShieldIcon,
+  MedalIcon, FlameIcon,
 } from '@/components/icons'
-import { cn, percentage } from '@/lib/utils'
+import { cn, percentage, formatXP } from '@/lib/utils'
 import { passedModuleSet } from '@/lib/moduleProgress'
 import { Tour } from '@/components/tour'
 import { TRAIN_TOUR } from '@/lib/tours'
-import { LearnTabs } from '@/components/LearnTabs'
 import Link from 'next/link'
 
 interface ModuleRow {
@@ -36,6 +36,7 @@ export default function TrainPage() {
   const [isManager, setIsManager] = useState(false)
   const [loading, setLoading] = useState(true)
   const [query, setQuery] = useState('')
+  const [snapshot, setSnapshot] = useState<{ belt: string; xp: number; streak: number } | null>(null)
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => {
@@ -47,13 +48,14 @@ export default function TrainPage() {
     setLoading(true)
     const [{ data: mods }, { data: prog }, { data: quizAttempts }, { data: me }, { data: lessonList }] = await Promise.all([
       supabase.from('modules').select('id, title, subtitle, order_index, xp_quiz, is_published, lessons(id)').eq('is_published', true).order('order_index'),
-      supabase.from('user_progress').select('completed_lessons').eq('user_id', uid).single(),
+      supabase.from('user_progress').select('completed_lessons, belt_rank, total_xp, current_streak').eq('user_id', uid).single(),
       supabase.from('quiz_attempts').select('module_id, percentage').eq('user_id', uid),
       supabase.from('users').select('role').eq('id', uid).single(),
       supabase.from('lessons').select('id, title, module_id').eq('is_published', true).order('order_index'),
     ])
     setIsManager(['manager', 'owner'].includes(me?.role ?? 'rep'))
     setAllLessons(lessonList ?? [])
+    setSnapshot({ belt: prog?.belt_rank ?? 'White Belt', xp: prog?.total_xp ?? 0, streak: prog?.current_streak ?? 0 })
 
     const completedIds = new Set<string>(prog?.completed_lessons ?? [])
     const passedModules = passedModuleSet(quizAttempts ?? [])
@@ -94,11 +96,29 @@ export default function TrainPage() {
 
   return (
     <div className="space-y-4 stagger-rise">
-      <LearnTabs />
       <div>
         <h1 className="text-h1 text-dark-text">Learning Center</h1>
         <p className="text-sm text-gray">{completedModules} of {modules.length} modules complete</p>
       </div>
+
+      {/* Progress snapshot — belt/XP/streak at a glance, with the full belt
+          journey, certificate, and achievement wall one tap away. */}
+      {snapshot && (
+        <Link href="/progress" className="block">
+          <Card hover className="flex items-center gap-4 !p-3.5">
+            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-navy/10 text-navy-ink"><MedalIcon size={20} /></span>
+            <div className="flex min-w-0 flex-1 items-center gap-4">
+              <div className="min-w-0">
+                <div className="truncate text-[13px] font-[800] text-dark-text">{snapshot.belt}</div>
+                <div className="text-[11px] text-gray">Your progress</div>
+              </div>
+              <div className="flex items-center gap-1.5 text-[12px] font-[700] text-mid-text"><XpIcon size={13} className="text-gold" />{formatXP(snapshot.xp).replace(' XP', '')}</div>
+              <div className="flex items-center gap-1.5 text-[12px] font-[700] text-mid-text"><FlameIcon size={13} className="text-orange-500" />{snapshot.streak}d</div>
+            </div>
+            <span className="shrink-0 text-[12px] font-[700] text-teal">Certificate & badges →</span>
+          </Card>
+        </Link>
+      )}
 
       {/* Search across all lessons */}
       <div className="relative">

@@ -770,6 +770,39 @@ export function GrowIcon(props: IconProps) {
   )
 }
 
+// Agentic CRM — a low, sleek race-car silhouette (front wing, cockpit hump,
+// rear wing, two wheels) to read as "engineered speed," distinct from every
+// other rounded/organic icon in the set.
+export function RaceCarIcon(props: IconProps) {
+  return (
+    <Icon {...props}>
+      <path d="M2 15H4" />
+      <path d="M20 15H22" />
+      <path d="M3.5 15C3.5 12 5 10.5 7 10L8.5 7.5C9 6.7 9.8 6.2 10.7 6.2H14.3C15.4 6.2 16.4 6.8 16.9 7.8L18 10C19.7 10.3 21 11.8 21 13.5V15" />
+      <path d="M3.5 15H21" />
+      <path d="M8.5 10H16" />
+      <circle cx="7" cy="17.5" r="2" />
+      <circle cx="17" cy="17.5" r="2" />
+      <path d="M9 17.5H15" />
+    </Icon>
+  )
+}
+
+// Learning Center — a stylized brain (learning/coaching), distinct in
+// silhouette from the open-book / graduation icons it replaces.
+export function BrainIcon(props: IconProps) {
+  return (
+    <Icon {...props}>
+      <path d="M9 4.5C7.3 4.5 6 5.8 6 7.3C4.6 7.7 3.5 9 3.5 10.5C3.5 11.4 3.9 12.2 4.5 12.8C4.2 13.3 4 13.9 4 14.5C4 16.2 5.3 17.6 7 17.7V18.5C7 19.9 8.1 21 9.5 21C10.9 21 12 19.9 12 18.5V7C12 5.6 10.7 4.5 9 4.5Z" />
+      <path d="M15 4.5C16.7 4.5 18 5.8 18 7.3C19.4 7.7 20.5 9 20.5 10.5C20.5 11.4 20.1 12.2 19.5 12.8C19.8 13.3 20 13.9 20 14.5C20 16.2 18.7 17.6 17 17.7V18.5C17 19.9 15.9 21 14.5 21C13.1 21 12 19.9 12 18.5V7C12 5.6 13.3 4.5 15 4.5Z" />
+      <path d="M9 9.5C9.8 9.5 10.5 10.2 10.5 11" />
+      <path d="M15 9.5C14.2 9.5 13.5 10.2 13.5 11" />
+      <path d="M7 13.5C7.8 13.5 8.5 12.9 8.7 12.2" />
+      <path d="M17 13.5C16.2 13.5 15.5 12.9 15.3 12.2" />
+    </Icon>
+  )
+}
+
 // ── Icon Map (for dynamic icon rendering) ─────────────────────────────────────
 
 export const ICON_MAP: Record<string, React.ComponentType<IconProps>> = {
@@ -793,6 +826,8 @@ export const ICON_MAP: Record<string, React.ComponentType<IconProps>> = {
   'products':     ProductsIcon,
   'org-chart':    OrgChartIcon,
   'target':       TargetIcon,
+  'race-car':     RaceCarIcon,
+  'brain':        BrainIcon,
   'belt':         BeltIcon,
   'trophy':       TrophyIcon,
   'flame':        FlameIcon,
