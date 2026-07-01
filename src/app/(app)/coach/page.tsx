@@ -5,7 +5,7 @@ import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import { Card, Button } from '@/components/ui'
-import { ArrowRightIcon, TargetIcon } from '@/components/icons'
+import { ArrowRightIcon, TargetIcon, CoachIcon } from '@/components/icons'
 import { cn, formatRelativeTime } from '@/lib/utils'
 import { Tour } from '@/components/tour'
 import { COACH_TOUR } from '@/lib/tours'
@@ -41,8 +41,8 @@ export default function CoachPage() {
     supabase.auth.getUser().then(({ data: { user } }) => {
       if (user) {
         setUserId(user.id)
-        supabase.from('users').select('first_name').eq('id', user.id).single()
-          .then(({ data }) => setUserName(data?.first_name ?? ''))
+        supabase.from('users').select('first_name, name').eq('id', user.id).single()
+          .then(({ data }) => setUserName(data?.first_name || (data?.name ?? '').split(' ')[0] || ''))
       }
     })
   }, [])
@@ -137,10 +137,10 @@ export default function CoachPage() {
       {/* Header */}
       <div className="flex items-center gap-3 mb-4 flex-shrink-0">
         <div className="w-10 h-10 bg-gold/10 rounded-xl flex items-center justify-center">
-          <TargetIcon className="text-gold" />
+          <CoachIcon className="text-gold" />
         </div>
         <div>
-          <h1 className="text-h2 text-dark-text">Coach AI</h1>
+          <h1 className="text-h2 text-dark-text">AI Coach</h1>
           <p className="text-xs text-gray">Your personal performance coach</p>
         </div>
       </div>
@@ -151,7 +151,7 @@ export default function CoachPage() {
           <div className="space-y-4">
             {/* Welcome */}
             <Card className="text-center py-6">
-              <div className="mb-3 flex justify-center"><TargetIcon size={36} className="text-gold" /></div>
+              <div className="mb-3 flex justify-center"><CoachIcon size={36} className="text-gold" /></div>
               <h2 className="text-base font-semibold text-dark-text mb-2">
                 Hey{userName ? `, ${userName}` : ''}! I&apos;m your Coach.
               </h2>
@@ -200,7 +200,7 @@ export default function CoachPage() {
               >
                 {msg.role === 'assistant' && (
                   <div className="w-7 h-7 bg-gold/10 rounded-full flex items-center justify-center flex-shrink-0 mt-1">
-                    <TargetIcon size={14} className="text-gold" />
+                    <CoachIcon size={14} className="text-gold" />
                   </div>
                 )}
                 <div
@@ -222,7 +222,7 @@ export default function CoachPage() {
             {loading && messages[messages.length - 1]?.role !== 'assistant' && (
               <div className="flex gap-3">
                 <div className="w-7 h-7 bg-gold/10 rounded-full flex items-center justify-center flex-shrink-0">
-                  <TargetIcon size={14} className="text-gold" />
+                  <CoachIcon size={14} className="text-gold" />
                 </div>
                 <div className="bg-white border border-border rounded-2xl rounded-tl-sm px-4 py-3 shadow-card">
                   <div className="flex gap-1 items-center h-4">

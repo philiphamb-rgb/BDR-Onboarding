@@ -124,11 +124,14 @@ export default function TodayPage() {
     const label = `${type[0].toUpperCase()}${type.slice(1)}`
     // One source of truth: a quick log creates the same `wins` record the Wins
     // page reads — not a silent XP-only tally that diverges from logged wins.
-    await supabase.from('wins').insert({
+    // Confirm the win persisted BEFORE awarding XP, so a failed insert can't
+    // hand out XP for a deal that was never recorded (counter/XP desync).
+    const { error: winErr } = await supabase.from('wins').insert({
       user_id: userId,
       type,
       description: `${label} logged from Today`,
     })
+    if (winErr) { toast.error(`Could not log that ${type}. Try again.`); return }
     const res = await fetch(
       `${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/calculate-xp`,
       {

@@ -67,7 +67,19 @@ serve(async (req: Request) => {
     if (led) { shouldAward = false; reason = 'Already awarded' }
     else xpEarned = ruleMap['lesson_complete'] ?? 25
   } else if (action === 'quiz_pass_60' || action === 'quiz_pass_80' || action === 'quiz_pass_90') {
-    xpEarned = ruleMap[action] ?? (action === 'quiz_pass_90' ? 75 : action === 'quiz_pass_80' ? 65 : 45)
+    // First passing attempt only (matches the Settings FAQ promise). Dedupe across
+    // ALL three tiers for this module via the immutable ledger; when no module ref
+    // is supplied, fall back to honoring the client's is_first_attempt flag.
+    const base = ruleMap[action] ?? (action === 'quiz_pass_90' ? 75 : action === 'quiz_pass_80' ? 65 : 45)
+    if (refId) {
+      const { data: led } = await supabaseAdmin.from('xp_ledger').select('id').eq('user_id', user.id).like('action', 'quiz_pass%').eq('reference_id', refId).maybeSingle()
+      if (led) { shouldAward = false; reason = 'Quiz XP already awarded for this module' }
+      else xpEarned = base
+    } else if (body.is_first_attempt === false) {
+      shouldAward = false; reason = 'Retake — quiz XP is awarded on the first attempt only'
+    } else {
+      xpEarned = base
+    }
   } else if (action === 'habit_complete') {
     if (!refId) return errorResponse('habit id required')
     const { data: led } = await supabaseAdmin.from('xp_ledger').select('id').eq('user_id', user.id).eq('action', 'habit_complete').eq('reference_id', refId).gte('created_at', startOfToday).maybeSingle()
@@ -105,7 +117,10 @@ serve(async (req: Request) => {
     else xpEarned = ruleMap['partner_onboarded'] ?? 50
   } else if (action === 'module_complete') {
     if (!refId) return errorResponse('module id required')
-    if ((progress.learning_done ?? []).includes(refId)) { shouldAward = false; reason = 'Already completed' }
+    // Dedupe via the immutable ledger, not the mutable learning_done array — a
+    // read-modify-write on that array can double-award under concurrent requests.
+    const { data: led } = await supabaseAdmin.from('xp_ledger').select('id').eq('user_id', user.id).eq('action', 'module_complete').eq('reference_id', refId).maybeSingle()
+    if (led) { shouldAward = false; reason = 'Already completed' }
     else xpEarned = ruleMap['module_complete'] ?? 100
   } else {
     return errorResponse(`Unknown action: ${action}`)

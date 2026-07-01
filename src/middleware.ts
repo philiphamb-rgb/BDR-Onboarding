@@ -56,8 +56,12 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(homeUrl)
   }
 
-  // ── Manager route protection ───────────────────────────────────────────────
-  if (user && pathname.startsWith('/manager')) {
+  // ── Manager-only route protection (server-enforced, not just client-hidden) ──
+  // Covers /manager/* and the Build tab (/grow/build), which is spec'd as
+  // hard-locked to Admin/Manager. Enforcing it here means the lock no longer
+  // depends on the fail-open client permission accessor.
+  const managerOnly = pathname.startsWith('/manager') || pathname.startsWith('/grow/build')
+  if (user && managerOnly) {
     const { data: userData } = await supabase
       .from('users')
       .select('role')

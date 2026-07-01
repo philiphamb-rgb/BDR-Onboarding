@@ -8,10 +8,10 @@ Stack: Next.js 14 App Router · Supabase (Postgres + RLS) · Vercel · Tailwind 
 ## Priority 1 — First impressions
 | Route | Purpose | Render | Data | QA |
 |---|---|---|---|---|
-| `/(auth)/onboarding` | Onboarding wizard | R | D | ? |
+| `/(auth)/onboarding` | Onboarding wizard | R | D | ✓ (2 HIGH fixed: stuck finish, phantom habits) |
 | `/(auth)/login` | Magic-link login | R | D | ? |
-| `/home` | Rep home / cockpit | R | D | ? |
-| `/today` | Daily race line + FTUX overlay | R | D | ? |
+| `/home` | Rep home / cockpit | R | D | ✓ (completeTask write-confirm fixed) |
+| `/today` | Daily race line + FTUX overlay | R | D | ~ (logActivity fixed; loading-gate carried fwd) |
 
 ## Priority 2 — Learning
 | Route | Purpose | Render | Data | QA |
@@ -48,7 +48,7 @@ Stack: Next.js 14 App Router · Supabase (Postgres + RLS) · Vercel · Tailwind 
 ## Priority 5 — Coach, plan, social
 | Route | Purpose | Render | Data | QA |
 |---|---|---|---|---|
-| `/coach` | AI Coach | R | D | ? |
+| `/coach` | AI Coach | R | D | ✓ (name/icon/greeting consistency fixed) |
 | `/schedule` | Plan (time blocks) | R | D | ? |
 | `/notes` | Notes | R | D | ? |
 | `/tasks` | Tasks | R | D | ? |

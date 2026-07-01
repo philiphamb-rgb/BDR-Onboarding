@@ -4,7 +4,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import { Button } from '@/components/ui'
+import { Button, toast } from '@/components/ui'
 import { CheckIcon, ArrowRightIcon, ArrowLeftIcon, TrophyIcon, SuccessIcon } from '@/components/icons'
 import { cn } from '@/lib/utils'
 
@@ -23,7 +23,10 @@ const BELT_BG: Record<string, string> = {
   white:'bg-bdrbg border border-border',yellow:'bg-yellow-400',orange:'bg-orange-500',
   green:'bg-green-500',blue:'bg-blue-600',purple:'bg-purple-600',black:'bg-gray-900',
 }
-const DEFAULT_HABITS = ['Reviewed my pipeline','Made 20+ calls','Followed up with 3+ leads','Completed training','Set tomorrow\'s top 3']
+// These MUST mirror seed_default_habits() in the initial-schema migration — the
+// list a brand-new user actually lands on. Keeping them in sync is what makes the
+// wizard's promise match the Today screen they see next.
+const DEFAULT_HABITS = ['Review HubSpot pipeline','Make 10 calls','Send 5 follow-up emails','Complete one lesson','Update deal notes','Log wins','Review next day plan']
 
 export default function OnboardingPage() {
   const router = useRouter()
@@ -39,23 +42,31 @@ export default function OnboardingPage() {
   const currentBelt = BELT_TIERS.reduce((acc, b) => daysSinceStart >= b.days ? b : acc, BELT_TIERS[0])
 
   const finish = async () => {
+    if (loading) return
     setLoading(true)
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) { router.push('/login'); return }   // session gone — send them to re-auth, don't hang
 
-    await supabase.from('users').update({
-      name: form.name.trim(),
-      phone: form.phone || null,
-      start_date: form.startDate,
-      onboarding_completed: true,
-    }).eq('id', user.id)
+      const { error: uErr } = await supabase.from('users').update({
+        name: form.name.trim(),
+        phone: form.phone || null,
+        start_date: form.startDate,
+        onboarding_completed: true,
+      }).eq('id', user.id)
+      if (uErr) throw uErr
 
-    await supabase.from('user_progress').upsert({
-      user_id: user.id,
-      belt_day: daysSinceStart,
-    }, { onConflict: 'user_id' })
+      const { error: pErr } = await supabase.from('user_progress').upsert({
+        user_id: user.id,
+        belt_day: daysSinceStart,
+      }, { onConflict: 'user_id' })
+      if (pErr) throw pErr
 
-    router.push('/home')
+      router.push('/home')   // success — leave loading true through the nav
+    } catch (e) {
+      toast.error('Could not finish setup — please try again.')
+      setLoading(false)
+    }
   }
 
   return (
@@ -76,7 +87,7 @@ export default function OnboardingPage() {
               <div className="mb-4 flex justify-center"><TrophyIcon size={48} className="text-gold" /></div>
               <h2 className="text-h2 text-dark-text mb-3 text-center">Welcome to BDR Hub</h2>
               <p className="text-sm text-gray mb-4 text-center">Your personal onboarding and performance hub for ConsumerDirect.</p>
-              {['Daily habit tracking','XP & belt progression','Learning & quizzes','Coach AI personalization'].map(item => (
+              {['Daily habit tracking','XP & belt progression','Learning & quizzes','AI Coach personalization'].map(item => (
                 <div key={item} className="flex items-center gap-3 py-2">
                   <div className="w-5 h-5 bg-teal/10 rounded-full flex items-center justify-center flex-shrink-0">
                     <CheckIcon className="w-3 h-3 text-teal" />
@@ -146,7 +157,7 @@ export default function OnboardingPage() {
           <div className="flex flex-col flex-1">
             <div className="flex-1">
               <h2 className="text-h2 text-dark-text mb-1">Daily habits</h2>
-              <p className="text-sm text-gray mb-4">You start with 5 default habits. Customize them any time.</p>
+              <p className="text-sm text-gray mb-4">You start with 7 default habits, ready to check off on day one. Customize them any time.</p>
               <div className="space-y-2">
                 {DEFAULT_HABITS.map((h, i) => (
                   <div key={i} className="flex items-center gap-3 p-3 bg-bdrbg rounded-xl border border-border">

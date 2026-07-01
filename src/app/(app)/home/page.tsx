@@ -155,11 +155,15 @@ export default function HomePage() {
   const completeTask = (id: string) => {
     if (doneTaskId) return
     setDoneTaskId(id)
-    supabase.from('tasks').update({ done: true, updated_at: new Date().toISOString() }).eq('id', id).then(() => {})
-    setTimeout(() => {
-      setTasks(prev => prev.filter(t => t.id !== id))
-      setDoneTaskId(prev => (prev === id ? null : prev))
-    }, 450)
+    // Only clear the row once the write is confirmed — a failed update must not
+    // make a task silently "disappear" as if done when it wasn't persisted.
+    supabase.from('tasks').update({ done: true, updated_at: new Date().toISOString() }).eq('id', id).then(({ error }) => {
+      if (error) { toast.error('Could not complete that task. Try again.'); setDoneTaskId(prev => (prev === id ? null : prev)); return }
+      setTimeout(() => {
+        setTasks(prev => prev.filter(t => t.id !== id))
+        setDoneTaskId(prev => (prev === id ? null : prev))
+      }, 450)
+    })
   }
 
   // Auto-triage today right from Home: pack tasks into time blocks by priority.
