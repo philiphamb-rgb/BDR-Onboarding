@@ -159,8 +159,11 @@ export default function ResourcesPage() {
           <SectionHead title="Tools & Access" canEdit={canEdit} onAdd={() => setEditor({ kind: 'tool', data: { ...BLANK.tool } })} addLabel="Add tool" />
           <div className="grid grid-cols-1 desktop:grid-cols-2 gap-3">
             {matchTools.map(t => {
-              const Icon = seeded ? resourceIcon(t.icon) : t.Icon
-              const tint = seeded ? tintClass(t.tint) : t.tint
+              // Both the seeded DB rows and the code defaults store icon/tint as
+              // string keys (resourcesDefaults.ts) — always resolve through the
+              // registry rather than assuming a component/class was stored.
+              const Icon = resourceIcon(t.icon)
+              const tint = tintClass(t.tint)
               const inner = (
                 <Card className="hover:border-teal transition-colors h-full">
                   <div className="flex items-start gap-3">
