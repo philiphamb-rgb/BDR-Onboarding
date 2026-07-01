@@ -164,7 +164,7 @@ export default function GrowthLeadGenPage() {
         </>
       )}
 
-      {openLead && <LeadDrawer partnerId={openLead.id} name={openLead.name} score={openLead.score} onClose={() => setOpenLead(null)} />}
+      {openLead && <LeadDrawer partnerId={openLead.id} name={openLead.name} score={openLead.score} onClose={() => setOpenLead(null)} onSaved={reload} />}
     </div>
   )
 }

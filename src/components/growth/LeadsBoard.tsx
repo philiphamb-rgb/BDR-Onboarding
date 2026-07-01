@@ -10,7 +10,7 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import { Card } from '@/components/ui'
+import { Card, toast } from '@/components/ui'
 import { NoteButton } from '@/components/growth/NoteButton'
 import { usePermissions } from '@/components/usePermissions'
 import { useModuleKV } from '@/lib/hooks/useModuleKV'
@@ -69,8 +69,16 @@ export function LeadsBoard({ leadList, onOpenLead, reload }: { leadList: any[]; 
   const bulk = async (patch: any) => {
     if (!editable || sel.size === 0 || busy) return
     setBusy(true)
-    await supabase.from('partner_onboarding').update({ ...patch, updated_at: new Date().toISOString() }).in('id', [...sel])
-    setBusy(false); clearSel(); reload()
+    const n = sel.size
+    const { error } = await supabase.from('partner_onboarding').update({ ...patch, updated_at: new Date().toISOString() }).in('id', [...sel])
+    setBusy(false)
+    if (error) {
+      // Keep the selection so the user can retry — don't pretend it worked.
+      toast.error(`Couldn't update ${n} lead${n > 1 ? 's' : ''}. Try again.`)
+      reload()
+      return
+    }
+    clearSel(); reload()
   }
   const openAssign = async () => {
     if (!isManager) return

@@ -1,7 +1,7 @@
 // @ts-nocheck
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { Card, Button, toast } from '@/components/ui'
 import { PageHeader } from '@/components/manager'
@@ -24,10 +24,12 @@ export default function BroadcastPage() {
   const [sending, setSending] = useState(false)
   const [broadcasts, setBroadcasts] = useState<Broadcast[]>([])
   const [teamSize, setTeamSize] = useState(0)
+  const userId = useRef<string | null>(null)
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => {
       if (!user) return
+      userId.current = user.id
       supabase.from('users').select('team_id').eq('id', user.id).single().then(({ data }) => {
         if (data?.team_id) {
           setTeamId(data.team_id)
@@ -45,18 +47,21 @@ export default function BroadcastPage() {
 
   const loadBroadcasts = async () => {
     const { data } = await supabase
-      .from('notifications')
-      .select('id, title, body, created_at')
-      .eq('type', 'broadcast')
+      .from('broadcasts')
+      .select('id, title, body, created_at, recipient_count')
       .order('created_at', { ascending: false })
       .limit(10)
-    setBroadcasts((data ?? []).map(n => ({ ...n, recipient_count: 0 })))
+    setBroadcasts(data ?? [])
   }
 
   const sendBroadcast = async () => {
     if (!title.trim() || !body.trim() || !teamId) return
     setSending(true)
     try {
+      // Re-fetch the roster at send time — the list may have changed since the
+      // page loaded, and the fan-out insert is atomic: one row that fails the
+      // managers_broadcast_to_team WITH CHECK (e.g. a rep who left the team)
+      // would otherwise reject the entire broadcast.
       const { data: reps } = await supabase.from('users').select('id').eq('team_id', teamId).eq('role', 'rep')
       if (!reps || reps.length === 0) {
         toast.error('No team members to send to')
@@ -65,12 +70,21 @@ export default function BroadcastPage() {
       const notifications = reps.map(rep => ({
         user_id: rep.id, type: 'broadcast', title: title.trim(), body: body.trim(), tier: 2,
       }))
-      const { error } = await supabase.from('notifications').insert(notifications)
+      const { data: inserted, error } = await supabase.from('notifications').insert(notifications).select('id')
       if (error) throw error
-      toast.success(`Message sent to ${reps.length} team member${reps.length === 1 ? '' : 's'}`)
-      setBroadcasts(prev => [{
+      const delivered = inserted?.length ?? reps.length
+      // Record the broadcast in team-scoped history so it survives a reload and
+      // shows an accurate recipient count. History failure is non-fatal — the
+      // message was already delivered.
+      const { data: rec } = await supabase
+        .from('broadcasts')
+        .insert({ team_id: teamId, sender_id: userId.current, title: title.trim(), body: body.trim(), recipient_count: delivered })
+        .select('id, title, body, created_at, recipient_count')
+        .single()
+      toast.success(`Message sent to ${delivered} team member${delivered === 1 ? '' : 's'}`)
+      setBroadcasts(prev => [rec ?? {
         id: Date.now().toString(), title: title.trim(), body: body.trim(),
-        created_at: new Date().toISOString(), recipient_count: reps.length,
+        created_at: new Date().toISOString(), recipient_count: delivered,
       }, ...prev])
       setTitle('')
       setBody('')

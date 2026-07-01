@@ -55,12 +55,16 @@ export default function AnalyticsPage() {
   const totalDeals = members.reduce((s, m) => s + m.total_deals, 0)
   const activeStreaks = members.filter(m => m.current_streak > 0).length
   // Call→demo and demo→deal conversion are the funnel a manager actually coaches.
-  const callToDemo = totalCalls ? Math.round((totalDemos / totalCalls) * 100) : 0
-  const demoToDeal = totalDemos ? Math.round((totalDeals / totalDemos) * 100) : 0
-  // Lead pipeline + warm/cold closing across the team.
+  // Clamp at 100%: the three counters are independent (a deal can be logged
+  // without a matching demo in the same window), so a raw ratio can exceed 100.
+  const callToDemo = totalCalls ? Math.min(100, Math.round((totalDemos / totalCalls) * 100)) : 0
+  const demoToDeal = totalDemos ? Math.min(100, Math.round((totalDeals / totalDemos) * 100)) : 0
+  // Lead pipeline + warm/cold closing across the team. Only count leads that
+  // have actually been triaged warm/cold — folding untriaged (null) leads into
+  // "cold" would crater the cold close-rate and mislead coaching.
   const wonRate = (arr) => arr.length ? Math.round(arr.filter(l => l.stage === 'opportunity_won').length / arr.length * 100) : 0
-  const warmLeads = leads.filter(l => (l.temperature ?? 'cold') === 'warm')
-  const coldLeads = leads.filter(l => (l.temperature ?? 'cold') === 'cold')
+  const warmLeads = leads.filter(l => l.temperature === 'warm')
+  const coldLeads = leads.filter(l => l.temperature === 'cold')
   const insights = deriveTeamInsights(members)
   const maxXP = Math.max(1, ...members.map(m => m.total_xp))
   const rankedXP = [...members].sort((a, b) => b.total_xp - a.total_xp)

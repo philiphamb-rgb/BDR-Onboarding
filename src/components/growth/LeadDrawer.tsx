@@ -28,8 +28,8 @@ const KINDS = [
 const kindMeta = (k: string) => KINDS.find(x => x.k === k) || KINDS[0]
 const fmtMoney = (n: number) => '$' + Math.round(n).toLocaleString('en-US')
 
-export function LeadDrawer({ partnerId, name, score, onClose }: { partnerId: string; name: string; score?: number; onClose: () => void }) {
-  const { loading, deal, contacts, activities, updateDeal, addContact, removeContact, setPrimary, addActivity, removeActivity } = useCrmRecord(partnerId)
+export function LeadDrawer({ partnerId, name, score, onClose, onSaved }: { partnerId: string; name: string; score?: number; onClose: () => void; onSaved?: () => void }) {
+  const { loading, deal, contacts, activities, updateDeal, addContact, removeContact, setPrimary, addActivity, removeActivity } = useCrmRecord(partnerId, onSaved)
   const [kind, setKind] = useState('note')
   const [body, setBody] = useState('')
   const [aiDraft, setAiDraft] = useState(false)

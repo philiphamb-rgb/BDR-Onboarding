@@ -1075,7 +1075,7 @@ const Confetti=({active,onDone})=>{
 };
 
 const XPToast=({xp,visible,onHide})=>{
-  useEffect(()=>{if(visible){const t=setTimeout(()=>onHide&&onHide(),2200);return()=>clearTimeout(t);}});
+  useEffect(()=>{if(visible){const t=setTimeout(()=>onHide&&onHide(),2200);return()=>clearTimeout(t);}},[visible]);
   return(
     <div style={{position:'fixed',top:visible?20:-80,right:20,zIndex:9999,
       padding:'10px 18px',borderRadius:24,background:C.gold,color:C.dark,
@@ -1090,7 +1090,7 @@ const XPToast=({xp,visible,onHide})=>{
 };
 
 const BadgeToast=({badge,visible,onHide})=>{
-  useEffect(()=>{if(visible){const t=setTimeout(()=>onHide&&onHide(),3800);return()=>clearTimeout(t);}});
+  useEffect(()=>{if(visible){const t=setTimeout(()=>onHide&&onHide(),3800);return()=>clearTimeout(t);}},[visible]);
   return(
     <div style={{position:'fixed',top:visible?72:-120,right:20,zIndex:9998,
       maxWidth:260,padding:'12px 16px',borderRadius:14,

@@ -10,7 +10,7 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import { Card } from '@/components/ui'
+import { Card, toast } from '@/components/ui'
 import {
   UserIcon, SearchIcon, CloseIcon, PlusIcon, TrashIcon, StarIcon, StarFilledIcon,
   HandshakeIcon, MailIcon, PhoneIcon, ArrowRightIcon, CoinIcon,
@@ -55,15 +55,24 @@ export function ContactsBoard({ companies, onOpenCompany }: { companies: any[]; 
     if (!form.name.trim() || !form.partner_id || !uidRef.current) return
     // First contact for this company becomes primary — matches the drawer's add path.
     const firstForCompany = !(contacts || []).some(c => c.partner_id === form.partner_id)
-    await supabase.from('crm_contacts').insert({ user_id: uidRef.current, team_id: teamRef.current, partner_id: form.partner_id, name: form.name.trim(), title: form.title || null, email: form.email || null, phone: form.phone || null, is_primary: firstForCompany })
+    const { error } = await supabase.from('crm_contacts').insert({ user_id: uidRef.current, team_id: teamRef.current, partner_id: form.partner_id, name: form.name.trim(), title: form.title || null, email: form.email || null, phone: form.phone || null, is_primary: firstForCompany })
+    if (error) { toast.error('Could not add contact. Try again.'); return }
     setForm({ partner_id: '', name: '', title: '', email: '', phone: '' }); setAdding(false); load()
   }
-  const removeContact = async (id: string) => { setContacts(prev => prev.filter(c => c.id !== id)); await supabase.from('crm_contacts').delete().eq('id', id) }
+  const removeContact = async (id: string) => {
+    const prev = contacts
+    setContacts(p => (p || []).filter(c => c.id !== id))
+    const { error } = await supabase.from('crm_contacts').delete().eq('id', id)
+    if (error) { setContacts(prev); toast.error('Could not delete contact.') }
+  }
   const setPrimary = async (c: any) => {
-    setContacts(prev => prev.map(x => x.partner_id === c.partner_id ? { ...x, is_primary: x.id === c.id } : x))
-    // Sequential to avoid a zero-primaries race.
-    await supabase.from('crm_contacts').update({ is_primary: false }).eq('partner_id', c.partner_id)
-    await supabase.from('crm_contacts').update({ is_primary: true }).eq('id', c.id)
+    const prev = contacts
+    setContacts(p => (p || []).map(x => x.partner_id === c.partner_id ? { ...x, is_primary: x.id === c.id } : x))
+    // Sequential to avoid a zero-primaries race; roll back if either write fails
+    // so we never show a phantom primary the DB doesn't have.
+    const { error: e1 } = await supabase.from('crm_contacts').update({ is_primary: false }).eq('partner_id', c.partner_id)
+    const { error: e2 } = e1 ? { error: e1 } : await supabase.from('crm_contacts').update({ is_primary: true }).eq('id', c.id)
+    if (e1 || e2) { setContacts(prev); toast.error('Could not set primary contact.') }
   }
 
   return (

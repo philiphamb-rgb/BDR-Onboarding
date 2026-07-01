@@ -84,10 +84,10 @@ export default function GamificationPage() {
     if (!error) {
       setRules(prev => prev.map(r => r.id === ruleId ? { ...r, xp_value: xp } : r))
       toast.success('XP value updated')
+      setEditingId(null)   // only close the editor on success — keep the typed value on failure
     } else {
       toast.error('Failed to save')
     }
-    setEditingId(null)
     setSaving(false)
   }
 
@@ -99,6 +99,8 @@ export default function GamificationPage() {
 
     if (!error) {
       setRules(prev => prev.map(r => r.id === rule.id ? { ...r, is_active: !r.is_active } : r))
+    } else {
+      toast.error('Could not update rule. Try again.')
     }
   }
 
@@ -147,6 +149,7 @@ export default function GamificationPage() {
                         <button
                           onClick={() => saveEdit(rule.id)}
                           disabled={saving}
+                          aria-label={`Save XP value for ${meta?.label ?? rule.rule_key}`}
                           className="w-7 h-7 bg-teal rounded-md flex items-center justify-center"
                         >
                           <CheckIcon className="w-4 h-4 text-white" />
@@ -160,12 +163,16 @@ export default function GamificationPage() {
                         </div>
                         <button
                           onClick={() => startEdit(rule)}
+                          aria-label={`Edit XP value for ${meta?.label ?? rule.rule_key}`}
                           className="w-7 h-7 bg-bdrbg hover:bg-border rounded-md flex items-center justify-center transition-colors"
                         >
                           <EditIcon className="w-3.5 h-3.5 text-gray" />
                         </button>
                         <button
                           onClick={() => toggleActive(rule)}
+                          role="switch"
+                          aria-checked={rule.is_active}
+                          aria-label={`${rule.is_active ? 'Disable' : 'Enable'} XP for ${meta?.label ?? rule.rule_key}`}
                           className={`w-7 h-7 rounded-md flex items-center justify-center transition-colors text-xs font-bold ${rule.is_active ? 'bg-teal/10 text-teal' : 'bg-bdrbg text-gray'}`}
                         >
                           {rule.is_active ? 'ON' : 'OFF'}
