@@ -15,7 +15,6 @@ import type { User } from '@/types/database'
 import { usePermissions } from '@/components/usePermissions'
 import { featureForHref, roleLabel } from '@/lib/permissions'
 import { askCoach } from '@/lib/coachBus'
-import { ApexLogo } from '@/components/ApexLogo'
 
 interface NavItem {
   href: string
@@ -35,7 +34,7 @@ const PRIMARY_NAV: NavItem[] = [
   { href: '/home',        label: 'Home',            icon: HomeIcon },
   { href: '/today',       label: 'Today',           icon: TodayIcon },
   { href: '/partners',    label: 'Partners',        icon: HandshakeIcon },
-  { href: '/grow',        label: 'Apex',            icon: GrowIcon, match: ['/grow'] },
+  { href: '/grow',        label: 'Agentic OS',      shortLabel: 'Agentic', icon: GrowIcon, match: ['/grow'] },
   { href: '/commissions', label: 'Commissions',     icon: CoinIcon },
   { href: '/analytics',   label: 'Analytics',       icon: BarChartIcon },
   { href: '/schedule',    label: 'Plan',            icon: ChecklistIcon, match: ['/notes', '/tasks', '/schedule'] },
@@ -63,7 +62,7 @@ const BOTTOM_NAV: NavItem[] = [
   { href: '/home',        label: 'Home',        icon: HomeIcon },
   { href: '/today',       label: 'Today',       icon: TodayIcon },
   { href: '/partners',    label: 'Partners',    icon: HandshakeIcon },
-  { href: '/grow',        label: 'Apex',        icon: GrowIcon, match: ['/grow'] },
+  { href: '/grow',        label: 'Agentic OS',  shortLabel: 'Agentic', icon: GrowIcon, match: ['/grow'] },
   { href: '/commissions', label: 'Commissions', shortLabel: 'Comms', icon: CoinIcon },
 ]
 
@@ -297,8 +296,12 @@ export function Sidebar({ user }: { user?: User | null; unreadCount?: number }) 
   return (
     <aside className={cn('fixed left-0 top-0 bottom-0 z-sidebar w-[240px] bg-card border-r border-border flex flex-col hidden desktop:flex')}>
       <div className="px-4 py-4 border-b border-border">
-        <Link href="/home" aria-label="Apex home" className="flex items-center transition-transform active:scale-[0.98]">
-          <ApexLogo size={40} />
+        <Link href="/home" aria-label="BDR Hub home" className="flex items-center gap-2.5 transition-transform active:scale-[0.98]">
+          <img src="/consumerdirect-mark.svg" alt="ConsumerDirect" className="h-8 w-8 shrink-0" />
+          <div className="leading-tight">
+            <div className="text-[15px] font-[900] text-dark-text">BDR Hub</div>
+            <div className="text-[10px] font-[700] uppercase tracking-[0.1em] text-gray">Consumer Direct</div>
+          </div>
         </Link>
       </div>
 

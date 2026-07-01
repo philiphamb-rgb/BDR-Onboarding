@@ -3,11 +3,13 @@
 
 export const dynamic = 'force-dynamic'
 
-// Apex — Automations. The operational lens on the AI Team: the same agents,
-// shown as when→then workflows with a researched ROI, live tool-connection
-// status, and the handful of settings a manager actually tunes. Status writes to
-// the real team-scoped `automations` table (RLS-gated to managers); per-agent
-// config persists per-user in module_progress. One roster, two lenses.
+// Automations — the operational layer, framed as workflows (NOT agents). Each
+// row is a when→then automation: the trigger, the action it performs, a
+// researched ROI, live tool-connection status, and the handful of settings a
+// manager tunes. The agent WORKFORCE that runs these lives in the AI Team tab
+// (the org chart); this tab is purely "what runs, and what it's wired to."
+// Status writes to the team-scoped `automations` table (RLS-gated to managers);
+// config persists per-user in module_progress.
 
 import { useState } from 'react'
 import { Card, Skeleton, Toggle, Badge } from '@/components/ui'
@@ -103,7 +105,7 @@ export default function GrowthAutomationsPage() {
                       <span className={cn('flex h-10 w-10 shrink-0 items-center justify-center rounded-xl', a.status === 'live' ? 'bg-teal/10 text-teal' : 'bg-bdrbg text-gray')}><LightningIcon size={18} /></span>
                       <div className="min-w-0 flex-1">
                         <div className="flex flex-wrap items-center gap-2">
-                          <span className="text-[13.5px] font-[800] text-dark-text">{a.name}</span>
+                          <span className="text-[13.5px] font-[800] text-dark-text">{m.action}</span>
                           <span className={cn('rounded-full px-2 py-0.5 text-[10px] font-[800]', sm.tone)}>{sm.label}</span>
                         </div>
                         <div className="mt-1.5 flex gap-1.5">
@@ -153,7 +155,7 @@ export default function GrowthAutomationsPage() {
                           </div>
                         </div>
 
-                        <button onClick={() => import('@/lib/coachBus').then(({ askCoach }) => askCoach(`Walk me through setting up the "${a.name}" automation for my ConsumerDirect Co-Brand PLUS+ Apex using ${m.tools.map(t => t.name).join(' + ')}. Give exact setup steps for each tool and what to test first.`))}
+                        <button onClick={() => import('@/lib/coachBus').then(({ askCoach }) => askCoach(`Walk me through setting up the "${m.action}" automation for my ConsumerDirect Co-Brand PLUS+ partner motion using ${m.tools.map(t => t.name).join(' + ')}. Give exact setup steps for each tool and what to test first.`))}
                           className="flex w-full items-center justify-between rounded-lg bg-teal/[0.08] px-4 py-2.5 text-[12px] font-[700] text-teal">
                           <span>Walk me through setup with AI</span><ArrowRightIcon size={13} />
                         </button>

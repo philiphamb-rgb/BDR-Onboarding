@@ -98,8 +98,8 @@ export function GrowthChrome({ compact = false }: { compact?: boolean }) {
       <div className="flex items-center gap-2">
         <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-hero text-white"><GrowIcon size={18} /></span>
         <div className="min-w-0 flex-1">
-          <h1 className="text-h2 leading-tight text-dark-text">Apex</h1>
-          <p className="text-[12px] text-gray">Your AI-powered growth engine</p>
+          <h1 className="text-h2 leading-tight text-dark-text">Agentic OS</h1>
+          <p className="text-[12px] text-gray">Your AI agent workforce</p>
         </div>
         <span className={cn('flex shrink-0 items-center gap-1.5 rounded-full px-2.5 py-1.5 text-[11px] font-[700]', TONE[health].bg, TONE[health].chipText)}>
           <span className={cn('h-1.5 w-1.5 rounded-full', TONE[health].dot)} />{healthLabel}

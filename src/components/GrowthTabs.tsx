@@ -26,7 +26,7 @@ export function GrowthTabs() {
   // Until perms resolve, hide the locked tab rather than flashing it to a rep.
   const views = GROWTH_VIEWS.filter(v => v.feature === 'growth' || (ready && canView(v.feature)))
   return (
-    <div className="no-print flex gap-1 overflow-x-auto rounded-xl bg-bdrbg p-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" role="tablist" aria-label="Apex">
+    <div className="no-print flex gap-1 overflow-x-auto rounded-xl bg-bdrbg p-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" role="tablist" aria-label="Agentic OS">
       {views.map(v => {
         const active = v.href === '/grow' ? pathname === '/grow' : (pathname === v.href || pathname.startsWith(v.href + '/'))
         const Icon = v.icon
