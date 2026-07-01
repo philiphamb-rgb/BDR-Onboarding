@@ -100,6 +100,11 @@ export default function ModulePage() {
         <Link href={`/train/${moduleId}/quiz`}>
           <Button variant="conversion" className="w-full" size="lg">Take Module Quiz<ArrowRightIcon className="ml-2" /></Button>
         </Link>
+      ) : lessons.length === 0 ? (
+        <div className="rounded-xl border border-border bg-bdrbg px-4 py-6 text-center">
+          <p className="text-[13px] font-[700] text-dark-text">No lessons published yet</p>
+          <p className="mt-1 text-[12px] text-gray">This module is being built. Check back soon — you&apos;ll be able to start it here.</p>
+        </div>
       ) : null}
 
       {/* Quiz becomes available only after ALL lessons are complete */}

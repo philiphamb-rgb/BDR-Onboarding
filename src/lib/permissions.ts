@@ -97,9 +97,15 @@ export function resolvePerms(role: RoleKey, overrides: { role: string; feature_k
   return map
 }
 
-// Fail-open accessors: allow unless explicitly denied.
-export const canView = (perms: PermMap | null, key: string) => !perms || perms[key]?.view !== false
-export const canEdit = (perms: PermMap | null, key: string) => !perms || perms[key]?.edit !== false
+const FEATURE_BY_KEY: Record<string, Feature> = Object.fromEntries(FEATURES.map(f => [f.key, f]))
+
+// Accessors. When perms ARE loaded: allow unless explicitly denied (unchanged).
+// When perms are NOT loaded yet (null): fail OPEN for rep-scope convenience
+// features (so nav never flickers), but fail CLOSED for manager-scope features —
+// a perms-load hiccup must never briefly expose a manager-only surface.
+const allowWhenUnloaded = (key: string) => FEATURE_BY_KEY[key]?.scope !== 'manager'
+export const canView = (perms: PermMap | null, key: string) => perms ? perms[key]?.view !== false : allowWhenUnloaded(key)
+export const canEdit = (perms: PermMap | null, key: string) => perms ? perms[key]?.edit !== false : allowWhenUnloaded(key)
 
 // Map a nav href to its feature key (for nav gating).
 export function featureForHref(href: string): string | undefined {

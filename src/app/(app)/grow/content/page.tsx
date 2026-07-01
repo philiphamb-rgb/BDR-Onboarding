@@ -274,7 +274,9 @@ export default function GrowthContentPage() {
                 </div>
               </div>
               <div className="space-y-2">
-                {filteredStack.map((item, i) => <StackCard key={item.id} item={item} rank={i + 2} />)}
+                {filteredStack.length === 0 ? (
+                  <p className="rounded-xl border border-border bg-bdrbg px-3 py-6 text-center text-[12px] text-gray">No queued moves for this channel — switch the filter above to see more.</p>
+                ) : filteredStack.map((item, i) => <StackCard key={item.id} item={item} rank={i + 2} />)}
               </div>
             </div>
             <FunnelWaterfall />

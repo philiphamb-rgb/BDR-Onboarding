@@ -92,16 +92,20 @@ serve(async (req: Request) => {
       else if (streak >= 14) xpEarned += ruleMap['streak_14_day_bonus'] ?? 20
       else if (streak >= 7) xpEarned += ruleMap['streak_7_day_bonus'] ?? 10
     }
-  } else if (action === 'call_logged') {
-    xpEarned = ruleMap['call_logged'] ?? 10
-  } else if (action === 'demo_logged') {
-    xpEarned = ruleMap['demo_logged'] ?? 25
-  } else if (action === 'deal_closed') {
-    xpEarned = ruleMap['deal_closed'] ?? 100
-    if ((progress.total_deals ?? 0) === 0) xpEarned += ruleMap['first_deal'] ?? 250
-    if ((progress.total_deals ?? 0) === 9) xpEarned += ruleMap['tenth_deal'] ?? 500
-  } else if (action === 'win_logged') {
-    xpEarned = ruleMap['win_logged'] ?? 15
+  } else if (action === 'call_logged' || action === 'demo_logged' || action === 'deal_closed' || action === 'win_logged') {
+    // Per-day XP cap per activity so these can't be farmed by paced clicking.
+    // Caps are generous — a real heavy day won't hit them; runaway logging will.
+    const DAILY_CAP: Record<string, number> = { call_logged: 40, demo_logged: 20, deal_closed: 20, win_logged: 25 }
+    const BASE: Record<string, number> = { call_logged: 10, demo_logged: 25, deal_closed: 100, win_logged: 15 }
+    const { count } = await supabaseAdmin.from('xp_ledger').select('*', { count: 'exact', head: true }).eq('user_id', user.id).eq('action', action).gte('created_at', startOfToday)
+    if ((count ?? 0) >= DAILY_CAP[action]) { shouldAward = false; reason = 'Daily XP cap reached for this activity' }
+    else {
+      xpEarned = ruleMap[action] ?? BASE[action]
+      if (action === 'deal_closed') {
+        if ((progress.total_deals ?? 0) === 0) xpEarned += ruleMap['first_deal'] ?? 250
+        if ((progress.total_deals ?? 0) === 9) xpEarned += ruleMap['tenth_deal'] ?? 500
+      }
+    }
   } else if (action === 'resource_viewed') {
     xpEarned = ruleMap['resource_viewed'] ?? 10
   } else if (action === 'drill_complete') {

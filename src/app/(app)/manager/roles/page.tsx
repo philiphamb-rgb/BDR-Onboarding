@@ -59,8 +59,12 @@ export default function RolesPage() {
 
   const changeMemberRole = async (id: string, role: string) => {
     if (!isAdmin) return
+    const prevMembers = members
     setMembers(prev => prev.map(m => m.id === id ? { ...m, role: dbRoleFor(role) } : m))
-    await supabase.from('users').update({ role: dbRoleFor(role) }).eq('id', id)
+    const { error } = await supabase.from('users').update({ role: dbRoleFor(role) }).eq('id', id)
+    // Don't claim success the DB rejected — role writes on other users need a
+    // privileged (service-role) path; surface that instead of a false success.
+    if (error) { setMembers(prevMembers); toast.error('Could not change role — this needs elevated server permissions.'); return }
     toast.success('Role updated')
   }
 
@@ -71,8 +75,9 @@ export default function RolesPage() {
       const { data: existing } = await supabase.from('users').select('id').eq('email', email.trim().toLowerCase()).single()
       if (existing) {
         await supabase.from('team_members').upsert({ team_id: me.team_id, user_id: existing.id, status: 'active' }, { onConflict: 'team_id,user_id' })
-        await supabase.from('users').update({ role: dbRoleFor(inviteRole), team_id: me.team_id }).eq('id', existing.id)
-        toast.success(`${email} added as ${inviteRole}`)
+        const { error: roleErr } = await supabase.from('users').update({ role: dbRoleFor(inviteRole), team_id: me.team_id }).eq('id', existing.id)
+        if (roleErr) toast.error(`${email} couldn’t be assigned a role — that needs elevated server permissions.`)
+        else toast.success(`${email} added as ${inviteRole}`)
         setEmail('')
         const { data: mem } = await supabase.from('users').select('id, name, email, role').eq('team_id', me.team_id)
         setMembers(mem ?? [])

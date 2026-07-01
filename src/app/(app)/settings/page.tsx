@@ -130,7 +130,7 @@ export default function SettingsPage() {
         <div className="space-y-2">
           {[
             { key: 'outlook', label: 'Outlook Calendar', desc: 'Two-way sync your Time Blocks blocks & notes', Icon: CalendarIcon, tint: 'bg-navy/10 text-navy' },
-            { key: 'slack', label: 'Slack', desc: 'Reach teammates & partner-support channels', Icon: SlackIcon, tint: 'bg-purple-50 text-purple-600' },
+            { key: 'slack', label: 'Slack', desc: 'Reach teammates & partner-support channels', Icon: SlackIcon, tint: 'bg-purple/10 text-purple' },
           ].map(c => (
             <div key={c.key} className="flex items-center gap-3 rounded-xl border border-border bg-bdrbg p-3">
               <div className={cn('flex h-9 w-9 shrink-0 items-center justify-center rounded-xl', c.tint)}><c.Icon size={18} /></div>
@@ -161,8 +161,8 @@ export default function SettingsPage() {
       {[
         { icon: <LightningIcon className="text-teal w-5 h-5" />, label: "What's new", sub: `Take the guided tour · v${APP_VERSION}`, onPress: () => startWalkthrough() },
         { icon: <BellIcon className="text-navy w-5 h-5" />, label: 'Notifications', sub: 'Reminders, quiet hours', onPress: () => setSection('notifications') },
-        { icon: <DownloadIcon className="text-green-600 w-5 h-5" />, label: 'My Data', sub: 'Export or delete your data', onPress: () => setSection('data') },
-        { icon: <ShieldIcon className="text-purple-600 w-5 h-5" />, label: 'Help & FAQ', sub: 'Common questions answered', onPress: () => setSection('help') },
+        { icon: <DownloadIcon className="text-success w-5 h-5" />, label: 'My Data', sub: 'Export or delete your data', onPress: () => setSection('data') },
+        { icon: <ShieldIcon className="text-purple w-5 h-5" />, label: 'Help & FAQ', sub: 'Common questions answered', onPress: () => setSection('help') },
       ].map(item => (
         <button key={item.label} onClick={item.onPress} className="w-full text-left">
           <Card className="flex items-center gap-3 hover:border-navy/20 transition-colors">
@@ -258,7 +258,7 @@ export default function SettingsPage() {
         <div className="text-sm font-semibold text-dark-text mb-1">Delete Account</div>
         <div className="text-xs text-gray mb-3">Permanently delete your account. This cannot be undone.</div>
         <button onClick={() => toast.error('Contact your manager to delete your account.')}
-          className="text-sm text-error font-medium border border-red-200 px-3 py-1.5 rounded-lg hover:bg-red-50 transition-colors">
+          className="text-sm text-error font-medium border border-error/30 px-3 py-1.5 rounded-lg hover:bg-error/10 transition-colors">
           Delete Account
         </button>
       </Card>
