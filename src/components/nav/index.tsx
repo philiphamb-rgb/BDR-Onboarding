@@ -9,7 +9,7 @@ import {
   HomeIcon, TodayIcon, TrainIcon, CoachIcon, DashboardIcon, XpIcon,
   BellIcon, BellDotIcon, SettingsIcon, LeaderboardIcon, TeamIcon, BarChartIcon,
   BookIcon, HandshakeIcon, ClockIcon, MoreIcon, CoinIcon,
-  ChecklistIcon, ShieldIcon, SearchIcon, CloseIcon, GrowIcon, ChevronDownIcon,
+  ChecklistIcon, ShieldIcon, SearchIcon, CloseIcon, GrowIcon, ChevronDownIcon, MenuIcon,
 } from '@/components/icons'
 import type { User } from '@/types/database'
 import { usePermissions } from '@/components/usePermissions'
@@ -304,37 +304,63 @@ export function Sidebar({ user }: { user?: User | null; unreadCount?: number }) 
   const showMgr = mgrOpen || onManagerRoute
   const toggleMgr = () => { setMgrOpen(o => { const n = !o; try { localStorage.setItem('mgrNavOpen', n ? '1' : '0') } catch {}; return n }) }
 
+  // Collapsed (icon-only rail) ↔ expanded, toggled by the hamburger. The width
+  // itself is driven by the --sb-w CSS var on <html> (so the main content margin
+  // follows too); this state just swaps the internal icon-only vs labelled render.
+  const [collapsed, setCollapsed] = useState(false)
+  useEffect(() => { setCollapsed(document.documentElement.dataset.sidebar === 'collapsed') }, [])
+  const toggleCollapsed = () => setCollapsed(c => {
+    const n = !c
+    try { localStorage.setItem('sidebarCollapsed', n ? '1' : '0') } catch {}
+    document.documentElement.dataset.sidebar = n ? 'collapsed' : 'expanded'
+    return n
+  })
+
   return (
-    <aside className={cn('fixed left-0 top-0 bottom-0 z-sidebar w-[240px] bg-card border-r border-border flex flex-col hidden desktop:flex')}>
-      <div className="px-4 py-4 border-b border-border">
-        <Link href="/home" aria-label="BDR Hub home" className="flex items-center gap-2.5 transition-transform active:scale-[0.98]">
-          <img src="/consumerdirect-mark.svg" alt="ConsumerDirect" className="h-8 w-8 shrink-0" />
-          <div className="leading-tight">
-            <div className="text-[15px] font-[900] text-dark-text">BDR Hub</div>
-            <div className="text-[10px] font-[700] uppercase tracking-[0.1em] text-gray">Consumer Direct</div>
-          </div>
-        </Link>
+    <aside className={cn('fixed left-0 top-0 bottom-0 z-sidebar w-[var(--sb-w)] overflow-hidden bg-card border-r border-border flex flex-col hidden desktop:flex transition-[width] duration-300')}>
+      <div className={cn('flex items-center gap-2 border-b border-border py-4', collapsed ? 'justify-center px-2' : 'px-3')}>
+        <button onClick={toggleCollapsed} aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'} aria-expanded={!collapsed}
+          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-gray hover:bg-bdrbg hover:text-navy">
+          <MenuIcon size={18} />
+        </button>
+        {!collapsed && (
+          <Link href="/home" aria-label="BDR Hub home" className="flex min-w-0 items-center gap-2 transition-transform active:scale-[0.98]">
+            <img src="/consumerdirect-mark.svg" alt="ConsumerDirect" className="h-7 w-7 shrink-0" />
+            <div className="min-w-0 leading-tight">
+              <div className="truncate text-[14px] font-[900] text-dark-text">BDR Hub</div>
+              <div className="truncate text-[9px] font-[700] uppercase tracking-[0.1em] text-gray">Consumer Direct</div>
+            </div>
+          </Link>
+        )}
       </div>
 
-      <div className="flex-1 overflow-y-auto py-3 px-3">
-        {/* Every destination as its own flat tab, in strategic usage order */}
+      <div className={cn('flex-1 overflow-y-auto py-3', collapsed ? 'px-2' : 'px-3')}>
         <div className="space-y-0.5">
-          {primary.map(item => <SidebarItem key={item.href} item={item} pathname={pathname} />)}
+          {primary.map(item => <SidebarItem key={item.href} item={item} pathname={pathname} collapsed={collapsed} />)}
         </div>
 
-        {/* Manager tools — role-gated, collapsible, collapsed by default */}
+        {/* Manager tools — role-gated. Collapsed: icon-only, no accordion.
+            Expanded: collapsible section, collapsed by default. */}
         {managerItems.length > 0 && (
           <div className="mt-4 border-t border-border pt-3">
-            <button onClick={toggleMgr} aria-expanded={showMgr}
-              className="mb-1 flex w-full items-center gap-2 rounded-lg px-4 py-1.5 text-left text-mid-text hover:bg-bdrbg">
-              <span className="flex-1 text-[10px] font-[800] uppercase tracking-[0.1em] text-gray">Manager</span>
-              {onManagerRoute && !mgrOpen && <span className="h-1.5 w-1.5 rounded-full bg-navy" />}
-              <ChevronDownIcon size={14} className={cn('text-gray transition-transform', showMgr && 'rotate-180')} />
-            </button>
-            {showMgr && (
+            {collapsed ? (
               <div className="space-y-0.5">
-                {managerItems.map(item => <SidebarItem key={item.href} item={item} pathname={pathname} />)}
+                {managerItems.map(item => <SidebarItem key={item.href} item={item} pathname={pathname} collapsed />)}
               </div>
+            ) : (
+              <>
+                <button onClick={toggleMgr} aria-expanded={showMgr}
+                  className="mb-1 flex w-full items-center gap-2 rounded-lg px-4 py-1.5 text-left text-mid-text hover:bg-bdrbg">
+                  <span className="flex-1 text-[10px] font-[800] uppercase tracking-[0.1em] text-gray">Manager</span>
+                  {onManagerRoute && !mgrOpen && <span className="h-1.5 w-1.5 rounded-full bg-navy" />}
+                  <ChevronDownIcon size={14} className={cn('text-gray transition-transform', showMgr && 'rotate-180')} />
+                </button>
+                {showMgr && (
+                  <div className="space-y-0.5">
+                    {managerItems.map(item => <SidebarItem key={item.href} item={item} pathname={pathname} />)}
+                  </div>
+                )}
+              </>
             )}
           </div>
         )}
@@ -343,20 +369,22 @@ export function Sidebar({ user }: { user?: User | null; unreadCount?: number }) 
   )
 }
 
-function SidebarItem({ item, pathname }: { item: NavItem; pathname: string }) {
+function SidebarItem({ item, pathname, collapsed = false }: { item: NavItem; pathname: string; collapsed?: boolean }) {
   const Icon = item.icon
   const isActive = matchNav(pathname, item)
   return (
-    <Link href={item.href}
-      className={cn('relative flex items-center gap-3 pl-4 pr-3 py-2.5 rounded-lg min-h-[42px] w-full text-[14px] font-[600] transition-all duration-[150ms]',
+    <Link href={item.href} title={collapsed ? item.label : undefined}
+      className={cn('relative flex items-center rounded-lg min-h-[42px] w-full text-[14px] font-[600] transition-all duration-[150ms] py-2.5',
+        collapsed ? 'justify-center px-0' : 'gap-3 pl-4 pr-3',
         isActive ? 'bg-navy/10 text-navy font-[700]' : 'text-mid-text hover:bg-bdrbg hover:text-navy')}
       aria-current={isActive ? 'page' : undefined}>
-      {/* Active indicator: pinned to the far-left edge so it never touches the
-          icon, with a subtle live "bob" that echoes the notification bell. */}
-      <div className={cn('absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 rounded-full bg-navy transition-opacity duration-200',
-        isActive ? 'opacity-100 animate-tab-bob' : 'opacity-0')} />
+      {/* Active indicator bar — only when expanded (would clip in the icon rail). */}
+      {!collapsed && (
+        <div className={cn('absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 rounded-full bg-navy transition-opacity duration-200',
+          isActive ? 'opacity-100 animate-tab-bob' : 'opacity-0')} />
+      )}
       <Icon size={18} />
-      <span className="flex-1">{item.label}</span>
+      {!collapsed && <span className="flex-1 truncate">{item.label}</span>}
     </Link>
   )
 }

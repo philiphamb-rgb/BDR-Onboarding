@@ -63,6 +63,11 @@
   transition: background-color .3s ease, border-color .3s ease, color .3s ease, fill .3s ease, stroke .3s ease !important;
 }
 
+/* Collapsible desktop sidebar width — one variable drives both the rail and the
+   main-content margin, so the hamburger toggle keeps them in lockstep. */
+:root { --sb-w: 240px; }
+html[data-sidebar="collapsed"] { --sb-w: 68px; }
+
 /* ── Base Resets ──────────────────────────────────────────────────────────── */
 *, *::before, *::after {
   box-sizing: border-box;
