@@ -9,11 +9,11 @@ import {
   HomeIcon, TodayIcon, TrainIcon, CoachIcon, DashboardIcon, XpIcon,
   BellIcon, BellDotIcon, SettingsIcon, LeaderboardIcon, TeamIcon, BarChartIcon,
   BookIcon, HandshakeIcon, ClockIcon, MoreIcon, CoinIcon,
-  ChecklistIcon, ShieldIcon, SearchIcon, ChevronDownIcon, CloseIcon, GrowIcon,
+  ChecklistIcon, ShieldIcon, SearchIcon, CloseIcon, GrowIcon,
 } from '@/components/icons'
 import type { User } from '@/types/database'
 import { usePermissions } from '@/components/usePermissions'
-import { featureForHref } from '@/lib/permissions'
+import { featureForHref, roleLabel } from '@/lib/permissions'
 import { askCoach } from '@/lib/coachBus'
 import { ApexLogo } from '@/components/ApexLogo'
 
@@ -25,30 +25,23 @@ interface NavItem {
   match?: string[]   // extra hrefs that should mark this item active
 }
 
-// Always-visible quick destinations. Plan is one workspace (Capture/Organize/
-// Schedule) — its three views share the in-page PlanTabs switcher.
-// Coach is no longer a tab — it lives in the header (desktop) + a draggable FAB
-// (mobile). Wins is no longer a tab — wins now surface as throttled milestone
-// notifications, scattered through the app instead of a destination.
-const TOP_NAV: NavItem[] = [
-  { href: '/home',     label: 'Home',  icon: HomeIcon },
-  { href: '/today',    label: 'Today', icon: TodayIcon },
-  { href: '/schedule', label: 'Plan',  icon: ChecklistIcon, match: ['/notes', '/tasks', '/schedule'] },
-]
-
-// Collapsible sections (accordion — one open at a time).
-const REP_SECTIONS: { title: string; items: NavItem[] }[] = [
-  { title: 'Sell', items: [
-    { href: '/partners',    label: 'Partners',    icon: HandshakeIcon },
-    { href: '/analytics',   label: 'Analytics',   icon: BarChartIcon },
-    { href: '/commissions', label: 'Commissions', icon: CoinIcon },
-  ] },
-  { title: 'Grow', items: [
-    { href: '/grow',        label: 'Apex',       icon: GrowIcon, match: ['/grow'] },
-    { href: '/train',       label: 'Learning Center', shortLabel: 'Learn', icon: TrainIcon, match: ['/train', '/progress'] },
-    { href: '/leaderboard', label: 'Leaderboard',     icon: LeaderboardIcon },
-    { href: '/resources',   label: 'Resources',       icon: BookIcon },
-  ] },
+// One flat, usage-ordered list — no "Sell/Grow" audience grouping. Every
+// destination is its own top-level tab; the order is the strategic front-to-back
+// priority for a BDR's day (the money + pipeline + workspace come first).
+// Plan is one workspace (Capture/Organize/Schedule) sharing the in-page PlanTabs
+// switcher. Coach is not a tab — it's the header button (desktop) + draggable FAB
+// (mobile). Wins is not a tab — wins surface as throttled milestone notifications.
+const PRIMARY_NAV: NavItem[] = [
+  { href: '/home',        label: 'Home',            icon: HomeIcon },
+  { href: '/today',       label: 'Today',           icon: TodayIcon },
+  { href: '/partners',    label: 'Partners',        icon: HandshakeIcon },
+  { href: '/grow',        label: 'Apex',            icon: GrowIcon, match: ['/grow'] },
+  { href: '/commissions', label: 'Commissions',     icon: CoinIcon },
+  { href: '/analytics',   label: 'Analytics',       icon: BarChartIcon },
+  { href: '/schedule',    label: 'Plan',            icon: ChecklistIcon, match: ['/notes', '/tasks', '/schedule'] },
+  { href: '/train',       label: 'Learning Center', shortLabel: 'Learn', icon: TrainIcon, match: ['/train', '/progress'] },
+  { href: '/leaderboard', label: 'Leaderboard',     icon: LeaderboardIcon },
+  { href: '/resources',   label: 'Resources',       icon: BookIcon },
 ]
 
 const MANAGER_ITEMS: NavItem[] = [
@@ -63,13 +56,15 @@ const MANAGER_ITEMS: NavItem[] = [
   { href: '/manager/roles',        label: 'Roles & Permissions', icon: ShieldIcon },
 ]
 
-// Mobile bottom bar (5 slots). Coach is the draggable FAB now; Wins is gone.
+// Mobile bottom bar (5 slots) — the five most-used destinations, front and
+// center. Coach is the draggable FAB now; Wins is gone. Everything else lives
+// one tap away under "More".
 const BOTTOM_NAV: NavItem[] = [
-  { href: '/home',     label: 'Home',     icon: HomeIcon },
-  { href: '/today',    label: 'Today',    icon: TodayIcon },
-  { href: '/partners', label: 'Partners', icon: HandshakeIcon },
-  { href: '/grow',     label: 'Apex',     icon: GrowIcon, match: ['/grow'] },
-  { href: '/train',    label: 'Learning Center', shortLabel: 'Learn', icon: TrainIcon },
+  { href: '/home',        label: 'Home',        icon: HomeIcon },
+  { href: '/today',       label: 'Today',       icon: TodayIcon },
+  { href: '/partners',    label: 'Partners',    icon: HandshakeIcon },
+  { href: '/grow',        label: 'Apex',        icon: GrowIcon, match: ['/grow'] },
+  { href: '/commissions', label: 'Commissions', shortLabel: 'Comms', icon: CoinIcon },
 ]
 
 const isActiveHref = (pathname: string, href: string) => pathname === href || pathname.startsWith(href + '/')
@@ -80,8 +75,7 @@ const matchNav = (pathname: string, item: NavItem) => isActiveHref(pathname, ite
 // ═══════════════════════════════════════════════════════════════════════════════
 
 const PAGE_INDEX: { label: string; href: string }[] = [
-  ...TOP_NAV.map(i => ({ label: i.label, href: i.href })),
-  ...REP_SECTIONS.flatMap(s => s.items.map(i => ({ label: i.label, href: i.href }))),
+  ...PRIMARY_NAV.map(i => ({ label: i.label, href: i.href })),
   // Workspace sub-views whose nav entry is the workspace itself.
   { label: 'Notes', href: '/notes' }, { label: 'Tasks', href: '/tasks' }, { label: 'Time Blocks', href: '/schedule' },
   { label: 'Progress', href: '/progress' },
@@ -193,7 +187,7 @@ export function AppHeader({ user, unreadCount = 0 }: { user?: User | null; unrea
         <Avatar src={user?.avatar_url ?? null} name={user?.name ?? ''} size={30} />
         <div className="leading-tight">
           <div className="text-[12px] font-[700] text-dark-text">{user?.name ?? ''}</div>
-          <div className="text-[10px] capitalize text-gray">{user?.role}</div>
+          <div className="text-[10px] text-gray">{roleLabel(user?.role)}</div>
         </div>
       </Link>
 
@@ -232,8 +226,7 @@ export function BottomNav({ user }: { user?: User | null; unreadCount?: number }
   const inBottom = (href: string) => BOTTOM_NAV.some(b => b.href === href)
   // Everything not on the bar (Settings + Notifications live in the header now).
   const moreItems: NavItem[] = [
-    ...TOP_NAV.filter(i => !inBottom(i.href)),
-    ...REP_SECTIONS.flatMap(s => s.items).filter(allowed).filter(i => !inBottom(i.href)),
+    ...PRIMARY_NAV.filter(allowed).filter(i => !inBottom(i.href)),
     ...(isManager ? MANAGER_ITEMS.filter(allowed) : []),
   ]
   const moreActive = moreItems.some(i => matchNav(pathname, i))
@@ -288,7 +281,7 @@ export function BottomNav({ user }: { user?: User | null; unreadCount?: number }
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// SIDEBAR (desktop) — accordion sections
+// SIDEBAR (desktop) — one flat list of tabs (no audience sections)
 // ═══════════════════════════════════════════════════════════════════════════════
 
 export function Sidebar({ user }: { user?: User | null; unreadCount?: number }) {
@@ -298,16 +291,8 @@ export function Sidebar({ user }: { user?: User | null; unreadCount?: number }) 
   const { canView } = usePermissions()
   const allowed = (item: NavItem) => { const f = featureForHref(item.href); return !f || canView(f) }
 
-  const sections = [
-    ...REP_SECTIONS.map(s => ({ title: s.title, items: s.items.filter(allowed) })),
-    ...(isManager ? [{ title: 'Manager', items: MANAGER_ITEMS.filter(allowed) }] : []),
-  ].filter(s => s.items.length > 0)
-
-  // Accordion: one open at a time; default collapsed but auto-open the section
-  // that contains the current route so the active page is always visible.
-  const sectionOf = (path: string) => sections.find(s => s.items.some(i => matchNav(path, i)))?.title ?? null
-  const [open, setOpen] = useState<string | null>(null)
-  useEffect(() => { const s = sectionOf(pathname); if (s) setOpen(s) }, [pathname]) // eslint-disable-line react-hooks/exhaustive-deps
+  const primary = PRIMARY_NAV.filter(allowed)
+  const managerItems = isManager ? MANAGER_ITEMS.filter(allowed) : []
 
   return (
     <aside className={cn('fixed left-0 top-0 bottom-0 z-sidebar w-[240px] bg-card border-r border-border flex flex-col hidden desktop:flex')}>
@@ -318,34 +303,20 @@ export function Sidebar({ user }: { user?: User | null; unreadCount?: number }) 
       </div>
 
       <div className="flex-1 overflow-y-auto py-3 px-3">
-        {/* Always-visible quick destinations */}
+        {/* Every destination as its own flat tab, in strategic usage order */}
         <div className="space-y-0.5">
-          {TOP_NAV.map(item => <SidebarItem key={item.href} item={item} pathname={pathname} />)}
+          {primary.map(item => <SidebarItem key={item.href} item={item} pathname={pathname} />)}
         </div>
 
-        {/* Accordion sections */}
-        <div className="mt-3 space-y-1">
-          {sections.map(s => {
-            const isOpen = open === s.title
-            const hasActive = s.items.some(i => matchNav(pathname, i))
-            return (
-              <div key={s.title}>
-                <button onClick={() => setOpen(o => o === s.title ? null : s.title)} aria-expanded={isOpen}
-                  className={cn('flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left transition-colors',
-                    hasActive ? 'text-navy' : 'text-mid-text hover:bg-bdrbg')}>
-                  <span className="flex-1 text-[11px] font-[800] uppercase tracking-[0.08em]">{s.title}</span>
-                  {hasActive && !isOpen && <span className="h-1.5 w-1.5 rounded-full bg-teal" />}
-                  <ChevronDownIcon size={15} className={cn('text-gray transition-transform', isOpen && 'rotate-180')} />
-                </button>
-                {isOpen && (
-                  <div className="mt-0.5 space-y-0.5">
-                    {s.items.map(item => <SidebarItem key={item.href} item={item} pathname={pathname} />)}
-                  </div>
-                )}
-              </div>
-            )
-          })}
-        </div>
+        {/* Manager tools — role-gated, divided but not collapsed */}
+        {managerItems.length > 0 && (
+          <div className="mt-4 border-t border-border pt-3">
+            <div className="mb-1 px-4 text-[10px] font-[800] uppercase tracking-[0.1em] text-gray">Manager</div>
+            <div className="space-y-0.5">
+              {managerItems.map(item => <SidebarItem key={item.href} item={item} pathname={pathname} />)}
+            </div>
+          </div>
+        )}
       </div>
     </aside>
   )

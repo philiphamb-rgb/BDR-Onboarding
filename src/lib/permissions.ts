@@ -12,13 +12,20 @@ export type RoleKey = 'admin' | 'manager' | 'rep'
 export const ROLES: { key: RoleKey; label: string; blurb: string }[] = [
   { key: 'admin',   label: 'Admin',   blurb: 'Full access, including roles & permissions.' },
   { key: 'manager', label: 'Manager', blurb: 'Team oversight, content, and analytics.' },
-  { key: 'rep',     label: 'Rep',     blurb: 'A BDR working their own pipeline & learning.' },
+  { key: 'rep',     label: 'User',    blurb: 'A BDR working their own pipeline & learning.' },
 ]
 
 export function effectiveRole(dbRole: string | null | undefined): RoleKey {
   if (dbRole === 'owner' || dbRole === 'admin') return 'admin'
   if (dbRole === 'manager') return 'manager'
   return 'rep'
+}
+
+// The human-facing tag for a stored DB role — Admin / Manager / User. Use this
+// anywhere a role is shown to a person, so the three labels stay consistent.
+export function roleLabel(dbRole: string | null | undefined): string {
+  const key = effectiveRole(dbRole)
+  return ROLES.find(r => r.key === key)?.label ?? 'User'
 }
 // What to write back to users.role when assigning a role (keeps DB enum intact).
 export function dbRoleFor(role: RoleKey): string {

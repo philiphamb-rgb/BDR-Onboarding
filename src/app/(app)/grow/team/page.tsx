@@ -81,6 +81,21 @@ function AgentCard({ agent, isManager, onSet, isOpen, onToggle, overrides = [] }
 
       {isOpen && (
         <div className="border-t border-border px-3.5 pb-4 pt-3.5" onClick={e => e.stopPropagation()}>
+          {/* What it does + what it's looking for */}
+          {agent.details?.length > 0 && (
+            <div className="mb-3">
+              <div className="mb-1.5 flex items-center gap-1.5 text-[10px] font-[800] uppercase tracking-wide text-gray"><LightningIcon size={11} /> What it does &amp; what it looks for</div>
+              <ul className="space-y-1.5">
+                {agent.details.map((d: string, i: number) => (
+                  <li key={i} className="flex gap-2 text-[12px] leading-relaxed text-mid-text">
+                    <span className="mt-[7px] h-1 w-1 shrink-0 rounded-full bg-teal" />
+                    <span>{d}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
           {/* ROI */}
           <div className="mb-3 flex gap-2 rounded-xl bg-teal/[0.06] p-3">
             <TargetIcon size={14} className="mt-0.5 shrink-0 text-teal" />

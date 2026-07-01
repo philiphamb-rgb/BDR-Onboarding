@@ -11,6 +11,7 @@ import { startWalkthrough, APP_VERSION } from '@/lib/walkthroughs'
 import { resetTours } from '@/components/tour'
 import { cn } from '@/lib/utils'
 import { toast } from '@/components/ui'
+import { roleLabel } from '@/lib/permissions'
 
 type Section = 'main' | 'notifications' | 'data' | 'help'
 
@@ -82,7 +83,7 @@ export default function SettingsPage() {
           <div className="flex-1">
             <div className="font-semibold text-dark-text">{user?.name}</div>
             <div className="text-xs text-gray">{user?.email}</div>
-            <div className="text-xs text-teal capitalize font-medium">{user?.role}</div>
+            <div className="text-xs text-teal font-medium">{roleLabel(user?.role)}</div>
           </div>
           <button onClick={() => router.push('/settings/profile')} className="text-sm text-navy font-medium">Edit</button>
         </div>
