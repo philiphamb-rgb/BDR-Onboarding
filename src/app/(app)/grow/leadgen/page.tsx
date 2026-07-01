@@ -16,7 +16,8 @@ import { CountUp } from '@/components/CountUp'
 import { GrowthTabs } from '@/components/GrowthTabs'
 import { GrowthChrome } from '@/components/growth/GrowthChrome'
 import { NoteButton } from '@/components/growth/NoteButton'
-import { TargetIcon, FlameIcon, LightningIcon, IntegrationIcon, ArrowRightIcon, PlusIcon, SearchIcon, CloseIcon, ChartRisingIcon, InfoIcon } from '@/components/icons'
+import { LeadDrawer } from '@/components/growth/LeadDrawer'
+import { TargetIcon, FlameIcon, LightningIcon, IntegrationIcon, ArrowRightIcon, PlusIcon, SearchIcon, CloseIcon, ChartRisingIcon, InfoIcon, CoinIcon } from '@/components/icons'
 import { useGrowthOS } from '@/lib/hooks/useGrowthOS'
 import { GEN_PROMPTS, SCORE_ROUTING, DEMO_CAMPAIGNS, fmtAgo, leadSuggestion } from '@/lib/modules/growth-os/leadgen'
 import { askCoach } from '@/lib/coachBus'
@@ -42,6 +43,8 @@ export default function GrowthLeadGenPage() {
   const { loading, leadList, leads, roster } = useGrowthOS()
   const [view, setView] = useState('leads')
   const [q, setQ] = useState('')
+  const [openLead, setOpenLead] = useState<any>(null)   // CRM record drawer
+  const weightedPipeline = (leadList || []).reduce((s, l) => s + (l.weighted || 0), 0)
 
   const filtered = (leadList || []).filter(l => !q || l.name.toLowerCase().includes(q.toLowerCase()))
   const insights = loading ? [] : computeInsights({ leadList: leadList || [], roster: roster || [] })
@@ -104,6 +107,18 @@ export default function GrowthLeadGenPage() {
             </div>
           </Card>
 
+          {/* Weighted pipeline — sum of deal amount × probability across leads.
+              Click a lead to set its deal properties; this is the HubSpot forecast. */}
+          {weightedPipeline > 0 && (
+            <Card className="flex items-center gap-3 !p-3.5">
+              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gold/12 text-[#A06C00]"><CoinIcon size={18} /></span>
+              <div className="min-w-0 flex-1">
+                <div className="text-[15px] font-[900] text-dark-text">${Math.round(weightedPipeline).toLocaleString()}<span className="text-[12px] font-[600] text-gray">/mo weighted</span></div>
+                <div className="text-[11.5px] text-gray">Forecasted pipeline · amount × probability, across your open deals</div>
+              </div>
+            </Card>
+          )}
+
           {/* sub-view switcher */}
           <div className="flex w-fit gap-0.5 rounded-lg border border-border bg-bdrbg p-1">
             {[['leads', 'Leads'], ['campaigns', 'Campaigns'], ['generate', 'Generate']].map(([id, l]) => subBtn(id, l))}
@@ -124,7 +139,8 @@ export default function GrowthLeadGenPage() {
                   const sug = leadSuggestion(lead)
                   const initials = lead.name.split(' ').map(w => w[0]).slice(0, 2).join('')
                   return (
-                    <Card key={lead.name + lead.agoMin} className="!p-3.5" style={{ borderLeft: `3px solid ${scoreColor(lead.score)}` }}>
+                    <Card key={lead.id || lead.name + lead.agoMin} onClick={() => lead.id && setOpenLead(lead)} role={lead.id ? 'button' : undefined}
+                      className={cn('!p-3.5', lead.id && 'cursor-pointer hover:border-teal/40')} style={{ borderLeft: `3px solid ${scoreColor(lead.score)}` }}>
                       <div className="flex items-center gap-3">
                         <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-navy/8 text-[12px] font-[800] text-navy">{initials}</div>
                         <div className="min-w-0 flex-1">
@@ -137,7 +153,7 @@ export default function GrowthLeadGenPage() {
                         </div>
                         <span className={cn('shrink-0 rounded-md px-2 py-0.5 text-[11px] font-[700]', st.c)}>{st.l}</span>
                         {lead.id && <NoteButton compact entityType="lead" entityId={lead.id} label={lead.name} context={`Partner lead · ${lead.stage} · score ${lead.score}`} />}
-                        <button onClick={() => askCoach(`Write a personalized follow-up strategy for this ConsumerDirect Co-Brand PLUS+ agency lead: ${lead.name}, score ${lead.score}, currently ${lead.stage}, last touched ${fmtAgo(lead.agoMin)}. Give the next 3 specific touchpoints with copy to move them toward a signed partnership.`)}
+                        <button onClick={e => { e.stopPropagation(); askCoach(`Write a personalized follow-up strategy for this ConsumerDirect Co-Brand PLUS+ agency lead: ${lead.name}, score ${lead.score}, currently ${lead.stage}, last touched ${fmtAgo(lead.agoMin)}. Give the next 3 specific touchpoints with copy to move them toward a signed partnership.`) }}
                           className="flex shrink-0 items-center gap-1 rounded-lg bg-teal/10 px-2.5 py-1.5 text-[11px] font-[700] text-teal"><IntegrationIcon size={11} /> Follow-up</button>
                       </div>
                       <div className="mt-2 flex items-center gap-1.5 pl-12">
@@ -202,6 +218,8 @@ export default function GrowthLeadGenPage() {
           )}
         </>
       )}
+
+      {openLead && <LeadDrawer partnerId={openLead.id} name={openLead.name} score={openLead.score} onClose={() => setOpenLead(null)} />}
     </div>
   )
 }
