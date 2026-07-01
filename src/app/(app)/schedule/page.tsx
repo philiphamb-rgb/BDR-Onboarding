@@ -61,6 +61,54 @@ function layoutColumns(items: { key: string; start: number; dur: number }[]) {
   return out
 }
 
+// Read-only week-ahead glance — today's real (overridden) blocks, and the plain
+// shift template for the other visible days (no per-day overrides exist for
+// future days yet, since only Day view can edit). Tap any day to jump back into
+// the full interactive Day view.
+function MultiDayOverview({ days, today, base, templateBlocks, rangeTasks, onPickDay }: {
+  days: number; today: string; base: number
+  templateBlocks: { key: string; label: string; type: string; start: number; dur: number; done: boolean }[]
+  rangeTasks: Record<string, any[]> | null
+  onPickDay: () => void
+}) {
+  const dateFor = (i: number) => localToday(new Date(Date.now() + i * 86400000))
+  const dayLabel = (i: number, iso: string) => {
+    if (i === 0) return 'Today'
+    const d = new Date(iso + 'T00:00:00')
+    return d.toLocaleDateString('en-US', { weekday: 'short', day: 'numeric' })
+  }
+  return (
+    <div className="grid gap-2" style={{ gridTemplateColumns: `repeat(${days}, minmax(0, 1fr))` }}>
+      {Array.from({ length: days }, (_, i) => {
+        const iso = dateFor(i)
+        const isToday = i === 0
+        const blocks = isToday ? templateBlocks : templateBlocks.map(b => ({ ...b, done: false }))
+        const dayTasks = rangeTasks?.[iso] ?? []
+        const doneN = dayTasks.filter(t => t.done).length
+        return (
+          <button key={iso} onClick={onPickDay}
+            className={cn('flex min-w-0 flex-col rounded-xl border p-2 text-left transition-colors hover:border-teal/40',
+              isToday ? 'border-teal/40 bg-teal/[0.04]' : 'border-border bg-card')}>
+            <div className={cn('mb-1.5 truncate text-[11px] font-[800] uppercase tracking-wide', isToday ? 'text-teal' : 'text-gray')}>{dayLabel(i, iso)}</div>
+            <div className="space-y-1">
+              {blocks.map(b => (
+                <div key={b.key} className={cn('flex items-center gap-1.5 rounded-md px-1.5 py-1 text-[10.5px]', b.done ? 'opacity-50' : '')} style={{ backgroundColor: `${(BLOCK_STYLE[b.type] ?? BLOCK_STYLE.focus).color}14` }}>
+                  <span className="h-1.5 w-1.5 shrink-0 rounded-full" style={{ backgroundColor: (BLOCK_STYLE[b.type] ?? BLOCK_STYLE.focus).color }} />
+                  <span className="truncate font-[700] text-dark-text">{b.label}</span>
+                  <span className="ml-auto shrink-0 text-gray">{fmtClock(b.start)}</span>
+                </div>
+              ))}
+            </div>
+            {dayTasks.length > 0 && (
+              <div className="mt-1.5 border-t border-border pt-1.5 text-[10px] font-[700] text-mid-text">{doneN}/{dayTasks.length} tasks planned</div>
+            )}
+          </button>
+        )
+      })}
+    </div>
+  )
+}
+
 export default function SchedulePage() {
   const supabase = createClient()
   const [userId, setUserId] = useState<string>()
@@ -89,6 +137,11 @@ export default function SchedulePage() {
   const [now, setNow] = useState(() => { const d = new Date(); return d.getHours() * 60 + d.getMinutes() })
   const scrollRef = useRef<HTMLDivElement>(null)
   const today = localToday()
+  // Calendar view mode — Day is the full interactive editor (unchanged, default);
+  // 3-Day/Week are a read-only glance ahead, loaded lazily on first switch.
+  const [viewMode, setViewMode] = useState<'day' | '3day' | 'week'>('day')
+  const [rangeTasks, setRangeTasks] = useState<Record<string, any[]> | null>(null)
+  const rangeLoadedFor = useRef<string | null>(null)
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => {
@@ -558,6 +611,24 @@ export default function SchedulePage() {
   const sel = selected != null ? blockByKey(selected) : null
   const selStyle = sel ? (BLOCK_STYLE[sel.type] ?? BLOCK_STYLE.focus) : null
 
+  // Lazily load the wider date range's tasks the first time 3-Day/Week is opened
+  // (Day view never needs it, so most sessions skip this fetch entirely).
+  useEffect(() => {
+    if (viewMode === 'day' || !userId) return
+    const span = viewMode === '3day' ? 3 : 7
+    const cacheKey = `${viewMode}:${today}`
+    if (rangeLoadedFor.current === cacheKey) return
+    rangeLoadedFor.current = cacheKey
+    const dates = Array.from({ length: span }, (_, i) => localToday(new Date(Date.now() + i * 86400000)))
+    supabase.from('tasks').select('id, title, done, scheduled_day, scheduled_block')
+      .eq('user_id', userId).in('scheduled_day', dates).is('parent_id', null)
+      .then(({ data }) => {
+        const byDay: Record<string, any[]> = {}
+        for (const t of data ?? []) (byDay[t.scheduled_day] ??= []).push(t)
+        setRangeTasks(byDay)
+      })
+  }, [viewMode, userId, today])
+
   return (
     <div className="space-y-3 pb-4">
       <PlanTabs />
@@ -565,7 +636,15 @@ export default function SchedulePage() {
       <div className="flex flex-wrap items-center gap-2">
         <div className="mr-auto">
           <h1 className="text-h2 text-dark-text leading-tight">Time Blocks</h1>
-          <p className="text-[12px] text-gray">Drag to move · drag the edge to resize · tap a block · tap empty space to add</p>
+          <p className="text-[12px] text-gray">{viewMode === 'day' ? 'Drag to move · drag the edge to resize · tap a block · tap empty space to add' : 'A look ahead — full editing lives in Day view'}</p>
+        </div>
+        <div className="flex overflow-hidden rounded-lg border border-border shrink-0" role="tablist" aria-label="Calendar view">
+          {([['day', 'Day'], ['3day', '3-Day'], ['week', 'Week']] as const).map(([v, l]) => (
+            <button key={v} role="tab" aria-selected={viewMode === v} onClick={() => setViewMode(v)}
+              className={cn('px-3 py-2 text-[12px] font-[800]', viewMode === v ? 'bg-navy text-white' : 'bg-card text-gray hover:text-navy-ink')}>
+              {l}
+            </button>
+          ))}
         </div>
         <div className="relative">
           <select value={shift} onChange={e => pickShift(e.target.value)} aria-label="Shift"
@@ -590,6 +669,17 @@ export default function SchedulePage() {
         Tap <span className="font-[700]">Auto-plan my day</span> and AI schedules your tasks by priority into the right blocks — selling work into power blocks, admin into the admin block. You can still drag any block to move it.
       </AiTip>
 
+      {viewMode !== 'day' ? (
+        <MultiDayOverview
+          days={viewMode === '3day' ? 3 : 7}
+          today={today}
+          base={base}
+          templateBlocks={templateBlocks}
+          rangeTasks={rangeTasks}
+          onPickDay={() => setViewMode('day')}
+        />
+      ) : (
+      <>
       {/* AI day-triage summary */}
       <div className="rounded-2xl bg-gradient-hero p-4 text-white shadow-card">
         <div className="mb-2 flex items-center gap-2">
@@ -810,6 +900,8 @@ export default function SchedulePage() {
           </div>
         </div>
       </div>
+      </>
+      )}
 
       {/* Needs attention — stale tasks aging out */}
       {staleTasks.length > 0 && (
