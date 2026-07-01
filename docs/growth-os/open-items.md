@@ -30,6 +30,26 @@ agents from "ready" to "running."_
   "the BDR will confirm the exact figure" rather than invent one.
 - Which lead source(s) are live vs stubbed for the Lead Builder motion.
 
+## CRM parity — progress (additive layer over partner_onboarding)
+
+Delivered: deal properties (amount / expected close / probability), a `crm_contacts`
+table (people ↔ company), a typed activity timeline (`growth_notes.kind`), the Lead
+detail **drawer** (score + editable deal + contacts + activities + coach next-step),
+and a **weighted pipeline** forecast (Σ amount × probability). RBAC: editing your own
+record is a standard rep action; bulk/team operations remain manager-gated.
+
+Still open on the CRM parity track:
+- **Contacts as a first-class object** (their own index/detail, not only nested in a
+  company) + full contact↔company↔deal association UI.
+- **List views / saved filters + bulk operations** (bulk stage-change / assign),
+  each bulk action gated on `canEdit` per RBAC.
+- **Reporting drill-through** — click any metric → underlying records; manager funnel
+  rollup with weighted pipeline value.
+- **Naming rollout** — swap "Growth OS" → the chosen brand across nav/headers/copy
+  (awaiting the final name).
+- **Feedback-loop nightly synthesis** — the Manager Digest → approve/reject →
+  versioned instruction-update job (capture + changelog already live).
+
 ## Deferred by design (documented, not blocking)
 
 - Full 3-tier brand-voice template CMS (guardrail/voice layer already baked into
