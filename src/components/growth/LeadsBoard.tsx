@@ -22,7 +22,7 @@ import {
 } from '@/components/icons'
 import { cn } from '@/lib/utils'
 
-const scoreColor = (s: number) => s >= 90 ? '#16A34A' : s >= 75 ? '#00C2B2' : s >= 50 ? '#B45309' : '#DC2626'
+const scoreColor = (s: number) => s >= 90 ? '#16A34A' : s >= 75 ? 'rgb(var(--teal))' : s >= 50 ? '#B45309' : '#DC2626'
 const STAGE_META: any = { hot: { l: 'Hot', c: 'text-error bg-error/10' }, warm: { l: 'Warm', c: 'text-[#A06C00] bg-gold/12' }, cold: { l: 'Cold', c: 'text-gray bg-bdrbg' }, converted: { l: 'Converted', c: 'text-success bg-success/10' } }
 const PIPELINE = [
   { k: 'new_lead', l: 'New' }, { k: 'interested', l: 'Interested' }, { k: 'proposal_sent', l: 'Proposal' },

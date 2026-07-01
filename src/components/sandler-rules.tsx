@@ -16,7 +16,7 @@
 */
 import { useState, useEffect, useRef } from 'react';
 
-const C={navy:'#003087',navyD:'#001F5B',navyL:'#1A5098',teal:'#00C2B2',tealL:'#33D0C2',gold:'#F5A623',goldD:'#C4841C',red:'#E84020',sky:'#4DC8E8',orange:'#F07820',white:'#FFF',offW:'#F8FAFF',bg:'#EEF3FC',dark:'#0A1628',mid:'#3D4F68',muted:'#6B7A95',faint:'#A0AECC',border:'#CDD5E8',borderL:'#E5EBF5',success:'#16A34A',successBg:'#F0FDF4',fail:'#DC2626',failBg:'#FEF2F2',warn:'#F59E0B',warnBg:'#FFFBEB',navy2:'#0047BD',surface:'#FAFCFF'};
+const C={navy:'rgb(var(--navy))',navyD:'#001F5B',navyL:'#1A5098',teal:'rgb(var(--teal))',tealL:'#33D0C2',gold:'rgb(var(--gold))',goldD:'#C4841C',red:'#E84020',sky:'#4DC8E8',orange:'#F07820',white:'#FFF',offW:'#F8FAFF',bg:'#EEF3FC',dark:'#0A1628',mid:'#3D4F68',muted:'#6B7A95',faint:'#A0AECC',border:'#CDD5E8',borderL:'#E5EBF5',success:'#16A34A',successBg:'#F0FDF4',fail:'#DC2626',failBg:'#FEF2F2',warn:'#F59E0B',warnBg:'#FFFBEB',navy2:'#0047BD',surface:'#FAFCFF'};
 
 
 const XP_VALUES={lesson_complete:25,quiz_pass:50,quiz_perfect:75,assessment_pass:150,assessment_perfect:250,final_pass:500,final_perfect:750};
@@ -26,9 +26,9 @@ const getBelt=xp=>BELTS.find(b=>xp>=b.min&&xp<b.max)||BELTS[BELTS.length-1];
 const getXpToNext=xp=>{const b=getBelt(xp);return b.max===9999?null:b.max-xp;};
 
 const PARTS=[
-  {id:'p1',num:1,title:'Part One: Learn the Core Concepts',sub:'Rules 1–6',tagline:'Use the first six rules to transform your selling process.',color:'#003087',textColor:'#fff',page:11},
-  {id:'p2',num:2,title:'Part Two: Execute',sub:'Rules 7–33',tagline:'Do what works.',color:'#00C2B2',textColor:'#fff',page:38},
-  {id:'p3',num:3,title:'Part Three: Course-Correct',sub:'Rules 34–49',tagline:'Remind yourself of what’s easy to forget.',color:'#F5A623',textColor:'#0A1628',page:139},
+  {id:'p1',num:1,title:'Part One: Learn the Core Concepts',sub:'Rules 1–6',tagline:'Use the first six rules to transform your selling process.',color:'rgb(var(--navy))',textColor:'#fff',page:11},
+  {id:'p2',num:2,title:'Part Two: Execute',sub:'Rules 7–33',tagline:'Do what works.',color:'rgb(var(--teal))',textColor:'#fff',page:38},
+  {id:'p3',num:3,title:'Part Three: Course-Correct',sub:'Rules 34–49',tagline:'Remind yourself of what’s easy to forget.',color:'rgb(var(--gold))',textColor:'#0A1628',page:139},
 ];
 
 const qq=(q,a,b,c,d,ans,ex)=>({q,opts:[a,b,c,d],a:ans,ex});
@@ -1061,7 +1061,7 @@ const Confetti=({active,onDone})=>{
   const pcs=[...Array(55)].map((_,i)=>({
     l:5+Math.random()*90,d:Math.random()*0.9,
     dur:1.4+Math.random()*0.9,
-    col:['#F5C200','#003087','#00C2B2','#E84020','#F07820','#fff','#4DC8E8'][i%7],
+    col:['#F5C200','rgb(var(--navy))','rgb(var(--teal))','#E84020','#F07820','#fff','#4DC8E8'][i%7],
     sz:6+Math.random()*8,rot:Math.random()*360,
   }));
   return(
@@ -1141,7 +1141,7 @@ const LevelUpBanner=({belt,onClose})=>{
 /* ── CDLogo (fixed ® as superscript) ───────────────────── */
 const CDLogo=({size=90,text=true,light=false})=>{
   const [uid]=useState(()=>`lg${Math.random().toString(36).slice(2,9)}`);
-  const A=[['#003087',14,'M18,133 C62,228 212,162 250,90'],['#4DC8E8',13.5,'M22,113 C65,205 208,143 246,72'],['#E84020',13,'M26,93 C68,182 204,124 241,54'],['#F07820',12.5,'M31,73 C72,160 199,105 235,37'],['#F5C200',12,'M36,53 C76,138 194,87 228,20']];
+  const A=[['rgb(var(--navy))',14,'M18,133 C62,228 212,162 250,90'],['#4DC8E8',13.5,'M22,113 C65,205 208,143 246,72'],['#E84020',13,'M26,93 C68,182 204,124 241,54'],['#F07820',12.5,'M31,73 C72,160 199,105 235,37'],['#F5C200',12,'M36,53 C76,138 194,87 228,20']];
   return(
     <div style={{display:'flex',flexDirection:'column',alignItems:'center',lineHeight:1}}>
       <svg width={size} height={size*0.74} viewBox='0 0 270 195' fill='none'>
@@ -1293,7 +1293,7 @@ function LandingScreen({onStart,onManager}){
   const mgo=()=>{if(pw==='MANAGER2024')onManager();else setErr('Incorrect password.');};
   return(
     <div style={{minHeight:'100vh',
-      background:'linear-gradient(150deg,#001F5B 0%,#003087 50%,#1A5098 78%,#007A72 100%)',
+      background:'linear-gradient(150deg,#001F5B 0%,rgb(var(--navy)) 50%,#1A5098 78%,#007A72 100%)',
       display:'flex',alignItems:'center',justifyContent:'center',
       padding:'20px 16px',fontFamily:'Arial,sans-serif',position:'relative',overflow:'hidden'}}>
       <div style={{position:'fixed',inset:0,backgroundImage:'radial-gradient(rgba(255,255,255,.1) 1px,transparent 1px)',
@@ -2350,7 +2350,7 @@ export default function App(cfg={}){
   </>);
 
   /* Routing */
-  if(screen==='init')return(<div style={{display:'flex',alignItems:'center',justifyContent:'center',height:'100vh',background:C.bg,fontFamily:'Arial,sans-serif'}}>  <div style={{textAlign:'center'}}><Spin/><div style={{marginTop:10,fontSize:13,color:C.muted}}>Loading your progress…</div></div><style>{`*{box-sizing:border-box;-webkit-font-smoothing:antialiased;}body{margin:0;padding:0;}@keyframes spin{to{transform:rotate(360deg)}}@keyframes fadeUp{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:translateY(0)}}@keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}@keyframes cf{0%{transform:translateY(0) rotate(0deg);opacity:1}100%{transform:translateY(110vh) rotate(800deg);opacity:0}}@keyframes lu{from{transform:scale(.4) translateY(60px);opacity:0}to{transform:scale(1) translateY(0);opacity:1}}::-webkit-scrollbar{width:6px;height:6px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:#CDD5E8;border-radius:99px}::selection{background:#003087;color:#fff}`}</style></div>);
+  if(screen==='init')return(<div style={{display:'flex',alignItems:'center',justifyContent:'center',height:'100vh',background:C.bg,fontFamily:'Arial,sans-serif'}}>  <div style={{textAlign:'center'}}><Spin/><div style={{marginTop:10,fontSize:13,color:C.muted}}>Loading your progress…</div></div><style>{`*{box-sizing:border-box;-webkit-font-smoothing:antialiased;}body{margin:0;padding:0;}@keyframes spin{to{transform:rotate(360deg)}}@keyframes fadeUp{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:translateY(0)}}@keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}@keyframes cf{0%{transform:translateY(0) rotate(0deg);opacity:1}100%{transform:translateY(110vh) rotate(800deg);opacity:0}}@keyframes lu{from{transform:scale(.4) translateY(60px);opacity:0}to{transform:scale(1) translateY(0);opacity:1}}::-webkit-scrollbar{width:6px;height:6px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:#CDD5E8;border-radius:99px}::selection{background:rgb(var(--navy));color:#fff}`}</style></div>);
   if(screen==='landing')return <LandingScreen onStart={startUser} onManager={()=>setScreen('manager')}/>;
   if(screen==='manager')return(<>{overlays}<ManagerScreen onBack={()=>setScreen(user?'dashboard':'landing')}/></>);
   if(screen==='certificate')return(<>{overlays}<CertificateScreen user={user} progress={progress} onBack={()=>setScreen('dashboard')}/></>);

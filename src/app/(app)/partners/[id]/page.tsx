@@ -141,7 +141,7 @@ export default function PartnerDetailPage() {
         {/* Progress */}
         <div className="mt-3 flex items-center gap-2">
           <div className="h-2 flex-1 overflow-hidden rounded-full bg-border">
-            <div className="h-full rounded-full transition-all duration-500" style={{ width: `${c.pct}%`, backgroundColor: c.pct === 100 ? '#16A34A' : '#00C2B2' }} />
+            <div className="h-full rounded-full transition-all duration-500" style={{ width: `${c.pct}%`, backgroundColor: c.pct === 100 ? '#16A34A' : 'rgb(var(--teal))' }} />
           </div>
           <span className="text-[12px] font-[700] text-mid-text tabular-nums">{c.done}/{c.total} done</span>
         </div>

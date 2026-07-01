@@ -19,7 +19,7 @@ import { useGrowthOS } from '@/lib/hooks/useGrowthOS'
 import { askCoach } from '@/lib/coachBus'
 import { cn } from '@/lib/utils'
 
-function Ring({ pct, label, sub, tone = '#00C2B2' }: { pct: number; label: any; sub: string; tone?: string }) {
+function Ring({ pct, label, sub, tone = 'rgb(var(--teal))' }: { pct: number; label: any; sub: string; tone?: string }) {
   const r = 26, c = 2 * Math.PI * r, off = c - (Math.min(100, Math.max(0, pct)) / 100) * c
   return (
     <div className="flex items-center gap-3">
@@ -63,7 +63,7 @@ export default function GrowthOverviewPage() {
               <div className="bg-gradient-hero p-4">
                 <div className={cn('grid gap-3', lpw > 0 && crGoal > 0 ? 'grid-cols-2' : 'grid-cols-1')}>
                   {lpw > 0 && <Ring pct={leadPct} label={<><CountUp value={leads.newThisWeek} />/{lpw}</>} sub="new leads this week" />}
-                  {crGoal > 0 && <Ring pct={crPct} label={`${leads.closeRate}%`} sub={`all-time close · goal ${crGoal}%`} tone="#F5A623" />}
+                  {crGoal > 0 && <Ring pct={crPct} label={`${leads.closeRate}%`} sub={`all-time close · goal ${crGoal}%`} tone="rgb(var(--gold))" />}
                 </div>
               </div>
             </Card>

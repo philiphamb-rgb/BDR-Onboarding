@@ -113,7 +113,7 @@ export default function PartnersPage() {
                     </span>
                   </div>
                   <div className="mt-3 flex items-center gap-3">
-                    <ProgressBar value={c.pct} max={100} color={c.pct === 100 ? '#16A34A' : '#00C2B2'} className="h-1.5 flex-1" />
+                    <ProgressBar value={c.pct} max={100} color={c.pct === 100 ? '#16A34A' : 'rgb(var(--teal))'} className="h-1.5 flex-1" />
                     <span className="flex items-center gap-1 text-[12px] font-[700] text-mid-text tabular-nums">
                       {c.pct === 100 ? <CheckIcon size={13} className="text-success" /> : null}{c.done}/{c.total}
                     </span>

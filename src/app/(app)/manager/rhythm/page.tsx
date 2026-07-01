@@ -70,7 +70,7 @@ export default function ManagerRhythmPage() {
                     {r.detail && <span className="text-[11px] text-gray">{r.detail}</span>}
                   </div>
                   <div className="mt-2 flex items-center gap-2">
-                    <ProgressBar value={r.done} max={TOTAL} color={r.done >= TOTAL ? '#16A34A' : '#00C2B2'} className="h-1.5 flex-1" />
+                    <ProgressBar value={r.done} max={TOTAL} color={r.done >= TOTAL ? '#16A34A' : 'rgb(var(--teal))'} className="h-1.5 flex-1" />
                     <span className="text-[12px] font-[700] text-mid-text tabular-nums">{r.done}/{TOTAL}</span>
                   </div>
                 </div>

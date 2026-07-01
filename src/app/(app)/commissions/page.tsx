@@ -232,7 +232,7 @@ export default function CommissionsPage() {
                 <span className="font-[700] text-mid-text">Covers your monthly production target</span>
                 <span className="font-[800] text-navy tabular-nums">{Math.round(coverage)}%</span>
               </div>
-              <ProgressBar value={coverage} max={100} color={coverage >= 100 ? '#16A34A' : '#003087'} className="h-2" />
+              <ProgressBar value={coverage} max={100} color={coverage >= 100 ? '#16A34A' : 'rgb(var(--navy))'} className="h-2" />
               <p className="mt-1.5 text-[11px] text-gray">
                 {coverage >= 100
                   ? `Your weighted pipeline already covers the ${fmt(monthlyNeed)}/mo this plan needs — protect it and keep advancing stages.`
@@ -252,8 +252,8 @@ export default function CommissionsPage() {
         </div>
         <svg viewBox={`0 0 ${W} ${H}`} className="w-full" preserveAspectRatio="none" style={{ height: 120 }}>
           <line x1={PAD} y1={y(plan.target)} x2={W - PAD} y2={y(plan.target)} stroke="#CA8A04" strokeWidth="1" strokeDasharray="4 3" />
-          <polygon points={areaPts} fill="#00C2B2" opacity="0.12" />
-          <polyline points={linePts} fill="none" stroke="#00C2B2" strokeWidth="2.5" strokeLinejoin="round" strokeLinecap="round" />
+          <polygon points={areaPts} fill="rgb(var(--teal))" opacity="0.12" />
+          <polyline points={linePts} fill="none" stroke="rgb(var(--teal))" strokeWidth="2.5" strokeLinejoin="round" strokeLinecap="round" />
           {plan.goalMonth && <circle cx={x(plan.goalMonth)} cy={y(plan.monthly[plan.goalMonth - 1].pace)} r="3.5" fill="#16A34A" />}
         </svg>
         <div className="mt-1 flex justify-between text-[10px] text-gray"><span>Mo 1</span><span className="text-gold">Goal {fmtK(plan.target)}</span><span>Mo 12</span></div>
@@ -262,7 +262,7 @@ export default function CommissionsPage() {
             <div key={m.m} className="rounded-lg border border-border bg-bdrbg p-2 text-center">
               <div className="text-[11px] font-[800] text-dark-text">Mo {m.m}</div>
               <div className={cn('text-[11px] font-[700]', m.hit ? 'text-success' : 'text-gray')}>{Math.round(m.pct)}%</div>
-              <ProgressBar value={m.pct} max={100} color={m.hit ? '#16A34A' : '#00C2B2'} className="mt-1 h-1" />
+              <ProgressBar value={m.pct} max={100} color={m.hit ? '#16A34A' : 'rgb(var(--teal))'} className="mt-1 h-1" />
             </div>
           ))}
         </div>
@@ -285,7 +285,7 @@ export default function CommissionsPage() {
                 <div key={s.l} className="flex items-center gap-3">
                   <span className="w-[110px] shrink-0 text-[12px] font-[700] text-mid-text">{s.l}</span>
                   <div className="h-5 flex-1 overflow-hidden rounded-md bg-bdrbg">
-                    <div className="h-full rounded-md" style={{ width: `${Math.max(pct, 4)}%`, backgroundColor: i === 4 ? '#16A34A' : '#003087', opacity: 1 - i * 0.13 }} />
+                    <div className="h-full rounded-md" style={{ width: `${Math.max(pct, 4)}%`, backgroundColor: i === 4 ? '#16A34A' : 'rgb(var(--navy))', opacity: 1 - i * 0.13 }} />
                   </div>
                   <span className="w-9 shrink-0 text-right text-[12px] font-[800] text-dark-text tabular-nums">{Math.round(s.v)}</span>
                 </div>

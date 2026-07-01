@@ -85,7 +85,7 @@ export default function ManagerPartnersPage() {
                       <span className="shrink-0 rounded-full px-2 py-0.5 text-[10px] font-[700]" style={{ backgroundColor: `${s.color}1A`, color: s.color }}>{s.label}</span>
                     </div>
                     <div className="mt-2 flex items-center gap-2">
-                      <ProgressBar value={c.pct} max={100} color={c.pct === 100 ? '#16A34A' : '#00C2B2'} className="h-1.5 flex-1" />
+                      <ProgressBar value={c.pct} max={100} color={c.pct === 100 ? '#16A34A' : 'rgb(var(--teal))'} className="h-1.5 flex-1" />
                       <span className="text-[11px] font-[700] text-mid-text tabular-nums">{c.done}/{c.total}</span>
                     </div>
                   </div>

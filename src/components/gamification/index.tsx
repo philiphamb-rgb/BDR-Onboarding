@@ -108,7 +108,7 @@ interface BeltCelebrationProps {
   onClose: () => void
 }
 
-const CONFETTI_COLORS = ['#00C2B2', '#F5A623', '#003087', '#00C97A', '#6D28D9', '#fff']
+const CONFETTI_COLORS = ['rgb(var(--teal))', 'rgb(var(--gold))', 'rgb(var(--navy))', '#00C97A', '#6D28D9', '#fff']
 
 function Particle({ color, delay, x }: { color: string; delay: number; x: number }) {
   return (
@@ -263,7 +263,7 @@ export function BeltWatcher({ userId }: { userId?: string }) {
         .order('created_at', { ascending: false }).limit(1).maybeSingle()
       if (!notif || cancelled) return
       const label = (notif.title ?? '').replace('You just earned', '').trim() || 'New Belt'
-      setCelebration({ name: label, color: BELT_COLOR[label] ?? '#00C2B2' })
+      setCelebration({ name: label, color: BELT_COLOR[label] ?? 'rgb(var(--teal))' })
       await supabase.from('notifications').update({ is_read: true }).eq('id', notif.id)
     })()
     return () => { cancelled = true }
@@ -293,7 +293,7 @@ interface AnimatedCheckProps {
 export function AnimatedCheck({
   checked,
   size = 24,
-  color = '#00C2B2',
+  color = 'rgb(var(--teal))',
   className,
   onToggle,
 }: AnimatedCheckProps) {

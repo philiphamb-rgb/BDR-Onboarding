@@ -113,7 +113,7 @@ export default function AnalyticsPage() {
               <p className="mb-4 text-[12px] text-gray">Across {leads.length} team lead{leads.length === 1 ? '' : 's'} · {warmLeads.length} warm · {coldLeads.length} cold.</p>
               <div className="grid grid-cols-3 gap-3 text-center">
                 {[
-                  { l: 'Overall close', v: wonRate(leads), c: '#003087' },
+                  { l: 'Overall close', v: wonRate(leads), c: 'rgb(var(--navy))' },
                   { l: '🔥 Warm close', v: wonRate(warmLeads), c: '#EA580C' },
                   { l: '❄️ Cold close', v: wonRate(coldLeads), c: '#2563EB' },
                 ].map(x => (

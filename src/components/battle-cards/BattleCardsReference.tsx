@@ -173,7 +173,7 @@ export function BattleCardsReference({ progress, save, onReplay }: any) {
         <div className="relative h-14 w-14 shrink-0">
           <svg width="56" height="56" viewBox="0 0 56 56" className="-rotate-90">
             <circle cx="28" cy="28" r="24" fill="none" stroke="#E4ECF2" strokeWidth="5" />
-            <circle cx="28" cy="28" r="24" fill="none" stroke="#00C2B2" strokeWidth="5" strokeLinecap="round" strokeDasharray={2 * Math.PI * 24} strokeDashoffset={2 * Math.PI * 24 * (1 - pct / 100)} style={{ transition: 'stroke-dashoffset .6s ease' }} />
+            <circle cx="28" cy="28" r="24" fill="none" stroke="rgb(var(--teal))" strokeWidth="5" strokeLinecap="round" strokeDasharray={2 * Math.PI * 24} strokeDashoffset={2 * Math.PI * 24 * (1 - pct / 100)} style={{ transition: 'stroke-dashoffset .6s ease' }} />
           </svg>
           <span className="absolute inset-0 flex items-center justify-center text-[13px] font-[800] text-navy">{masteredCount}/9</span>
         </div>

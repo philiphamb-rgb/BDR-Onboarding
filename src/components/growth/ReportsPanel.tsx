@@ -18,8 +18,8 @@ import { cn } from '@/lib/utils'
 const STAGES = [
   { k: 'new_lead', l: 'New', c: '#64748B' },
   { k: 'interested', l: 'Interested', c: '#0284C7' },
-  { k: 'proposal_sent', l: 'Proposal', c: '#00C2B2' },
-  { k: 'contract_signed', l: 'Signed', c: '#F5A623' },
+  { k: 'proposal_sent', l: 'Proposal', c: 'rgb(var(--teal))' },
+  { k: 'contract_signed', l: 'Signed', c: 'rgb(var(--gold))' },
   { k: 'opportunity_won', l: 'Won', c: '#16A34A' },
 ]
 const idxOf = (stage: string) => { const i = STAGES.findIndex(s => s.k === stage); return i < 0 ? 0 : i }

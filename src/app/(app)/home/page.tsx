@@ -559,8 +559,8 @@ export default function HomePage() {
 
         <div className="grid grid-cols-2 gap-3">
           {[
-            { href: '/partners',        Icon: HandshakeIcon, label: 'Partners',        sub: 'Work your pipeline', tint: 'bg-teal/10 text-teal',       accent: '#00C2B2' },
-            { href: '/train',           Icon: BookIcon,      label: 'Learning Center', sub: 'Continue learning',  tint: 'bg-navy/10 text-navy',       accent: '#003087' },
+            { href: '/partners',        Icon: HandshakeIcon, label: 'Partners',        sub: 'Work your pipeline', tint: 'bg-teal/10 text-teal',       accent: 'rgb(var(--teal))' },
+            { href: '/train',           Icon: BookIcon,      label: 'Learning Center', sub: 'Continue learning',  tint: 'bg-navy/10 text-navy',       accent: 'rgb(var(--navy))' },
             { href: '/wins?action=new', Icon: TrophyIcon,    label: 'Log a Win',       sub: 'Call · Demo · Deal', tint: 'bg-gold/10 text-gold',       accent: '#CA8A04' },
             { href: '/commissions',     Icon: CoinIcon,      label: 'Goals & Income',  sub: 'Plan your number',   tint: 'bg-success/10 text-success', accent: '#16A34A' },
           ].map(a => (

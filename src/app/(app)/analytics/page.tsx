@@ -128,7 +128,7 @@ export default function AnalyticsPage() {
             <div className="label mb-3">Closing rate</div>
             <div className="grid grid-cols-3 gap-3 text-center">
               {[
-                { l: 'Overall', v: rate(partners), c: '#003087' },
+                { l: 'Overall', v: rate(partners), c: 'rgb(var(--navy))' },
                 { l: '🔥 Warm', v: rate(warm), c: '#EA580C' },
                 { l: '❄️ Cold', v: rate(cold), c: '#2563EB' },
               ].map(x => (

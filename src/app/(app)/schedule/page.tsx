@@ -760,7 +760,7 @@ export default function SchedulePage() {
                           aria-label={done ? 'Mark not done' : 'Mark done'}
                           className={cn('flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded-[4px] border-[1.5px] transition-all',
                             done ? 'border-success bg-success text-white' : 'bg-card text-transparent', suggestDone && 'animate-attention')}
-                          style={{ minHeight: 18, ...(!done ? { borderColor: suggestDone ? '#F5A623' : st.color } : {}) }}>
+                          style={{ minHeight: 18, ...(!done ? { borderColor: suggestDone ? 'rgb(var(--gold))' : st.color } : {}) }}>
                           <CheckIcon size={11} />
                         </button>
                       )}

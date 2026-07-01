@@ -159,7 +159,7 @@ export default function TrainPage() {
         <div className="flex items-end justify-between mb-3">
           <div className="text-2xl font-bold text-white">{completedModules}/{modules.length}</div>
         </div>
-        <ProgressBar value={percentage(completedModules, modules.length)} max={100} color="#00C2B2" className="h-2" />
+        <ProgressBar value={percentage(completedModules, modules.length)} max={100} color="rgb(var(--teal))" className="h-2" />
       </Card>
 
       <div className="space-y-3" data-tour="train-list">
@@ -198,7 +198,7 @@ export default function TrainPage() {
                         <span className="text-xs text-gray flex items-center gap-0.5"><XpIcon className="w-3 h-3 text-gold" />+{mod.xp_quiz} XP</span>
                       </div>
                       {mod.lessons_count > 0 && (
-                        <ProgressBar value={pct} max={100} color={fullyDone ? '#00C2B2' : '#003087'} className="h-1.5" />
+                        <ProgressBar value={pct} max={100} color={fullyDone ? 'rgb(var(--teal))' : 'rgb(var(--navy))'} className="h-1.5" />
                       )}
                     </>
                   )}
