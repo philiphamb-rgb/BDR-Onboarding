@@ -19,8 +19,8 @@ Stack: Next.js 14 App Router · Supabase (Postgres + RLS) · Vercel · Tailwind 
 | `/train` | Learning Center hub | R | D | ? |
 | `/train/sandler` | Sandler Academy (49 rules) | R | D | ? |
 | `/train/[moduleId]` | Module overview | R | D | ? |
-| `/train/[moduleId]/[lessonId]` | Lesson reader | R | D | ? |
-| `/train/[moduleId]/quiz` | Scenario quiz | R | D | ? |
+| `/train/[moduleId]/[lessonId]` | Lesson reader | R | D | ✓ (XP-first completion fixed) |
+| `/train/[moduleId]/quiz` | Scenario quiz | R | D | ✓ (refresh-safe persistence added) |
 | `/train/battlecards` | Battle Cards | R | D | ? |
 | `/drill` | Objection drill | R | D | ? |
 | `/progress` | Learning progress | R | D | ? |
@@ -39,11 +39,11 @@ Stack: Next.js 14 App Router · Supabase (Postgres + RLS) · Vercel · Tailwind 
 | Route | Purpose | Render | Data | QA |
 |---|---|---|---|---|
 | `/grow` | Apex workspace home | R | D | ? |
-| `/grow/team` | AI Team roster (18 agents) | R | D | ? |
-| `/grow/automations` | Automations | R | D | ? |
-| `/grow/leadgen` | Lead Gen | R | D | ? |
-| `/grow/content` | Content Engine | R | D | ? |
-| `/grow/build` | Build phases | R | D | ? |
+| `/grow/team` | AI Team roster (18 agents) | R | D | ✓ (status-write rollback fixed) |
+| `/grow/automations` | Automations | R | D | ✓ (status-write rollback fixed) |
+| `/grow/leadgen` | Lead Gen | R | D | ✓ (CTAs sound) |
+| `/grow/content` | Content Engine | R | D | ~ (honest copy; rank/empty-state carried fwd) |
+| `/grow/build` | Build phases | R | D | ✓ (server-gated manager-only) |
 
 ## Priority 5 — Coach, plan, social
 | Route | Purpose | Render | Data | QA |

@@ -72,7 +72,7 @@ function NextMoveCard() {
             disabled={!!status} className="flex items-center gap-1.5 rounded-lg bg-navy px-4 py-2 text-[12.5px] font-[800] text-white"><IntegrationIcon size={13} /> Generate with AI</button>
         </div>
       </div>
-      {status && <div className={cn('mt-3 text-[12px] font-[600]', status === 'done' ? 'text-success' : 'text-gray')}>{status === 'done' ? 'Marked done — queue re-ranking…' : 'Skipped — pulling next-best move…'}</div>}
+      {status && <div className={cn('mt-3 text-[12px] font-[600]', status === 'done' ? 'text-success' : 'text-gray')}>{status === 'done' ? 'Marked done — the next move refreshes with tomorrow’s queue.' : 'Skipped — the next move refreshes with tomorrow’s queue.'}</div>}
       {expanded && (
         <div className="mt-4 border-t border-border pt-4">
           <div className="mb-3 flex gap-2 rounded-lg bg-teal/[0.06] p-3"><InfoIcon size={13} className="mt-0.5 shrink-0 text-teal" /><span className="text-[12px] leading-relaxed text-mid-text"><span className="font-[800] text-dark-text">What "Expected Value" means: </span>a smart guess at how much recurring partner revenue this post will drive, from what similar posts actually did. Higher EV = better bet for your next 30 minutes.</span></div>

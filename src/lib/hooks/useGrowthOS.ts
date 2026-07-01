@@ -12,6 +12,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
+import { toast } from '@/components/ui'
 import { mergeRoster, type AutomationStatus } from '@/lib/modules/growth-os/roster'
 
 function weekStart(now = new Date()) {
@@ -100,15 +101,20 @@ export function useGrowthOS() {
   // Upserts the full row so a team that was never seeded still persists cleanly.
   const setStatus = useCallback(async (agent: { id: string; name: string; category: string }, status: AutomationStatus) => {
     if (!isManager || !teamRef.current || !userId) return
+    let prevRows: any[] = []
     setAutoRows(prev => {
+      prevRows = prev   // capture for rollback if the write fails
       const i = prev.findIndex(r => r.id === agent.id)
       const row = { id: agent.id, status, updated_at: new Date().toISOString(), updated_by: userId }
       return i >= 0 ? prev.map(r => r.id === agent.id ? { ...r, ...row } : r) : [...prev, row]
     })
-    await supabase.from('automations').upsert(
+    const { error } = await supabase.from('automations').upsert(
       { team_id: teamRef.current, id: agent.id, name: agent.name, category: agent.category, status, updated_by: userId, updated_at: new Date().toISOString() },
       { onConflict: 'team_id,id' },
     )
+    // Don't let the roster (and the live-count / cost KPIs derived from it) show a
+    // status the DB rejected — roll back and tell the manager it didn't take.
+    if (error) { setAutoRows(prevRows); toast.error(`Could not update ${agent.name}. Try again.`) }
   }, [isManager, userId, supabase])
 
   // Persist growth goals onto the shared per-user goals row (debounced).

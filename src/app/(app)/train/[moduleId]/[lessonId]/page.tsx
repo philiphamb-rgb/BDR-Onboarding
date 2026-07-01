@@ -68,30 +68,36 @@ export default function LessonPage() {
     if (!userId || alreadyDone) return
     setCompleting(true)
     try {
-      // Add to completed_lessons array
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session) { toast.error('Session expired — please sign in again.'); return }
+
+      // Award XP FIRST and only mark the lesson complete once it's confirmed.
+      // Previously the array was written before the XP call, so a failed call
+      // stranded the lesson as "done" with no XP and no way to retry.
+      const res = await fetch(`${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/calculate-xp`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}` },
+        body: JSON.stringify({ action: 'lesson_complete', user_id: userId, lesson_id: lessonId }),
+      })
+      if (!res.ok) { toast.error('Could not save your progress. Try again.'); return }
+      const { xp_earned } = await res.json()
+
+      // Mirror the completed_lessons array the server also maintains, so the
+      // module view reflects completion immediately.
       const { data: prog } = await supabase.from('user_progress').select('completed_lessons').eq('user_id', userId).single()
       const existing = prog?.completed_lessons ?? []
       if (!existing.includes(lessonId)) {
         await supabase.from('user_progress').update({ completed_lessons: [...existing, lessonId] }).eq('user_id', userId)
       }
 
-      const { data: { session } } = await supabase.auth.getSession()
-      if (session) {
-        const res = await fetch(`${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/calculate-xp`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}` },
-          body: JSON.stringify({ action: 'lesson_complete', user_id: userId, lesson_id: lessonId }),
-        })
-        if (res.ok) {
-          const { xp_earned } = await res.json()
-          toast.xp(xp_earned ?? 0, 'Lesson complete!')
-        }
-      }
       setAlreadyDone(true)
+      toast.xp(xp_earned ?? 0, 'Lesson complete!')
       // Let the XP reward toast land before navigating away (protects the
       // positive-feedback loop from being cut off by the route change).
       await new Promise((r) => setTimeout(r, 850))
       router.push(`/train/${moduleId}`)
+    } catch {
+      toast.error('Could not save your progress. Try again.')
     } finally { setCompleting(false) }
   }
 

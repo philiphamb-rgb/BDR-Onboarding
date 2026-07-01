@@ -69,3 +69,31 @@ Flagged decisions (needs Philip):
 5. No automated test suite (from cycle 1).
 Delight additions: none this cycle (correctness pass). Coach icon/name now consistent with the global Ask-Coach affordance — small but removes a "wait, is this the same coach?" beat.
 
+---
+
+## Cycle 4 — 2026-07-01T04:55Z — Phase: 4 (Module QA — learning flow + Apex tabs)
+Time spent: ~25m
+Goal this cycle: Adversarial audit of the Learning/quiz/drill flow and the Apex /grow/* tabs via two parallel agents; fix high-confidence findings.
+
+Findings + dispositions (most severe first):
+- [HIGH] Refreshing mid-quiz wiped all answers back to the intro (state was React-only, no persistence). FIXED — in-flight {phase, currentIdx, answers} now persist to sessionStorage per module and rehydrate on mount; cleared on submit.
+- [HIGH] Lesson completion pre-wrote `completed_lessons` BEFORE the XP call, so a failed XP call stranded the lesson as "done" with no XP and no retry. FIXED — award XP first, mark complete only on a confirmed response, error toast otherwise.
+- [HIGH] Apex `setStatus` (AI Team / Automations status toggle) was optimistic with no error handling — the roster + live-count + cost KPIs would show a status the DB rejected. FIXED — capture the write error, roll the row back, toast.
+- [MED] Content "Next Move" Skip/Done claimed "queue re-ranking…"/"pulling next-best move…" but nothing happened (static data). FIXED — honest copy ("refreshes with tomorrow's queue", which matches the Content Idea cron's daily regen).
+- [MED] `agent_instruction_overrides` fetch ignores errors → could copy a prompt missing its team tuning. CARRIED FORWARD (low real frequency; recommend error handling + copy-gate).
+- [MED] Content ranked queue uses a magic `rank={i+2}` and has no empty state when the channel filter excludes everything. CARRIED FORWARD.
+- [MED] Automations live-count denominator differs from the 18-agent chrome count (subset vs full). CARRIED FORWARD (labeling fix).
+- [MED] Tap targets < 44px: drill send button (36px), quiz search-clear icon. CARRIED FORWARD.
+- [MED] Module page has no empty state for a module with zero published lessons. CARRIED FORWARD.
+- Quiz score/pass math (70% threshold), 18-agent `details` rendering, Build-tab gating, coach CTAs, automations onConflict PK, most empty/loading states — CHECKED, SOUND.
+
+Verified how: agent findings re-traced to source; `npm run build` ✓ compiled successfully after all edits.
+Changes made:
+- src/app/(app)/train/[moduleId]/quiz/page.tsx — sessionStorage quiz-progress persistence + rehydrate.
+- src/app/(app)/train/[moduleId]/[lessonId]/page.tsx — XP-first, mark-complete-on-confirm lesson flow.
+- src/lib/hooks/useGrowthOS.ts — setStatus error handling + optimistic rollback + toast.
+- src/app/(app)/grow/content/page.tsx — honest Next Move status copy.
+Not verified / carried forward: the MED items above; Phase 4 on Notifications, Leaderboard, Resources, Schedule/Notes/Tasks, Partners; Today loading-gate.
+Flagged decisions: no NEW flags this cycle (the deploy + RLS + caps flags from cycle 3 still stand).
+Delight additions: quiz now survives an accidental refresh mid-attempt — a genuine "it just did the right thing" moment for a rep on mobile.
+

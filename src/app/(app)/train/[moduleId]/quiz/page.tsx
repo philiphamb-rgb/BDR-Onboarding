@@ -38,11 +38,25 @@ export default function ModuleQuizPage() {
   const [result, setResult] = useState<{ correct: number; total: number; pct: number; passed: boolean; xpEarned: number } | null>(null)
   const [prevBest, setPrevBest] = useState<number>(0)
 
+  // Survive a mid-quiz refresh / backgrounded-tab kill: in-flight answers are
+  // persisted per module and rehydrated on mount, so a reload doesn't wipe a
+  // 15-question run back to the intro.
+  const storageKey = `quiz_progress_${moduleId}`
+
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => {
       if (user) { setUserId(user.id); fetchData(user.id) }
     })
   }, [moduleId])
+
+  useEffect(() => {
+    if (loading) return
+    try {
+      if (phase === 'taking') sessionStorage.setItem(storageKey, JSON.stringify({ currentIdx, answers, showAnswer }))
+      else sessionStorage.removeItem(storageKey)
+    } catch { /* storage unavailable — non-fatal */ }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [phase, currentIdx, answers, showAnswer, loading])
 
   const fetchData = async (uid: string) => {
     const [{ data: mod }, { data: qs }, { data: prevAttempts }] = await Promise.all([
@@ -50,9 +64,20 @@ export default function ModuleQuizPage() {
       supabase.from('quiz_questions').select('*').eq('module_id', moduleId).order('order_index'),
       supabase.from('quiz_attempts').select('percentage').eq('user_id', uid).eq('module_id', moduleId).order('attempted_at', { ascending: false }).limit(5),
     ])
+    const loaded = (qs ?? []).map(q => ({ ...q, options: q.options as string[] }))
     setModuleName(mod?.title ?? '')
-    setQuestions((qs ?? []).map(q => ({ ...q, options: q.options as string[] })))
+    setQuestions(loaded)
     setPrevBest(Math.max(...(prevAttempts?.map(a => a.percentage) ?? [0])))
+    // Rehydrate an interrupted run before showing the intro.
+    try {
+      const saved = JSON.parse(sessionStorage.getItem(storageKey) || 'null')
+      if (saved && saved.answers && Object.keys(saved.answers).length > 0 && loaded.length > 0) {
+        setAnswers(saved.answers)
+        setCurrentIdx(Math.min(saved.currentIdx ?? 0, loaded.length - 1))
+        setShowAnswer(!!saved.showAnswer)
+        setPhase('taking')
+      }
+    } catch { /* ignore malformed */ }
     setLoading(false)
   }
 

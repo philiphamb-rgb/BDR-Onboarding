@@ -1,22 +1,23 @@
 {
   "started_at": "2026-07-01T04:15:37Z",
   "current_phase": "PHASE_4",
-  "cycles_completed": 3,
+  "cycles_completed": 4,
   "module_checklist_path": "module_checklist.md",
   "phases_completed_full_pass": ["PHASE_0", "PHASE_3"],
   "phases_in_progress": ["PHASE_4", "PHASE_5"],
+  "wake_up_report": "WAKE_UP_REPORT.md",
   "flagged_decisions": [
-    "DEPLOY calculate-xp edge function to activate the quiz + module_complete ledger dedupe fixes (changes live XP economy — needs Philip's go-ahead).",
-    "Activity XP (call/demo/deal/win) has no per-day cap — farmable by paced clicks. Recommend a daily cap mirroring drill_complete (5/day); needs a value decision.",
-    "B2C impliedMonthlyDeals feeds a subscriber-add count into monthly_deal_goal which Home/Today compare closed deals against — unit mismatch, needs a semantics decision.",
-    "Broadcast send + manager role-change/invite are blocked by RLS but the UI reports success. Need a service-role edge function or scoped RLS INSERT/UPDATE policies.",
-    "Fail-open permission accessor (canView/canEdit) leaks manager-scope features on any perms-load failure. Recommend fail-closed for scope 'manager'. Auth-model change — flagged, not executed.",
-    "No automated test suite exists (package.json has no test script). Recommend Playwright smoke tests."
+    "DEPLOY calculate-xp edge function to activate the quiz + module_complete ledger dedupe fixes (changes live XP economy — needs go-ahead).",
+    "Activity XP (call/demo/deal/win) has no per-day cap — farmable by paced clicks. Recommend a daily cap mirroring drill_complete (5/day).",
+    "B2C impliedMonthlyDeals feeds a subscriber-add count into monthly_deal_goal which Home/Today compare closed deals against — unit mismatch.",
+    "Broadcast send + manager role-change/invite are blocked by RLS but the UI reports success. Need a service-role edge function or scoped RLS policies.",
+    "Fail-open permission accessor (canView/canEdit) leaks manager-scope features on any perms-load failure. Recommend fail-closed for scope 'manager'.",
+    "No automated test suite exists. Recommend Playwright smoke tests."
   ],
-  "modules_qa_passed": ["onboarding", "home (completeTask)", "today (logActivity)", "coach", "commissions/income-engine (math sound)", "manager suite (reads/RLS sound)"],
-  "modules_carried_forward": ["today (loading-state gate)", "train/sandler", "grow/* tabs", "notifications", "leaderboard", "resources", "drill", "schedule/notes/tasks"],
+  "modules_qa_passed": ["onboarding", "home", "today (partial)", "coach", "commissions/income-engine", "manager suite", "train/lesson", "train/quiz", "grow/team", "grow/automations", "grow/build", "grow/leadgen"],
+  "modules_carried_forward": ["today (loading-gate)", "grow/content (rank/empty-state)", "train/sandler", "notifications", "leaderboard", "resources", "drill (tap-target)", "schedule/notes/tasks", "partners"],
   "time_budget_minutes": 360,
-  "time_used_minutes": 70,
+  "time_used_minutes": 95,
   "baseline_commit": "130a5bf",
   "branches": ["claude/serene-shannon-17i9vv", "claude/affectionate-volta-v1qqa6"]
 }
