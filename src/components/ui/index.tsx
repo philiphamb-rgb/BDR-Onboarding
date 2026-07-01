@@ -218,7 +218,7 @@ export function Toggle({
         className,
       )}
     >
-      <span className={cn('inline-block transform rounded-full bg-white shadow-sm transition-transform duration-200', s.knob, checked ? s.on : s.off)} />
+      <span className={cn('inline-block transform rounded-full bg-card shadow-sm transition-transform duration-200', s.knob, checked ? s.on : s.off)} />
     </button>
   )
 }

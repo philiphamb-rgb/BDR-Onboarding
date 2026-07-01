@@ -54,7 +54,7 @@ export default function LeaderboardPage() {
         {[{ key: 'xp', label: 'Total XP' }, { key: 'streak', label: 'Streak' }].map(t => (
           <button key={t.key} onClick={() => setTab(t.key as typeof tab)}
             className={cn('flex-1 py-2 rounded-lg text-sm font-medium transition-all',
-              tab === t.key ? 'bg-white shadow text-navy' : 'text-gray')}>
+              tab === t.key ? 'bg-card shadow text-navy' : 'text-gray')}>
             {t.label}
           </button>
         ))}

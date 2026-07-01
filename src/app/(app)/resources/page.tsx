@@ -176,7 +176,7 @@ export default function ResourcesPage() {
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Search tools and resources…"
-          className="w-full pl-9 pr-4 py-3 rounded-xl border border-border text-sm focus:outline-none focus:ring-2 focus:ring-navy bg-white"
+          className="w-full pl-9 pr-4 py-3 rounded-xl border border-border text-sm focus:outline-none focus:ring-2 focus:ring-navy bg-card"
         />
       </div>
 

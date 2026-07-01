@@ -28,20 +28,25 @@ export const viewport: Viewport = {
   initialScale: 1,
   maximumScale: 1,
   userScalable: false,
-  themeColor: '#003087',
+  themeColor: '#0A0E15',
   viewportFit: 'cover',
 }
+
+// Applied before first paint so there's no theme flash. Dark is the default;
+// `.light` on <html> flips to the light palette. 'system' follows the OS.
+const THEME_INIT = `(function(){try{var t=localStorage.getItem('theme')||'dark';var isLight=t==='light'||(t==='system'&&!matchMedia('(prefers-color-scheme: dark)').matches);document.documentElement.classList.toggle('light',isLight);}catch(e){}})();`
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
       <head>
+        <script dangerouslySetInnerHTML={{ __html: THEME_INIT }} />
         <link rel="apple-touch-icon" href="/icons/icon-192x192.png" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
         <meta name="mobile-web-app-capable" content="yes" />
       </head>
-      <body className="font-sans antialiased bg-bdrbg text-gray-900 min-h-screen">
+      <body className="font-sans antialiased bg-bdrbg text-dark-text min-h-screen">
         {children}
         <ToastContainer />
         <XpPopLayer />

@@ -178,7 +178,7 @@ export default function LessonPage() {
     )
     if (block.type === 'template') return (
       <div key={i} className="rounded-xl border border-border bg-bdrbg overflow-hidden">
-        <div className="flex items-center justify-between px-3 py-2 border-b border-border bg-white">
+        <div className="flex items-center justify-between px-3 py-2 border-b border-border bg-card">
           <span className="text-[11px] font-[800] uppercase tracking-wide text-gray">{block.caption ?? 'Copy & paste'}</span>
           <button
             onClick={() => { navigator.clipboard?.writeText(block.text ?? ''); toast.success?.('Copied to clipboard') }}
@@ -213,7 +213,7 @@ export default function LessonPage() {
         {block.src
           ? <img src={block.src} alt={block.caption ?? ''} className="w-full" />
           : <div className="aspect-video flex items-center justify-center text-gray text-xs">Illustration</div>}
-        {block.caption && <figcaption className="px-3 py-2 text-xs text-gray border-t border-border bg-white">{block.caption}</figcaption>}
+        {block.caption && <figcaption className="px-3 py-2 text-xs text-gray border-t border-border bg-card">{block.caption}</figcaption>}
       </figure>
     )
     return null

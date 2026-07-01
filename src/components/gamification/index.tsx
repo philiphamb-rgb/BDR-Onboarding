@@ -170,7 +170,7 @@ export function BeltCelebration({ beltName, beltColor, xpEarned, onClose }: Belt
       {/* Belt card */}
       <div
         className={cn(
-          'relative bg-white rounded-3xl p-8 mx-6 text-center shadow-2xl max-w-sm w-full',
+          'relative bg-card rounded-3xl p-8 mx-6 text-center shadow-2xl max-w-sm w-full',
           'animate-pop',
           closing && 'scale-95 opacity-0 transition-all duration-400'
         )}

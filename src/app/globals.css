@@ -4,24 +4,44 @@
 @tailwind components;
 @tailwind utilities;
 
-/* ── CSS Custom Properties (Design System Tokens) ─────────────────────────── */
+/* ── Design System Tokens (themeable) ─────────────────────────────────────────
+   Neutrals are space-separated RGB CHANNELS so Tailwind's `rgb(var(--x)/<alpha>)`
+   opacity modifiers keep working (bg-card/10, text-navy/40, …). DARK is the
+   default theme (the space/red look); `.light` on <html> flips to light. The
+   brand primary (`--navy`) is a vivid red in BOTH themes. */
 :root {
-  --color-navy:       #003087;
-  --color-navy-dark:  #001855;
-  --color-navy-mid:   #0A4BA8;
-  --color-teal:       #00C2B2;
-  --color-teal-dark:  #009E8B;
-  --color-mint:       #00C97A;
-  --color-gold:       #F5A623;
-  --color-bg:         #F0F5FA;
-  --color-card:       #FFFFFF;
-  --color-border:     #E4ECF2;
-  --color-dark:       #0D1B2A;
-  --color-mid:        #374151;
-  --color-gray:       #64748B;
-  --color-success:    #16A34A;
-  --color-error:      #DC2626;
-  --font-sans:        'Inter', system-ui, sans-serif;
+  color-scheme: dark;
+  /* neutrals — DARK (default) */
+  --bg:         10 14 21;
+  --card:       20 26 36;
+  --border:     38 46 59;
+  --light:      27 34 45;
+  --text:       237 241 247;
+  --text-mid:   194 203 216;
+  --text-muted: 135 146 163;
+  /* brand primary (red) — identical across themes */
+  --navy:       229 72 77;
+  --navy-dark:  193 59 63;
+  --navy-mid:   240 96 95;
+  --font-sans:  'Inter', system-ui, sans-serif;
+  /* legacy aliases used within this stylesheet — follow the channels above */
+  --color-bg:     rgb(var(--bg));
+  --color-dark:   rgb(var(--text));
+  --color-border: rgb(var(--border));
+  --color-gray:   rgb(var(--text-muted));
+  --color-navy:   rgb(var(--navy));
+  --color-teal:   #00C2B2;
+}
+
+.light {
+  color-scheme: light;
+  --bg:         240 245 250;
+  --card:       255 255 255;
+  --border:     228 236 242;
+  --light:      244 248 251;
+  --text:       13 27 42;
+  --text-mid:   55 65 81;
+  --text-muted: 100 116 139;
 }
 
 /* ── Base Resets ──────────────────────────────────────────────────────────── */

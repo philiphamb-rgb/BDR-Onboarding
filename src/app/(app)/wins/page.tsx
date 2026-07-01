@@ -108,7 +108,7 @@ function WinsContent() {
         {WIN_TYPES.slice(0, 3).map(wt => {
           const count = wins.filter(w => w.type === wt.type).length
           return (
-            <div key={wt.type} className="bg-white rounded-xl border border-border p-3 text-center shadow-card">
+            <div key={wt.type} className="bg-card rounded-xl border border-border p-3 text-center shadow-card">
               <div className="mb-1 flex justify-center"><wt.Icon size={20} className="text-navy" /></div>
               <div className="text-h3 font-bold text-dark-text"><CountUp value={count} /></div>
               <div className="text-xs text-gray">{wt.label}s</div>
@@ -122,7 +122,7 @@ function WinsContent() {
         {['all', ...WIN_TYPES.map(t => t.type)].map(f => (
           <button key={f} onClick={() => setFilter(f)}
             className={cn('px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-colors',
-              filter === f ? 'bg-navy text-white' : 'bg-white border border-border text-gray hover:bg-bdrbg')}>
+              filter === f ? 'bg-navy text-white' : 'bg-card border border-border text-gray hover:bg-bdrbg')}>
             {f === 'all' ? 'All' : WIN_TYPES.find(t => t.type === f)?.label}
           </button>
         ))}

@@ -12,6 +12,37 @@ import { resetTours } from '@/components/tour'
 import { cn } from '@/lib/utils'
 import { toast } from '@/components/ui'
 import { roleLabel } from '@/lib/permissions'
+import { getTheme, setTheme, type ThemeChoice } from '@/lib/theme'
+
+function AppearanceCard() {
+  const [theme, setThemeState] = useState<ThemeChoice>('dark')
+  useEffect(() => { setThemeState(getTheme()) }, [])
+  const choose = (t: ThemeChoice) => { setThemeState(t); setTheme(t) }
+  const OPTS: { key: ThemeChoice; label: string; sub: string; swatch: string }[] = [
+    { key: 'dark',   label: 'Dark',   sub: 'The space look (default)', swatch: 'bg-[#0A0E15] border-[#262E3B]' },
+    { key: 'light',  label: 'Light',  sub: 'Bright, high-contrast',    swatch: 'bg-[#F0F5FA] border-[#E4ECF2]' },
+    { key: 'system', label: 'System', sub: 'Match your device',        swatch: 'bg-gradient-to-br from-[#0A0E15] to-[#F0F5FA] border-border' },
+  ]
+  return (
+    <Card>
+      <h2 className="text-h3 text-dark-text mb-1">Appearance</h2>
+      <p className="text-xs text-gray mb-3">Choose how BDR Hub looks. Applies instantly and is remembered on this device.</p>
+      <div className="grid grid-cols-3 gap-2">
+        {OPTS.map(o => {
+          const active = theme === o.key
+          return (
+            <button key={o.key} onClick={() => choose(o.key)} aria-pressed={active}
+              className={cn('flex flex-col items-start gap-2 rounded-xl border p-3 text-left transition-all', active ? 'border-navy ring-2 ring-navy/30' : 'border-border hover:border-navy/40')}>
+              <span className={cn('h-8 w-full rounded-lg border', o.swatch)} />
+              <span className="text-[13px] font-[800] text-dark-text">{o.label}</span>
+              <span className="text-[11px] leading-tight text-gray">{o.sub}</span>
+            </button>
+          )
+        })}
+      </div>
+    </Card>
+  )
+}
 
 type Section = 'main' | 'notifications' | 'data' | 'help'
 
@@ -88,6 +119,9 @@ export default function SettingsPage() {
           <button onClick={() => router.push('/settings/profile')} className="text-sm text-navy font-medium">Edit</button>
         </div>
       </Card>
+
+      {/* Appearance — light / dark / system */}
+      <AppearanceCard />
 
       {/* Connections — per-user integrations */}
       <Card>

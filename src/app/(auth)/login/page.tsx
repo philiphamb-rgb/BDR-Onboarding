@@ -11,7 +11,7 @@ function LoginForm() {
     <div className="w-full max-w-sm">
       {/* Logo */}
       <div className="text-center mb-8">
-        <div className="w-20 h-20 bg-white rounded-2xl mx-auto mb-4 flex items-center justify-center shadow-lg p-3">
+        <div className="w-20 h-20 bg-card rounded-2xl mx-auto mb-4 flex items-center justify-center shadow-lg p-3">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src="/consumerdirect-mark.svg" alt="ConsumerDirect" className="w-full h-full" />
         </div>
@@ -20,7 +20,7 @@ function LoginForm() {
       </div>
 
       {/* Card */}
-      <div className="bg-white rounded-2xl shadow-modal p-6">
+      <div className="bg-card rounded-2xl shadow-modal p-6">
         <h2 className="text-lg font-semibold text-dark-text mb-1">Sign in</h2>
         <p className="text-sm text-gray mb-5">Enter your email and password.</p>
 
@@ -37,7 +37,7 @@ function LoginForm() {
               type="email"
               placeholder="you@consumerdirect.com"
               required
-              className="w-full px-4 py-3 rounded-xl border border-border bg-white text-sm focus:outline-none focus:ring-2 focus:ring-navy focus:border-transparent transition"
+              className="w-full px-4 py-3 rounded-xl border border-border bg-card text-sm focus:outline-none focus:ring-2 focus:ring-navy focus:border-transparent transition"
               autoComplete="email"
               autoFocus
             />
@@ -53,7 +53,7 @@ function LoginForm() {
               type="password"
               placeholder="••••••••"
               required
-              className="w-full px-4 py-3 rounded-xl border border-border bg-white text-sm focus:outline-none focus:ring-2 focus:ring-navy focus:border-transparent transition"
+              className="w-full px-4 py-3 rounded-xl border border-border bg-card text-sm focus:outline-none focus:ring-2 focus:ring-navy focus:border-transparent transition"
               autoComplete="current-password"
             />
           </div>

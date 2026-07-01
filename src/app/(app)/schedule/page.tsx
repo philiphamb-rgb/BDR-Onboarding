@@ -615,12 +615,12 @@ export default function SchedulePage() {
         {planTotal > 0 && (
           <div className="mt-3">
             <div className="mb-1 flex items-center justify-between text-[11px] text-white/80"><span>Today’s plan</span><span className="tabular-nums">{planDone}/{planTotal} done</span></div>
-            <div className="h-1.5 w-full overflow-hidden rounded-full bg-white/20"><div className="h-full rounded-full bg-white transition-all duration-700 ease-out" style={{ width: `${planProgress}%` }} /></div>
+            <div className="h-1.5 w-full overflow-hidden rounded-full bg-white/20"><div className="h-full rounded-full bg-card transition-all duration-700 ease-out" style={{ width: `${planProgress}%` }} /></div>
           </div>
         )}
         <div data-tour="autoplan-controls" className="mt-3 flex flex-wrap gap-2">
           <button onClick={() => autoPlanDay(false)} disabled={triageBusy}
-            className="flex items-center gap-1.5 rounded-lg bg-white px-3 py-2 text-[13px] font-[800] text-navy active:scale-[0.99] disabled:opacity-60">
+            className="flex items-center gap-1.5 rounded-lg bg-card px-3 py-2 text-[13px] font-[800] text-navy active:scale-[0.99] disabled:opacity-60">
             <LightningIcon size={14} className="text-navy" /> {triageBusy ? 'Planning…' : 'Auto-plan my day'}
           </button>
           {scheduledToday.length > 0 && (

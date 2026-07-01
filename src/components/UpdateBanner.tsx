@@ -46,7 +46,7 @@ export function UpdateBanner() {
     <div className="fixed inset-x-0 top-0 z-[560] flex items-center justify-center gap-3 bg-gradient-hero px-4 py-2 text-white shadow-md animate-rise">
       <span className="text-[13px] font-[700]">A new version of BDR Hub is ready.</span>
       <button onClick={() => window.location.reload()}
-        className="flex items-center gap-1.5 rounded-full bg-white px-3 py-1 text-[12px] font-[800] text-navy transition-transform active:scale-95">
+        className="flex items-center gap-1.5 rounded-full bg-card px-3 py-1 text-[12px] font-[800] text-navy transition-transform active:scale-95">
         <RefreshIcon size={13} /> Refresh
       </button>
       <button onClick={() => { dismissed.current = true; setStale(false) }} aria-label="Dismiss"

@@ -78,7 +78,7 @@ export default function OnboardingPage() {
         ))}
       </div>
 
-      <div className="bg-white rounded-2xl shadow-modal p-6 min-h-[420px] flex flex-col">
+      <div className="bg-card rounded-2xl shadow-modal p-6 min-h-[420px] flex flex-col">
 
         {/* Step 0: Welcome */}
         {step === 0 && (

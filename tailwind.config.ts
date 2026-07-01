@@ -10,11 +10,11 @@ const config: Config = {
     extend: {
       // ─── Brand Colors ──────────────────────────────────────────────────────
       colors: {
-        // Primary palette
+        // Primary palette — brand primary is themeable (red) via CSS channels
         navy: {
-          DEFAULT: '#003087',
-          dark:    '#001855',
-          mid:     '#0A4BA8',
+          DEFAULT: 'rgb(var(--navy) / <alpha-value>)',
+          dark:    'rgb(var(--navy-dark) / <alpha-value>)',
+          mid:     'rgb(var(--navy-mid) / <alpha-value>)',
         },
         teal: {
           DEFAULT: '#00C2B2',
@@ -22,15 +22,15 @@ const config: Config = {
         },
         mint:    '#00C97A',
         gold:    '#F5A623',
-        // UI colors
-        bdrbg:   '#F0F5FA',
-        card:    '#FFFFFF',
-        border:  '#E4ECF2',
-        light:   '#F4F8FB',
-        // Text
-        'dark-text': '#0D1B2A',
-        'mid-text':  '#374151',
-        gray:        '#64748B',
+        // UI colors — themeable (dark default / light option)
+        bdrbg:   'rgb(var(--bg) / <alpha-value>)',
+        card:    'rgb(var(--card) / <alpha-value>)',
+        border:  'rgb(var(--border) / <alpha-value>)',
+        light:   'rgb(var(--light) / <alpha-value>)',
+        // Text — themeable
+        'dark-text': 'rgb(var(--text) / <alpha-value>)',
+        'mid-text':  'rgb(var(--text-mid) / <alpha-value>)',
+        gray:        'rgb(var(--text-muted) / <alpha-value>)',
         // Status
         success: '#16A34A',
         error:   '#DC2626',
@@ -86,14 +86,14 @@ const config: Config = {
       boxShadow: {
         'card':   '0 2px 8px rgba(0,0,0,0.06)',
         'modal':  '0 8px 32px rgba(0,0,0,0.12)',
-        'button': '0 4px 16px rgba(0,194,178,0.35)',
+        'button': '0 4px 16px rgba(229,72,77,0.30)',
         'none':   'none',
       },
 
       // ─── Background Gradients ──────────────────────────────────────────────
       backgroundImage: {
         'gradient-primary': 'linear-gradient(135deg, #00C2B2, #009E8B)',
-        'gradient-hero':    'linear-gradient(135deg, #001855, #003087)',
+        'gradient-hero':    'linear-gradient(135deg, #B93438, #E5484D)',
         'gradient-gold':    'linear-gradient(135deg, #F5A623, #FFB300)',
         'gradient-belt':    'linear-gradient(90deg, #00C2B2, #00C97A)',
         'gradient-purple':  'linear-gradient(135deg, #6D28D9, #4C1D95)',

@@ -243,7 +243,7 @@ export function BottomNav({ user }: { user?: User | null; unreadCount?: number }
                 const Icon = item.icon
                 return (
                   <Link key={item.href} href={item.href} onClick={() => setMoreOpen(false)}
-                    className={cn('flex flex-col items-center justify-center gap-1 rounded-lg px-1 py-3 text-center', isActive ? 'bg-teal/8 text-teal' : 'text-mid-text hover:bg-bdrbg')}
+                    className={cn('flex flex-col items-center justify-center gap-1 rounded-lg px-1 py-3 text-center', isActive ? 'bg-navy/10 text-navy' : 'text-mid-text hover:bg-bdrbg')}
                     aria-current={isActive ? 'page' : undefined}>
                     <Icon size={22} />
                     <span className="text-[10px] font-[700] leading-tight">{item.label}</span>
@@ -261,18 +261,18 @@ export function BottomNav({ user }: { user?: User | null; unreadCount?: number }
           const Icon = item.icon
           return (
             <Link key={item.href} href={item.href} onClick={() => setMoreOpen(false)}
-              className={cn('flex flex-col items-center justify-center gap-0.5 min-w-[44px] min-h-[44px] px-3 rounded-lg transition-colors duration-[150ms]', isActive ? 'text-teal' : 'text-gray hover:text-navy')}
+              className={cn('flex flex-col items-center justify-center gap-0.5 min-w-[44px] min-h-[44px] px-3 rounded-lg transition-colors duration-[150ms]', isActive ? 'text-navy' : 'text-gray hover:text-navy')}
               aria-current={isActive ? 'page' : undefined}>
               <Icon size={22} className={cn('transition-transform duration-200', isActive && 'scale-110')} />
-              <span className={cn('text-[10px] font-[700] uppercase tracking-[0.05em]', isActive ? 'text-teal' : 'text-gray')}>{item.shortLabel ?? item.label}</span>
-              {isActive && <span className="absolute -bottom-0.5 h-1 w-1 animate-pop rounded-full bg-teal" />}
+              <span className={cn('text-[10px] font-[700] uppercase tracking-[0.05em]', isActive ? 'text-navy' : 'text-gray')}>{item.shortLabel ?? item.label}</span>
+              {isActive && <span className="absolute -bottom-0.5 h-1 w-1 animate-pop rounded-full bg-navy" />}
             </Link>
           )
         })}
         <button onClick={() => setMoreOpen(o => !o)} aria-label="More" aria-expanded={moreOpen}
-          className={cn('flex flex-col items-center justify-center gap-0.5 min-w-[44px] min-h-[44px] px-3 rounded-lg transition-colors duration-[150ms]', moreOpen || moreActive ? 'text-teal' : 'text-gray hover:text-navy')}>
+          className={cn('flex flex-col items-center justify-center gap-0.5 min-w-[44px] min-h-[44px] px-3 rounded-lg transition-colors duration-[150ms]', moreOpen || moreActive ? 'text-navy' : 'text-gray hover:text-navy')}>
           <MoreIcon size={22} />
-          <span className={cn('text-[10px] font-[700] uppercase tracking-[0.05em]', moreOpen || moreActive ? 'text-teal' : 'text-gray')}>More</span>
+          <span className={cn('text-[10px] font-[700] uppercase tracking-[0.05em]', moreOpen || moreActive ? 'text-navy' : 'text-gray')}>More</span>
         </button>
       </nav>
     </>
@@ -331,11 +331,11 @@ function SidebarItem({ item, pathname }: { item: NavItem; pathname: string }) {
   return (
     <Link href={item.href}
       className={cn('relative flex items-center gap-3 pl-4 pr-3 py-2.5 rounded-lg min-h-[42px] w-full text-[14px] font-[600] transition-all duration-[150ms]',
-        isActive ? 'bg-teal/8 text-teal font-[700]' : 'text-mid-text hover:bg-bdrbg hover:text-navy')}
+        isActive ? 'bg-navy/10 text-navy font-[700]' : 'text-mid-text hover:bg-bdrbg hover:text-navy')}
       aria-current={isActive ? 'page' : undefined}>
       {/* Active indicator: pinned to the far-left edge so it never touches the
           icon, with a subtle live "bob" that echoes the notification bell. */}
-      <div className={cn('absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 rounded-full bg-teal transition-opacity duration-200',
+      <div className={cn('absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 rounded-full bg-navy transition-opacity duration-200',
         isActive ? 'opacity-100 animate-tab-bob' : 'opacity-0')} />
       <Icon size={18} />
       <span className="flex-1">{item.label}</span>

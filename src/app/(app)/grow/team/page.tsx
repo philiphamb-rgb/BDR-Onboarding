@@ -194,7 +194,7 @@ export default function GrowthTeamPage() {
                 <div className="text-[15px] font-[800]">Build the whole team</div>
                 <p className="mt-1 text-[12.5px] leading-relaxed text-white/75">Copy this into a new Claude conversation and it will walk you through configuring all 18 agents in the right order — asking what you have access to, guiding each step, testing before moving on.</p>
               </div>
-              <button onClick={() => copy(MASTER_SETUP_PROMPT)} className={cn('flex shrink-0 items-center gap-2 rounded-lg px-4 py-2.5 text-[13px] font-[700]', copied ? 'bg-success text-white' : 'bg-white text-navy')}>
+              <button onClick={() => copy(MASTER_SETUP_PROMPT)} className={cn('flex shrink-0 items-center gap-2 rounded-lg px-4 py-2.5 text-[13px] font-[700]', copied ? 'bg-success text-white' : 'bg-card text-navy')}>
                 {copied ? <><CheckIcon size={14} /> Copied</> : <><CopyIcon size={14} /> Copy Setup Prompt</>}
               </button>
             </div>

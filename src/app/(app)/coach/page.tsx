@@ -182,7 +182,7 @@ export default function CoachPage() {
                   <button
                     key={prompt}
                     onClick={() => sendMessage(prompt)}
-                    className="text-left px-4 py-3 bg-white rounded-xl border border-border hover:border-navy/40 hover:bg-navy/5 transition-all text-sm text-mid-text flex items-center justify-between gap-2"
+                    className="text-left px-4 py-3 bg-card rounded-xl border border-border hover:border-navy/40 hover:bg-navy/5 transition-all text-sm text-mid-text flex items-center justify-between gap-2"
                   >
                     {prompt}
                     <ArrowRightIcon className="w-4 h-4 text-gray flex-shrink-0" />
@@ -208,7 +208,7 @@ export default function CoachPage() {
                     'max-w-[80%] px-4 py-3 rounded-2xl text-sm leading-relaxed',
                     msg.role === 'user'
                       ? 'bg-navy text-white rounded-tr-sm'
-                      : 'bg-white border border-border text-dark-text rounded-tl-sm shadow-card'
+                      : 'bg-card border border-border text-dark-text rounded-tl-sm shadow-card'
                   )}
                 >
                   <p className="whitespace-pre-wrap">{msg.content}</p>
@@ -224,7 +224,7 @@ export default function CoachPage() {
                 <div className="w-7 h-7 bg-gold/10 rounded-full flex items-center justify-center flex-shrink-0">
                   <CoachIcon size={14} className="text-gold" />
                 </div>
-                <div className="bg-white border border-border rounded-2xl rounded-tl-sm px-4 py-3 shadow-card">
+                <div className="bg-card border border-border rounded-2xl rounded-tl-sm px-4 py-3 shadow-card">
                   <div className="flex gap-1 items-center h-4">
                     {[0, 1, 2].map((i) => (
                       <div
@@ -244,7 +244,7 @@ export default function CoachPage() {
 
       {/* Input */}
       <div className="flex-shrink-0" data-tour="coach-input">
-        <div className="flex gap-2 items-end bg-white rounded-2xl border border-border shadow-card p-2">
+        <div className="flex gap-2 items-end bg-card rounded-2xl border border-border shadow-card p-2">
           <textarea
             value={input}
             onChange={(e) => setInput(e.target.value)}
