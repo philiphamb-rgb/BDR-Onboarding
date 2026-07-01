@@ -308,7 +308,7 @@ export default function NotesPage() {
                       draggable={!!b.text.trim()}
                       onDragStart={e => { e.dataTransfer.setData('text/plain', b.text); e.dataTransfer.effectAllowed = 'copy' }}
                       title={b.text.trim() ? 'Drag into a time block below' : undefined}
-                      className={cn('mt-1.5 select-none text-[13px] leading-none', b.text.trim() ? 'cursor-grab text-gray/50 hover:text-navy' : 'text-border')}>⠿</span>
+                      className={cn('mt-1.5 select-none text-[13px] leading-none', b.text.trim() ? 'cursor-grab text-gray/50 hover:text-navy-ink' : 'text-border')}>⠿</span>
                     <textarea
                       ref={el => { if (!el) return; el.style.height = 'auto'; el.style.height = el.scrollHeight + 'px'; if (focusId === b.id) { el.focus(); setFocusId(null) } }}
                       value={b.text}
@@ -320,9 +320,9 @@ export default function NotesPage() {
                     {/* Per-line actions */}
                     <div className={cn('mt-1 flex shrink-0 items-center gap-1 transition-opacity', b.text.trim() ? 'opacity-0 group-hover:opacity-100 focus-within:opacity-100' : 'opacity-0')}>
                       <button onClick={() => createTask(b.text)} title="Make a task" aria-label="Make a task"
-                        className={cn('rounded-md px-1.5 py-1 text-[11px] font-[800]', actionable ? 'bg-teal/15 text-teal' : 'text-gray hover:bg-bdrbg hover:text-navy')}><CheckIcon size={13} /></button>
+                        className={cn('rounded-md px-1.5 py-1 text-[11px] font-[800]', actionable ? 'bg-teal/15 text-teal' : 'text-gray hover:bg-bdrbg hover:text-navy-ink')}><CheckIcon size={13} /></button>
                       <button onClick={() => createTask(b.text, { plan: true })} title="Make a task & plan today" aria-label="Make a task and plan today"
-                        className="rounded-md px-1.5 py-1 text-gray hover:bg-bdrbg hover:text-navy"><ClockIcon size={13} /></button>
+                        className="rounded-md px-1.5 py-1 text-gray hover:bg-bdrbg hover:text-navy-ink"><ClockIcon size={13} /></button>
                     </div>
                   </div>
                 )

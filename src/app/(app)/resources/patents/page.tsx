@@ -14,7 +14,7 @@ export default function PatentsPage() {
 
       {/* Header */}
       <div className="flex items-start gap-3">
-        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-navy/10 text-navy">
+        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-navy/10 text-navy-ink">
           <ShieldIcon size={22} />
         </div>
         <div>
@@ -47,7 +47,7 @@ export default function PatentsPage() {
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
                       <div className="flex flex-wrap items-center gap-2">
-                        <span className="text-[13px] font-[800] text-navy">{p.number}</span>
+                        <span className="text-[13px] font-[800] text-navy-ink">{p.number}</span>
                         <span className={`rounded-full px-2 py-0.5 text-[10px] font-[700] ${p.status === 'Granted' ? 'bg-success/10 text-success' : 'bg-gold/10 text-[#A06C00]'}`}>
                           {p.status} · {p.year}
                         </span>

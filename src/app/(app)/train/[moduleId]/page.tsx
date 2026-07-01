@@ -126,7 +126,7 @@ export default function ModulePage() {
             <Card className={cn('!p-3', !isLocked && !lesson.is_completed && 'hover:border-teal/40 transition-colors')}>
               <div className="flex items-center gap-3">
                 <div className={cn('w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0',
-                  lesson.is_completed ? 'bg-teal/10 text-teal' : isLocked ? 'bg-bdrbg text-gray' : 'bg-navy/10 text-navy')}>
+                  lesson.is_completed ? 'bg-teal/10 text-teal' : isLocked ? 'bg-bdrbg text-gray' : 'bg-navy/10 text-navy-ink')}>
                   {lesson.is_completed ? <CheckIcon className="w-4 h-4" /> : isLocked ? <LockIcon size={14} /> : idx + 1}
                 </div>
                 <div className="flex-1 min-w-0">

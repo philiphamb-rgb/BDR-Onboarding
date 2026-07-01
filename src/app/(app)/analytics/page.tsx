@@ -168,7 +168,7 @@ export default function AnalyticsPage() {
                 { Icon: HandshakeIcon, label: 'Deals / mo', value: prog?.deals_this_month ?? 0 },
               ].map(s => (
                 <div key={s.label} className="rounded-xl border border-border bg-bdrbg p-3 text-center">
-                  <s.Icon size={20} className="mx-auto mb-1 text-navy" />
+                  <s.Icon size={20} className="mx-auto mb-1 text-navy-ink" />
                   <div className="text-h3 font-bold text-dark-text tabular-nums">{s.value}</div>
                   <div className="text-[11px] text-gray">{s.label}</div>
                 </div>

@@ -80,7 +80,7 @@ export function ReportsPanel({ myLeads, onOpenLead }: { myLeads: any[]; onOpenLe
       {isManager && (
         <div className="flex w-fit gap-0.5 rounded-lg border border-border bg-bdrbg p-1">
           {[['mine', 'My pipeline', UserIcon], ['team', 'Team pipeline', TeamIcon]].map(([k, l, Icon]) => (
-            <button key={k} onClick={() => { setScope(k); setDrill(null) }} className={cn('flex items-center gap-1.5 rounded-md px-3 py-1.5 text-[12.5px] font-[700]', scope === k ? 'bg-navy text-white' : 'text-gray hover:text-navy')}>
+            <button key={k} onClick={() => { setScope(k); setDrill(null) }} className={cn('flex items-center gap-1.5 rounded-md px-3 py-1.5 text-[12.5px] font-[700]', scope === k ? 'bg-navy text-white' : 'text-gray hover:text-navy-ink')}>
               <Icon size={13} /> {l}
             </button>
           ))}
@@ -90,7 +90,7 @@ export function ReportsPanel({ myLeads, onOpenLead }: { myLeads: any[]; onOpenLe
       {/* KPI cards — each drills to its records */}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         {[
-          { icon: TargetIcon, label: 'Open leads', value: String(stats.total - stats.won), tone: 'text-navy', drill: null },
+          { icon: TargetIcon, label: 'Open leads', value: String(stats.total - stats.won), tone: 'text-navy-ink', drill: null },
           { icon: CoinIcon, label: 'Weighted pipeline', value: money(stats.weighted), tone: 'text-teal', drill: null },
           { icon: TrophyIcon, label: 'Win rate', value: `${stats.winRate}%`, tone: 'text-success', drill: null },
           { icon: ChartRisingIcon, label: 'Avg deal / mo', value: stats.avgDeal ? money(stats.avgDeal) : '—', tone: 'text-[#A06C00]', drill: null },
@@ -140,7 +140,7 @@ export function ReportsPanel({ myLeads, onOpenLead }: { myLeads: any[]; onOpenLe
         <Card className="!p-3">
           <div className="mb-2 flex items-center justify-between px-1">
             <span className="text-[12px] font-[800] text-dark-text">{drill.label} · {drillRecords.length} record{drillRecords.length !== 1 ? 's' : ''}</span>
-            <button onClick={() => setDrill(null)} className="text-[11px] font-[700] text-gray hover:text-navy">Close</button>
+            <button onClick={() => setDrill(null)} className="text-[11px] font-[700] text-gray hover:text-navy-ink">Close</button>
           </div>
           {drillRecords.length === 0 ? (
             <p className="px-1 py-3 text-[12px] text-gray">No records at this stage.</p>
@@ -148,7 +148,7 @@ export function ReportsPanel({ myLeads, onOpenLead }: { myLeads: any[]; onOpenLe
             <div className="space-y-1.5">
               {drillRecords.slice(0, 50).map(r => (
                 <button key={r.id} onClick={() => onOpenLead({ id: r.id, name: r.name, score: r.score })} className="flex w-full items-center gap-3 rounded-xl border border-border bg-card p-2.5 text-left hover:border-teal/40">
-                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-navy/8 text-[11px] font-[800] text-navy">{r.name.split(' ').map(w => w[0]).slice(0, 2).join('')}</span>
+                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-navy/8 text-[11px] font-[800] text-navy-ink">{r.name.split(' ').map(w => w[0]).slice(0, 2).join('')}</span>
                   <span className="min-w-0 flex-1 truncate text-[13px] font-[700] text-dark-text">{r.name}</span>
                   {r.weighted != null && <span className="shrink-0 text-[12px] font-[700] tabular-nums text-teal">{money(r.weighted)}/mo</span>}
                   <ArrowRightIcon size={14} className="shrink-0 text-gray" />

@@ -346,7 +346,7 @@ export default function HomePage() {
             <LightningIcon size={14} className="relative text-white" /><span className="relative">{triageBusy ? 'Planning…' : 'Auto-plan my day'}</span>
           </button>
           <button onClick={() => askCoach('Triage my day from my goal, pipeline, and tasks. What are the top 3 things to do right now, in order, and why?')}
-            className="flex items-center justify-center gap-1.5 rounded-lg border border-navy/30 bg-navy/5 py-2.5 text-[13px] font-[800] text-navy hover:bg-navy/10">
+            className="flex items-center justify-center gap-1.5 rounded-lg border border-navy/30 bg-navy/5 py-2.5 text-[13px] font-[800] text-navy-ink hover:bg-navy/10">
             <CoachIcon size={14} /> Coach my day
           </button>
         </div>
@@ -408,7 +408,7 @@ export default function HomePage() {
           )}
           <div className="flex items-center gap-4 pt-2 border-t border-black/10">
             <div className="flex items-center gap-1.5">
-              <XpIcon className={cn('w-4 h-4', isBlack ? 'text-gold' : 'text-navy')} />
+              <XpIcon className={cn('w-4 h-4', isBlack ? 'text-gold' : 'text-navy-ink')} />
               <span className={cn('text-sm font-semibold', isBlack ? 'text-white' : 'text-dark-text')}><CountUp value={progress?.total_xp ?? 0} format={formatXP} /></span>
             </div>
             <div className="flex items-center gap-1.5">
@@ -459,7 +459,7 @@ export default function HomePage() {
       ) : (
         <Link href="/schedule">
           <Card hover data-tour="home-rhythm" className="flex items-center gap-3 !p-3">
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-navy/10 text-navy"><ClockIcon size={18} /></div>
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-navy/10 text-navy-ink"><ClockIcon size={18} /></div>
             <div className="min-w-0 flex-1">
               <div className="label text-gray">Time Blocks</div>
               <div className="text-[14px] font-[700] text-dark-text">{rhythm?.status === 'before' ? `Your day starts at ${fmtClock(rhythm.startsAt)}` : 'Shift complete — nice work'}</div>
@@ -473,14 +473,14 @@ export default function HomePage() {
       <Card data-tour="home-today">
         <div className="flex items-center justify-between mb-3">
           <h2 className="text-h3 text-dark-text">Today</h2>
-          <Link href="/today" className="text-sm text-navy font-medium flex items-center gap-1">View all<ArrowRightIcon className="w-4 h-4" /></Link>
+          <Link href="/today" className="text-sm text-navy-ink font-medium flex items-center gap-1">View all<ArrowRightIcon className="w-4 h-4" /></Link>
         </div>
 
         {/* Tasks — surfaced from the task manager, completable inline */}
         <div className="mb-3">
           <div className="mb-2 flex items-center justify-between">
             <span className="label">My tasks</span>
-            <Link href="/tasks" className="text-[12px] font-[700] text-navy">{tasks.length > 0 ? 'All tasks →' : 'Add tasks →'}</Link>
+            <Link href="/tasks" className="text-[12px] font-[700] text-navy-ink">{tasks.length > 0 ? 'All tasks →' : 'Add tasks →'}</Link>
           </div>
           {tasks.length === 0 ? (
             <Link href="/tasks" className="flex items-center gap-3 rounded-xl border border-dashed border-border bg-bdrbg p-3 text-left transition-colors hover:border-navy/40">
@@ -527,7 +527,7 @@ export default function HomePage() {
         <div className="grid grid-cols-3 gap-3">
           {[
             { icon: <ChecklistIcon className="text-teal" />, label: 'Habits', value: `${progress?.todayStats.habitsCompleted ?? 0}/${progress?.todayStats.habitsTotal ?? 0}`, done: (progress?.todayStats.habitsCompleted ?? 0) >= (progress?.todayStats.habitsTotal ?? 1) },
-            { icon: <PhoneIcon className="text-navy" />, label: 'Calls', value: String(progress?.todayStats.callsLogged ?? 0), done: false },
+            { icon: <PhoneIcon className="text-navy-ink" />, label: 'Calls', value: String(progress?.todayStats.callsLogged ?? 0), done: false },
             { icon: <LightningIcon className="text-gold" />, label: 'XP Today', value: formatXP(progress?.todayStats.xpEarnedToday ?? 0), done: false },
           ].map(s => (
             <div key={s.label} className={cn('p-3 rounded-xl border text-center', s.done ? 'border-teal/30 bg-teal/5' : 'border-border bg-bdrbg')}>
@@ -560,7 +560,7 @@ export default function HomePage() {
         <div className="grid grid-cols-2 gap-3">
           {[
             { href: '/partners',        Icon: HandshakeIcon, label: 'Partners',        sub: 'Work your pipeline', tint: 'bg-teal/10 text-teal',       accent: 'rgb(var(--teal))' },
-            { href: '/train',           Icon: BookIcon,      label: 'Learning Center', sub: 'Continue learning',  tint: 'bg-navy/10 text-navy',       accent: 'rgb(var(--navy))' },
+            { href: '/train',           Icon: BookIcon,      label: 'Learning Center', sub: 'Continue learning',  tint: 'bg-navy/10 text-navy-ink',       accent: 'rgb(var(--navy))' },
             { href: '/wins?action=new', Icon: TrophyIcon,    label: 'Log a Win',       sub: 'Call · Demo · Deal', tint: 'bg-gold/10 text-gold',       accent: '#CA8A04' },
             { href: '/commissions',     Icon: CoinIcon,      label: 'Goals & Income',  sub: 'Plan your number',   tint: 'bg-success/10 text-success', accent: '#16A34A' },
           ].map(a => (
@@ -582,7 +582,7 @@ export default function HomePage() {
         <Card>
           <div className="flex items-center justify-between mb-3">
             <h2 className="text-h3 text-dark-text">Leaderboard</h2>
-            <Link href="/leaderboard" className="text-sm text-navy font-medium flex items-center gap-1">Full board<ArrowRightIcon className="w-4 h-4" /></Link>
+            <Link href="/leaderboard" className="text-sm text-navy-ink font-medium flex items-center gap-1">Full board<ArrowRightIcon className="w-4 h-4" /></Link>
           </div>
           {userRank > 0 && (
             <div className="mb-3 px-3 py-2 bg-teal/10 rounded-xl flex items-center gap-2">
@@ -603,7 +603,7 @@ export default function HomePage() {
         </Card>
       )}
 
-      <button onClick={() => startWalkthrough()} className="block w-full pt-2 text-center text-[11px] text-gray hover:text-navy">
+      <button onClick={() => startWalkthrough()} className="block w-full pt-2 text-center text-[11px] text-gray hover:text-navy-ink">
         BDR Hub · Version {APP_VERSION} · <span className="font-[700] underline-offset-2 hover:underline">Take the tour</span>
       </button>
 

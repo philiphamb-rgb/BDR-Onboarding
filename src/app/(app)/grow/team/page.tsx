@@ -194,7 +194,7 @@ export default function GrowthTeamPage() {
                 <div className="text-[15px] font-[800]">Build the whole team</div>
                 <p className="mt-1 text-[12.5px] leading-relaxed text-white/75">Copy this into a new Claude conversation and it will walk you through configuring all 18 agents in the right order — asking what you have access to, guiding each step, testing before moving on.</p>
               </div>
-              <button onClick={() => copy(MASTER_SETUP_PROMPT)} className={cn('flex shrink-0 items-center gap-2 rounded-lg px-4 py-2.5 text-[13px] font-[700]', copied ? 'bg-success text-white' : 'bg-card text-navy')}>
+              <button onClick={() => copy(MASTER_SETUP_PROMPT)} className={cn('flex shrink-0 items-center gap-2 rounded-lg px-4 py-2.5 text-[13px] font-[700]', copied ? 'bg-success text-white' : 'bg-card text-navy-ink')}>
                 {copied ? <><CheckIcon size={14} /> Copied</> : <><CopyIcon size={14} /> Copy Setup Prompt</>}
               </button>
             </div>
@@ -255,7 +255,7 @@ export default function GrowthTeamPage() {
                 <div key={div.key} className="rounded-2xl border border-border bg-bdrbg/40 p-3">
                   <div className="mb-2 flex items-center justify-between px-0.5">
                     <div>
-                      <h2 className="text-[12px] font-[900] uppercase tracking-wide text-navy">{div.label}</h2>
+                      <h2 className="text-[12px] font-[900] uppercase tracking-wide text-navy-ink">{div.label}</h2>
                       <p className="text-[11px] text-gray">{div.blurb}</p>
                     </div>
                   </div>
@@ -275,7 +275,7 @@ export default function GrowthTeamPage() {
           </div>
 
           <div className="flex items-start gap-2 rounded-xl bg-navy/[0.04] p-3">
-            <InfoIcon size={14} className="mt-0.5 shrink-0 text-navy" />
+            <InfoIcon size={14} className="mt-0.5 shrink-0 text-navy-ink" />
             <p className="text-[11.5px] leading-relaxed text-mid-text"><span className="font-[700] text-dark-text">Agents vs automations:</span> this tab is the team — who does the thinking and how they coordinate. The <span className="font-[700]">Automations</span> tab is the operational layer: the exact trigger-to-action workflows these agents run, with the tool connections and settings you switch on.</p>
           </div>
         </>

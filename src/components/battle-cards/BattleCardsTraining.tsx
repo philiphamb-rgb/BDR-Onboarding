@@ -28,7 +28,7 @@ function Lesson({ step, recorded, onAnswer, reviewing }: any) {
           {th && <span className={cn('rounded-full px-2 py-0.5 text-[10px] font-[800]', th.bg, th.text)}>{th.label}</span>}
         </div>
         <h2 className="mt-1 text-h2 text-dark-text">{step.title}</h2>
-        <p className="mt-1 text-[14px] font-[700] italic text-navy">“{step.hook}”</p>
+        <p className="mt-1 text-[14px] font-[700] italic text-navy-ink">“{step.hook}”</p>
       </div>
 
       <div className="space-y-2">
@@ -87,7 +87,7 @@ export function BattleCardsTraining({ progress, save, certify, onEnter }: any) {
     const rs = TRAINING[reviewIdx]
     return (
       <div className="mx-auto max-w-2xl space-y-4">
-        <button onClick={() => setReviewIdx(null)} className="flex items-center gap-1 text-[13px] font-[700] text-navy"><BackIcon size={15} /> Back to results</button>
+        <button onClick={() => setReviewIdx(null)} className="flex items-center gap-1 text-[13px] font-[700] text-navy-ink"><BackIcon size={15} /> Back to results</button>
         <Lesson step={rs} reviewing />
       </div>
     )

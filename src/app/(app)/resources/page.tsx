@@ -29,10 +29,10 @@ import { RESOURCES_TOUR } from '@/lib/tours'
 const TOOLS = [
   { name: 'HubSpot', purpose: 'CRM & pipeline management', url: 'https://hubspot.com', contact: 'Anthony Medina', Icon: HubspotIcon, tint: 'bg-orange-500/10 text-orange-400' },
   { name: 'Seamless.AI', purpose: 'Prospecting & lead research (with LinkedIn)', url: 'https://seamless.ai', contact: 'Sales Operations', Icon: SearchIcon, tint: 'bg-teal-50 text-teal' },
-  { name: 'Onit', purpose: 'Order forms & e-signature (opened from the HubSpot deal)', url: 'https://onit.com', contact: 'Sales Ops · orderform@consumerdirect.com', Icon: DocumentIcon, tint: 'bg-navy/5 text-navy' },
+  { name: 'Onit', purpose: 'Order forms & e-signature (opened from the HubSpot deal)', url: 'https://onit.com', contact: 'Sales Ops · orderform@consumerdirect.com', Icon: DocumentIcon, tint: 'bg-navy/5 text-navy-ink' },
   { name: 'Nextiva', purpose: 'Voice & communications', url: 'https://nextiva.com', contact: '#partner_support-and-sales_team', Icon: PhoneIcon, tint: 'bg-blue-500/10 text-blue-400' },
   { name: 'PartnerHub', purpose: 'Partner management dashboard', url: 'https://partnerhub.consumerdirect.com', contact: 'Chris Peery · #partnerhub-client-manager-issues', Icon: HubIcon, tint: 'bg-teal-50 text-teal' },
-  { name: 'Developer Docs', purpose: 'Partner API reference & integration guides', url: 'https://developer.consumerdirect.io', contact: 'partnerintegration@consumerdirect.com', Icon: LightningIcon, tint: 'bg-navy/5 text-navy' },
+  { name: 'Developer Docs', purpose: 'Partner API reference & integration guides', url: 'https://developer.consumerdirect.io', contact: 'partnerintegration@consumerdirect.com', Icon: LightningIcon, tint: 'bg-navy/5 text-navy-ink' },
   { name: 'Dropbox', purpose: 'File sharing & storage', url: 'https://dropbox.com', contact: 'Nikka Gerodias', Icon: DatabaseIcon, tint: 'bg-sky-50 text-sky-600' },
   { name: 'Slack', purpose: 'Team communication', url: 'https://consumerdirect.slack.com', contact: 'Nikka Gerodias', Icon: SlackIcon, tint: 'bg-purple-500/10 text-purple-400' },
   { name: 'JIRA', purpose: 'Project tracking & requests', url: 'https://jira.com', contact: '#jira', Icon: PipelineIcon, tint: 'bg-indigo-50 text-indigo-600' },
@@ -145,7 +145,7 @@ export default function ResourcesPage() {
       {/* Patent portfolio */}
       <Link href="/resources/patents">
         <Card hover className="flex items-center gap-3">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-navy/10 text-navy">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-navy/10 text-navy-ink">
             <ShieldIcon size={20} />
           </div>
           <div className="flex-1 min-w-0">
@@ -230,7 +230,7 @@ export default function ResourcesPage() {
             <Card key={p.name} className="h-full">
               <div className="flex items-start gap-3">
                 <div className="w-10 h-10 rounded-full bg-navy/10 flex items-center justify-center shrink-0">
-                  <UserIcon size={20} className="text-navy" />
+                  <UserIcon size={20} className="text-navy-ink" />
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between gap-2">
@@ -255,7 +255,7 @@ export default function ResourcesPage() {
             {matchLibrary.map((sec) => (
               <Card key={sec.category}>
                 <div className="flex items-center gap-2 mb-2">
-                  <sec.Icon size={18} className="text-navy" />
+                  <sec.Icon size={18} className="text-navy-ink" />
                   <CardTitle>{sec.category}</CardTitle>
                 </div>
                 <div className="divide-y divide-border">

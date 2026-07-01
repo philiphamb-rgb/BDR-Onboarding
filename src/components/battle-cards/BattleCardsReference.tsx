@@ -11,7 +11,7 @@ import { cn } from '@/lib/utils'
 import { SearchIcon, CloseIcon, BackIcon, CheckIcon, ArrowRightIcon, BookIcon, TargetIcon, RefreshIcon } from '@/components/icons'
 import { COMPETITORS, MARKET_MAP, COMMISSION_COMPARISON, GROUP_MAP } from '@/lib/modules/battle-cards'
 
-const THREAT_PILL = { high: 'bg-error/10 text-error', med: 'bg-gold/15 text-[#A06C00]', low: 'bg-teal/10 text-teal', map: 'bg-navy/10 text-navy' }
+const THREAT_PILL = { high: 'bg-error/10 text-error', med: 'bg-gold/15 text-[#A06C00]', low: 'bg-teal/10 text-teal', map: 'bg-navy/10 text-navy-ink' }
 const strip = (s: string) => (s || '').replace(/<[^>]+>/g, '')
 const COMP_ENTRIES = Object.entries(COMPETITORS) // [key, competitor][]
 
@@ -37,7 +37,7 @@ function Block({ b, checked, onToggle }: any) {
           <p className="mt-1 text-[13px] leading-relaxed text-mid-text">{b.summary}{b.link && <> <a href={b.link} target="_blank" rel="noreferrer" className="font-[700] text-teal">{b.linkLabel || 'Visit'} ↗</a></>}</p>
           {b.body && (
             <>
-              <button onClick={() => setOpen(o => !o)} className="mt-1.5 text-[12px] font-[700] text-navy">{open ? 'Show less' : 'Read more'}</button>
+              <button onClick={() => setOpen(o => !o)} className="mt-1.5 text-[12px] font-[700] text-navy-ink">{open ? 'Show less' : 'Read more'}</button>
               {open && <div className="bc-body mt-1.5 text-[13px] leading-relaxed text-dark-text animate-rise" dangerouslySetInnerHTML={{ __html: b.body }} />}
             </>
           )}
@@ -109,7 +109,7 @@ export function BattleCardsReference({ progress, save, onReplay }: any) {
     return (
       <div className="mx-auto max-w-2xl space-y-3">
         {HL}
-        <button onClick={() => setView('home')} className="flex items-center gap-1 text-[13px] font-[700] text-navy"><BackIcon size={15} /> All battle cards</button>
+        <button onClick={() => setView('home')} className="flex items-center gap-1 text-[13px] font-[700] text-navy-ink"><BackIcon size={15} /> All battle cards</button>
         <Card className="overflow-hidden !p-0">
           <div className="bg-gradient-hero p-4 text-white">
             <div className="flex items-center gap-2">
@@ -140,7 +140,7 @@ export function BattleCardsReference({ progress, save, onReplay }: any) {
     return (
       <div className="mx-auto max-w-2xl space-y-3">
         {HL}
-        <button onClick={() => setView('home')} className="flex items-center gap-1 text-[13px] font-[700] text-navy"><BackIcon size={15} /> Back</button>
+        <button onClick={() => setView('home')} className="flex items-center gap-1 text-[13px] font-[700] text-navy-ink"><BackIcon size={15} /> Back</button>
         <h1 className="text-h2 text-dark-text">Cheat sheet</h1>
         <p className="text-[13px] text-gray">Your one-page cram — the headline edge and the line to say for each competitor.</p>
         <div className="space-y-2">
@@ -155,7 +155,7 @@ export function BattleCardsReference({ progress, save, onReplay }: any) {
                   {(checks[k]?.length ?? 0) >= c.blocks.length && <span className="ml-auto rounded-full bg-success/15 px-1.5 py-0.5 text-[9px] font-[800] text-success">Mastered</span>}
                 </div>
                 {edge && <p className="mt-1 text-[12.5px] leading-snug text-mid-text"><span className="font-[700] text-teal">Edge:</span> {edge.summary}</p>}
-                {say && <p className="mt-0.5 text-[12.5px] leading-snug text-mid-text"><span className="font-[700] text-navy">Say:</span> {strip(say.summary)}</p>}
+                {say && <p className="mt-0.5 text-[12.5px] leading-snug text-mid-text"><span className="font-[700] text-navy-ink">Say:</span> {strip(say.summary)}</p>}
               </button>
             )
           })}
@@ -175,7 +175,7 @@ export function BattleCardsReference({ progress, save, onReplay }: any) {
             <circle cx="28" cy="28" r="24" fill="none" stroke="#E4ECF2" strokeWidth="5" />
             <circle cx="28" cy="28" r="24" fill="none" stroke="rgb(var(--teal))" strokeWidth="5" strokeLinecap="round" strokeDasharray={2 * Math.PI * 24} strokeDashoffset={2 * Math.PI * 24 * (1 - pct / 100)} style={{ transition: 'stroke-dashoffset .6s ease' }} />
           </svg>
-          <span className="absolute inset-0 flex items-center justify-center text-[13px] font-[800] text-navy">{masteredCount}/9</span>
+          <span className="absolute inset-0 flex items-center justify-center text-[13px] font-[800] text-navy-ink">{masteredCount}/9</span>
         </div>
         <div className="min-w-0 flex-1">
           <div className="text-[15px] font-[800] text-dark-text">Competitive mastery</div>
@@ -238,7 +238,7 @@ export function BattleCardsReference({ progress, save, onReplay }: any) {
           </div>
 
           <div className="grid grid-cols-2 gap-2">
-            <button onClick={() => setView('cheat')} className="flex items-center justify-center gap-1.5 rounded-xl border border-border bg-card py-2.5 text-[13px] font-[700] text-navy hover:border-navy/40">
+            <button onClick={() => setView('cheat')} className="flex items-center justify-center gap-1.5 rounded-xl border border-border bg-card py-2.5 text-[13px] font-[700] text-navy-ink hover:border-navy/40">
               <BookIcon size={14} /> Cheat sheet
             </button>
             <button onClick={onReplay} className="flex items-center justify-center gap-1.5 rounded-xl border border-border bg-bdrbg py-2.5 text-[13px] font-[700] text-mid-text hover:bg-border/40">

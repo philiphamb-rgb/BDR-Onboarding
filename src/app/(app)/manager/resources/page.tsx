@@ -102,7 +102,7 @@ export default function ManagerResourcesPage() {
                 <div className="mt-0.5">{TYPE_ICONS[r.type] ?? <DocumentIcon />}</div>
                 <div className="min-w-0 flex-1">
                   {r.url
-                    ? <a href={r.url} target="_blank" rel="noopener noreferrer" className="block truncate text-[14px] font-[600] text-navy hover:underline">{r.title}</a>
+                    ? <a href={r.url} target="_blank" rel="noopener noreferrer" className="block truncate text-[14px] font-[600] text-navy-ink hover:underline">{r.title}</a>
                     : <span className="block truncate text-[14px] font-[600] text-dark-text">{r.title}</span>}
                   {r.description && <p className="mt-0.5 text-[12px] text-gray">{r.description}</p>}
                 </div>
@@ -121,7 +121,7 @@ export default function ManagerResourcesPage() {
             {TYPES.map(t => (
               <button key={t.value} onClick={() => setForm(p => ({ ...p, type: t.value }))}
                 className={cn('flex items-center gap-2 p-3 rounded-md border text-sm transition-all',
-                  form.type === t.value ? 'border-navy bg-navy/5 font-[600] text-navy' : 'border-border text-mid-text hover:bg-bdrbg')}>
+                  form.type === t.value ? 'border-navy bg-navy/5 font-[600] text-navy-ink' : 'border-border text-mid-text hover:bg-bdrbg')}>
                 {TYPE_ICONS[t.value]}{t.label}
               </button>
             ))}

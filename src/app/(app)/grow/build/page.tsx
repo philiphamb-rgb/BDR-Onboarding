@@ -149,7 +149,7 @@ export default function GrowthBuildPage() {
                               <span className="hidden shrink-0 rounded-md border border-border bg-bdrbg px-1.5 py-0.5 text-[10px] text-gray sm:inline"><ClockIcon size={9} className="mr-0.5 inline" />{task.hrs}h · {task.tool}</span>
                               <NoteButton compact entityType="phase-task" entityId={task.id} label={task.t} context={`Phase ${ph.n} ${ph.name}, ${task.hrs}h via ${task.tool}`} />
                               <button onClick={() => askCoach(`Help me complete this task for my ConsumerDirect Co-Brand PLUS+ Apex build, Phase ${ph.n} (${ph.name}): "${task.t}". Estimated ${task.hrs}h using ${task.tool}. Give a step-by-step plan with specific, ready-to-use output.`)}
-                                className="flex shrink-0 items-center gap-1 rounded-md border border-border bg-bdrbg px-2 py-1 text-[10px] font-[600] text-gray hover:text-navy">
+                                className="flex shrink-0 items-center gap-1 rounded-md border border-border bg-bdrbg px-2 py-1 text-[10px] font-[600] text-gray hover:text-navy-ink">
                                 <IntegrationIcon size={9} /> AI Help
                               </button>
                             </div>

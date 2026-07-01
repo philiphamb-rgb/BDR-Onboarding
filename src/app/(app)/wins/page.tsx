@@ -109,7 +109,7 @@ function WinsContent() {
           const count = wins.filter(w => w.type === wt.type).length
           return (
             <div key={wt.type} className="bg-card rounded-xl border border-border p-3 text-center shadow-card">
-              <div className="mb-1 flex justify-center"><wt.Icon size={20} className="text-navy" /></div>
+              <div className="mb-1 flex justify-center"><wt.Icon size={20} className="text-navy-ink" /></div>
               <div className="text-h3 font-bold text-dark-text"><CountUp value={count} /></div>
               <div className="text-xs text-gray">{wt.label}s</div>
             </div>
@@ -174,7 +174,7 @@ function WinsContent() {
               <button key={wt.type} onClick={() => setSelectedType(wt.type)}
                 className={cn('flex items-center gap-2 p-3 rounded-xl border transition-all text-left',
                   selectedType === wt.type ? 'border-navy bg-navy/5' : 'border-border bg-bdrbg hover:bg-bdrbg')}>
-                <wt.Icon size={20} className="text-navy" />
+                <wt.Icon size={20} className="text-navy-ink" />
                 <div>
                   <div className="text-sm font-medium text-dark-text">{wt.label}</div>
                   <div className="text-xs text-gray flex items-center gap-1"><XpIcon className="w-3 h-3" />+{wt.xp}</div>

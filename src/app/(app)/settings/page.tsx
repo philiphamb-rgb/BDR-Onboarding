@@ -161,7 +161,7 @@ export default function SettingsPage() {
             <div className="text-xs text-gray">{user?.email}</div>
             <div className="text-xs text-teal font-medium">{roleLabel(user?.role)}</div>
           </div>
-          <button onClick={() => router.push('/settings/profile')} className="text-sm text-navy font-medium">Edit</button>
+          <button onClick={() => router.push('/settings/profile')} className="text-sm text-navy-ink font-medium">Edit</button>
         </div>
       </Card>
 
@@ -174,7 +174,7 @@ export default function SettingsPage() {
         <p className="text-xs text-gray mb-3">Connect your accounts so the Hub can sync live data for you.</p>
         <div className="space-y-2">
           {[
-            { key: 'outlook', label: 'Outlook Calendar', desc: 'Two-way sync your Time Blocks blocks & notes', Icon: CalendarIcon, tint: 'bg-navy/10 text-navy' },
+            { key: 'outlook', label: 'Outlook Calendar', desc: 'Two-way sync your Time Blocks blocks & notes', Icon: CalendarIcon, tint: 'bg-navy/10 text-navy-ink' },
             { key: 'slack', label: 'Slack', desc: 'Reach teammates & partner-support channels', Icon: SlackIcon, tint: 'bg-purple/10 text-purple' },
           ].map(c => (
             <div key={c.key} className="flex items-center gap-3 rounded-xl border border-border bg-bdrbg p-3">
@@ -205,7 +205,7 @@ export default function SettingsPage() {
 
       {[
         { icon: <LightningIcon className="text-teal w-5 h-5" />, label: "What's new", sub: `Take the guided tour · v${APP_VERSION}`, onPress: () => startWalkthrough() },
-        { icon: <BellIcon className="text-navy w-5 h-5" />, label: 'Notifications', sub: 'Reminders, quiet hours', onPress: () => setSection('notifications') },
+        { icon: <BellIcon className="text-navy-ink w-5 h-5" />, label: 'Notifications', sub: 'Reminders, quiet hours', onPress: () => setSection('notifications') },
         { icon: <DownloadIcon className="text-success w-5 h-5" />, label: 'My Data', sub: 'Export or delete your data', onPress: () => setSection('data') },
         { icon: <ShieldIcon className="text-purple w-5 h-5" />, label: 'Help & FAQ', sub: 'Common questions answered', onPress: () => setSection('help') },
       ].map(item => (
@@ -232,7 +232,7 @@ export default function SettingsPage() {
 
   if (section === 'notifications') return (
     <div className="space-y-4">
-      <button onClick={() => setSection('main')} className="text-sm text-navy font-medium">← Back</button>
+      <button onClick={() => setSection('main')} className="text-sm text-navy-ink font-medium">← Back</button>
       <h1 className="text-h1 text-dark-text">Notifications</h1>
 
       <Card>
@@ -292,7 +292,7 @@ export default function SettingsPage() {
 
   if (section === 'data') return (
     <div className="space-y-4">
-      <button onClick={() => setSection('main')} className="text-sm text-navy font-medium">← Back</button>
+      <button onClick={() => setSection('main')} className="text-sm text-navy-ink font-medium">← Back</button>
       <h1 className="text-h1 text-dark-text">My Data</h1>
       <Card>
         <div className="text-sm font-semibold text-dark-text mb-1">Export My Data</div>
@@ -312,7 +312,7 @@ export default function SettingsPage() {
 
   if (section === 'help') return (
     <div className="space-y-4">
-      <button onClick={() => setSection('main')} className="text-sm text-navy font-medium">← Back</button>
+      <button onClick={() => setSection('main')} className="text-sm text-navy-ink font-medium">← Back</button>
       <h1 className="text-h1 text-dark-text">Help & FAQ</h1>
       {FAQ_ITEMS.map((item, i) => (
         <Card key={i}>

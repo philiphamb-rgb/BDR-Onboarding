@@ -47,7 +47,7 @@ export default function ManagerPartnersPage() {
       ) : (
         <>
           <div className="grid grid-cols-3 gap-3">
-            <StatTile label="In onboarding" value={total} icon={<HandshakeIcon size={18} />} accent="text-navy" />
+            <StatTile label="In onboarding" value={total} icon={<HandshakeIcon size={18} />} accent="text-navy-ink" />
             <StatTile label="In flight" value={inFlight} icon={<TargetIcon size={18} />} accent="text-teal" />
             <StatTile label="Fully onboarded" value={onboarded} icon={<CheckIcon size={18} />} accent="text-success" />
           </div>

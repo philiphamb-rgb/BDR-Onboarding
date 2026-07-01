@@ -15,8 +15,8 @@ const TYPE_ICON: Record<string, React.ComponentType<{ size?: number; className?:
   win: SuccessIcon, system: BellIcon, resource: BookIcon, streak: FlameIcon,
 }
 const TYPE_TINT: Record<string, string> = {
-  belt_advance: 'text-navy', achievement: 'text-gold', reminder: 'text-gray', coaching: 'text-teal',
-  win: 'text-teal', system: 'text-gray', resource: 'text-navy', streak: 'text-orange-500',
+  belt_advance: 'text-navy-ink', achievement: 'text-gold', reminder: 'text-gray', coaching: 'text-teal',
+  win: 'text-teal', system: 'text-gray', resource: 'text-navy-ink', streak: 'text-orange-500',
 }
 
 export default function NotificationsPage() {

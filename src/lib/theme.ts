@@ -73,6 +73,12 @@ export function applyTheme(base: BaseMode, accent: Accent, animate = false) {
   }
   applyBase(base)
   applyAccent(accent)
+  // Navy-as-text token: readable on the current base. On a dark base a custom
+  // accent is lightened so small text keeps contrast; on light it stays as-picked.
+  const el = document.documentElement.style
+  const rgb = accent !== 'brand' ? hexToRgb(accent) : null
+  if (rgb) el.setProperty('--navy-ink', channels(isLightBase(base) ? rgb : scale(rgb, 1.35)))
+  else el.removeProperty('--navy-ink')  // brand → fall back to :root / .light values
 }
 
 export function setStoredTheme(base: BaseMode, accent: Accent) {

@@ -624,8 +624,8 @@ export default function SchedulePage() {
         )}
         <div data-tour="autoplan-controls" className="mt-3 flex flex-wrap gap-2">
           <button onClick={() => autoPlanDay(false)} disabled={triageBusy}
-            className="flex items-center gap-1.5 rounded-lg bg-card px-3 py-2 text-[13px] font-[800] text-navy active:scale-[0.99] disabled:opacity-60">
-            <LightningIcon size={14} className="text-navy" /> {triageBusy ? 'Planning…' : 'Auto-plan my day'}
+            className="flex items-center gap-1.5 rounded-lg bg-card px-3 py-2 text-[13px] font-[800] text-navy-ink active:scale-[0.99] disabled:opacity-60">
+            <LightningIcon size={14} className="text-navy-ink" /> {triageBusy ? 'Planning…' : 'Auto-plan my day'}
           </button>
           {scheduledToday.length > 0 && (
             <button onClick={() => autoPlanDay(true)} disabled={triageBusy}
@@ -656,7 +656,7 @@ export default function SchedulePage() {
             {suggestions.map(s => (
               <div key={s.id} className="flex items-center gap-2 rounded-lg bg-card px-2.5 py-2 shadow-sm">
                 <span className={cn('flex h-6 w-6 shrink-0 items-center justify-center rounded-lg',
-                  s.kind === 'goal' ? 'bg-gold/15 text-gold' : s.kind === 'warm' ? 'bg-orange-500/15 text-orange-400' : 'bg-navy/10 text-navy')}>
+                  s.kind === 'goal' ? 'bg-gold/15 text-gold' : s.kind === 'warm' ? 'bg-orange-500/15 text-orange-400' : 'bg-navy/10 text-navy-ink')}>
                   {s.kind === 'goal' ? <TargetIcon size={13} /> : s.kind === 'warm' ? <PhoneIcon size={13} /> : <ArrowRightIcon size={13} />}
                 </span>
                 <div className="min-w-0 flex-1">
@@ -835,7 +835,7 @@ export default function SchedulePage() {
       {/* Unplanned tasks queue */}
       <div className="rounded-2xl border border-border bg-card p-3 shadow-card">
         <div className="mb-2 flex flex-wrap items-center gap-2">
-          <ChecklistIcon size={15} className="text-navy" />
+          <ChecklistIcon size={15} className="text-navy-ink" />
           <span className="text-[13px] font-[800] text-dark-text">Unplanned tasks</span>
           <span className="rounded-full bg-bdrbg px-2 py-0.5 text-[11px] font-[700] text-mid-text tabular-nums">{unscheduled.length}</span>
           <label className="ml-auto flex items-center gap-1 text-[11px] text-gray">
@@ -845,7 +845,7 @@ export default function SchedulePage() {
               {[3, 5, 7, 14, 30].map(d => <option key={d} value={d}>{d}d</option>)}
             </select>
           </label>
-          <Link href="/tasks" className="text-[12px] font-[700] text-navy">Manage →</Link>
+          <Link href="/tasks" className="text-[12px] font-[700] text-navy-ink">Manage →</Link>
         </div>
         <div className="mb-2 flex items-center gap-2">
           <input value={newTaskTitle} onChange={e => setNewTaskTitle(e.target.value)}
@@ -875,9 +875,9 @@ export default function SchedulePage() {
                     u.tone === 'high' ? 'bg-error/10 text-error' : u.tone === 'med' ? 'bg-gold/15 text-[#A06C00]' : 'bg-bdrbg text-gray')}>{u.label}</span>
                   <span className="min-w-0 flex-1 truncate text-[13px] text-dark-text">{t.title}{t.priority && <StarFilledIcon size={12} className="ml-1 inline text-gold" />}</span>
                   <div className="flex shrink-0 items-center rounded-md border border-border bg-card">
-                    <button onClick={() => setEstimate(t.id, (t.estimated_minutes || 30) - 15)} aria-label="Less time" className="px-1.5 text-gray hover:text-navy">−</button>
+                    <button onClick={() => setEstimate(t.id, (t.estimated_minutes || 30) - 15)} aria-label="Less time" className="px-1.5 text-gray hover:text-navy-ink">−</button>
                     <span className="w-9 text-center text-[11px] font-[700] text-mid-text tabular-nums">{fmtEst(t.estimated_minutes || 30)}</span>
-                    <button onClick={() => setEstimate(t.id, (t.estimated_minutes || 30) + 15)} aria-label="More time" className="px-1.5 text-gray hover:text-navy">+</button>
+                    <button onClick={() => setEstimate(t.id, (t.estimated_minutes || 30) + 15)} aria-label="More time" className="px-1.5 text-gray hover:text-navy-ink">+</button>
                   </div>
                   <button onClick={() => planOne(t)} className="shrink-0 rounded-md bg-teal/10 px-2 py-1 text-[11px] font-[700] text-teal hover:bg-teal/15">Plan</button>
                 </div>
@@ -890,7 +890,7 @@ export default function SchedulePage() {
 
       {/* Outlook — compact */}
       <Link href="/settings" className="flex items-center gap-2 rounded-xl border border-border bg-card px-3 py-2 text-[12px] shadow-card hover:border-navy/40">
-        <CalendarIcon size={15} className="text-navy" />
+        <CalendarIcon size={15} className="text-navy-ink" />
         <span className="font-[700] text-dark-text">Connect Outlook / Google</span>
         <span className="text-gray">— two-way calendar sync</span>
         <span className="ml-auto rounded-full bg-bdrbg px-2 py-0.5 text-[10px] font-[700] text-gray">Soon</span>

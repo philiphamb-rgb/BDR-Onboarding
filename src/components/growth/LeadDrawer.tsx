@@ -83,7 +83,7 @@ export function LeadDrawer({ partnerId, name, score, onClose, onSaved }: { partn
       <div className="relative z-10 flex h-full w-full max-w-md flex-col bg-card shadow-modal animate-fade-in">
         {/* Header */}
         <div className="flex items-start gap-3 border-b border-border p-4">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-navy/8 text-[13px] font-[800] text-navy">{name.split(' ').map(w => w[0]).slice(0, 2).join('')}</div>
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-navy/8 text-[13px] font-[800] text-navy-ink">{name.split(' ').map(w => w[0]).slice(0, 2).join('')}</div>
           <div className="min-w-0 flex-1">
             <h2 className="truncate text-[16px] font-[900] text-dark-text">{name}</h2>
             <div className="mt-0.5 flex items-center gap-2 text-[11.5px] text-gray">
@@ -91,7 +91,7 @@ export function LeadDrawer({ partnerId, name, score, onClose, onSaved }: { partn
               {score != null && <><span>·</span><span className="font-[700] text-teal">score {score}</span></>}
             </div>
           </div>
-          <Link href={`/partners/${partnerId}`} className="shrink-0 rounded-lg border border-border p-2 text-gray hover:text-navy" title="Open in Partners"><ExternalLinkIcon size={15} /></Link>
+          <Link href={`/partners/${partnerId}`} className="shrink-0 rounded-lg border border-border p-2 text-gray hover:text-navy-ink" title="Open in Partners"><ExternalLinkIcon size={15} /></Link>
           <button onClick={onClose} aria-label="Close" className="shrink-0 rounded-lg p-2 text-gray hover:text-dark-text"><CloseIcon size={18} /></button>
         </div>
 
@@ -128,16 +128,16 @@ export function LeadDrawer({ partnerId, name, score, onClose, onSaved }: { partn
             <section>
               <div className="mb-2 flex items-center justify-between">
                 <div className="text-[10px] font-[800] uppercase tracking-wide text-gray">Research</div>
-                {research?.model && <span className="rounded bg-navy/8 px-1.5 py-0.5 text-[9px] font-[800] uppercase tracking-wide text-navy">via {research.model}</span>}
+                {research?.model && <span className="rounded bg-navy/8 px-1.5 py-0.5 text-[9px] font-[800] uppercase tracking-wide text-navy-ink">via {research.model}</span>}
               </div>
               {research ? (
                 <div className="rounded-xl border border-border bg-bdrbg p-3">
                   <p className="whitespace-pre-wrap text-[12.5px] leading-relaxed text-dark-text">{research.text}</p>
-                  <button onClick={runResearch} disabled={researching} className="mt-2 flex items-center gap-1.5 text-[11px] font-[700] text-navy disabled:opacity-60"><SearchIcon size={11} />{researching ? 'Researching…' : 'Refresh'}</button>
+                  <button onClick={runResearch} disabled={researching} className="mt-2 flex items-center gap-1.5 text-[11px] font-[700] text-navy-ink disabled:opacity-60"><SearchIcon size={11} />{researching ? 'Researching…' : 'Refresh'}</button>
                 </div>
               ) : (
                 <button onClick={runResearch} disabled={researching} className="flex w-full items-center gap-2 rounded-xl border border-border bg-bdrbg px-3 py-2.5 text-left text-[12.5px] font-[700] text-mid-text transition-colors hover:border-navy/40 disabled:opacity-60">
-                  <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-navy/8 text-navy"><SearchIcon size={14} /></span>
+                  <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-navy/8 text-navy-ink"><SearchIcon size={14} /></span>
                   <span className="flex-1">{researching ? 'Researching this partner…' : 'Research this partner'}</span>
                   {!researching && <ArrowRightIcon size={14} className="text-gray" />}
                 </button>
@@ -148,7 +148,7 @@ export function LeadDrawer({ partnerId, name, score, onClose, onSaved }: { partn
             <section>
               <div className="mb-2 flex items-center justify-between">
                 <div className="text-[10px] font-[800] uppercase tracking-wide text-gray">Contacts ({contacts.length})</div>
-                <button onClick={() => setShowContact(s => !s)} className="flex items-center gap-1 text-[11px] font-[700] text-navy"><PlusIcon size={12} /> Add</button>
+                <button onClick={() => setShowContact(s => !s)} className="flex items-center gap-1 text-[11px] font-[700] text-navy-ink"><PlusIcon size={12} /> Add</button>
               </div>
               {showContact && (
                 <div className="mb-2 space-y-1.5 rounded-xl border border-border bg-bdrbg p-2.5">
@@ -167,7 +167,7 @@ export function LeadDrawer({ partnerId, name, score, onClose, onSaved }: { partn
                 <div className="space-y-1.5">
                   {contacts.map(ct => (
                     <div key={ct.id} className="flex items-center gap-2 rounded-xl border border-border bg-card p-2.5">
-                      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-navy/8 text-navy"><UserIcon size={14} /></div>
+                      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-navy/8 text-navy-ink"><UserIcon size={14} /></div>
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-1.5"><span className="truncate text-[13px] font-[700] text-dark-text">{ct.name}</span>{ct.is_primary && <span className="rounded bg-gold/12 px-1 text-[9px] font-[800] text-[#A06C00]">PRIMARY</span>}</div>
                         <div className="truncate text-[11px] text-gray">{[ct.title, ct.email, ct.phone].filter(Boolean).join(' · ') || '—'}</div>
@@ -186,7 +186,7 @@ export function LeadDrawer({ partnerId, name, score, onClose, onSaved }: { partn
               <div className="rounded-xl border border-border bg-bdrbg p-2.5">
                 <div className="mb-2 flex flex-wrap gap-1">
                   {KINDS.map(k => { const Icon = k.icon; return (
-                    <button key={k.k} onClick={() => setKind(k.k)} className={cn('flex items-center gap-1 rounded-lg px-2 py-1 text-[11px] font-[700]', kind === k.k ? 'bg-navy text-white' : 'bg-card text-gray hover:text-navy')}><Icon size={11} />{k.label}</button>
+                    <button key={k.k} onClick={() => setKind(k.k)} className={cn('flex items-center gap-1 rounded-lg px-2 py-1 text-[11px] font-[700]', kind === k.k ? 'bg-navy text-white' : 'bg-card text-gray hover:text-navy-ink')}><Icon size={11} />{k.label}</button>
                   ) })}
                 </div>
                 <textarea value={body} onChange={e => { setBody(e.target.value); if (aiDraft) setAiDraft(false) }} rows={2} placeholder={`Log a ${kind}…`} className="w-full resize-none rounded-lg border border-border bg-card px-2.5 py-2 text-[13px] outline-none placeholder-gray focus:border-navy/40" />
@@ -203,7 +203,7 @@ export function LeadDrawer({ partnerId, name, score, onClose, onSaved }: { partn
                 ) : activities.map(n => { const km = kindMeta(n.kind); const Icon = km.icon; return (
                   <div key={n.id} className="flex gap-2.5">
                     <div className="flex flex-col items-center">
-                      <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-navy/8 text-navy"><Icon size={13} /></span>
+                      <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-navy/8 text-navy-ink"><Icon size={13} /></span>
                       <span className="mt-1 w-px flex-1 bg-border" />
                     </div>
                     <div className="min-w-0 flex-1 pb-2">

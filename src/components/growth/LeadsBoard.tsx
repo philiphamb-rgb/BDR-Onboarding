@@ -115,7 +115,7 @@ export function LeadsBoard({ leadList, onOpenLead, reload }: { leadList: any[]; 
             <input value={q} onChange={e => setQ(e.target.value)} placeholder="Search leads by name…" className="w-full rounded-lg border border-border bg-card py-2 pl-9 pr-9 text-[13px] outline-none focus:border-navy/40" />
             {q && <button onClick={() => setQ('')} aria-label="Clear" className="absolute right-3 top-1/2 -translate-y-1/2 text-gray"><CloseIcon size={14} /></button>}
           </div>
-          <button onClick={() => setShowFilters(s => !s)} className={cn('flex shrink-0 items-center gap-1.5 rounded-lg border px-3 text-[12.5px] font-[700]', activeFilters || showFilters ? 'border-navy bg-navy/5 text-navy' : 'border-border text-gray')}>
+          <button onClick={() => setShowFilters(s => !s)} className={cn('flex shrink-0 items-center gap-1.5 rounded-lg border px-3 text-[12.5px] font-[700]', activeFilters || showFilters ? 'border-navy bg-navy/5 text-navy-ink' : 'border-border text-gray')}>
             <FilterIcon size={13} /> Filter{activeFilters > 0 && <span className="flex h-4 min-w-4 items-center justify-center rounded-full bg-navy px-1 text-[9px] text-white">{activeFilters}</span>}
           </button>
         </div>
@@ -174,7 +174,7 @@ export function LeadsBoard({ leadList, onOpenLead, reload }: { leadList: any[]; 
               <div className="flex items-center gap-3">
                 <button onClick={() => toggle(lead.id)} aria-label={checked ? 'Deselect' : 'Select'} style={{ minHeight: 18 }} className={cn('flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded-md border-[1.5px]', checked ? 'border-navy bg-navy text-white' : 'border-gray/40 text-transparent hover:border-navy')}><CheckIcon size={11} /></button>
                 <button onClick={() => onOpenLead(lead)} className="flex min-w-0 flex-1 items-center gap-3 text-left">
-                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-navy/8 text-[12px] font-[800] text-navy">{lead.name.split(' ').map(w => w[0]).slice(0, 2).join('')}</div>
+                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-navy/8 text-[12px] font-[800] text-navy-ink">{lead.name.split(' ').map(w => w[0]).slice(0, 2).join('')}</div>
                   <div className="min-w-0 flex-1">
                     <div className="truncate text-[13px] font-[700] text-dark-text">{lead.name}</div>
                     <div className="text-[11px] text-gray">{fmtAgo(lead.agoMin)}{lead.weighted != null ? ` · $${Math.round(lead.weighted).toLocaleString()}/mo` : ''}</div>
@@ -226,7 +226,7 @@ export function LeadsBoard({ leadList, onOpenLead, reload }: { leadList: any[]; 
             <>
               <BulkMenu label="Set stage" items={PIPELINE} onPick={k => bulk({ stage: k })} disabled={busy} />
               <BulkMenu label="Set temp" items={TEMPS} onPick={k => bulk({ temperature: k })} disabled={busy} />
-              {isManager && <button onClick={openAssign} disabled={busy} className="flex items-center gap-1.5 rounded-lg border border-border px-3 py-2 text-[12px] font-[700] text-navy"><UserIcon size={13} /> Assign owner</button>}
+              {isManager && <button onClick={openAssign} disabled={busy} className="flex items-center gap-1.5 rounded-lg border border-border px-3 py-2 text-[12px] font-[700] text-navy-ink"><UserIcon size={13} /> Assign owner</button>}
             </>
           ) : (
             <span className="flex items-center gap-1.5 rounded-lg bg-bdrbg px-3 py-2 text-[12px] font-[700] text-gray"><LockIcon size={12} /> View only</span>
@@ -244,7 +244,7 @@ export function LeadsBoard({ leadList, onOpenLead, reload }: { leadList: any[]; 
             <div className="max-h-64 space-y-1 overflow-y-auto">
               {reps.length === 0 ? <p className="py-4 text-center text-[12px] text-gray">No team members found.</p> : reps.map(r => (
                 <button key={r.id} onClick={() => assignTo(r.id)} className="flex w-full items-center gap-2 rounded-lg border border-border p-2.5 text-left hover:border-navy/40">
-                  <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-navy/8 text-navy"><UserIcon size={14} /></span>
+                  <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-navy/8 text-navy-ink"><UserIcon size={14} /></span>
                   <span className="min-w-0 flex-1"><span className="block truncate text-[13px] font-[700] text-dark-text">{r.name}</span><span className="text-[11px] capitalize text-gray">{r.role}</span></span>
                   <ArrowRightIcon size={14} className="text-gray" />
                 </button>
@@ -262,7 +262,7 @@ function BulkMenu({ label, items, onPick, disabled }: any) {
   const [open, setOpen] = useState(false)
   return (
     <div className="relative">
-      <button onClick={() => setOpen(o => !o)} disabled={disabled} className="flex items-center gap-1.5 rounded-lg border border-border px-3 py-2 text-[12px] font-[700] text-navy disabled:opacity-50">{label} <ChevronDownIcon size={12} /></button>
+      <button onClick={() => setOpen(o => !o)} disabled={disabled} className="flex items-center gap-1.5 rounded-lg border border-border px-3 py-2 text-[12px] font-[700] text-navy-ink disabled:opacity-50">{label} <ChevronDownIcon size={12} /></button>
       {open && (
         <>
           <div className="fixed inset-0 z-[10]" onClick={() => setOpen(false)} />

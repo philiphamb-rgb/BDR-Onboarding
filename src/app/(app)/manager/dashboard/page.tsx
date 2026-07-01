@@ -95,7 +95,7 @@ export default function ManagerDashboardPage() {
         <>
           {/* KPI row */}
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-            <StatTile label="Avg XP / rep" value={<CountUp value={avgXP} format={n => formatXP(n).replace(' XP', '')} />} sub="All time" icon={<ChartRisingIcon size={18} />} accent="text-navy" />
+            <StatTile label="Avg XP / rep" value={<CountUp value={avgXP} format={n => formatXP(n).replace(' XP', '')} />} sub="All time" icon={<ChartRisingIcon size={18} />} accent="text-navy-ink" />
             <StatTile label="On a streak" value={<><CountUp value={activeStreaks} />/{teamSize}</>} sub="Active today" icon={<FlameIcon size={18} />} accent="text-orange-500" />
             <StatTile label="Calls this week" value={<CountUp value={callsThisWeek} />} sub="Team total" icon={<LightningIcon size={18} />} accent="text-teal" />
             <StatTile label="Deals this month" value={<CountUp value={dealsThisMonth} />} sub="Closed-won" icon={<TargetIcon size={18} />} accent="text-success" />
@@ -155,10 +155,10 @@ export default function ManagerDashboardPage() {
           {/* Quick actions */}
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
             {[
-              { href: '/manager/analytics', label: 'Analytics', icon: <BarChartIcon size={18} />, accent: 'text-navy' },
+              { href: '/manager/analytics', label: 'Analytics', icon: <BarChartIcon size={18} />, accent: 'text-navy-ink' },
               { href: '/manager/broadcast', label: 'Broadcast', icon: <BellIcon size={18} />, accent: 'text-teal' },
               { href: '/manager/gamification', label: 'XP Rules', icon: <XpIcon size={18} />, accent: 'text-gold' },
-              { href: '/manager/roles', label: 'Roles', icon: <TeamIcon size={18} />, accent: 'text-navy' },
+              { href: '/manager/roles', label: 'Roles', icon: <TeamIcon size={18} />, accent: 'text-navy-ink' },
             ].map(a => (
               <Link key={a.href} href={a.href}>
                 <Card hover className="flex items-center gap-2 !p-3">

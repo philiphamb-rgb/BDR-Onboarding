@@ -15,6 +15,7 @@ const config: Config = {
           DEFAULT: 'rgb(var(--navy) / <alpha-value>)',
           dark:    'rgb(var(--navy-dark) / <alpha-value>)',
           mid:     'rgb(var(--navy-mid) / <alpha-value>)',
+          ink:     'rgb(var(--navy-ink) / <alpha-value>)',
         },
         // Supporting accents — themeable via the accent scheme (brand vs custom)
         teal: {

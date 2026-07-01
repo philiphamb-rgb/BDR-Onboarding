@@ -193,13 +193,13 @@ export function AppHeader({ user, unreadCount = 0 }: { user?: User | null; unrea
         </div>
       </Link>
 
-      <Link href="/settings" aria-label="Settings" className="hidden h-9 w-9 items-center justify-center rounded-lg text-gray hover:bg-bdrbg hover:text-navy desktop:flex">
+      <Link href="/settings" aria-label="Settings" className="hidden h-9 w-9 items-center justify-center rounded-lg text-gray hover:bg-bdrbg hover:text-navy-ink desktop:flex">
         <SettingsIcon size={19} />
       </Link>
 
       <Link href="/notifications" data-tour="nav-bell" aria-label={unreadCount > 0 ? `${unreadCount} unread notifications` : 'Notifications'}
-        className="relative flex h-9 w-9 items-center justify-center rounded-lg text-gray hover:bg-bdrbg hover:text-navy">
-        <Bell size={20} className={unreadCount > 0 ? 'text-navy animate-ring' : ''} />
+        className="relative flex h-9 w-9 items-center justify-center rounded-lg text-gray hover:bg-bdrbg hover:text-navy-ink">
+        <Bell size={20} className={unreadCount > 0 ? 'text-navy-ink animate-ring' : ''} />
         {unreadCount > 0 && (
           <span className="absolute right-1 top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-error px-1 text-[9px] font-[800] text-white">{unreadCount > 9 ? '9+' : unreadCount}</span>
         )}
@@ -254,7 +254,7 @@ export function BottomNav({ user }: { user?: User | null; unreadCount?: number }
                 const Icon = item.icon
                 return (
                   <Link key={item.href} href={item.href} onClick={() => setMoreOpen(false)}
-                    className={cn('flex flex-col items-center justify-center gap-1 rounded-lg px-1 py-3 text-center', isActive ? 'bg-navy/10 text-navy' : 'text-mid-text hover:bg-bdrbg')}
+                    className={cn('flex flex-col items-center justify-center gap-1 rounded-lg px-1 py-3 text-center', isActive ? 'bg-navy/10 text-navy-ink' : 'text-mid-text hover:bg-bdrbg')}
                     aria-current={isActive ? 'page' : undefined}>
                     <Icon size={22} />
                     <span className="text-[10px] font-[700] leading-tight">{item.label}</span>
@@ -272,18 +272,18 @@ export function BottomNav({ user }: { user?: User | null; unreadCount?: number }
           const Icon = item.icon
           return (
             <Link key={item.href} href={item.href} onClick={() => setMoreOpen(false)}
-              className={cn('relative flex flex-col items-center justify-center gap-0.5 min-w-[44px] min-h-[44px] px-3 rounded-lg transition-colors duration-[150ms]', isActive ? 'text-navy' : 'text-gray hover:text-navy')}
+              className={cn('relative flex flex-col items-center justify-center gap-0.5 min-w-[44px] min-h-[44px] px-3 rounded-lg transition-colors duration-[150ms]', isActive ? 'text-navy-ink' : 'text-gray hover:text-navy-ink')}
               aria-current={isActive ? 'page' : undefined}>
               <Icon size={22} className={cn('transition-transform duration-200', isActive && 'scale-110')} />
-              <span className={cn('text-[10px] font-[700] uppercase tracking-[0.05em]', isActive ? 'text-navy' : 'text-gray')}>{item.shortLabel ?? item.label}</span>
+              <span className={cn('text-[10px] font-[700] uppercase tracking-[0.05em]', isActive ? 'text-navy-ink' : 'text-gray')}>{item.shortLabel ?? item.label}</span>
               {isActive && <span className="absolute -bottom-0.5 h-1 w-1 animate-pop rounded-full bg-navy" />}
             </Link>
           )
         })}
         <button onClick={() => setMoreOpen(o => !o)} aria-label="More" aria-expanded={moreOpen}
-          className={cn('flex flex-col items-center justify-center gap-0.5 min-w-[44px] min-h-[44px] px-3 rounded-lg transition-colors duration-[150ms]', moreOpen || moreActive ? 'text-navy' : 'text-gray hover:text-navy')}>
+          className={cn('flex flex-col items-center justify-center gap-0.5 min-w-[44px] min-h-[44px] px-3 rounded-lg transition-colors duration-[150ms]', moreOpen || moreActive ? 'text-navy-ink' : 'text-gray hover:text-navy-ink')}>
           <MoreIcon size={22} />
-          <span className={cn('text-[10px] font-[700] uppercase tracking-[0.05em]', moreOpen || moreActive ? 'text-navy' : 'text-gray')}>More</span>
+          <span className={cn('text-[10px] font-[700] uppercase tracking-[0.05em]', moreOpen || moreActive ? 'text-navy-ink' : 'text-gray')}>More</span>
         </button>
       </nav>
     </>
@@ -329,7 +329,7 @@ export function Sidebar({ user }: { user?: User | null; unreadCount?: number }) 
     <aside className={cn('fixed left-0 top-0 bottom-0 z-sidebar w-[var(--sb-w)] overflow-hidden bg-card border-r border-border flex flex-col hidden desktop:flex transition-[width] duration-300')}>
       <div className={cn('flex items-center gap-2 border-b border-border py-4', collapsed ? 'justify-center px-2' : 'px-3')}>
         <button onClick={toggleCollapsed} aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'} aria-expanded={!collapsed}
-          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-gray hover:bg-bdrbg hover:text-navy">
+          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-gray hover:bg-bdrbg hover:text-navy-ink">
           <MenuIcon size={18} />
         </button>
         {!collapsed && (
@@ -385,7 +385,7 @@ function SidebarItem({ item, pathname, collapsed = false }: { item: NavItem; pat
     <Link href={item.href} title={collapsed ? item.label : undefined}
       className={cn('relative flex items-center rounded-lg min-h-[42px] w-full text-[14px] font-[600] transition-all duration-[150ms] py-2.5',
         collapsed ? 'justify-center px-0' : 'gap-3 pl-4 pr-3',
-        isActive ? 'bg-navy/10 text-navy font-[700]' : 'text-mid-text hover:bg-bdrbg hover:text-navy')}
+        isActive ? 'bg-navy/10 text-navy-ink font-[700]' : 'text-mid-text hover:bg-bdrbg hover:text-navy-ink')}
       aria-current={isActive ? 'page' : undefined}>
       {/* Active indicator bar — only when expanded (would clip in the icon rail). */}
       {!collapsed && (

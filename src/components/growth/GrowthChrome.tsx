@@ -29,7 +29,7 @@ const TONE = {
   error: { text: 'text-error', bg: 'bg-error/10', chipText: 'text-error', dot: 'bg-error' },
   teal:  { text: 'text-teal',  bg: 'bg-teal/10',  chipText: 'text-teal',  dot: 'bg-teal' },
   gold:  { text: 'text-[#A06C00]', bg: 'bg-gold/12', chipText: 'text-[#A06C00]', dot: 'bg-gold' },
-  navy:  { text: 'text-navy',  bg: 'bg-navy/8',   chipText: 'text-navy',  dot: 'bg-navy' },
+  navy:  { text: 'text-navy-ink',  bg: 'bg-navy/8',   chipText: 'text-navy-ink',  dot: 'bg-navy' },
 }
 
 function GoalsEditor({ goals, onSave, onClose }: any) {
@@ -113,7 +113,7 @@ export function GrowthChrome({ compact = false }: { compact?: boolean }) {
           {chip(CoinIcon, `~$${cost}/mo`, 'gold')}
           {chip(FlameIcon, `${leads.hot} hot leads`, 'error')}
           {chip(ChecklistIcon, `${bp.pct}% built`, 'navy')}
-          <button onClick={() => setEditing(true)} className="flex shrink-0 items-center gap-1.5 rounded-full border border-border px-2.5 py-1 text-[11px] font-[700] text-gray hover:text-navy">
+          <button onClick={() => setEditing(true)} className="flex shrink-0 items-center gap-1.5 rounded-full border border-border px-2.5 py-1 text-[11px] font-[700] text-gray hover:text-navy-ink">
             <TargetIcon size={12} />
             {goals.monthly_income_goal ? `$${Number(goals.monthly_income_goal).toLocaleString()}/mo` : 'Set goals'}
             {goals.leads_per_week_goal ? ` · ${goals.leads_per_week_goal}/wk` : ''}
@@ -128,7 +128,7 @@ export function GrowthChrome({ compact = false }: { compact?: boolean }) {
       {!compact && !loading && (
         <div>
           <div className="mb-2 flex items-center gap-1.5 px-0.5">
-            <StarIcon size={13} className="text-navy" />
+            <StarIcon size={13} className="text-navy-ink" />
             <span className="text-[12px] font-[800] text-dark-text">Your plan, prioritized against your goals</span>
           </div>
           <div className="grid gap-2 sm:grid-cols-3">

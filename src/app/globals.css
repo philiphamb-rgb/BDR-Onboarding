@@ -30,6 +30,7 @@
   --navy:       59 98 153;    /* #3B6299 deep-blue — dominant/primary accent */
   --navy-dark:  45 76 122;
   --navy-mid:   90 140 200;
+  --navy-ink:   90 140 200;   /* navy used as TEXT — lighter on dark for WCAG AA (5.2:1) */
   --teal:       92 209 243;   /* #5CD1F3 light-blue — "new / info" accent */
   --teal-dark:  47 170 210;
   --gold:       255 196 108;  /* #FFC46C yellow — "in progress / warning" accent */
@@ -54,6 +55,8 @@
   --text:       13 27 42;
   --text-mid:   55 65 81;
   --text-muted: 100 116 139;
+  /* On a light base the deep brand navy already passes AA on white (~5.9:1). */
+  --navy-ink:   59 98 153;
 }
 
 /* One-shot cross-fade applied while a theme change commits (added by theme.ts,

@@ -121,7 +121,7 @@ export default function LessonPage() {
           <li key={j} className="flex items-start gap-2 text-mid-text">
             <div className="w-1.5 h-1.5 bg-navy rounded-full mt-2 flex-shrink-0" />
             {item.url ? (
-              <a href={item.url} target="_blank" rel="noopener noreferrer" className="text-sm text-navy font-medium underline decoration-navy/30 hover:decoration-navy inline-flex items-center gap-1">
+              <a href={item.url} target="_blank" rel="noopener noreferrer" className="text-sm text-navy-ink font-medium underline decoration-navy/30 hover:decoration-navy inline-flex items-center gap-1">
                 {item.text}<ExternalLinkIcon size={12} />
               </a>
             ) : (
@@ -141,7 +141,7 @@ export default function LessonPage() {
             <span className="w-6 h-6 rounded-full bg-navy text-white text-xs font-[800] flex items-center justify-center shrink-0">{j + 1}</span>
             <span className="text-sm text-mid-text pt-0.5">
               {item.url ? (
-                <a href={item.url} target="_blank" rel="noopener noreferrer" className="text-navy font-medium underline decoration-navy/30 hover:decoration-navy inline-flex items-center gap-1">{item.text}<ExternalLinkIcon size={12} /></a>
+                <a href={item.url} target="_blank" rel="noopener noreferrer" className="text-navy-ink font-medium underline decoration-navy/30 hover:decoration-navy inline-flex items-center gap-1">{item.text}<ExternalLinkIcon size={12} /></a>
               ) : rich(item.text)}
             </span>
           </li>

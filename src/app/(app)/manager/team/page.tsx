@@ -80,7 +80,7 @@ export default function TeamPage() {
               { label: 'Calls', value: m.total_calls, icon: <PhoneIcon size={13} className="text-teal" /> },
               { label: 'Demos', value: m.total_demos, icon: null },
               { label: 'Deals', value: m.total_deals, icon: <TargetIcon size={13} className="text-success" /> },
-              { label: 'Lessons', value: m.lessons_completed, icon: <BookIcon size={13} className="text-navy" /> },
+              { label: 'Lessons', value: m.lessons_completed, icon: <BookIcon size={13} className="text-navy-ink" /> },
             ]
             return (
               <Card key={m.id}>

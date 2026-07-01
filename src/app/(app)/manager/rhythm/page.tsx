@@ -45,7 +45,7 @@ export default function ManagerRhythmPage() {
     })
   }, [])
 
-  const toneCls = { teal: 'bg-teal/10 text-teal', navy: 'bg-navy/10 text-navy', gray: 'bg-bdrbg text-gray' }
+  const toneCls = { teal: 'bg-teal/10 text-teal', navy: 'bg-navy/10 text-navy-ink', gray: 'bg-bdrbg text-gray' }
 
   return (
     <div className="space-y-4 pb-4 stagger-rise">

@@ -40,7 +40,7 @@ export function GrowthTabs() {
         return (
           <Link key={v.href} href={v.href} role="tab" aria-selected={active}
             className={cn('flex flex-1 shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-lg px-3 py-2 text-[12.5px] font-[700] transition-all',
-              active ? 'bg-card text-navy shadow-sm' : 'text-gray hover:text-navy')}>
+              active ? 'bg-card text-navy-ink shadow-sm' : 'text-gray hover:text-navy-ink')}>
             <Icon size={15} /> <span>{v.label}</span>
           </Link>
         )

@@ -52,7 +52,7 @@ export function FeedbackButton() {
 
   return (
     <>
-      <button onClick={() => setOpen(true)} className="flex shrink-0 items-center gap-1.5 rounded-full border border-border px-2.5 py-1 text-[11px] font-[700] text-gray hover:text-navy">
+      <button onClick={() => setOpen(true)} className="flex shrink-0 items-center gap-1.5 rounded-full border border-border px-2.5 py-1 text-[11px] font-[700] text-gray hover:text-navy-ink">
         <StarIcon size={12} /> Feedback
       </button>
 
@@ -68,7 +68,7 @@ export function FeedbackButton() {
             {isManager && (
               <div className="mb-3 flex gap-0.5 rounded-lg border border-border bg-bdrbg p-1">
                 {[['give', 'Give feedback', StarIcon], ['digest', 'Team digest', DashboardIcon]].map(([k, l, Icon]) => (
-                  <button key={k} onClick={() => setMode(k)} className={cn('flex flex-1 items-center justify-center gap-1.5 rounded-md py-1.5 text-[12px] font-[700]', mode === k ? 'bg-card text-navy shadow-sm' : 'text-gray')}>
+                  <button key={k} onClick={() => setMode(k)} className={cn('flex flex-1 items-center justify-center gap-1.5 rounded-md py-1.5 text-[12px] font-[700]', mode === k ? 'bg-card text-navy-ink shadow-sm' : 'text-gray')}>
                     <Icon size={12} /> {l}
                   </button>
                 ))}

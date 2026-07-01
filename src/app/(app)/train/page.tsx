@@ -128,7 +128,7 @@ export default function TrainPage() {
               {moduleResults.map(m => (
                 <Link key={`m-${m.id}`} href={`/train/${m.id}`} className="block">
                   <Card className="flex items-center gap-3 !p-3 hover:border-teal transition-colors">
-                    <BookIcon size={18} className="text-navy shrink-0" />
+                    <BookIcon size={18} className="text-navy-ink shrink-0" />
                     <div className="min-w-0 flex-1">
                       <div className="text-sm font-[700] text-dark-text truncate">{m.title}</div>
                       <div className="text-[11px] text-gray">Module {m.order_index} · whole module</div>
@@ -177,7 +177,7 @@ export default function TrainPage() {
               <div className="flex items-start gap-4">
                 <div className={cn('w-12 h-12 rounded-2xl flex items-center justify-center flex-shrink-0',
                   locked ? 'bg-bdrbg' : fullyDone ? 'bg-teal/10' : 'bg-navy/5')}>
-                  <Icon size={locked ? 20 : 24} className={locked ? 'text-gray' : fullyDone ? 'text-teal' : 'text-navy'} />
+                  <Icon size={locked ? 20 : 24} className={locked ? 'text-gray' : fullyDone ? 'text-teal' : 'text-navy-ink'} />
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-start justify-between gap-2 mb-1">

@@ -84,7 +84,7 @@ export function ContactsBoard({ companies, onOpenCompany }: { companies: any[]; 
           { icon: HandshakeIcon, label: 'Companies', value: companiesWith },
           { icon: StarIcon, label: 'Primary', value: primaries },
         ].map((s, i) => { const Icon = s.icon; return (
-          <Card key={i} className="!p-3"><Icon size={15} className="text-navy" /><div className="mt-1 text-[18px] font-[900] tabular-nums text-dark-text">{contacts === null ? '…' : s.value}</div><div className="text-[11px] text-gray">{s.label}</div></Card>
+          <Card key={i} className="!p-3"><Icon size={15} className="text-navy-ink" /><div className="mt-1 text-[18px] font-[900] tabular-nums text-dark-text">{contacts === null ? '…' : s.value}</div><div className="text-[11px] text-gray">{s.label}</div></Card>
         ) })}
       </div>
 
@@ -128,7 +128,7 @@ export function ContactsBoard({ companies, onOpenCompany }: { companies: any[]; 
             return (
               <Card key={c.id} className="!p-3">
                 <div className="flex items-center gap-3">
-                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-navy/8 text-[12px] font-[800] text-navy">{(c.name || '?').split(' ').map(w => w[0]).slice(0, 2).join('')}</span>
+                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-navy/8 text-[12px] font-[800] text-navy-ink">{(c.name || '?').split(' ').map(w => w[0]).slice(0, 2).join('')}</span>
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-1.5"><span className="truncate text-[13px] font-[700] text-dark-text">{c.name}</span>{c.is_primary && <span className="rounded bg-gold/12 px-1 text-[9px] font-[800] text-[#A06C00]">PRIMARY</span>}</div>
                     <div className="truncate text-[11px] text-gray">{[c.title, c.email, c.phone].filter(Boolean).join(' · ') || 'No details'}</div>
@@ -139,8 +139,8 @@ export function ContactsBoard({ companies, onOpenCompany }: { companies: any[]; 
                 {/* Association: company + deal → click to open the record */}
                 <button onClick={() => onOpenCompany({ id: c.partner_id, name: c.partner?.partner_name || 'Company' })}
                   className="mt-2 flex w-full items-center gap-2 rounded-lg bg-bdrbg px-2.5 py-1.5 text-left hover:bg-teal/[0.06]">
-                  <HandshakeIcon size={12} className="shrink-0 text-navy" />
-                  <span className="min-w-0 flex-1 truncate text-[11.5px] font-[700] text-navy">{c.partner?.partner_name || 'Company'}</span>
+                  <HandshakeIcon size={12} className="shrink-0 text-navy-ink" />
+                  <span className="min-w-0 flex-1 truncate text-[11.5px] font-[700] text-navy-ink">{c.partner?.partner_name || 'Company'}</span>
                   {weighted != null && <span className="flex shrink-0 items-center gap-0.5 text-[11px] font-[700] text-teal"><CoinIcon size={10} />{money(weighted)}/mo</span>}
                   <ArrowRightIcon size={12} className="shrink-0 text-gray" />
                 </button>

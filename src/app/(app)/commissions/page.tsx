@@ -85,7 +85,7 @@ export default function CommissionsPage() {
           <h1 className="text-h1 text-dark-text">Income &amp; Commission Planner</h1>
           <p className="mt-0.5 text-[13px] text-gray">Turn your income goal into a daily number — and track your way there.</p>
         </div>
-        <Link href="/analytics" className="hidden shrink-0 items-center gap-1 rounded-pill border border-border bg-card px-3 py-2 text-[12px] font-[700] text-navy shadow-card hover:border-navy/40 desktop:flex">
+        <Link href="/analytics" className="hidden shrink-0 items-center gap-1 rounded-pill border border-border bg-card px-3 py-2 text-[12px] font-[700] text-navy-ink shadow-card hover:border-navy/40 desktop:flex">
           <ChartRisingIcon size={15} /> Analytics
         </Link>
       </div>
@@ -107,7 +107,7 @@ export default function CommissionsPage() {
         <div className="mb-3 flex gap-1 rounded-xl bg-bdrbg p-1">
           {[{ k: 'b2c', l: 'Direct (B2C)' }, { k: 'b2b2c', l: 'Partners (B2B2C)' }].map(p => (
             <button key={p.k} onClick={() => updateInputs({ path: p.k as any })}
-              className={cn('flex-1 rounded-lg py-2 text-[13px] font-[700] transition-all', plan.path === p.k ? 'bg-card text-navy shadow-sm' : 'text-gray hover:text-navy')}>{p.l}</button>
+              className={cn('flex-1 rounded-lg py-2 text-[13px] font-[700] transition-all', plan.path === p.k ? 'bg-card text-navy-ink shadow-sm' : 'text-gray hover:text-navy-ink')}>{p.l}</button>
           ))}
         </div>
 
@@ -130,7 +130,7 @@ export default function CommissionsPage() {
           </div>
         </div>
 
-        <button onClick={() => setAdvanced(a => !a)} className="mt-3 text-[12px] font-[700] text-navy">{advanced ? 'Hide' : 'Show'} advanced inputs</button>
+        <button onClick={() => setAdvanced(a => !a)} className="mt-3 text-[12px] font-[700] text-navy-ink">{advanced ? 'Hide' : 'Show'} advanced inputs</button>
         {advanced && (
           <div className="mt-2 grid grid-cols-2 gap-3 border-t border-border pt-3">
             {isB2C ? (
@@ -208,9 +208,9 @@ export default function CommissionsPage() {
       {!pipe.loading && pipe.openCount > 0 && (
         <Card className="border-navy/30">
           <div className="mb-3 flex items-center gap-2">
-            <ChartRisingIcon size={15} className="text-navy" />
+            <ChartRisingIcon size={15} className="text-navy-ink" />
             <span className="label">Pipeline momentum</span>
-            <Link href="/grow" className="ml-auto text-[11px] font-[700] text-navy">Open workspace</Link>
+            <Link href="/grow" className="ml-auto text-[11px] font-[700] text-navy-ink">Open workspace</Link>
           </div>
           <div className="grid grid-cols-3 gap-2 text-center">
             <div className="rounded-xl border border-border bg-bdrbg p-3">
@@ -230,7 +230,7 @@ export default function CommissionsPage() {
             <div className="mt-3">
               <div className="mb-1 flex items-center justify-between text-[11.5px]">
                 <span className="font-[700] text-mid-text">Covers your monthly production target</span>
-                <span className="font-[800] text-navy tabular-nums">{Math.round(coverage)}%</span>
+                <span className="font-[800] text-navy-ink tabular-nums">{Math.round(coverage)}%</span>
               </div>
               <ProgressBar value={coverage} max={100} color={coverage >= 100 ? '#16A34A' : 'rgb(var(--navy))'} className="h-2" />
               <p className="mt-1.5 text-[11px] text-gray">
@@ -246,7 +246,7 @@ export default function CommissionsPage() {
       {/* 12-month projection */}
       <Card>
         <div className="mb-2 flex items-center gap-2">
-          <ChartRisingIcon size={15} className="text-navy" />
+          <ChartRisingIcon size={15} className="text-navy-ink" />
           <span className="label">12-month projection</span>
           {plan.goalMonth && <span className="ml-auto rounded-full bg-success/10 px-2 py-0.5 text-[11px] font-[800] text-success">Goal ~month {plan.goalMonth}</span>}
         </div>
@@ -271,7 +271,7 @@ export default function CommissionsPage() {
       {/* Weekly funnel */}
       {plan.funnel && (
         <Card>
-          <div className="mb-3 flex items-center gap-2"><PhoneIcon size={15} className="text-navy" /><span className="label">Your weekly funnel</span></div>
+          <div className="mb-3 flex items-center gap-2"><PhoneIcon size={15} className="text-navy-ink" /><span className="label">Your weekly funnel</span></div>
           <div className="space-y-1.5">
             {[
               { l: isB2C ? 'Dials' : 'Touches', v: plan.funnel.dials },
@@ -298,7 +298,7 @@ export default function CommissionsPage() {
 
       {/* Earnings breakdown */}
       <Card>
-        <div className="mb-3 flex items-center gap-2"><HandshakeIcon size={15} className="text-navy" /><span className="label">Year-1 earnings</span></div>
+        <div className="mb-3 flex items-center gap-2"><HandshakeIcon size={15} className="text-navy-ink" /><span className="label">Year-1 earnings</span></div>
         <div className="grid grid-cols-3 gap-2 text-center">
           {[
             { l: 'Base', v: plan.base },

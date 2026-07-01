@@ -82,7 +82,7 @@ export default function GrowthAutomationsPage() {
           <div className="flex flex-wrap items-center gap-2">
             <div className="flex flex-wrap gap-1.5">
               {cats.map(c => (
-                <button key={c} onClick={() => setCat(c)} className={cn('rounded-full border px-3 py-1 text-[11.5px] font-[700]', cat === c ? 'border-navy bg-navy text-white' : 'border-border text-gray hover:text-navy')}>{c === 'All' ? 'All' : CAT_LABEL[c]}</button>
+                <button key={c} onClick={() => setCat(c)} className={cn('rounded-full border px-3 py-1 text-[11.5px] font-[700]', cat === c ? 'border-navy bg-navy text-white' : 'border-border text-gray hover:text-navy-ink')}>{c === 'All' ? 'All' : CAT_LABEL[c]}</button>
               ))}
             </div>
             <div className="relative ml-auto min-w-[150px] flex-1 sm:max-w-[220px]">
@@ -116,7 +116,7 @@ export default function GrowthAutomationsPage() {
                       <div className="flex shrink-0 flex-col items-end gap-2" onClick={e => e.stopPropagation()}>
                         {isManager ? (
                           a.status === 'setup'
-                            ? <button onClick={() => setStatusFor(a, 'live')} className="rounded-md bg-navy/8 px-2.5 py-1 text-[10.5px] font-[800] text-navy">Activate</button>
+                            ? <button onClick={() => setStatusFor(a, 'live')} className="rounded-md bg-navy/8 px-2.5 py-1 text-[10.5px] font-[800] text-navy-ink">Activate</button>
                             : <Toggle size="sm" checked={a.status === 'live'} onChange={n => setStatusFor(a, n ? 'live' : 'paused')} />
                         ) : <span className={cn('h-2 w-2 rounded-full', sm.dot)} />}
                         <ChevronDownIcon size={14} className={cn('text-gray transition-transform', isOpen && 'rotate-180')} onClick={() => setOpenId(isOpen ? null : a.id)} />

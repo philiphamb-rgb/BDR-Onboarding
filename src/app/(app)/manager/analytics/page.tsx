@@ -71,7 +71,7 @@ export default function AnalyticsPage() {
 
   const metrics = [
     { label: 'Total team XP', value: formatXP(totalXP).replace(' XP', ''), sub: 'All time', icon: <TrophyIcon size={18} />, accent: 'text-gold' },
-    { label: 'Avg XP / rep', value: formatXP(size ? Math.round(totalXP / size) : 0).replace(' XP', ''), sub: 'All time', icon: <ChartRisingIcon size={18} />, accent: 'text-navy' },
+    { label: 'Avg XP / rep', value: formatXP(size ? Math.round(totalXP / size) : 0).replace(' XP', ''), sub: 'All time', icon: <ChartRisingIcon size={18} />, accent: 'text-navy-ink' },
     { label: 'Total calls', value: totalCalls, sub: 'All time', icon: <PhoneIcon size={18} />, accent: 'text-teal' },
     { label: 'Total deals', value: totalDeals, sub: 'Closed-won', icon: <TargetIcon size={18} />, accent: 'text-success' },
   ]
@@ -163,7 +163,7 @@ export default function AnalyticsPage() {
 
           <div className="grid grid-cols-2 gap-3">
             <StatTile label="Reps on a streak" value={`${activeStreaks}/${size}`} icon={<FlameIcon size={18} />} accent="text-orange-500" />
-            <StatTile label="Total demos" value={totalDemos} icon={<BookIcon size={18} />} accent="text-navy" />
+            <StatTile label="Total demos" value={totalDemos} icon={<BookIcon size={18} />} accent="text-navy-ink" />
           </div>
         </>
       )}

@@ -50,7 +50,7 @@ export function NoteButton({ entityType, entityId, label, context = '', compact 
   return (
     <>
       <button onClick={e => { e.stopPropagation(); setOpen(true) }} aria-label={`Notes for ${label}`} title="Reference notes"
-        className={cn('relative flex shrink-0 items-center gap-1 rounded-md border border-border bg-bdrbg px-2 py-1 text-[10.5px] font-[700] text-gray hover:text-navy', className)}>
+        className={cn('relative flex shrink-0 items-center gap-1 rounded-md border border-border bg-bdrbg px-2 py-1 text-[10.5px] font-[700] text-gray hover:text-navy-ink', className)}>
         <DocumentIcon size={compact ? 11 : 12} />
         {!compact && <span>Notes</span>}
         {count > 0 && <span className="flex h-4 min-w-4 items-center justify-center rounded-full bg-teal px-1 text-[9px] font-[800] text-white">{count}</span>}

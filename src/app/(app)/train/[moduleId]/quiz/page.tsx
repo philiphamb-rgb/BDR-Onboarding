@@ -165,7 +165,7 @@ export default function ModuleQuizPage() {
       </button>
       <Card>
         <div className="text-center py-4">
-          <div className="mb-3 flex justify-center"><ChecklistIcon size={36} className="text-navy" /></div>
+          <div className="mb-3 flex justify-center"><ChecklistIcon size={36} className="text-navy-ink" /></div>
           <h1 className="text-h2 text-dark-text mb-2">{moduleName} Quiz</h1>
           <p className="text-sm text-gray mb-1">{questions.length} questions · Pass at 70%</p>
           {prevBest > 0 && <p className="text-xs text-gray">Your best: {prevBest}%</p>}
@@ -209,7 +209,7 @@ export default function ModuleQuizPage() {
                 else if (idx === userAnswer) cls = 'border-error/50 bg-error/10 text-error'
                 else cls = 'border-border bg-bdrbg opacity-40 text-gray'
               } else if (idx === userAnswer) {
-                cls = 'border-navy bg-navy/5 text-navy'
+                cls = 'border-navy bg-navy/5 text-navy-ink'
               }
               return (
                 <button key={idx} onClick={() => selectAnswer(q.id, idx)}
@@ -249,7 +249,7 @@ export default function ModuleQuizPage() {
     <div className="space-y-4">
       {result.passed && <Confetti />}
       <Card className={cn('text-center py-8', result.passed ? 'border-teal/30 bg-teal/5' : 'border-red-500/40 bg-error/10')}>
-        <div className="mb-3 flex justify-center">{result.passed ? <TrophyIcon size={44} className="text-gold" /> : <BookIcon size={44} className="text-navy" />}</div>
+        <div className="mb-3 flex justify-center">{result.passed ? <TrophyIcon size={44} className="text-gold" /> : <BookIcon size={44} className="text-navy-ink" />}</div>
         <h2 className="text-h2 text-dark-text mb-2">{result.passed ? 'Passed!' : 'Keep studying'}</h2>
         <div className="text-4xl font-bold text-dark-text mb-1">{result.pct}%</div>
         <p className="text-sm text-gray mb-4">{result.correct} of {result.total} correct</p>

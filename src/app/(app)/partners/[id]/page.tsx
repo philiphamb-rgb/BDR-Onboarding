@@ -189,7 +189,7 @@ export default function PartnerDetailPage() {
                     const sys = systemLink(item.link)
                     return sys ? (
                       <a href={sys.url} target="_blank" rel="noopener noreferrer"
-                        className="mt-1.5 inline-flex items-center gap-1 rounded-md bg-navy/5 px-2.5 py-1 text-[11px] font-[700] text-navy hover:bg-navy/10 transition-colors">
+                        className="mt-1.5 inline-flex items-center gap-1 rounded-md bg-navy/5 px-2.5 py-1 text-[11px] font-[700] text-navy-ink hover:bg-navy/10 transition-colors">
                         Open {sys.label} <ExternalLinkIcon size={12} />
                       </a>
                     ) : null

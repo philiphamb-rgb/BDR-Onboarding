@@ -102,9 +102,9 @@ export const PHASES: Phase[] = [
 // Accent tone → tailwind classes (kept in the design system, no off-brand color).
 export const PHASE_TONE: Record<string, { text: string; bg: string; ring: string }> = {
   gold:   { text: 'text-[#A06C00]', bg: 'bg-gold/12',  ring: 'border-gold/40' },
-  purple: { text: 'text-navy',      bg: 'bg-navy/8',   ring: 'border-navy/30' },
+  purple: { text: 'text-navy-ink',      bg: 'bg-navy/8',   ring: 'border-navy/30' },
   teal:   { text: 'text-teal',      bg: 'bg-teal/10',  ring: 'border-teal/40' },
-  navy:   { text: 'text-navy',      bg: 'bg-navy/8',   ring: 'border-navy/40' },
+  navy:   { text: 'text-navy-ink',      bg: 'bg-navy/8',   ring: 'border-navy/40' },
 }
 
 export const ALL_TASK_IDS = PHASES.flatMap(p => p.tasks.map(t => t.id))

@@ -137,7 +137,7 @@ export function FeedbackDigest() {
             {proposals.map(p => (
               <div key={p.id} className="rounded-xl border border-border bg-card p-3">
                 <div className="flex items-center gap-2">
-                  <span className="rounded bg-navy/8 px-1.5 py-0.5 text-[10px] font-[800] text-navy">{agentName(p.agent_id)}</span>
+                  <span className="rounded bg-navy/8 px-1.5 py-0.5 text-[10px] font-[800] text-navy-ink">{agentName(p.agent_id)}</span>
                   <span className="min-w-0 flex-1 truncate text-[12.5px] font-[700] text-dark-text">{p.summary}</span>
                 </div>
                 <p className="mt-1.5 rounded-lg bg-bdrbg p-2 text-[12px] italic leading-relaxed text-mid-text">“{p.addendum}”</p>

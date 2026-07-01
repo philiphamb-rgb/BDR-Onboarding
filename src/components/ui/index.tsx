@@ -33,7 +33,7 @@ interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
 const buttonVariants: Record<ButtonVariant, string> = {
   primary:     'bg-gradient-primary text-white shadow-button hover:opacity-90 hover:-translate-y-px',
   secondary:   'bg-navy text-white hover:bg-navy-dark hover:-translate-y-px',
-  ghost:       'bg-transparent border-2 border-navy text-navy hover:bg-navy/5',
+  ghost:       'bg-transparent border-2 border-navy text-navy-ink hover:bg-navy/5',
   destructive: 'bg-transparent border-2 border-error text-error hover:bg-error/5',
   // Highest-attention conversion action (teal). Reserve for the single most
   // important next step on a screen (Continue Learning / Mark Complete).
@@ -491,7 +491,7 @@ const toastIcons: Record<ToastVariant, React.ReactNode> = {
   success: <SuccessIcon size={18} className="text-success" />,
   error:   <AlertIcon  size={18} className="text-error" />,
   warning: <AlertIcon  size={18} className="text-gold" />,
-  info:    <InfoIcon   size={18} className="text-navy" />,
+  info:    <InfoIcon   size={18} className="text-navy-ink" />,
   xp:      <div className="text-teal font-[900] text-[14px]">XP</div>,
 }
 
@@ -729,7 +729,7 @@ interface BadgeProps {
 
 const badgeVariants: Record<BadgeVariant, string> = {
   teal:    'bg-teal/10 text-teal-dark',
-  navy:    'bg-navy/10 text-navy',
+  navy:    'bg-navy/10 text-navy-ink',
   gold:    'bg-gold/10 text-[#A06C00]',
   success: 'bg-success/10 text-success',
   error:   'bg-error/10 text-error',

@@ -44,11 +44,11 @@ export default function GrowthLeadGenPage() {
   const [openLead, setOpenLead] = useState<any>(null)   // CRM record drawer
   const weightedPipeline = (leadList || []).reduce((s, l) => s + (l.weighted || 0), 0)
   const insights = loading ? [] : computeInsights({ leadList: leadList || [], roster: roster || [] })
-  const stages = [{ k: 'cold', l: 'Cold', c: 'text-navy' }, { k: 'warm', l: 'Warm', c: 'text-[#A06C00]' }, { k: 'hot', l: 'Hot', c: 'text-error' }, { k: 'converted', l: 'Won', c: 'text-success' }]
+  const stages = [{ k: 'cold', l: 'Cold', c: 'text-navy-ink' }, { k: 'warm', l: 'Warm', c: 'text-[#A06C00]' }, { k: 'hot', l: 'Hot', c: 'text-error' }, { k: 'converted', l: 'Won', c: 'text-success' }]
   const counts = { cold: leads.cold, warm: leads.warm, hot: leads.hot, converted: leads.won }
 
   const subBtn = (id: string, l: string) => (
-    <button key={id} onClick={() => setView(id)} className={cn('rounded-md px-3.5 py-1.5 text-[12.5px] font-[700] transition-colors', view === id ? 'bg-navy text-white' : 'text-gray hover:text-navy')}>{l}</button>
+    <button key={id} onClick={() => setView(id)} className={cn('rounded-md px-3.5 py-1.5 text-[12.5px] font-[700] transition-colors', view === id ? 'bg-navy text-white' : 'text-gray hover:text-navy-ink')}>{l}</button>
   )
 
   return (
@@ -64,7 +64,7 @@ export default function GrowthLeadGenPage() {
           {insights.length > 0 && (
             <div>
               <div className="mb-2 flex items-center gap-1.5 px-0.5">
-                <IntegrationIcon size={14} className="text-navy" />
+                <IntegrationIcon size={14} className="text-navy-ink" />
                 <span className="text-[12px] font-[800] text-dark-text">Your AI Coach already checked your pipeline</span>
               </div>
               <div className="grid gap-2 sm:grid-cols-2">

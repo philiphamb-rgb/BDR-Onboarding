@@ -35,7 +35,7 @@ export function FirstRunOverlay({ kvKey, eyebrow, title, body, steps = [], ctaLa
               const Icon = s.icon
               return (
                 <div key={i} className="flex items-center gap-3">
-                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-navy/8 text-navy"><Icon size={16} /></span>
+                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-navy/8 text-navy-ink"><Icon size={16} /></span>
                   <span className="text-[13px] font-[600] text-mid-text">{s.label}</span>
                 </div>
               )

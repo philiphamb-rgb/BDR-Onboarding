@@ -204,7 +204,7 @@ export default function DrillPage() {
           <div key={i} className={cn('flex gap-2', m.role === 'user' ? 'flex-row-reverse' : 'flex-row')}>
             {m.role === 'assistant' && (
               <div className="mt-1 flex h-7 w-7 items-center justify-center rounded-full bg-navy/10 shrink-0">
-                <span className="text-[11px] font-[800] text-navy">P</span>
+                <span className="text-[11px] font-[800] text-navy-ink">P</span>
               </div>
             )}
             <div className={cn('max-w-[82%] rounded-2xl px-4 py-2.5 text-sm leading-relaxed',
@@ -215,7 +215,7 @@ export default function DrillPage() {
         ))}
         {loading && (
           <div className="flex gap-2">
-            <div className="flex h-7 w-7 items-center justify-center rounded-full bg-navy/10"><span className="text-[11px] font-[800] text-navy">P</span></div>
+            <div className="flex h-7 w-7 items-center justify-center rounded-full bg-navy/10"><span className="text-[11px] font-[800] text-navy-ink">P</span></div>
             <div className="rounded-2xl rounded-tl-sm border border-border bg-card px-4 py-3 shadow-card">
               <div className="flex h-4 items-center gap-1">{[0,1,2].map(i => <div key={i} className="h-2 w-2 animate-bounce rounded-full bg-gray" style={{ animationDelay: `${i*0.15}s` }} />)}</div>
             </div>

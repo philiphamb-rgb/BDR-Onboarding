@@ -209,7 +209,7 @@ export default function TodayPage() {
           <h1 className="text-h1 text-dark-text">Today</h1>
           <p className="text-sm text-gray">{formatDateShort(new Date())}</p>
         </div>
-        <Link href="/schedule" className="flex items-center gap-1.5 rounded-pill border border-border bg-card px-3 py-2 text-[12px] font-[700] text-navy shadow-card hover:border-navy/40">
+        <Link href="/schedule" className="flex items-center gap-1.5 rounded-pill border border-border bg-card px-3 py-2 text-[12px] font-[700] text-navy-ink shadow-card hover:border-navy/40">
           <ClockIcon size={15} /> Time Blocks
         </Link>
       </div>
@@ -266,7 +266,7 @@ export default function TodayPage() {
       <Card data-tour="today-plan-card">
         <div className="mb-3 flex items-center justify-between">
           <h2 className="text-h3 text-dark-text">Today&apos;s plan</h2>
-          <Link href="/schedule" className="flex items-center gap-1 text-sm font-medium text-navy">Time Blocks <ArrowRightIcon className="h-4 w-4" /></Link>
+          <Link href="/schedule" className="flex items-center gap-1 text-sm font-medium text-navy-ink">Time Blocks <ArrowRightIcon className="h-4 w-4" /></Link>
         </div>
         {planned.length === 0 ? (
           <div className="rounded-xl border border-dashed border-border bg-bdrbg p-3">
@@ -301,7 +301,7 @@ export default function TodayPage() {
             <LightningIcon size={14} className="relative text-white" /><span className="relative">{triageBusy ? 'Planning…' : 'Auto-plan my day'}</span>
           </button>
           <button onClick={() => askCoach('Triage my day from my goal, pipeline, and tasks. What are the top 3 things to do right now, in order, and why?')}
-            className="flex items-center justify-center gap-1.5 rounded-lg border border-navy/30 bg-navy/5 py-2.5 text-[13px] font-[800] text-navy hover:bg-navy/10">
+            className="flex items-center justify-center gap-1.5 rounded-lg border border-navy/30 bg-navy/5 py-2.5 text-[13px] font-[800] text-navy-ink hover:bg-navy/10">
             <CoachIcon size={14} /> Coach my day
           </button>
         </div>
@@ -370,7 +370,7 @@ export default function TodayPage() {
           ].map(item => (
             <button key={item.type} onClick={(e) => logActivity(item.type, e)}
               className="flex flex-col items-center gap-1 p-3 bg-bdrbg hover:bg-bdrbg active:scale-95 rounded-xl border border-border transition-all">
-              <item.Icon size={24} className="text-navy" />
+              <item.Icon size={24} className="text-navy-ink" />
               <span className="text-xs font-semibold text-dark-text">{item.label}</span>
               <span className="text-xs text-gray">+{item.xp} XP</span>
             </button>

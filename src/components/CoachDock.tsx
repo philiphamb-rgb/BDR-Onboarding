@@ -232,7 +232,7 @@ export function CoachDock() {
                 <div className="flex items-center gap-1.5 text-[15px] font-[800] text-dark-text">AI Coach <LightningIcon size={13} className="text-teal" /></div>
                 <div className="truncate text-[11px] text-gray">Knows your numbers · {ctx.label}</div>
               </div>
-              <Link href="/coach" onClick={() => setOpen(false)} className="rounded-lg px-2 py-1 text-[12px] font-[700] text-navy hover:bg-navy/5">Open full →</Link>
+              <Link href="/coach" onClick={() => setOpen(false)} className="rounded-lg px-2 py-1 text-[12px] font-[700] text-navy-ink hover:bg-navy/5">Open full →</Link>
               <button onClick={() => setOpen(false)} aria-label="Close coach" className="flex h-9 w-9 items-center justify-center rounded-full text-gray hover:bg-bdrbg hover:text-dark-text">
                 <CloseIcon size={18} />
               </button>

@@ -133,7 +133,7 @@ export default function RolesPage() {
       {/* Permission matrix */}
       <Card>
         <div className="flex items-center gap-2 mb-1">
-          <ShieldIcon size={16} className="text-navy" />
+          <ShieldIcon size={16} className="text-navy-ink" />
           <h2 className="text-h3 text-dark-text">Permission matrix</h2>
         </div>
         <p className="text-[12px] text-gray mb-3">Pick a role, then set what it can view and edit. {isAdmin ? 'Changes save instantly.' : 'View-only — ask an Admin to change permissions.'}</p>

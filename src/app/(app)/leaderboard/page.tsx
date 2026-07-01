@@ -109,7 +109,7 @@ export default function LeaderboardPage() {
     <div className="space-y-4">
       <h1 className="text-h1 text-dark-text">Leaderboard</h1>
       <Card className="!py-12 text-center">
-        <span className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-navy/10 text-navy"><TrophyIcon size={22} /></span>
+        <span className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-navy/10 text-navy-ink"><TrophyIcon size={22} /></span>
         <p className="text-[14px] font-[800] text-dark-text">No teammates on the board yet</p>
         <p className="mx-auto mt-1 max-w-xs text-[12.5px] text-gray">Once you and your team log calls, leads, and deals, the rankings light up here.</p>
       </Card>
@@ -143,7 +143,7 @@ export default function LeaderboardPage() {
         <div className="flex gap-1 overflow-x-auto rounded-xl bg-bdrbg p-1">
           {RANGES.map(r => (
             <button key={r.key} onClick={() => setRange(r.key)}
-              className={cn('shrink-0 rounded-lg px-3 py-1.5 text-[12.5px] font-[800] transition-all', range === r.key ? 'bg-card text-navy shadow-sm' : 'text-gray hover:text-navy')}>
+              className={cn('shrink-0 rounded-lg px-3 py-1.5 text-[12.5px] font-[800] transition-all', range === r.key ? 'bg-card text-navy-ink shadow-sm' : 'text-gray hover:text-navy-ink')}>
               {r.label}
             </button>
           ))}
@@ -167,7 +167,7 @@ export default function LeaderboardPage() {
                 <span className="absolute -bottom-1 -right-1 flex h-6 w-6 items-center justify-center rounded-full text-[11px] font-[900] text-white shadow" style={{ backgroundColor: medal }}>{slot + 1}</span>
               </div>
               <div className="mt-1 max-w-full truncate text-[12.5px] font-[800] text-dark-text">{r.name?.split(' ')[0] || '—'}</div>
-              <div className="text-[19px] font-[900] leading-none text-navy tabular-nums"><CountUp value={r.s} /></div>
+              <div className="text-[19px] font-[900] leading-none text-navy-ink tabular-nums"><CountUp value={r.s} /></div>
               <div className="text-[10px] font-[700] uppercase tracking-wide text-gray">points</div>
             </Card>
           )
@@ -175,13 +175,13 @@ export default function LeaderboardPage() {
       </div>
 
       {/* Score explainer */}
-      <button onClick={() => setShowFormula(s => !s)} className="flex items-center gap-1.5 text-[11.5px] font-[700] text-navy"><InfoIcon size={13} /> How the score works</button>
+      <button onClick={() => setShowFormula(s => !s)} className="flex items-center gap-1.5 text-[11.5px] font-[700] text-navy-ink"><InfoIcon size={13} /> How the score works</button>
       {showFormula && (
         <Card className="!p-3 text-[11.5px] leading-relaxed text-mid-text">
           <span className="font-[800] text-dark-text">Total Score</span> rewards proactive, self-generated effort most:
           <span className="mt-1.5 flex flex-wrap gap-x-3 gap-y-1 text-[11px] font-[700]">
             <span className="text-teal">Self-gen lead ×{W.lead}</span><span className="text-success">Deal won ×{W.deal}</span>
-            <span className="text-navy">Demo ×{W.demo}</span><span className="text-navy">Cold call ×{W.call}</span>
+            <span className="text-navy-ink">Demo ×{W.demo}</span><span className="text-navy-ink">Cold call ×{W.call}</span>
             <span className="text-error">Streak day ×{W.streakDay}</span><span className="text-teal">Pipeline ×1 / $500</span><span className="text-gold">XP ×1 / 20</span>
           </span>
         </Card>
@@ -198,7 +198,7 @@ export default function LeaderboardPage() {
                 <div className="truncate text-[13px] font-[800] text-dark-text">You · {belt(me.belt_day).name} Belt</div>
                 <div className="text-[11px] text-gray">{me.calls} calls · {me.leads} self-gen leads · {me.deals} deals</div>
               </div>
-              <div className="text-right"><div className="text-[18px] font-[900] leading-none text-navy tabular-nums">{me.s.toLocaleString()}</div><div className="text-[9.5px] font-[700] uppercase tracking-wide text-gray">your score</div></div>
+              <div className="text-right"><div className="text-[18px] font-[900] leading-none text-navy-ink tabular-nums">{me.s.toLocaleString()}</div><div className="text-[9.5px] font-[700] uppercase tracking-wide text-gray">your score</div></div>
             </div>
           </Card>
         </div>
@@ -225,7 +225,7 @@ export default function LeaderboardPage() {
                 <div className="flex min-w-0 items-center gap-2">
                   <Avatar src={r.avatar_url} name={r.name} size={28} />
                   <div className="min-w-0">
-                    <div className="truncate text-[12.5px] font-[800] text-dark-text">{r.name || '—'}{mine && <span className="ml-1 text-[10px] font-[700] text-navy">(you)</span>}</div>
+                    <div className="truncate text-[12.5px] font-[800] text-dark-text">{r.name || '—'}{mine && <span className="ml-1 text-[10px] font-[700] text-navy-ink">(you)</span>}</div>
                     <div className="flex items-center gap-1 text-[10px] text-gray">
                       <span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: b.c }} />{b.name} Belt
                       <span className="desktop:hidden"> · {r.calls} calls · {r.leads} leads · {r.deals} deals</span>
@@ -238,7 +238,7 @@ export default function LeaderboardPage() {
                   </span>
                 ))}
                 <div className="text-right">
-                  <div className="text-[15px] font-[900] leading-none text-navy tabular-nums">{r.s.toLocaleString()}</div>
+                  <div className="text-[15px] font-[900] leading-none text-navy-ink tabular-nums">{r.s.toLocaleString()}</div>
                   <div className="mt-1 hidden h-1 w-full overflow-hidden rounded-full bg-bdrbg desktop:block"><div className="h-full rounded-full bg-navy transition-all duration-700" style={{ width: `${Math.max(4, (r.s / topScore) * 100)}%` }} /></div>
                 </div>
               </div>

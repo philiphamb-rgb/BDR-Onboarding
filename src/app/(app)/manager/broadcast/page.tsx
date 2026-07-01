@@ -105,7 +105,7 @@ export default function BroadcastPage() {
       <Card>
         <div className="mb-4 flex items-center gap-3">
           <div className="flex h-9 w-9 items-center justify-center rounded-full bg-navy/10">
-            <TeamIcon size={16} className="text-navy" />
+            <TeamIcon size={16} className="text-navy-ink" />
           </div>
           <div>
             <div className="text-[14px] font-[600] text-dark-text">All team members</div>

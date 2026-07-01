@@ -20,13 +20,13 @@ export default function BattleCardsPage() {
     <div className="space-y-4 stagger-rise">
       <div className="flex items-center justify-between gap-3">
         <div className="flex items-center gap-2">
-          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-navy/10 text-navy"><ShieldIcon size={18} /></span>
+          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-navy/10 text-navy-ink"><ShieldIcon size={18} /></span>
           <div>
             <h1 className="text-h2 text-dark-text leading-tight">Battle Cards</h1>
             <p className="text-[12px] text-gray">Competitive intelligence · 9 competitors</p>
           </div>
         </div>
-        <Link href="/train" className="flex shrink-0 items-center gap-1 rounded-pill border border-border bg-card px-3 py-2 text-[12px] font-[700] text-navy shadow-card hover:border-navy/40"><BackIcon size={14} /> Learning Center</Link>
+        <Link href="/train" className="flex shrink-0 items-center gap-1 rounded-pill border border-border bg-card px-3 py-2 text-[12px] font-[700] text-navy-ink shadow-card hover:border-navy/40"><BackIcon size={14} /> Learning Center</Link>
       </div>
 
       {loading ? (

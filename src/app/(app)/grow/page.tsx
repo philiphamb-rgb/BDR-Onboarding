@@ -73,14 +73,14 @@ export default function GrowthOverviewPage() {
           <Link href="/partners" className="block active:scale-[0.99] transition-transform">
             <Card className="!p-4 hover:border-teal/40">
               <div className="mb-3 flex items-center justify-between">
-                <div className="flex items-center gap-2"><HandshakeIcon size={16} className="text-navy" /><span className="text-[13px] font-[800] text-dark-text">Pipeline right now</span></div>
-                <span className="flex items-center gap-1 text-[12px] font-[700] text-navy">Open Partners <ArrowRightIcon size={13} /></span>
+                <div className="flex items-center gap-2"><HandshakeIcon size={16} className="text-navy-ink" /><span className="text-[13px] font-[800] text-dark-text">Pipeline right now</span></div>
+                <span className="flex items-center gap-1 text-[12px] font-[700] text-navy-ink">Open Partners <ArrowRightIcon size={13} /></span>
               </div>
               <div className="grid grid-cols-3 gap-2">
                 {[
                   { k: 'Hot', v: leads.hot, tone: 'text-error', bg: 'bg-error/8' },
                   { k: 'Warm', v: leads.warm, tone: 'text-[#A06C00]', bg: 'bg-gold/12' },
-                  { k: 'Cold', v: leads.cold, tone: 'text-navy', bg: 'bg-navy/6' },
+                  { k: 'Cold', v: leads.cold, tone: 'text-navy-ink', bg: 'bg-navy/6' },
                 ].map(s => (
                   <div key={s.k} className={cn('rounded-xl p-2.5 text-center', s.bg)}>
                     <div className="mb-0.5 flex items-center justify-center gap-1"><FlameIcon size={14} className={s.tone} /><span className="text-[10px] font-[800] uppercase tracking-wide text-gray">{s.k}</span></div>
@@ -110,14 +110,14 @@ export default function GrowthOverviewPage() {
           <div className="grid grid-cols-2 gap-3">
             <Link href="/grow/content" className="block active:scale-[0.98] transition-transform">
               <Card className="h-full !p-4 hover:border-teal/40">
-                <EditIcon size={20} className="text-navy" />
+                <EditIcon size={20} className="text-navy-ink" />
                 <div className="mt-2 text-[13.5px] font-[800] text-dark-text">Content Engine</div>
                 <p className="mt-0.5 text-[11.5px] leading-snug text-gray">Your ranked "what to post next"</p>
               </Card>
             </Link>
             <Link href="/grow/leadgen" className="block active:scale-[0.98] transition-transform">
               <Card className="h-full !p-4 hover:border-teal/40">
-                <ChartRisingIcon size={20} className="text-navy" />
+                <ChartRisingIcon size={20} className="text-navy-ink" />
                 <div className="mt-2 text-[13.5px] font-[800] text-dark-text">Lead Gen</div>
                 <p className="mt-0.5 text-[11.5px] leading-snug text-gray">Score, route & convert leads</p>
               </Card>

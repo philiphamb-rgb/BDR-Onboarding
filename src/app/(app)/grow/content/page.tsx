@@ -33,7 +33,7 @@ function ConfChip({ level }: any) {
   return <span className={cn('inline-flex items-center gap-1 rounded px-2 py-0.5 text-[10px] font-[800] uppercase tracking-wide', proven ? 'bg-success/10 text-success' : 'bg-gold/12 text-[#A06C00]')}><span className={cn('h-1.5 w-1.5 rounded-full', proven ? 'bg-success' : 'bg-gold')} />{level}</span>
 }
 function ChannelChip({ channel }: any) {
-  return <span className={cn('rounded px-1.5 py-0.5 text-[9.5px] font-[800] uppercase', channel === 'face' ? 'bg-teal/10 text-teal' : 'bg-navy/8 text-navy')}>{channel === 'face' ? 'Face' : 'Faceless'}</span>
+  return <span className={cn('rounded px-1.5 py-0.5 text-[9.5px] font-[800] uppercase', channel === 'face' ? 'bg-teal/10 text-teal' : 'bg-navy/8 text-navy-ink')}>{channel === 'face' ? 'Face' : 'Faceless'}</span>
 }
 function Countdown({ minutes }: any) {
   const [secs, setSecs] = useState(minutes * 60)
@@ -256,7 +256,7 @@ export default function GrowthContentPage() {
 
       <div className="flex w-fit gap-0.5 rounded-lg border border-border bg-bdrbg p-1">
         {[['now', 'Next Move'], ['working', "What's Working"]].map(([id, l]) => (
-          <button key={id} onClick={() => setView(id)} className={cn('rounded-md px-3.5 py-1.5 text-[12.5px] font-[700]', view === id ? 'bg-navy text-white' : 'text-gray hover:text-navy')}>{l}</button>
+          <button key={id} onClick={() => setView(id)} className={cn('rounded-md px-3.5 py-1.5 text-[12.5px] font-[700]', view === id ? 'bg-navy text-white' : 'text-gray hover:text-navy-ink')}>{l}</button>
         ))}
       </div>
 
@@ -289,7 +289,7 @@ export default function GrowthContentPage() {
 
       {/* Saved idea board */}
       <div>
-        <h2 className="mb-2 px-0.5 text-[13px] font-[800] uppercase tracking-wide text-navy">Your idea board</h2>
+        <h2 className="mb-2 px-0.5 text-[13px] font-[800] uppercase tracking-wide text-navy-ink">Your idea board</h2>
         <Card className="!p-3">
           <div className="flex items-end gap-2">
             <textarea value={draft} onChange={e => setDraft(e.target.value)} onKeyDown={e => { if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) { e.preventDefault(); addIdea() } }} placeholder="Jot a content idea, hook, or subject line to keep…" rows={1}

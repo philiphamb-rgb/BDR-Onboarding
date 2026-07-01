@@ -22,7 +22,7 @@ const INSIGHT_ICONS = {
 const TONE_STYLES: Record<InsightTone, { wrap: string; icon: string; dot: string }> = {
   positive: { wrap: 'bg-success/5 border-success/30', icon: 'text-success', dot: 'bg-success' },
   warning:  { wrap: 'bg-gold/[0.06] border-gold/40',   icon: 'text-[#A06C00]', dot: 'bg-gold' },
-  info:     { wrap: 'bg-navy/[0.04] border-navy/20',    icon: 'text-navy', dot: 'bg-navy' },
+  info:     { wrap: 'bg-navy/[0.04] border-navy/20',    icon: 'text-navy-ink', dot: 'bg-navy' },
 }
 
 export function InsightRow({ insight }: { insight: Insight }) {
@@ -44,7 +44,7 @@ export function InsightRow({ insight }: { insight: Insight }) {
 // ── Stat tile ───────────────────────────────────────────────────────────────
 
 export function StatTile({
-  label, value, sub, icon, accent = 'text-navy',
+  label, value, sub, icon, accent = 'text-navy-ink',
 }: {
   label: string
   value: React.ReactNode
