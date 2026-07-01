@@ -83,7 +83,7 @@ export default function HomePage() {
       loadTasks(user.id)
       loadDayBlocks(user.id)
       // Pipeline (full rows) feeds the priority engine + 'Right now' nudge.
-      supabase.from('partner_onboarding').select('id, partner_name, stage, temperature, updated_at').eq('user_id', user.id)
+      supabase.from('partner_onboarding').select('id, partner_name, stage, temperature, updated_at, next_followup_date').eq('user_id', user.id)
         .then(({ data }) => setPartners(data ?? []))
       // Goal + this-month deals for the live goal cockpit.
       supabase.from('goals').select('monthly_deal_goal').eq('user_id', user.id).maybeSingle().then(({ data }) => setGoal(data?.monthly_deal_goal ?? null))

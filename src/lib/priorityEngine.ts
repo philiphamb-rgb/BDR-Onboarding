@@ -95,8 +95,20 @@ export function buildActions(input: {
     out.push({ id: `task:${t.id}`, kind: 'task', title: t.title, why, href: '/tasks', cta: 'Open', est: t.estimated_minutes ?? 30, score, taskId: t.id })
   }
 
-  // Stalled partners → follow-ups (skip if a matching task already exists).
-  const stalled = (partners ?? []).filter(p => STALLED.includes(p.stage)).sort((a, b) => (a.updated_at || '').localeCompare(b.updated_at || ''))
+  // Due follow-ups → highest-intent partner action (you scheduled it yourself).
+  const todayISO = new Date(now.toDateString()).toISOString().split('T')[0]
+  const dueFollowups = (partners ?? []).filter(p => p.next_followup_date && p.next_followup_date <= todayISO)
+    .sort((a, b) => (a.next_followup_date || '').localeCompare(b.next_followup_date || ''))
+  const followedUp = new Set<string>()
+  for (const p of dueFollowups.slice(0, 5)) {
+    followedUp.add(p.id)
+    if (hasTitle(p.partner_name)) continue
+    const overdueDays = daysSince(p.next_followup_date + 'T00:00:00')
+    out.push({ id: `followup:${p.id}`, kind: 'lead', title: `Follow up with ${p.partner_name}`, why: overdueDays > 0 ? `Follow-up ${overdueDays}d overdue` : 'Follow-up due today', href: `/partners/${p.id}`, cta: 'Work it', est: 15, score: 200 + Math.min(90, overdueDays * 10) })
+  }
+
+  // Stalled partners → follow-ups (skip if already surfaced via a due date or task).
+  const stalled = (partners ?? []).filter(p => STALLED.includes(p.stage) && !followedUp.has(p.id)).sort((a, b) => (a.updated_at || '').localeCompare(b.updated_at || ''))
   for (const p of stalled.slice(0, 5)) {
     if (hasTitle(p.partner_name)) continue
     const days = daysSince(p.updated_at)

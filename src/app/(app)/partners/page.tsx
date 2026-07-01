@@ -1,29 +1,41 @@
 // @ts-nocheck
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Card, Button, Modal, EmptyState, SkeletonList, ProgressBar, Badge, toast } from '@/components/ui'
 import { PageHeader } from '@/components/manager'
 import { GrowthTabs } from '@/components/GrowthTabs'
 import { GrowthChrome } from '@/components/growth/GrowthChrome'
-import { HandshakeIcon, PlusIcon, ArrowRightIcon, ChecklistIcon, CheckIcon } from '@/components/icons'
+import { HandshakeIcon, PlusIcon, ArrowRightIcon, ChecklistIcon, CheckIcon, SearchIcon, CloseIcon, CalendarIcon, ChevronDownIcon, MenuIcon } from '@/components/icons'
 import { CHECKLIST_TEMPLATE, PIPELINE_STAGES, freshChecklist, completion, stageMeta } from '@/lib/partnerChecklist'
 import { cn } from '@/lib/utils'
 import { Tour } from '@/components/tour'
 import { PARTNERS_TOUR } from '@/lib/tours'
 
+const SORTS = [
+  { k: 'recent', l: 'Recent' }, { k: 'name', l: 'Name' }, { k: 'stage', l: 'Stage' },
+  { k: 'progress', l: 'Progress' }, { k: 'followup', l: 'Follow-up due' },
+]
+const todayStr = () => new Date().toISOString().split('T')[0]
+const fmtFollow = (d: string) => new Date(d + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+
 export default function PartnersPage() {
   const supabase = createClient()
+  const router = useRouter()
   const [userId, setUserId] = useState<string>()
   const [teamId, setTeamId] = useState<string>()
   const [partners, setPartners] = useState([])
   const [loading, setLoading] = useState(true)
   const [showAdd, setShowAdd] = useState(false)
   const [showTemplate, setShowTemplate] = useState(false)
-  const [form, setForm] = useState({ partner_name: '', company: '', temperature: 'cold' })
+  const [form, setForm] = useState({ partner_name: '', company: '', temperature: 'cold', next_followup_date: '' })
   const [saving, setSaving] = useState(false)
+  const [q, setQ] = useState('')
+  const [sort, setSort] = useState('recent')
+  const [view, setView] = useState<'list' | 'board'>('list')
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => {
@@ -37,10 +49,18 @@ export default function PartnersPage() {
   const load = async (uid: string) => {
     const { data } = await supabase
       .from('partner_onboarding')
-      .select('id, partner_name, company, stage, checklist, temperature, updated_at')
+      .select('id, partner_name, company, stage, checklist, temperature, updated_at, next_followup_date')
       .eq('user_id', uid).order('updated_at', { ascending: false })
     setPartners(data ?? [])
     setLoading(false)
+  }
+
+  // Move a partner to a new stage from the board (optimistic + rollback).
+  const setStage = async (p: any, stage: string) => {
+    const prev = partners
+    setPartners(list => list.map(x => x.id === p.id ? { ...x, stage } : x))
+    const { error } = await supabase.from('partner_onboarding').update({ stage, updated_at: new Date().toISOString() }).eq('id', p.id)
+    if (error) { setPartners(prev); toast.error('Could not move that partner.') }
   }
 
   const addPartner = async () => {
@@ -50,11 +70,12 @@ export default function PartnersPage() {
       user_id: userId, team_id: teamId ?? null,
       partner_name: form.partner_name.trim(), company: form.company.trim() || null,
       stage: 'new_lead', checklist: freshChecklist(), temperature: form.temperature,
-    }).select('id, partner_name, company, stage, checklist, temperature, updated_at').single()
+      next_followup_date: form.next_followup_date || null,
+    }).select('id, partner_name, company, stage, checklist, temperature, updated_at, next_followup_date').single()
     setSaving(false)
     if (!error && data) {
       setPartners(p => [data, ...p])
-      setForm({ partner_name: '', company: '', temperature: 'cold' })
+      setForm({ partner_name: '', company: '', temperature: 'cold', next_followup_date: '' })
       setShowAdd(false)
       toast.success('Partner added — start the checklist')
     } else {
@@ -64,6 +85,20 @@ export default function PartnersPage() {
 
   const active = partners.length
   const fullyDone = partners.filter(p => completion(p.checklist).pct === 100).length
+
+  const stageRank = (k: string) => { const i = PIPELINE_STAGES.findIndex(s => s.key === k); return i < 0 ? 99 : i }
+  const filtered = useMemo(() => {
+    const t = q.trim().toLowerCase()
+    let r = partners.filter(p => !t || p.partner_name?.toLowerCase().includes(t) || p.company?.toLowerCase().includes(t))
+    const by = {
+      recent: (a, b) => (b.updated_at || '').localeCompare(a.updated_at || ''),
+      name: (a, b) => (a.partner_name || '').localeCompare(b.partner_name || ''),
+      stage: (a, b) => stageRank(b.stage) - stageRank(a.stage),
+      progress: (a, b) => completion(b.checklist).pct - completion(a.checklist).pct,
+      followup: (a, b) => (a.next_followup_date || '9999').localeCompare(b.next_followup_date || '9999'),
+    }[sort]
+    return [...r].sort(by)
+  }, [partners, q, sort])
 
   return (
     <div className="space-y-4 pb-4">
@@ -80,6 +115,30 @@ export default function PartnersPage() {
         }
       />
 
+      {/* Controls */}
+      {!loading && partners.length > 0 && (
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="relative min-w-[180px] flex-1">
+            <SearchIcon size={14} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-gray" />
+            <input value={q} onChange={e => setQ(e.target.value)} placeholder="Search partners…"
+              className="w-full rounded-lg border border-border bg-card py-2 pl-9 pr-9 text-[13px] outline-none focus:border-navy/40" />
+            {q && <button onClick={() => setQ('')} aria-label="Clear" className="absolute right-3 top-1/2 -translate-y-1/2 text-gray"><CloseIcon size={14} /></button>}
+          </div>
+          <div className="relative">
+            <select value={sort} onChange={e => setSort(e.target.value)} aria-label="Sort partners"
+              className="appearance-none rounded-lg border border-border bg-card py-2 pl-3 pr-8 text-[12.5px] font-[700] text-mid-text outline-none focus:border-navy/40">
+              {SORTS.map(o => <option key={o.k} value={o.k}>Sort: {o.l}</option>)}
+            </select>
+            <ChevronDownIcon size={13} className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-gray" />
+          </div>
+          <div className="flex overflow-hidden rounded-lg border border-border">
+            {(['list', 'board'] as const).map(v => (
+              <button key={v} onClick={() => setView(v)} className={cn('px-3 py-2 text-[12px] font-[800] capitalize', view === v ? 'bg-navy text-white' : 'bg-card text-gray hover:text-navy-ink')}>{v}</button>
+            ))}
+          </div>
+        </div>
+      )}
+
       {loading ? (
         <SkeletonList count={3} />
       ) : partners.length === 0 ? (
@@ -91,12 +150,17 @@ export default function PartnersPage() {
             action={{ label: 'Add your first partner', onClick: () => setShowAdd(true) }}
           />
         </Card>
+      ) : filtered.length === 0 ? (
+        <Card className="!py-8 text-center"><SearchIcon size={20} className="mx-auto mb-2 text-gray" /><p className="text-[13px] text-gray">No partners match “{q}”.</p></Card>
+      ) : view === 'board' ? (
+        <PartnerBoard partners={filtered} onMove={setStage} onOpen={id => router.push(`/partners/${id}`)} />
       ) : (
-        <div className="space-y-3 stagger-rise" data-tour="partners-list">
-          {partners.map(p => {
+        <div className="space-y-3" data-tour="partners-list">
+          {filtered.map(p => {
             const c = completion(p.checklist)
             const s = stageMeta(p.stage)
             const needsAction = p.stage === 'proposal_sent' || p.stage === 'contract_signed'
+            const overdue = p.next_followup_date && p.next_followup_date <= todayStr()
             return (
               <Link key={p.id} href={`/partners/${p.id}`} className="block">
                 <Card hover className={cn(needsAction && 'border-gold/50')}>
@@ -114,6 +178,11 @@ export default function PartnersPage() {
                   </div>
                   <div className="mt-3 flex items-center gap-3">
                     <ProgressBar value={c.pct} max={100} color={c.pct === 100 ? '#16A34A' : 'rgb(var(--teal))'} className="h-1.5 flex-1" />
+                    {p.next_followup_date && (
+                      <span className={cn('flex shrink-0 items-center gap-1 text-[11px] font-[700]', overdue ? 'text-error' : 'text-gray')}>
+                        <CalendarIcon size={12} /> {fmtFollow(p.next_followup_date)}
+                      </span>
+                    )}
                     <span className="flex items-center gap-1 text-[12px] font-[700] text-mid-text tabular-nums">
                       {c.pct === 100 ? <CheckIcon size={13} className="text-success" /> : null}{c.done}/{c.total}
                     </span>
@@ -154,6 +223,11 @@ export default function PartnersPage() {
               ))}
             </div>
           </div>
+          <div>
+            <label className="label mb-1 block">Next follow-up <span className="font-normal text-gray">optional</span></label>
+            <input type="date" value={form.next_followup_date} onChange={e => setForm(f => ({ ...f, next_followup_date: e.target.value }))}
+              className="w-full rounded-md border border-border px-4 py-3 text-sm text-dark-text focus:outline-none focus:ring-2 focus:ring-navy" />
+          </div>
           <Button onClick={addPartner} loading={saving} disabled={!form.partner_name.trim()} fullWidth>Add partner</Button>
         </div>
       </Modal>
@@ -179,6 +253,71 @@ export default function PartnersPage() {
       </Modal>
 
       <Tour tourKey="partners" steps={PARTNERS_TOUR} />
+    </div>
+  )
+}
+
+// Pipeline board — a column per stage. Click a card to open it; use its ▾ menu
+// to move it to another stage (no drag lib needed, so nothing to misfire).
+function PartnerBoard({ partners, onMove, onOpen }: any) {
+  const [menu, setMenu] = useState<string | null>(null)
+  return (
+    <div className="flex gap-3 overflow-x-auto pb-2">
+      {PIPELINE_STAGES.map(stage => {
+        const cards = partners.filter((p: any) => p.stage === stage.key)
+        return (
+          <div key={stage.key} className="w-[240px] shrink-0">
+            <div className="mb-2 flex items-center justify-between px-1">
+              <span className="flex items-center gap-1.5 text-[12px] font-[800] text-dark-text">
+                <span className="h-2 w-2 rounded-full" style={{ background: stage.color }} />{stage.label}
+              </span>
+              <span className="text-[11px] font-[700] text-gray tabular-nums">{cards.length}</span>
+            </div>
+            <div className="space-y-2">
+              {cards.length === 0 && <div className="rounded-xl border border-dashed border-border py-6 text-center text-[11px] text-gray">Empty</div>}
+              {cards.map((p: any) => {
+                const c = completion(p.checklist)
+                const overdue = p.next_followup_date && p.next_followup_date <= todayStr()
+                return (
+                  <Card key={p.id} className="!p-3">
+                    <div className="flex items-start justify-between gap-2">
+                      <button onClick={() => onOpen(p.id)} className="min-w-0 flex-1 text-left">
+                        <div className="truncate text-[13px] font-[700] text-dark-text">{p.partner_name}</div>
+                        {p.company && <div className="truncate text-[11px] text-gray">{p.company}</div>}
+                      </button>
+                      <div className="relative shrink-0">
+                        <button onClick={() => setMenu(menu === p.id ? null : p.id)} aria-label="Move stage" className="rounded-md p-1 text-gray hover:bg-bdrbg hover:text-navy-ink"><MenuIcon size={13} /></button>
+                        {menu === p.id && (
+                          <>
+                            <div className="fixed inset-0 z-[10]" onClick={() => setMenu(null)} />
+                            <div className="absolute right-0 z-[20] mt-1 w-40 rounded-xl border border-border bg-card p-1 shadow-modal">
+                              <div className="px-2 py-1 text-[9px] font-[800] uppercase tracking-wide text-gray">Move to</div>
+                              {PIPELINE_STAGES.filter(s => s.key !== p.stage).map(s => (
+                                <button key={s.key} onClick={() => { setMenu(null); onMove(p, s.key) }} className="flex w-full items-center gap-1.5 rounded-lg px-2 py-1.5 text-left text-[12px] font-[600] text-dark-text hover:bg-bdrbg">
+                                  <span className="h-2 w-2 rounded-full" style={{ background: s.color }} />{s.label}
+                                </button>
+                              ))}
+                            </div>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                    <div className="mt-2 flex items-center gap-2">
+                      <ProgressBar value={c.pct} max={100} color={c.pct === 100 ? '#16A34A' : 'rgb(var(--teal))'} className="h-1 flex-1" />
+                      <span className="text-[10px] font-[700] text-mid-text tabular-nums">{c.done}/{c.total}</span>
+                    </div>
+                    {p.next_followup_date && (
+                      <div className={cn('mt-1.5 flex items-center gap-1 text-[10.5px] font-[700]', overdue ? 'text-error' : 'text-gray')}>
+                        <CalendarIcon size={11} /> {fmtFollow(p.next_followup_date)}
+                      </div>
+                    )}
+                  </Card>
+                )
+              })}
+            </div>
+          </div>
+        )
+      })}
     </div>
   )
 }

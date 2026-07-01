@@ -166,6 +166,22 @@ export default function PartnerDetailPage() {
         </div>
       </Card>
 
+      {/* Next follow-up — feeds the priority engine's next-best-action */}
+      <Card>
+        <div className="flex items-center justify-between gap-3">
+          <div className="label">Next follow-up</div>
+          <div className="flex items-center gap-2">
+            <input type="date" value={partner.next_followup_date ?? ''}
+              onChange={e => { const v = e.target.value || null; setPartner((p: any) => ({ ...p, next_followup_date: v })); persist({ next_followup_date: v }) }}
+              className="rounded-lg border border-border bg-card px-2.5 py-1.5 text-[12.5px] text-dark-text outline-none focus:border-navy/40" />
+            {partner.next_followup_date && (
+              <button onClick={() => { setPartner((p: any) => ({ ...p, next_followup_date: null })); persist({ next_followup_date: null }) }}
+                className="text-[11px] font-[700] text-gray hover:text-error">Clear</button>
+            )}
+          </div>
+        </div>
+      </Card>
+
       {/* Checklist */}
       <div className="space-y-2" data-tour="pd-checklist">
         {merged.map((item, i) => {

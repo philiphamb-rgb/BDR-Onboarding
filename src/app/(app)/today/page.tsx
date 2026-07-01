@@ -52,7 +52,7 @@ export default function TodayPage() {
       await Promise.all([
         loadTasks(user.id),
         loadDayBlocks(user.id),
-        supabase.from('partner_onboarding').select('id, partner_name, stage, temperature, updated_at').eq('user_id', user.id).then(({ data }) => setPartners(data ?? [])),
+        supabase.from('partner_onboarding').select('id, partner_name, stage, temperature, updated_at, next_followup_date').eq('user_id', user.id).then(({ data }) => setPartners(data ?? [])),
         supabase.from('goals').select('monthly_deal_goal').eq('user_id', user.id).maybeSingle().then(({ data }) => setGoal(data?.monthly_deal_goal ?? null)),
         supabase.from('user_progress').select('deals_this_month').eq('user_id', user.id).single().then(({ data }) => setDealsThisMonth(data?.deals_this_month ?? 0)),
       ])
