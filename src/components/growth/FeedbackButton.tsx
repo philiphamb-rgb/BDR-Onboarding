@@ -22,8 +22,8 @@ import { cn } from '@/lib/utils'
 // Recent applied improvements — the visible proof the loop closes. Seeded with
 // what this build actually shipped; new approved feedback appends here.
 const CHANGELOG = [
-  { v: '2.4', when: 'This release', what: 'Agentic OS fully built out — Content Engine, Lead Gen, Automations, the 18-agent AI Team, and the Triage Strip, all native to BDR Hub.' },
-  { v: '2.3', when: 'Earlier', what: 'AI Coach now reasons from your real Agentic OS state — goals, pipeline temperature, and which agents are live.' },
+  { v: '2.4', when: 'This release', what: 'Agentic CRM fully built out — Content Engine, Lead Gen, Automations, the 18-agent AI Team, and the Triage Strip, all native to BDR Hub.' },
+  { v: '2.3', when: 'Earlier', what: 'AI Coach now reasons from your real Agentic CRM state — goals, pipeline temperature, and which agents are live.' },
   { v: '2.2', when: 'Earlier', what: 'Growth goals unified onto the same row as the Commission Planner, so one number drives the whole app.' },
 ]
 
@@ -60,7 +60,7 @@ export function FeedbackButton() {
         <div className="fixed inset-0 z-[1050] flex items-center justify-center bg-dark-text/50 p-4" onClick={reset}>
           <div className={cn('w-full rounded-2xl bg-card p-5 shadow-modal', mode === 'digest' ? 'max-h-[85vh] max-w-md overflow-y-auto' : 'max-w-sm')} onClick={e => e.stopPropagation()}>
             <div className="mb-3 flex items-center justify-between">
-              <h2 className="text-[16px] font-[900] text-dark-text">{mode === 'digest' ? 'Team feedback digest' : 'Help shape Agentic OS'}</h2>
+              <h2 className="text-[16px] font-[900] text-dark-text">{mode === 'digest' ? 'Team feedback digest' : 'Help shape Agentic CRM'}</h2>
               <button onClick={reset} aria-label="Close" className="text-gray hover:text-dark-text"><CloseIcon size={18} /></button>
             </div>
 
@@ -85,7 +85,7 @@ export function FeedbackButton() {
               </div>
             ) : (
               <>
-                <p className="mb-3 text-[12.5px] leading-relaxed text-gray">Is Agentic OS steering you well? Your rating rolls into the daily improvement digest.</p>
+                <p className="mb-3 text-[12.5px] leading-relaxed text-gray">Is Agentic CRM steering you well? Your rating rolls into the daily improvement digest.</p>
                 <div className="mb-3 flex gap-2">
                   {[['up', 'Working well', 'bg-success/10 text-success border-success/30'], ['down', 'Needs work', 'bg-error/8 text-error border-error/30']].map(([k, l, on]) => (
                     <button key={k} onClick={() => setSentiment(k)} className={cn('flex-1 rounded-xl border py-2.5 text-[13px] font-[700] transition-colors', sentiment === k ? on : 'border-border text-gray hover:border-navy/30')}>{l}</button>

@@ -77,7 +77,7 @@ async function buildUserContext(supabase, uid: string) {
   if (goal?.leads_per_week_goal) growthBits.push(`leads/week goal ${goal.leads_per_week_goal}`)
   if (goal?.close_rate_goal) growthBits.push(`close-rate goal ${goal.close_rate_goal}%`)
   const growthBlock = (growthBits.length || autos?.length)
-    ? `\nAGENTIC OS:${growthBits.length ? `\n- Growth goals: ${growthBits.join(' · ')}${hotCount ? ` · ${hotCount} hot leads in pipeline` : ''}` : ''}${autos?.length ? `\n- AI Team: ${liveAutos.length}/${autos.length} automation agents live (${[...new Set(liveAutos.map((a: any) => a.category))].join(', ') || 'none'}). When relevant, point them to Agentic OS to activate the right agent.` : ''}`
+    ? `\nAGENTIC CRM:${growthBits.length ? `\n- Growth goals: ${growthBits.join(' · ')}${hotCount ? ` · ${hotCount} hot leads in pipeline` : ''}` : ''}${autos?.length ? `\n- AI Team: ${liveAutos.length}/${autos.length} automation agents live (${[...new Set(liveAutos.map((a: any) => a.category))].join(', ') || 'none'}). When relevant, point them to Agentic CRM to activate the right agent.` : ''}`
     : ''
 
   const firstName = userData?.first_name || (userData?.name ?? 'BDR').split(' ')[0]

@@ -9,7 +9,7 @@ import {
   HomeIcon, TodayIcon, TrainIcon, CoachIcon, DashboardIcon, XpIcon,
   BellIcon, BellDotIcon, SettingsIcon, LeaderboardIcon, TeamIcon, BarChartIcon,
   BookIcon, HandshakeIcon, ClockIcon, MoreIcon, CoinIcon,
-  ChecklistIcon, ShieldIcon, SearchIcon, CloseIcon, GrowIcon,
+  ChecklistIcon, ShieldIcon, SearchIcon, CloseIcon, GrowIcon, ChevronDownIcon,
 } from '@/components/icons'
 import type { User } from '@/types/database'
 import { usePermissions } from '@/components/usePermissions'
@@ -33,13 +33,13 @@ interface NavItem {
 const PRIMARY_NAV: NavItem[] = [
   { href: '/home',        label: 'Home',            icon: HomeIcon },
   { href: '/today',       label: 'Today',           icon: TodayIcon },
-  { href: '/partners',    label: 'Partners',        icon: HandshakeIcon },
-  { href: '/grow',        label: 'Agentic OS',      shortLabel: 'Agentic', icon: GrowIcon, match: ['/grow'] },
-  { href: '/commissions', label: 'Commissions',     icon: CoinIcon },
-  { href: '/analytics',   label: 'Analytics',       icon: BarChartIcon },
   { href: '/schedule',    label: 'Plan',            icon: ChecklistIcon, match: ['/notes', '/tasks', '/schedule'] },
-  { href: '/train',       label: 'Learning Center', shortLabel: 'Learn', icon: TrainIcon, match: ['/train', '/progress'] },
+  // Agentic CRM now owns the partner pipeline + commissions (folded in), so those
+  // deep routes light up this tab. Mobile shows just "CRM".
+  { href: '/grow',        label: 'Agentic CRM',     shortLabel: 'CRM', icon: GrowIcon, match: ['/grow', '/partners', '/commissions'] },
   { href: '/leaderboard', label: 'Leaderboard',     icon: LeaderboardIcon },
+  { href: '/analytics',   label: 'Analytics',       icon: BarChartIcon },
+  { href: '/train',       label: 'Learning Center', shortLabel: 'Learn', icon: TrainIcon, match: ['/train', '/progress'] },
   { href: '/resources',   label: 'Resources',       icon: BookIcon },
 ]
 
@@ -59,11 +59,11 @@ const MANAGER_ITEMS: NavItem[] = [
 // center. Coach is the draggable FAB now; Wins is gone. Everything else lives
 // one tap away under "More".
 const BOTTOM_NAV: NavItem[] = [
-  { href: '/home',        label: 'Home',        icon: HomeIcon },
-  { href: '/today',       label: 'Today',       icon: TodayIcon },
-  { href: '/partners',    label: 'Partners',    icon: HandshakeIcon },
-  { href: '/grow',        label: 'Agentic OS',  shortLabel: 'Agentic', icon: GrowIcon, match: ['/grow'] },
-  { href: '/commissions', label: 'Commissions', shortLabel: 'Comms', icon: CoinIcon },
+  { href: '/home',        label: 'Home',    icon: HomeIcon },
+  { href: '/today',       label: 'Today',   icon: TodayIcon },
+  { href: '/grow',        label: 'CRM',     shortLabel: 'CRM', icon: GrowIcon, match: ['/grow', '/partners', '/commissions'] },
+  { href: '/leaderboard', label: 'Ranks',   shortLabel: 'Ranks', icon: LeaderboardIcon },
+  { href: '/schedule',    label: 'Plan',    icon: ChecklistIcon, match: ['/notes', '/tasks', '/schedule'] },
 ]
 
 const isActiveHref = (pathname: string, href: string) => pathname === href || pathname.startsWith(href + '/')
@@ -79,6 +79,8 @@ const PAGE_INDEX: { label: string; href: string }[] = [
   { label: 'Notes', href: '/notes' }, { label: 'Tasks', href: '/tasks' }, { label: 'Time Blocks', href: '/schedule' },
   { label: 'Progress', href: '/progress' },
   { label: 'AI Team', href: '/grow/team' }, { label: 'Content Engine', href: '/grow/content' }, { label: 'Build Phases', href: '/grow/build' },
+  // Folded into Agentic CRM but still directly searchable.
+  { label: 'Partners', href: '/partners' }, { label: 'Pipeline', href: '/partners' }, { label: 'Commissions', href: '/commissions' }, { label: 'Lead Gen', href: '/grow/leadgen' },
   { label: 'Settings', href: '/settings' }, { label: 'Notifications', href: '/notifications' },
 ]
 
@@ -293,6 +295,15 @@ export function Sidebar({ user }: { user?: User | null; unreadCount?: number }) 
   const primary = PRIMARY_NAV.filter(allowed)
   const managerItems = isManager ? MANAGER_ITEMS.filter(allowed) : []
 
+  // Manager section defaults COLLAPSED; the choice persists across navigation.
+  // It auto-opens while you're actually on a /manager route so the active page
+  // is never hidden.
+  const [mgrOpen, setMgrOpen] = useState(false)
+  useEffect(() => { try { setMgrOpen(localStorage.getItem('mgrNavOpen') === '1') } catch {} }, [])
+  const onManagerRoute = pathname.startsWith('/manager')
+  const showMgr = mgrOpen || onManagerRoute
+  const toggleMgr = () => { setMgrOpen(o => { const n = !o; try { localStorage.setItem('mgrNavOpen', n ? '1' : '0') } catch {}; return n }) }
+
   return (
     <aside className={cn('fixed left-0 top-0 bottom-0 z-sidebar w-[240px] bg-card border-r border-border flex flex-col hidden desktop:flex')}>
       <div className="px-4 py-4 border-b border-border">
@@ -311,13 +322,20 @@ export function Sidebar({ user }: { user?: User | null; unreadCount?: number }) 
           {primary.map(item => <SidebarItem key={item.href} item={item} pathname={pathname} />)}
         </div>
 
-        {/* Manager tools — role-gated, divided but not collapsed */}
+        {/* Manager tools — role-gated, collapsible, collapsed by default */}
         {managerItems.length > 0 && (
           <div className="mt-4 border-t border-border pt-3">
-            <div className="mb-1 px-4 text-[10px] font-[800] uppercase tracking-[0.1em] text-gray">Manager</div>
-            <div className="space-y-0.5">
-              {managerItems.map(item => <SidebarItem key={item.href} item={item} pathname={pathname} />)}
-            </div>
+            <button onClick={toggleMgr} aria-expanded={showMgr}
+              className="mb-1 flex w-full items-center gap-2 rounded-lg px-4 py-1.5 text-left text-mid-text hover:bg-bdrbg">
+              <span className="flex-1 text-[10px] font-[800] uppercase tracking-[0.1em] text-gray">Manager</span>
+              {onManagerRoute && !mgrOpen && <span className="h-1.5 w-1.5 rounded-full bg-navy" />}
+              <ChevronDownIcon size={14} className={cn('text-gray transition-transform', showMgr && 'rotate-180')} />
+            </button>
+            {showMgr && (
+              <div className="space-y-0.5">
+                {managerItems.map(item => <SidebarItem key={item.href} item={item} pathname={pathname} />)}
+              </div>
+            )}
           </div>
         )}
       </div>

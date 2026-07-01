@@ -6,6 +6,8 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import { Card, SkeletonCard, ProgressBar } from '@/components/ui'
 import { PageHeader } from '@/components/manager'
+import { GrowthTabs } from '@/components/GrowthTabs'
+import { GrowthChrome } from '@/components/growth/GrowthChrome'
 import { PhoneIcon, TargetIcon, HandshakeIcon, ArrowRightIcon, LightningIcon, CoinIcon } from '@/components/icons'
 import { PIPELINE_STAGES, stageMeta } from '@/lib/partnerChecklist'
 import { askCoach } from '@/lib/coachBus'
@@ -70,6 +72,8 @@ export default function AnalyticsPage() {
 
   return (
     <div className="space-y-4 pb-4">
+      <GrowthChrome compact />
+      <GrowthTabs />
       <PageHeader title="Analytics" subtitle="Your pipeline, conversion, and activity at a glance." />
 
       {/* Proactive coaching on the numbers right here */}
