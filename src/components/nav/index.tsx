@@ -8,9 +8,9 @@ import { createClient } from '@/lib/supabase/client'
 import {
   HomeIcon, TodayIcon, CoachIcon, DashboardIcon, XpIcon,
   BellIcon, BellDotIcon, SettingsIcon, TeamIcon, BarChartIcon,
-  BookIcon, HandshakeIcon, ClockIcon, MoreIcon, CoinIcon, DocumentIcon, EditIcon,
+  BookIcon, HandshakeIcon, ClockIcon, MoreIcon, CoinIcon, EditIcon,
   ChecklistIcon, ShieldIcon, SearchIcon, CloseIcon, ChevronDownIcon, MenuIcon,
-  RaceCarIcon, BrainIcon,
+  RaceCarIcon, BrainIcon, NoteIcon,
 } from '@/components/icons'
 import type { User } from '@/types/database'
 import { usePermissions } from '@/components/usePermissions'
@@ -37,7 +37,7 @@ interface NavItem {
 const PRIMARY_NAV: NavItem[] = [
   { href: '/home',        label: 'Home',            icon: HomeIcon },
   { href: '/today',       label: 'Today',           icon: TodayIcon },
-  { href: '/notes',       label: 'Notes',           icon: DocumentIcon },
+  { href: '/notes',       label: 'Notes',           icon: NoteIcon },
   { href: '/tasks',       label: 'Tasks.ai',        icon: ChecklistIcon },
   { href: '/schedule',    label: 'Schedule',        icon: ClockIcon },
   // Agentic CRM owns the partner pipeline, so that deep route lights up this

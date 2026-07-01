@@ -770,6 +770,18 @@ export function GrowIcon(props: IconProps) {
   )
 }
 
+// Notes/Capture — a speech-bubble silhouette (rounded body + tail), so it never
+// gets mistaken for BookIcon (Resources) or DocumentIcon at collapsed-rail size;
+// both of those read as a rectangular page and were too close to call at a glance.
+export function NoteIcon(props: IconProps) {
+  return (
+    <Icon {...props}>
+      <path d="M4 6C4 4.9 4.9 4 6 4H18C19.1 4 20 4.9 20 6V15C20 16.1 19.1 17 18 17H9L5 21V17H6C4.9 17 4 16.1 4 15V6Z" />
+      <path d="M8 9H16M8 12.5H13" />
+    </Icon>
+  )
+}
+
 // Agentic CRM — a low, sleek race-car silhouette (front wing, cockpit hump,
 // rear wing, two wheels) to read as "engineered speed," distinct from every
 // other rounded/organic icon in the set.
@@ -828,6 +840,7 @@ export const ICON_MAP: Record<string, React.ComponentType<IconProps>> = {
   'target':       TargetIcon,
   'race-car':     RaceCarIcon,
   'brain':        BrainIcon,
+  'note':         NoteIcon,
   'belt':         BeltIcon,
   'trophy':       TrophyIcon,
   'flame':        FlameIcon,

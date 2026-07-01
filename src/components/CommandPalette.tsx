@@ -16,7 +16,7 @@ import { triggerXpPop, triggerConfetti } from '@/components/gamification'
 import { getStoredTheme, setStoredTheme, applyTheme } from '@/lib/theme'
 import {
   SearchIcon, HomeIcon, TodayIcon, LeaderboardIcon, BarChartIcon, BrainIcon, RaceCarIcon,
-  BookIcon, ChecklistIcon, DocumentIcon, CoachIcon, PhoneIcon, TargetIcon, HandshakeIcon,
+  BookIcon, ChecklistIcon, NoteIcon, ClockIcon, CoachIcon, PhoneIcon, TargetIcon, HandshakeIcon,
   PlusIcon, SettingsIcon, ArrowRightIcon, LightningIcon, MenuIcon, HubIcon, CoinIcon, EditIcon,
 } from '@/components/icons'
 import { cn } from '@/lib/utils'
@@ -24,9 +24,9 @@ import { cn } from '@/lib/utils'
 const NAV = [
   { label: 'Home', href: '/home', icon: HomeIcon, keys: 'h' },
   { label: 'Today', href: '/today', icon: TodayIcon, keys: 't' },
-  { label: 'Notes', href: '/notes', icon: DocumentIcon, keys: 'n' },
+  { label: 'Notes', href: '/notes', icon: NoteIcon, keys: 'n' },
   { label: 'Tasks.ai', href: '/tasks', icon: ChecklistIcon },
-  { label: 'Schedule', href: '/schedule', icon: ChecklistIcon, keys: 's' },
+  { label: 'Schedule', href: '/schedule', icon: ClockIcon, keys: 's' },
   { label: 'Agentic CRM', href: '/grow', icon: RaceCarIcon, keys: 'c' },
   { label: 'Commissions', href: '/commissions', icon: CoinIcon },
   { label: 'Content', href: '/grow/content', icon: EditIcon },
@@ -105,7 +105,7 @@ export function CommandPalette() {
   // ── Command registry ──
   const commands = useMemo(() => [
     { id: 'new-task', label: 'New task', group: 'Create', icon: PlusIcon, run: () => { setCompose('task'); setQ(''); setComposeText('') } },
-    { id: 'new-note', label: 'New note', group: 'Create', icon: DocumentIcon, run: () => { close(); createNote() } },
+    { id: 'new-note', label: 'New note', group: 'Create', icon: NoteIcon, run: () => { close(); createNote() } },
     { id: 'log-call', label: 'Log a call', hint: '+XP', group: 'Log', icon: PhoneIcon, run: () => { close(); logActivity('call') } },
     { id: 'log-demo', label: 'Log a demo', hint: '+XP', group: 'Log', icon: TargetIcon, run: () => { close(); logActivity('demo') } },
     { id: 'log-deal', label: 'Log a deal', hint: '🎉', group: 'Log', icon: HandshakeIcon, run: () => { close(); logActivity('deal') } },

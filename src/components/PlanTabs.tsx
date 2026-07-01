@@ -7,10 +7,10 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { cn } from '@/lib/utils'
-import { DocumentIcon, ChecklistIcon, ClockIcon } from '@/components/icons'
+import { NoteIcon, ChecklistIcon, ClockIcon } from '@/components/icons'
 
 const PLAN_VIEWS = [
-  { href: '/notes', label: 'Capture', icon: DocumentIcon },
+  { href: '/notes', label: 'Capture', icon: NoteIcon },
   { href: '/tasks', label: 'Tasks.ai', icon: ChecklistIcon },
   { href: '/schedule', label: 'Schedule', icon: ClockIcon },
 ]
