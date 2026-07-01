@@ -29,12 +29,16 @@ export function useModuleKV<T extends object>(key: string, empty: T) {
     return () => { active = false }
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Merge a patch (object or updater) and persist optimistically.
+  // Merge a patch (object or updater) and persist optimistically. Derived off the
+  // latest committed state inside setValue so rapid same-frame saves don't read a
+  // stale ref and drop each other's changes.
   const save = (patch: Partial<T> | ((p: T) => Partial<T>)) => {
-    const p = typeof patch === 'function' ? (patch as any)(ref.current) : patch
-    const next = { ...ref.current, ...p }
-    setValue(next)
-    if (uid) supabase.from('module_progress').upsert({ user_id: uid, key, value: next, shared: false }, { onConflict: 'user_id,key' }).then(() => {})
+    setValue(prev => {
+      const p = typeof patch === 'function' ? (patch as any)(prev) : patch
+      const next = { ...prev, ...p }
+      if (uid) supabase.from('module_progress').upsert({ user_id: uid, key, value: next, shared: false }, { onConflict: 'user_id,key' }).then(() => {})
+      return next
+    })
   }
 
   return { loading, value, save }

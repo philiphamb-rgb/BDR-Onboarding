@@ -24,7 +24,9 @@ import { cn } from '@/lib/utils'
 const scoreColor = (s: number) => s >= 90 ? '#16A34A' : s >= 75 ? '#00C2B2' : s >= 50 ? '#B45309' : '#DC2626'
 const STAGE_META: any = { hot: { l: 'Hot', c: 'text-error bg-error/10' }, warm: { l: 'Warm', c: 'text-[#A06C00] bg-gold/12' }, cold: { l: 'Cold', c: 'text-gray bg-bdrbg' }, converted: { l: 'Converted', c: 'text-success bg-success/10' } }
 
-function Insights({ leadList, roster }: any) {
+// Not a component — a plain helper that derives the insight cards from real
+// state. Named lowercase so it never looks like it should hold hooks.
+function computeInsights({ leadList, roster }: any) {
   const out: any[] = []
   const staleHot = leadList.filter(l => l.temperature === 'hot' && l.stage !== 'converted' && l.agoMin > 60)
   if (staleHot.length) out.push({ icon: FlameIcon, tone: 'error', title: `${staleHot.length} hot lead${staleHot.length > 1 ? 's have' : ' has'}n't been contacted in over an hour`, body: 'Leads contacted within 5 minutes are 21x more likely to qualify than after 30. Every extra hour compounds the loss.', cta: 'Draft outreach now', prompt: `Write urgent, ready-to-send outreach for these hot Co-Brand PLUS+ agency leads that have gone quiet: ${staleHot.slice(0, 5).map(l => `${l.name} (score ${l.score}, ${fmtAgo(l.agoMin)})`).join(', ')}. One SMS and one email each.` })
@@ -41,7 +43,7 @@ export default function GrowthLeadGenPage() {
   const [q, setQ] = useState('')
 
   const filtered = (leadList || []).filter(l => !q || l.name.toLowerCase().includes(q.toLowerCase()))
-  const insights = loading ? [] : Insights({ leadList: leadList || [], roster: roster || [] })
+  const insights = loading ? [] : computeInsights({ leadList: leadList || [], roster: roster || [] })
   const stages = [{ k: 'cold', l: 'Cold', c: 'text-navy' }, { k: 'warm', l: 'Warm', c: 'text-[#A06C00]' }, { k: 'hot', l: 'Hot', c: 'text-error' }, { k: 'converted', l: 'Won', c: 'text-success' }]
   const counts = { cold: leads.cold, warm: leads.warm, hot: leads.hot, converted: leads.won }
 

@@ -114,7 +114,7 @@ export default function GrowthAutomationsPage() {
                       <div className="flex shrink-0 flex-col items-end gap-2" onClick={e => e.stopPropagation()}>
                         {isManager ? (
                           a.status === 'setup'
-                            ? <button onClick={() => setStatusFor(a, 'paused')} className="rounded-md bg-navy/8 px-2.5 py-1 text-[10.5px] font-[800] text-navy">Set up now</button>
+                            ? <button onClick={() => setStatusFor(a, 'live')} className="rounded-md bg-navy/8 px-2.5 py-1 text-[10.5px] font-[800] text-navy">Activate</button>
                             : <Toggle size="sm" checked={a.status === 'live'} onChange={n => setStatusFor(a, n ? 'live' : 'paused')} />
                         ) : <span className={cn('h-2 w-2 rounded-full', sm.dot)} />}
                         <ChevronDownIcon size={14} className={cn('text-gray transition-transform', isOpen && 'rotate-180')} onClick={() => setOpenId(isOpen ? null : a.id)} />

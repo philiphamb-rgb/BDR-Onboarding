@@ -65,11 +65,14 @@ export function useGrowthOS() {
     const all = partners ?? []
     const ws = weekStart()
     const temp = (p: any) => (p.temperature ?? 'cold')
-    const hot = all.filter(p => temp(p) === 'hot').length
-    const warm = all.filter(p => temp(p) === 'warm').length
-    const cold = all.filter(p => temp(p) === 'cold').length
-    const newThisWeek = all.filter(p => p.created_at && new Date(p.created_at) >= ws).length
+    // Won partners graduate out of the temperature buckets so a signed-but-hot
+    // record isn't counted as both Hot and Won (the buckets + Won stay disjoint).
     const won = all.filter(p => p.stage === 'opportunity_won').length
+    const active = all.filter(p => p.stage !== 'opportunity_won')
+    const hot = active.filter(p => temp(p) === 'hot').length
+    const warm = active.filter(p => temp(p) === 'warm').length
+    const cold = active.filter(p => temp(p) === 'cold').length
+    const newThisWeek = all.filter(p => p.created_at && new Date(p.created_at) >= ws).length
     const closeRate = all.length ? Math.round((won / all.length) * 100) : 0
     return { total: all.length, hot, warm, cold, newThisWeek, won, closeRate }
   }, [partners])
@@ -116,7 +119,9 @@ export function useGrowthOS() {
         // Only write the growth-goal columns present; never clobber the deal goal
         // the Commission Planner owns unless explicitly changed here.
         const payload: any = { user_id: userId, team_id: teamRef.current, leads_per_week_goal: next.leads_per_week_goal, close_rate_goal: next.close_rate_goal, updated_at: new Date().toISOString() }
-        if ('monthly_income_goal' in next && next.monthly_income_goal != null) payload.monthly_income_goal = next.monthly_income_goal
+        // Write these only when the caller actually touched them (present in the
+        // patch) — including when set to null, so a goal can be cleared.
+        if ('monthly_income_goal' in patch) payload.monthly_income_goal = next.monthly_income_goal
         if ('monthly_deal_goal' in patch) payload.monthly_deal_goal = next.monthly_deal_goal
         supabase.from('goals').upsert(payload, { onConflict: 'user_id' }).then(() => {})
       }, 500)
