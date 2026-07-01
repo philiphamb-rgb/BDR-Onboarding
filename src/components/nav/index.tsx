@@ -6,10 +6,11 @@ import Link from 'next/link'
 import { cn, Avatar } from '@/components/ui'
 import { createClient } from '@/lib/supabase/client'
 import {
-  HomeIcon, TodayIcon, TrainIcon, CoachIcon, DashboardIcon, XpIcon,
-  BellIcon, BellDotIcon, SettingsIcon, LeaderboardIcon, TeamIcon, BarChartIcon,
-  BookIcon, HandshakeIcon, ClockIcon, MoreIcon, CoinIcon,
-  ChecklistIcon, ShieldIcon, SearchIcon, CloseIcon, GrowIcon, ChevronDownIcon, MenuIcon,
+  HomeIcon, TodayIcon, CoachIcon, DashboardIcon, XpIcon,
+  BellIcon, BellDotIcon, SettingsIcon, TeamIcon, BarChartIcon,
+  BookIcon, HandshakeIcon, ClockIcon, MoreIcon, CoinIcon, DocumentIcon, EditIcon,
+  ChecklistIcon, ShieldIcon, SearchIcon, CloseIcon, ChevronDownIcon, MenuIcon,
+  RaceCarIcon, BrainIcon,
 } from '@/components/icons'
 import type { User } from '@/types/database'
 import { usePermissions } from '@/components/usePermissions'
@@ -25,21 +26,26 @@ interface NavItem {
 }
 
 // One flat, usage-ordered list — no "Sell/Grow" audience grouping. Every
-// destination is its own top-level tab; the order is the strategic front-to-back
-// priority for a BDR's day (the money + pipeline + workspace come first).
-// Plan is one workspace (Capture/Organize/Schedule) sharing the in-page PlanTabs
-// switcher. Coach is not a tab — it's the header button (desktop) + draggable FAB
-// (mobile). Wins is not a tab — wins surface as throttled milestone notifications.
+// destination is its own top-level tab. Today absorbs the old "Plan" workspace
+// (Capture/Organize/Schedule); those three sections still share the in-page
+// PlanTabs switcher on their own pages AND are individually reachable here as
+// Notes / Tasks.ai / Schedule. Analytics and Leaderboard are no longer standalone
+// tabs — both live as sections on Home. Commissions and Content are standalone
+// (pulled out of Agentic CRM's sub-nav). Coach is not a tab — it's the header
+// button (desktop) + draggable FAB (mobile). Wins is not a tab — wins surface as
+// throttled milestone notifications.
 const PRIMARY_NAV: NavItem[] = [
   { href: '/home',        label: 'Home',            icon: HomeIcon },
   { href: '/today',       label: 'Today',           icon: TodayIcon },
-  { href: '/schedule',    label: 'Plan',            icon: ChecklistIcon, match: ['/notes', '/tasks', '/schedule'] },
-  // Agentic CRM now owns the partner pipeline + commissions (folded in), so those
-  // deep routes light up this tab. Mobile shows just "CRM".
-  { href: '/grow',        label: 'Agentic CRM',     shortLabel: 'CRM', icon: GrowIcon, match: ['/grow', '/partners', '/commissions'] },
-  { href: '/leaderboard', label: 'Leaderboard',     icon: LeaderboardIcon },
-  { href: '/analytics',   label: 'Analytics',       icon: BarChartIcon },
-  { href: '/train',       label: 'Learning Center', shortLabel: 'Learn', icon: TrainIcon, match: ['/train', '/progress'] },
+  { href: '/notes',       label: 'Notes',           icon: DocumentIcon },
+  { href: '/tasks',       label: 'Tasks.ai',        icon: ChecklistIcon },
+  { href: '/schedule',    label: 'Schedule',        icon: ClockIcon },
+  // Agentic CRM owns the partner pipeline, so that deep route lights up this
+  // tab too. Mobile shows just "CRM". F1-car icon — "engineered speed."
+  { href: '/grow',        label: 'Agentic CRM',     shortLabel: 'CRM', icon: RaceCarIcon, match: ['/grow', '/partners'] },
+  { href: '/commissions', label: 'Commissions',     icon: CoinIcon },
+  { href: '/grow/content', label: 'Content',        icon: EditIcon },
+  { href: '/train',       label: 'Learning Center', shortLabel: 'Learn', icon: BrainIcon, match: ['/train', '/progress'] },
   { href: '/resources',   label: 'Resources',       icon: BookIcon },
 ]
 
@@ -61,9 +67,9 @@ const MANAGER_ITEMS: NavItem[] = [
 const BOTTOM_NAV: NavItem[] = [
   { href: '/home',        label: 'Home',    icon: HomeIcon },
   { href: '/today',       label: 'Today',   icon: TodayIcon },
-  { href: '/grow',        label: 'CRM',     shortLabel: 'CRM', icon: GrowIcon, match: ['/grow', '/partners', '/commissions'] },
-  { href: '/leaderboard', label: 'Ranks',   shortLabel: 'Ranks', icon: LeaderboardIcon },
-  { href: '/schedule',    label: 'Plan',    icon: ChecklistIcon, match: ['/notes', '/tasks', '/schedule'] },
+  { href: '/grow',        label: 'CRM',     shortLabel: 'CRM', icon: RaceCarIcon, match: ['/grow', '/partners'] },
+  { href: '/tasks',       label: 'Tasks.ai', shortLabel: 'Tasks', icon: ChecklistIcon },
+  { href: '/schedule',    label: 'Schedule', icon: ClockIcon },
 ]
 
 const isActiveHref = (pathname: string, href: string) => pathname === href || pathname.startsWith(href + '/')
@@ -75,12 +81,13 @@ const matchNav = (pathname: string, item: NavItem) => isActiveHref(pathname, ite
 
 const PAGE_INDEX: { label: string; href: string }[] = [
   ...PRIMARY_NAV.map(i => ({ label: i.label, href: i.href })),
-  // Workspace sub-views whose nav entry is the workspace itself.
-  { label: 'Notes', href: '/notes' }, { label: 'Tasks', href: '/tasks' }, { label: 'Time Blocks', href: '/schedule' },
-  { label: 'Progress', href: '/progress' },
-  { label: 'AI Team', href: '/grow/team' }, { label: 'Content Engine', href: '/grow/content' }, { label: 'Build Phases', href: '/grow/build' },
-  // Folded into Agentic CRM but still directly searchable.
-  { label: 'Partners', href: '/partners' }, { label: 'Pipeline', href: '/partners' }, { label: 'Commissions', href: '/commissions' }, { label: 'Lead Gen', href: '/grow/leadgen' },
+  // Folded into Home as sections, but still directly searchable as full pages.
+  { label: 'Analytics', href: '/analytics' }, { label: 'Leaderboard', href: '/leaderboard' },
+  // Folded into Learning Center as a linked section, still directly searchable.
+  { label: 'Progress', href: '/progress' }, { label: 'Time Blocks', href: '/schedule' },
+  { label: 'AI Team', href: '/grow/team' }, { label: 'Build Phases', href: '/grow/build' },
+  // Inside Agentic CRM's sub-nav but still directly searchable.
+  { label: 'Partners', href: '/partners' }, { label: 'Pipeline', href: '/partners' }, { label: 'Lead Gen', href: '/grow/leadgen' },
   { label: 'Settings', href: '/settings' }, { label: 'Notifications', href: '/notifications' },
 ]
 

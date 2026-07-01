@@ -1,27 +1,23 @@
 'use client'
 
-// The Apex switcher — one destination, six views mirroring the agentic
-// system: Overview (where you stand), Content Engine, Lead Gen, Automations, AI
-// Team, and Build. Mirrors LearnTabs / PlanTabs so the whole app shares one
-// workspace-switcher pattern; scrolls horizontally on narrow screens.
+// The Apex switcher — one destination, five views: Overview (where you stand),
+// Pipeline, Lead Gen, Automations, AI Team, and Build. Mirrors PlanTabs so the
+// whole app shares one workspace-switcher pattern; scrolls horizontally on
+// narrow screens. Analytics, Content, and Commissions are standalone top-level
+// tabs now (not nested here) — Agentic CRM stays focused on the pipeline + the
+// AI agent workforce that feeds it.
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { cn } from '@/lib/utils'
 import { usePermissions } from '@/components/usePermissions'
-import { DashboardIcon, EditIcon, TargetIcon, LightningIcon, IntegrationIcon, ChecklistIcon, HandshakeIcon, BarChartIcon, CoinIcon } from '@/components/icons'
+import { DashboardIcon, TargetIcon, LightningIcon, IntegrationIcon, ChecklistIcon, HandshakeIcon } from '@/components/icons'
 
-// The Agentic CRM switcher. Partner pipeline, Analytics, and Commissions are
-// folded in here (no longer standalone tabs) so the CRM is the single home for
-// the whole revenue motion — HubSpot-style, reporting nested inside the CRM.
 const GROWTH_VIEWS = [
   { href: '/grow',            label: 'Overview',    icon: DashboardIcon,   feature: 'growth' },
   { href: '/partners',        label: 'Pipeline',    icon: HandshakeIcon,   feature: 'partners' },
   { href: '/grow/leadgen',    label: 'Lead Gen',    icon: TargetIcon,      feature: 'growth' },
-  { href: '/analytics',       label: 'Analytics',   icon: BarChartIcon,    feature: 'analytics' },
-  { href: '/grow/content',    label: 'Content',     icon: EditIcon,        feature: 'growth' },
   { href: '/grow/automations',label: 'Automations', icon: LightningIcon,   feature: 'growth' },
   { href: '/grow/team',       label: 'AI Team',     icon: IntegrationIcon, feature: 'growth' },
-  { href: '/commissions',     label: 'Commissions', icon: CoinIcon,        feature: 'commissions' },
   // Build is hard-locked to Admin/Manager — hidden entirely from standard users.
   { href: '/grow/build',      label: 'Build',       icon: ChecklistIcon,   feature: 'growth_build', lock: true },
 ]

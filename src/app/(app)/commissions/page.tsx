@@ -9,8 +9,6 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { Card, Button, ProgressBar, Skeleton } from '@/components/ui'
-import { GrowthTabs } from '@/components/GrowthTabs'
-import { GrowthChrome } from '@/components/growth/GrowthChrome'
 import { CountUp } from '@/components/CountUp'
 import { AiTip } from '@/components/AiTip'
 import { CoinIcon, LightningIcon, TargetIcon, PhoneIcon, HandshakeIcon, CheckIcon, ArrowRightIcon, ChartRisingIcon, FlameIcon, GrowIcon } from '@/components/icons'
@@ -78,8 +76,6 @@ export default function CommissionsPage() {
 
   return (
     <div className="space-y-4 stagger-rise pb-4">
-      <GrowthChrome compact />
-      <GrowthTabs />
       <div className="flex items-start justify-between gap-3">
         <div>
           <h1 className="text-h1 text-dark-text">Income &amp; Commission Planner</h1>

@@ -11,8 +11,7 @@ export const dynamic = 'force-dynamic'
 
 import { useEffect, useState } from 'react'
 import { Card, Button, Skeleton } from '@/components/ui'
-import { GrowthTabs } from '@/components/GrowthTabs'
-import { GrowthChrome } from '@/components/growth/GrowthChrome'
+import { PageHeader } from '@/components/manager'
 import {
   LightningIcon, ClockIcon, ChevronDownIcon, ArrowRightIcon, IntegrationIcon, TargetIcon,
   ChartRisingIcon, DownloadIcon, PlusIcon, CheckIcon, TrashIcon, InfoIcon, StarIcon,
@@ -246,8 +245,7 @@ export default function GrowthContentPage() {
 
   return (
     <div className="space-y-4 stagger-rise">
-      <GrowthChrome />
-      <GrowthTabs />
+      <PageHeader title="Content" subtitle="What to publish next to attract agency partners — ranked by expected value." />
 
       <div className="flex items-start gap-2 rounded-xl bg-teal/[0.06] p-3">
         <InfoIcon size={14} className="mt-0.5 shrink-0 text-teal" />

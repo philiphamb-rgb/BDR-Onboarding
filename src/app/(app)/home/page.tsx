@@ -59,6 +59,7 @@ export default function HomePage() {
   const [partners, setPartners] = useState<any[]>([])
   const [goal, setGoal] = useState<number | null>(null)
   const [dealsThisMonth, setDealsThisMonth] = useState(0)
+  const [activity, setActivity] = useState({ calls: 0, demos: 0 })
   const [dayBlocks, setDayBlocks] = useState<any[]>([])
   const [triageBusy, setTriageBusy] = useState(false)
   const [useEveryDay, setUseEveryDay] = useState(false)
@@ -87,7 +88,10 @@ export default function HomePage() {
         .then(({ data }) => setPartners(data ?? []))
       // Goal + this-month deals for the live goal cockpit.
       supabase.from('goals').select('monthly_deal_goal').eq('user_id', user.id).maybeSingle().then(({ data }) => setGoal(data?.monthly_deal_goal ?? null))
-      supabase.from('user_progress').select('deals_this_month').eq('user_id', user.id).single().then(({ data }) => setDealsThisMonth(data?.deals_this_month ?? 0))
+      supabase.from('user_progress').select('deals_this_month, calls_this_week, demos_this_week').eq('user_id', user.id).single().then(({ data }) => {
+        setDealsThisMonth(data?.deals_this_month ?? 0)
+        setActivity({ calls: data?.calls_this_week ?? 0, demos: data?.demos_this_week ?? 0 })
+      })
       supabase.from('user_progress').select('user_id, total_xp, users!inner(name)')
         .order('total_xp', { ascending: false }).limit(5)
         .then(({ data }) => {
@@ -214,6 +218,10 @@ export default function HomePage() {
   const userRank = leaderboard.findIndex(l => l.user_id === userId) + 1
   const rhythm = shift ? currentBlock(shift) : null
   const stuck = partners.filter(p => p.stage === 'proposal_sent' || p.stage === 'contract_signed').length
+
+  // ── Analytics snapshot — folded in from the old standalone tab ──────────────
+  const wonPartners = partners.filter(p => p.stage === 'opportunity_won').length
+  const closeRate = partners.length ? Math.round(wonPartners / partners.length * 100) : 0
 
   // ── Priority brain: live goal math + the single ranked action list ───────────
   const nowDate = new Date()
@@ -576,6 +584,30 @@ export default function HomePage() {
           ))}
         </div>
       </div>
+
+      {/* Analytics snapshot — folded in from the old standalone Analytics tab */}
+      <Card>
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="text-h3 text-dark-text">Analytics</h2>
+          <Link href="/analytics" className="text-sm text-navy-ink font-medium flex items-center gap-1">Full view<ArrowRightIcon className="w-4 h-4" /></Link>
+        </div>
+        <div className="grid grid-cols-3 gap-2">
+          <div className="rounded-xl border border-border bg-bdrbg p-3 text-center">
+            <div className="text-h3 font-bold text-dark-text tabular-nums">{closeRate}%</div>
+            <div className="text-[11px] text-gray">Close rate</div>
+          </div>
+          <div className="rounded-xl border border-border bg-bdrbg p-3 text-center">
+            <PhoneIcon size={16} className="mx-auto mb-1 text-navy-ink" />
+            <div className="text-h3 font-bold text-dark-text tabular-nums">{activity.calls}</div>
+            <div className="text-[11px] text-gray">Calls / wk</div>
+          </div>
+          <div className="rounded-xl border border-border bg-bdrbg p-3 text-center">
+            <TargetIcon size={16} className="mx-auto mb-1 text-navy-ink" />
+            <div className="text-h3 font-bold text-dark-text tabular-nums">{activity.demos}</div>
+            <div className="text-[11px] text-gray">Demos / wk</div>
+          </div>
+        </div>
+      </Card>
 
       {/* Leaderboard preview */}
       {leaderboard.length > 0 && (

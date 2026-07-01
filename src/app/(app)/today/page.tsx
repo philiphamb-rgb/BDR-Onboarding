@@ -6,7 +6,7 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import { useProgress, useHabits } from '@/lib/hooks/useProgress'
 import { Card, ProgressBar, Skeleton } from '@/components/ui'
-import { CheckIcon, FlameIcon, XpIcon, PhoneIcon, TargetIcon, HandshakeIcon, ClockIcon, ArrowRightIcon, LightningIcon, CoachIcon } from '@/components/icons'
+import { CheckIcon, FlameIcon, XpIcon, PhoneIcon, TargetIcon, HandshakeIcon, ArrowRightIcon, LightningIcon, CoachIcon } from '@/components/icons'
 import { cn, formatXP, formatDateShort } from '@/lib/utils'
 import { toast } from '@/components/ui'
 import { AiTip } from '@/components/AiTip'
@@ -20,6 +20,7 @@ import { autoPlan, fmtEst } from '@/lib/triageEngine'
 import { stageMeta } from '@/lib/partnerChecklist'
 import { localToday } from '@/lib/schedule'
 import { fetchDaySlots } from '@/lib/daySlots'
+import { PlanTabs } from '@/components/PlanTabs'
 
 export default function TodayPage() {
   const supabase = createClient()
@@ -204,15 +205,13 @@ export default function TodayPage() {
         ctaHref="/commissions"
       />
 
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <h1 className="text-h1 text-dark-text">Today</h1>
-          <p className="text-sm text-gray">{formatDateShort(new Date())}</p>
-        </div>
-        <Link href="/schedule" className="flex items-center gap-1.5 rounded-pill border border-border bg-card px-3 py-2 text-[12px] font-[700] text-navy-ink shadow-card hover:border-navy/40">
-          <ClockIcon size={15} /> Time Blocks
-        </Link>
+      <div>
+        <h1 className="text-h1 text-dark-text">Today</h1>
+        <p className="text-sm text-gray">{formatDateShort(new Date())}</p>
       </div>
+
+      {/* Capture / Tasks.ai / Schedule — the old "Plan" workspace, one tap away */}
+      <PlanTabs />
 
       <AiTip id="today-plan" title="Start the day with an AI game plan" prompt="Give me my game plan for today: where I stand, my biggest opportunity, and the top 3 things to do." tryLabel="Get today's game plan">
         Ask the coach to triage your day from your goal, pipeline, and tasks — then tap <span className="font-[700]">Auto-plan my day</span> to schedule it all into your time blocks.

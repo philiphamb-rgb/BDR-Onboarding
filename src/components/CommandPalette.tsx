@@ -15,24 +15,26 @@ import { askCoach } from '@/lib/coachBus'
 import { triggerXpPop, triggerConfetti } from '@/components/gamification'
 import { getStoredTheme, setStoredTheme, applyTheme } from '@/lib/theme'
 import {
-  SearchIcon, HomeIcon, TodayIcon, GrowIcon, LeaderboardIcon, BarChartIcon, TrainIcon,
+  SearchIcon, HomeIcon, TodayIcon, LeaderboardIcon, BarChartIcon, BrainIcon, RaceCarIcon,
   BookIcon, ChecklistIcon, DocumentIcon, CoachIcon, PhoneIcon, TargetIcon, HandshakeIcon,
-  PlusIcon, SettingsIcon, ArrowRightIcon, LightningIcon, MenuIcon, HubIcon,
+  PlusIcon, SettingsIcon, ArrowRightIcon, LightningIcon, MenuIcon, HubIcon, CoinIcon, EditIcon,
 } from '@/components/icons'
 import { cn } from '@/lib/utils'
 
 const NAV = [
   { label: 'Home', href: '/home', icon: HomeIcon, keys: 'h' },
   { label: 'Today', href: '/today', icon: TodayIcon, keys: 't' },
-  { label: 'Plan', href: '/schedule', icon: ChecklistIcon, keys: 'p' },
-  { label: 'Agentic CRM', href: '/grow', icon: GrowIcon, keys: 'c' },
-  { label: 'Leaderboard', href: '/leaderboard', icon: LeaderboardIcon, keys: 'l' },
-  { label: 'Analytics', href: '/analytics', icon: BarChartIcon },
-  { label: 'Learning Center', href: '/train', icon: TrainIcon },
+  { label: 'Notes', href: '/notes', icon: DocumentIcon, keys: 'n' },
+  { label: 'Tasks.ai', href: '/tasks', icon: ChecklistIcon },
+  { label: 'Schedule', href: '/schedule', icon: ChecklistIcon, keys: 's' },
+  { label: 'Agentic CRM', href: '/grow', icon: RaceCarIcon, keys: 'c' },
+  { label: 'Commissions', href: '/commissions', icon: CoinIcon },
+  { label: 'Content', href: '/grow/content', icon: EditIcon },
+  { label: 'Learning Center', href: '/train', icon: BrainIcon, keys: 'l' },
   { label: 'Resources', href: '/resources', icon: BookIcon, keys: 'r' },
   { label: 'Partners', href: '/partners', icon: HandshakeIcon },
-  { label: 'Notes', href: '/notes', icon: DocumentIcon },
-  { label: 'Tasks', href: '/tasks', icon: ChecklistIcon },
+  { label: 'Analytics', href: '/analytics', icon: BarChartIcon },
+  { label: 'Leaderboard', href: '/leaderboard', icon: LeaderboardIcon },
   { label: 'Settings', href: '/settings', icon: SettingsIcon },
 ]
 
@@ -263,8 +265,9 @@ const SHORTCUTS: [string, string][] = [
   ['⌘K', 'Open the command palette'],
   ['t', 'New task'], ['n', 'New note'], ['c', 'Ask the coach'],
   ['[', 'Collapse / expand sidebar'], ['?', 'This cheatsheet'],
-  ['g then h', 'Go Home'], ['g then t', 'Go to Today'], ['g then c', 'Go to CRM'],
-  ['g then l', 'Go to Leaderboard'], ['g then r', 'Go to Resources'],
+  ['g then h', 'Go Home'], ['g then t', 'Go to Today'], ['g then n', 'Go to Notes'],
+  ['g then s', 'Go to Schedule'], ['g then c', 'Go to Agentic CRM'],
+  ['g then l', 'Go to Learning Center'], ['g then r', 'Go to Resources'],
 ]
 
 function Cheatsheet({ onClose }: { onClose: () => void }) {

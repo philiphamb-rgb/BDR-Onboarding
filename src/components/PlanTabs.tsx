@@ -11,7 +11,7 @@ import { DocumentIcon, ChecklistIcon, ClockIcon } from '@/components/icons'
 
 const PLAN_VIEWS = [
   { href: '/notes', label: 'Capture', icon: DocumentIcon },
-  { href: '/tasks', label: 'Organize', icon: ChecklistIcon },
+  { href: '/tasks', label: 'Tasks.ai', icon: ChecklistIcon },
   { href: '/schedule', label: 'Schedule', icon: ClockIcon },
 ]
 
