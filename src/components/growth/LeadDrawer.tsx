@@ -13,7 +13,7 @@ import { useCrmRecord } from '@/lib/hooks/useCrmRecord'
 import {
   CloseIcon, CoinIcon, CalendarIcon, TargetIcon, UserIcon, PlusIcon, TrashIcon,
   StarIcon, StarFilledIcon, PhoneIcon, MailIcon, DocumentIcon, LightningIcon,
-  ChecklistIcon, ArrowRightIcon, ExternalLinkIcon,
+  ChecklistIcon, ArrowRightIcon, ExternalLinkIcon, SearchIcon,
 } from '@/components/icons'
 import { askCoach } from '@/lib/coachBus'
 import { cn } from '@/lib/utils'
@@ -36,6 +36,8 @@ export function LeadDrawer({ partnerId, name, score, onClose }: { partnerId: str
   const [suggesting, setSuggesting] = useState(false)
   const [showContact, setShowContact] = useState(false)
   const [c, setC] = useState({ name: '', title: '', email: '', phone: '' })
+  const [researching, setResearching] = useState(false)
+  const [research, setResearch] = useState<{ text: string; model: string } | null>(null)
   const mounted = useRef(true)
   const abortRef = useRef<AbortController | null>(null)
   useEffect(() => () => { mounted.current = false; abortRef.current?.abort() }, [])
@@ -55,6 +57,21 @@ export function LeadDrawer({ partnerId, name, score, onClose }: { partnerId: str
       })
       if (res.ok && res.body) { const rd = res.body.getReader(); const dc = new TextDecoder(); let acc = ''; while (true) { const { done, value } = await rd.read(); if (done) break; acc += dc.decode(value, { stream: true }); if (mounted.current) setBody(acc.trim()) } }
     } catch {} finally { if (mounted.current) setSuggesting(false) }
+  }
+
+  const runResearch = async () => {
+    if (researching) return
+    setResearching(true)
+    try {
+      const res = await fetch('/api/research', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ query: `Brief research on the credit-repair / financial-services agency "${name}": recent context, approximate size and market position, and one concrete partnership angle for a ConsumerDirect Co-Brand PLUS+ BDR.` }),
+      })
+      const j = await res.json().catch(() => ({}))
+      if (mounted.current) setResearch(res.ok && j.text ? { text: j.text, model: j.model || 'AI' } : { text: 'Research is unavailable right now — try again shortly.', model: '' })
+    } catch {
+      if (mounted.current) setResearch({ text: 'Research is unavailable right now — try again shortly.', model: '' })
+    } finally { if (mounted.current) setResearching(false) }
   }
 
   const logActivity = () => { const t = body.trim(); if (!t) return; addActivity(kind, t, aiDraft); setBody(''); setAiDraft(false) }
@@ -104,6 +121,26 @@ export function LeadDrawer({ partnerId, name, score, onClose }: { partnerId: str
                   <span className="font-[700] text-mid-text">Weighted value</span>
                   <span className="font-[900] text-teal">{fmtMoney(weighted)}/mo</span>
                 </div>
+              )}
+            </section>
+
+            {/* Research */}
+            <section>
+              <div className="mb-2 flex items-center justify-between">
+                <div className="text-[10px] font-[800] uppercase tracking-wide text-gray">Research</div>
+                {research?.model && <span className="rounded bg-navy/8 px-1.5 py-0.5 text-[9px] font-[800] uppercase tracking-wide text-navy">via {research.model}</span>}
+              </div>
+              {research ? (
+                <div className="rounded-xl border border-border bg-bdrbg p-3">
+                  <p className="whitespace-pre-wrap text-[12.5px] leading-relaxed text-dark-text">{research.text}</p>
+                  <button onClick={runResearch} disabled={researching} className="mt-2 flex items-center gap-1.5 text-[11px] font-[700] text-navy disabled:opacity-60"><SearchIcon size={11} />{researching ? 'Researching…' : 'Refresh'}</button>
+                </div>
+              ) : (
+                <button onClick={runResearch} disabled={researching} className="flex w-full items-center gap-2 rounded-xl border border-border bg-bdrbg px-3 py-2.5 text-left text-[12.5px] font-[700] text-mid-text transition-colors hover:border-navy/40 disabled:opacity-60">
+                  <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-navy/8 text-navy"><SearchIcon size={14} /></span>
+                  <span className="flex-1">{researching ? 'Researching this partner…' : 'Research this partner'}</span>
+                  {!researching && <ArrowRightIcon size={14} className="text-gray" />}
+                </button>
               )}
             </section>
 

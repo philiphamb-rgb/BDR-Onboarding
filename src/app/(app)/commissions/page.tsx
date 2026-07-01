@@ -15,6 +15,7 @@ import { CoinIcon, LightningIcon, TargetIcon, PhoneIcon, HandshakeIcon, CheckIco
 import { cn } from '@/lib/utils'
 import { askCoach } from '@/lib/coachBus'
 import { useIncomeCalculator, impliedMonthlyDeals } from '@/lib/hooks/useIncomeCalculator'
+import { usePipelineMomentum } from '@/lib/hooks/usePipelineMomentum'
 import { fmt, fmtK } from '@/lib/income/engine'
 
 const BUFFERS = [
@@ -39,6 +40,7 @@ function Num({ label, suffix, value, onChange, step = 1 }: any) {
 
 export default function CommissionsPage() {
   const { loading, saving, hasPlan, inputs, updateInputs, plan, insight, stats, playbook, setPlaybook, checkIns, logWeek } = useIncomeCalculator()
+  const pipe = usePipelineMomentum()
   const [advanced, setAdvanced] = useState(false)
   const [wkC, setWkC] = useState(''); const [wkX, setWkX] = useState(''); const [logging, setLogging] = useState(false)
 
@@ -47,6 +49,10 @@ export default function CommissionsPage() {
   const isB2C = plan.path === 'b2c'
   const monthly = impliedMonthlyDeals(plan)
   const coversWarm = plan.coldDay === 0 && plan.warmDay > 0
+
+  // Live pipeline momentum vs the monthly production this plan demands.
+  const monthlyNeed = Math.max(0, (plan.target || 0) - (plan.base || 0)) / 12
+  const coverage = monthlyNeed > 0 ? Math.min(100, (pipe.weighted / monthlyNeed) * 100) : 0
 
   // Projection chart geometry
   const maxPace = Math.max(plan.target, ...plan.monthly.map(m => m.pace)) * 1.05
@@ -193,6 +199,45 @@ export default function CommissionsPage() {
           <p className="text-[12px] text-mid-text">This plan needs about <strong className="text-dark-text">{monthly} deal{monthly > 1 ? 's' : ''}/month</strong> — synced to your goal on Home, Today &amp; Coach.</p>
         </div>
       </Card>
+
+      {/* Live pipeline momentum — real CRM deals rolled up against the plan */}
+      {!pipe.loading && pipe.openCount > 0 && (
+        <Card className="border-navy/30">
+          <div className="mb-3 flex items-center gap-2">
+            <ChartRisingIcon size={15} className="text-navy" />
+            <span className="label">Pipeline momentum</span>
+            <Link href="/grow" className="ml-auto text-[11px] font-[700] text-navy">Open workspace</Link>
+          </div>
+          <div className="grid grid-cols-3 gap-2 text-center">
+            <div className="rounded-xl border border-border bg-bdrbg p-3">
+              <div className="text-[16px] font-[800] text-teal tabular-nums">{fmt(pipe.weighted)}</div>
+              <div className="mt-0.5 text-[10.5px] text-gray">Weighted /mo</div>
+            </div>
+            <div className="rounded-xl border border-border bg-bdrbg p-3">
+              <div className="text-[16px] font-[800] text-dark-text tabular-nums">{fmt(pipe.gross)}</div>
+              <div className="mt-0.5 text-[10.5px] text-gray">Gross /mo</div>
+            </div>
+            <div className="rounded-xl border border-border bg-bdrbg p-3">
+              <div className="text-[16px] font-[800] text-dark-text tabular-nums">{pipe.openCount}</div>
+              <div className="mt-0.5 text-[10.5px] text-gray">Open deal{pipe.openCount === 1 ? '' : 's'}</div>
+            </div>
+          </div>
+          {monthlyNeed > 0 && (
+            <div className="mt-3">
+              <div className="mb-1 flex items-center justify-between text-[11.5px]">
+                <span className="font-[700] text-mid-text">Covers your monthly production target</span>
+                <span className="font-[800] text-navy tabular-nums">{Math.round(coverage)}%</span>
+              </div>
+              <ProgressBar value={coverage} max={100} color={coverage >= 100 ? '#16A34A' : '#003087'} className="h-2" />
+              <p className="mt-1.5 text-[11px] text-gray">
+                {coverage >= 100
+                  ? `Your weighted pipeline already covers the ${fmt(monthlyNeed)}/mo this plan needs — protect it and keep advancing stages.`
+                  : `You need about ${fmt(monthlyNeed)}/mo in new production. Weighted pipeline covers ${Math.round(coverage)}% — add or advance ${pipe.priced < pipe.openCount ? 'and price the ' + (pipe.openCount - pipe.priced) + ' unpriced ' : ''}deals to close the gap.`}
+              </p>
+            </div>
+          )}
+        </Card>
+      )}
 
       {/* 12-month projection */}
       <Card>
