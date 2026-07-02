@@ -46,28 +46,34 @@ export default function AgentOfficePage() {
   const [openId, setOpenId] = useState<string | null>(null)
   const [editBrand, setEditBrand] = useState(false)
   const [view, setView] = useState<'org' | 'grid'>('org')
+  const [hitlById, setHitlById] = useState<Record<string, string>>({})   // team HITL overrides
 
   const load = async () => {
     const registry = await loadRegistry(supabase)
     const { data: { user } } = await supabase.auth.getUser()
-    let statuses: Record<string, string> = {}, tid: string | null = null, br: any = null
+    let statuses: Record<string, string> = {}, tid: string | null = null, br: any = null, hitl: Record<string, string> = {}
     if (user) {
       const { data: me } = await supabase.from('users').select('team_id').eq('id', user.id).maybeSingle()
       tid = me?.team_id ?? null
       if (tid) {
-        const [{ data: autos }, { data: b }] = await Promise.all([
+        const [{ data: autos }, { data: b }, { data: settings }] = await Promise.all([
           supabase.from('automations').select('id, status').eq('team_id', tid),
           supabase.from('brand_settings').select('*').eq('team_id', tid).maybeSingle(),
+          supabase.from('agent_settings').select('agent_id, hitl_tier').eq('team_id', tid),
         ])
         statuses = Object.fromEntries((autos ?? []).map((a: any) => [a.id, a.status]))
         br = b
+        hitl = Object.fromEntries((settings ?? []).map((s: any) => [s.agent_id, s.hitl_tier]))
       }
     }
-    setReg(registry); setStatusById(statuses); setBrand(br); setTeamId(tid); setUserId(user?.id ?? null); setLoading(false)
+    setReg(registry); setStatusById(statuses); setBrand(br); setTeamId(tid); setUserId(user?.id ?? null); setHitlById(hitl); setLoading(false)
   }
   useEffect(() => { load() }, [])
 
   const hourlyRate = brand?.hourly_rate ? Number(brand.hourly_rate) : 50
+  const defaultHitl = brand?.default_hitl || 'in-the-loop'
+  // Effective HITL: team override → registry default → team default.
+  const hitlOf = (a: any) => hitlById[a.id] ?? a.hitlTier ?? defaultHitl
   const statusOf = (a: any) => statusById[a.id] ?? a.defaultStatus
   const liveAgents = reg ? reg.agents.filter((a: any) => statusOf(a) === 'live') : []
   const companyRoi = liveAgents.reduce((acc: any, a: any) => {
@@ -89,6 +95,36 @@ export default function AgentOfficePage() {
     const { error } = await supabase.from('brand_settings').upsert(row, { onConflict: 'team_id' })
     if (error) { toast.error(`Couldn't save. ${error.message}`); return }
     toast.success('Brand voice saved'); setEditBrand(false); load()
+  }
+
+  // Quick HITL change for one agent — writes a team override, effective instantly.
+  const setHitl = async (agentId: string, tier: string) => {
+    if (!teamId) { toast.error('No team found'); return }
+    setHitlById(prev => ({ ...prev, [agentId]: tier }))   // optimistic
+    const { error } = await supabase.from('agent_settings')
+      .upsert({ team_id: teamId, agent_id: agentId, hitl_tier: tier, updated_by: userId, updated_at: new Date().toISOString() }, { onConflict: 'team_id,agent_id' })
+    if (error) { toast.error(`Couldn't save. ${error.message}`); load(); return }
+    toast.success(`${reg?.byId[agentId]?.firstName ?? 'Agent'} → ${HITL_LABEL[tier]}`)
+  }
+
+  // Bulk: move a whole department to a tier (e.g. everyone On the loop once trusted).
+  const setDeptHitl = async (dept: string, tier: string) => {
+    if (!teamId) { toast.error('No team found'); return }
+    const ids = reg.agents.filter((a: any) => a.role?.department === dept).map((a: any) => a.id)
+    setHitlById(prev => ({ ...prev, ...Object.fromEntries(ids.map((id: string) => [id, tier])) }))
+    const rows = ids.map((id: string) => ({ team_id: teamId, agent_id: id, hitl_tier: tier, updated_by: userId, updated_at: new Date().toISOString() }))
+    const { error } = await supabase.from('agent_settings').upsert(rows, { onConflict: 'team_id,agent_id' })
+    if (error) { toast.error(`Couldn't save. ${error.message}`); load(); return }
+    toast.success(`${DEPT_LABEL[dept]} → ${HITL_LABEL[tier]} (${ids.length})`)
+  }
+
+  const setTeamDefaultHitl = async (tier: string) => {
+    if (!teamId) { toast.error('No team found'); return }
+    setBrand((b: any) => ({ ...(b || {}), default_hitl: tier }))
+    const { error } = await supabase.from('brand_settings')
+      .upsert({ team_id: teamId, default_hitl: tier, updated_by: userId, updated_at: new Date().toISOString() }, { onConflict: 'team_id' })
+    if (error) { toast.error(`Couldn't save. ${error.message}`); load(); return }
+    toast.success(`Team default → ${HITL_LABEL[tier]}`)
   }
 
   const saveAgent = async (agentFields: any, roleFields: any) => {
@@ -114,6 +150,27 @@ export default function AgentOfficePage() {
             <div><div className="text-[20px] font-[900]">${companyRoi.dollars.toLocaleString()}</div><div className="mt-0.5 text-[10.5px] text-white/70">value/mo at ${hourlyRate}/hr</div></div>
           </div>
           <div className="mt-2.5 border-t border-white/15 pt-2 text-center text-[10px] text-white/60">Live agents only · each teammate's ROI shows its exact math when you open it</div>
+        </Card>
+      )}
+
+      {/* Team autonomy default + at-a-glance HITL mix */}
+      {!loading && (
+        <Card className="!p-4">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <div>
+              <div className="text-[13px] font-[800] text-dark-text">Autonomy — you're the human in the loop</div>
+              <div className="mt-0.5 text-[11.5px] text-gray">
+                {(() => { const c = { 'in-the-loop': 0, 'on-the-loop': 0, autonomous: 0 }; reg.agents.forEach((a: any) => { c[hitlOf(a)] = (c[hitlOf(a)] ?? 0) + 1 }); return `${c['in-the-loop']} ask first · ${c['on-the-loop']} on the loop · ${c.autonomous} autonomous` })()}
+              </div>
+            </div>
+            {isManager && (
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] font-[800] uppercase tracking-wide text-gray">New-agent default</span>
+                <HitlToggle value={defaultHitl} onChange={setTeamDefaultHitl} compact />
+              </div>
+            )}
+          </div>
+          <p className="mt-2 border-t border-border pt-2 text-[11px] leading-relaxed text-gray">Every agent starts <span className="font-[700] text-dark-text">in the loop</span> — it raises a hand and asks you before it acts. As an agent proves itself, open it and flip it to <span className="font-[700] text-teal">on the loop</span> (it acts and keeps you posted) or <span className="font-[700]">autonomous</span>. Compliance and legal agents are best left in the loop.</p>
         </Card>
       )}
 
@@ -153,19 +210,29 @@ export default function AgentOfficePage() {
       {loading ? (
         <div className="space-y-3">{[1, 2, 3].map(i => <Skeleton key={i} className="h-24 rounded-2xl" />)}</div>
       ) : view === 'org' ? (
-        <OrgChart reg={reg} statusOf={statusOf} hourlyRate={hourlyRate} onOpen={setOpenId} />
+        <OrgChart reg={reg} statusOf={statusOf} hitlOf={hitlOf} hourlyRate={hourlyRate} onOpen={setOpenId} />
       ) : (
         <div className="space-y-5">
-          {byDept.map(g => (
+          {byDept.map(g => {
+            const inLoop = g.items.filter((a: any) => hitlOf(a) === 'in-the-loop').length
+            return (
             <div key={g.dept}>
-              <div className="mb-2 px-0.5 text-[11px] font-[900] uppercase tracking-wide text-navy-ink">{DEPT_LABEL[g.dept]} <span className="text-gray/60">· {g.items.length}</span></div>
+              <div className="mb-2 flex items-center justify-between px-0.5">
+                <div className="text-[11px] font-[900] uppercase tracking-wide text-navy-ink">{DEPT_LABEL[g.dept]} <span className="text-gray/60">· {g.items.length}</span></div>
+                {isManager && inLoop > 0 && (
+                  <button onClick={() => setDeptHitl(g.dept, 'on-the-loop')}
+                    className="text-[10.5px] font-[800] text-teal hover:underline" title={`Move all ${g.items.length} to On the loop`}>
+                    Promote all to On the loop →
+                  </button>
+                )}
+              </div>
               <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
                 {g.items.map((a: any) => {
-                  const st = statusOf(a); const roi = computeAgentRoi(a, hourlyRate)
+                  const st = statusOf(a); const roi = computeAgentRoi(a, hourlyRate); const h = hitlOf(a)
                   return (
-                    <Card key={a.id} hover className="!p-3 cursor-pointer" onClick={() => setOpenId(a.id)}>
+                    <Card key={a.id} hover className="group !p-3 cursor-pointer" onClick={() => setOpenId(a.id)}>
                       <div className="flex items-start gap-2.5">
-                        <AgentAvatar agent={a} size={40} live={st === 'live'} float={st === 'live'} className="shrink-0" />
+                        <AgentAvatar agent={a} size={40} live={st === 'live'} float={st === 'live'} raiseHand={st === 'live' && h === 'in-the-loop'} className="shrink-0" />
                         <div className="min-w-0 flex-1">
                           <div className="truncate text-[13px] font-[800] text-dark-text">{a.fullName}</div>
                           <div className="truncate text-[10.5px] font-[700] uppercase tracking-wide text-gray">{a.role?.title}</div>
@@ -178,11 +245,11 @@ export default function AgentOfficePage() {
                 })}
               </div>
             </div>
-          ))}
+          )})}
         </div>
       )}
 
-      {open && <AgentDrawer agent={open} reg={reg} status={statusOf(open)} brand={brand} hourlyRate={hourlyRate} isManager={isManager} onClose={() => setOpenId(null)} onOpen={setOpenId} onSave={saveAgent} />}
+      {open && <AgentDrawer agent={open} reg={reg} status={statusOf(open)} brand={brand} hourlyRate={hourlyRate} isManager={isManager} hitl={hitlOf(open)} onSetHitl={setHitl} onClose={() => setOpenId(null)} onOpen={setOpenId} onSave={saveAgent} />}
       {editBrand && <BrandModal brand={brand} onClose={() => setEditBrand(false)} onSave={saveBrand} />}
       {!loading && isManager && teamId && (
         <BrandOnboarding supabase={supabase} teamId={teamId} userId={userId} brandExists={!!(brand?.voice || brand?.promise)} onDone={load} />
@@ -210,8 +277,33 @@ function JobSpec({ text }: { text: string }) {
   )
 }
 
+// Quick human-in-the-loop control. One tap moves an agent between asking first,
+// acting-and-informing, and full autonomy — the core of promoting a proven agent.
+const HITL_OPTS = [
+  { key: 'in-the-loop', label: 'In the loop', sub: 'Asks you first', tone: 'text-error' },
+  { key: 'on-the-loop', label: 'On the loop', sub: 'Acts, keeps you posted', tone: 'text-teal' },
+  { key: 'autonomous', label: 'Autonomous', sub: 'Handles it fully', tone: 'text-gray' },
+]
+function HitlToggle({ value, onChange, disabled, compact = false }: any) {
+  return (
+    <div className={cn('inline-flex rounded-lg border border-border bg-bdrbg p-0.5', disabled && 'opacity-70')}>
+      {HITL_OPTS.map(o => {
+        const active = value === o.key
+        return (
+          <button key={o.key} disabled={disabled} onClick={() => !disabled && onChange(o.key)}
+            title={o.sub}
+            className={cn('rounded-md font-[800] transition-colors', compact ? 'px-2 py-1 text-[10px]' : 'px-2.5 py-1.5 text-[11.5px]',
+              active ? 'bg-navy text-white shadow-sm' : 'text-gray hover:text-navy-ink', disabled && 'cursor-default')}>
+            {o.label}
+          </button>
+        )
+      })}
+    </div>
+  )
+}
+
 // ── Full agent detail + inline edit ─────────────────────────────────────────
-function AgentDrawer({ agent, reg, status, brand, hourlyRate, isManager, onClose, onOpen, onSave }: any) {
+function AgentDrawer({ agent, reg, status, brand, hourlyRate, isManager, hitl, onSetHitl, onClose, onOpen, onSave }: any) {
   const role = agent.role || {}
   const [editing, setEditing] = useState(false)
   const [showPrompt, setShowPrompt] = useState(false)
@@ -230,13 +322,23 @@ function AgentDrawer({ agent, reg, status, brand, hourlyRate, isManager, onClose
   return (
     <div className="fixed inset-0 z-[1055] flex items-end justify-center bg-dark-text/50 sm:items-center" onClick={onClose}>
       <div className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-t-2xl bg-card p-4 shadow-modal sm:rounded-2xl" onClick={e => e.stopPropagation()}>
-        <div className="mb-3 flex items-start gap-3">
-          <AgentAvatar agent={agent} size={56} live={status === 'live'} float={status === 'live'} className="shrink-0" />
+        <div className="group mb-3 flex items-start gap-3">
+          <AgentAvatar agent={agent} size={56} live={status === 'live'} float={status === 'live'} raiseHand={status === 'live' && hitl === 'in-the-loop'} className="shrink-0" />
           <div className="min-w-0 flex-1">
             <div className="text-[16px] font-[900] text-dark-text">{agent.fullName}</div>
             <div className="text-[11px] font-[700] uppercase tracking-wide text-gray">{role.title}</div>
           </div>
           <span className={cn('shrink-0 rounded-full px-2 py-0.5 text-[10px] font-[800] capitalize', status === 'live' ? 'bg-success/10 text-success' : status === 'paused' ? 'bg-bdrbg text-gray' : 'bg-gold/12 text-[#A06C00]')}>{status}</span>
+        </div>
+
+        {/* Human-in-the-loop — the quick promotion control */}
+        <div className="mb-3 rounded-xl border border-border bg-bdrbg/40 p-3">
+          <div className="mb-1.5 flex items-center justify-between">
+            <span className="text-[10px] font-[900] uppercase tracking-wide text-navy-ink">Autonomy · you're in control</span>
+            {hitl === 'in-the-loop' && status === 'live' && <span className="flex items-center gap-1 text-[10px] font-[800] text-error">✋ raises a hand for you</span>}
+          </div>
+          <HitlToggle value={hitl} onChange={(t: string) => onSetHitl(agent.id, t)} disabled={!isManager} />
+          <p className="mt-1.5 text-[11px] leading-relaxed text-gray">{HITL_OPTS.find(o => o.key === hitl)?.sub}. {isManager ? 'Promote to On the loop once it consistently delivers.' : 'Only managers can change this.'}</p>
         </div>
 
         {editing ? (
@@ -281,9 +383,8 @@ function AgentDrawer({ agent, reg, status, brand, hourlyRate, isManager, onClose
               {role.commsStyle && <p className="text-[11.5px] leading-relaxed text-mid-text">{role.commsStyle}</p>}
             </div>
 
-            {/* Brand voice + controls */}
+            {/* Brand voice + controls (autonomy is set above via the quick toggle) */}
             <div className="mb-3 flex flex-wrap gap-2">
-              <span className={cn('rounded-lg px-2.5 py-1 text-[11px] font-[700]', HITL_TONE[agent.hitlTier])}>{HITL_LABEL[agent.hitlTier]}</span>
               <span className="rounded-lg bg-navy/8 px-2.5 py-1 text-[11px] font-[700] text-navy-ink">{TIER_LABEL[role.tier] ?? 'Specialist'}</span>
               <span className="rounded-lg bg-bdrbg px-2.5 py-1 text-[11px] font-[700] text-gray" title={MODEL_FOR_TIER[agent.modelTier]}>{MODEL_LABEL[agent.modelTier]}</span>
             </div>

@@ -36,11 +36,16 @@ export async function POST(req: Request) {
   const { data: room } = await supabase.from('meeting_rooms').select('*').eq('id', roomId).maybeSingle()
   if (!room) return NextResponse.json({ error: 'room not found' }, { status: 404 })
 
-  const [{ data: parts }, registry] = await Promise.all([
+  const [{ data: parts }, registry, { data: hitlRows }] = await Promise.all([
     supabase.from('meeting_participants').select('agent_id').eq('room_id', roomId),
     loadRegistry(supabase),
+    supabase.from('agent_settings').select('agent_id, hitl_tier').eq('team_id', room.team_id),
   ])
-  const participantAgents = (parts ?? []).map((p: any) => registry.byId[p.agent_id]).filter(Boolean)
+  // Apply the team's human-in-the-loop overrides so each agent behaves at the
+  // autonomy level the operator set (in-the-loop asks first; on-the-loop acts).
+  const hitlOverride: Record<string, string> = Object.fromEntries((hitlRows ?? []).map((r: any) => [r.agent_id, r.hitl_tier]))
+  const withHitl = (a: any) => hitlOverride[a.id] ? { ...a, hitlTier: hitlOverride[a.id] } : a
+  const participantAgents = (parts ?? []).map((p: any) => registry.byId[p.agent_id]).filter(Boolean).map(withHitl)
   if (participantAgents.length === 0) return NextResponse.json({ error: 'no agents in room' }, { status: 400 })
 
   // Persist the operator's message first (if any).
@@ -63,7 +68,7 @@ export async function POST(req: Request) {
     responders = responders.slice(0, MAX_RESPONDERS)
     // Boardroom: the chair speaks last, to synthesize.
     if (room.mode === 'boardroom' && room.chair_agent_id && registry.byId[room.chair_agent_id]) {
-      responders = [...responders.filter((a: any) => a.id !== room.chair_agent_id), registry.byId[room.chair_agent_id]]
+      responders = [...responders.filter((a: any) => a.id !== room.chair_agent_id), withHitl(registry.byId[room.chair_agent_id])]
     }
   }
 

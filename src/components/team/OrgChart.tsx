@@ -24,9 +24,10 @@ const DEPT: Record<string, { label: string; accent: string; grad: [string, strin
 const DEPT_ORDER = ['marketing', 'funnel', 'partner', 'compliance', 'ops', 'memory']
 const RAIL = 'linear-gradient(90deg, transparent, rgba(148,163,184,0.55) 12%, rgba(148,163,184,0.55) 88%, transparent)'
 
-export function OrgChart({ reg, statusOf, hourlyRate, onOpen }: any) {
+export function OrgChart({ reg, statusOf, hitlOf, hourlyRate, onOpen }: any) {
   const agents = reg.agents
   const isLive = (a: any) => statusOf(a) === 'live'
+  const raises = (a: any) => isLive(a) && (hitlOf ? hitlOf(a) : a.hitlTier) === 'in-the-loop'
   const roiOf = (a: any) => computeAgentRoi(a, hourlyRate).dollarsPerMo
 
   const leaders = agents.filter((a: any) => a.role?.tier === 1)
@@ -65,7 +66,7 @@ export function OrgChart({ reg, statusOf, hourlyRate, onOpen }: any) {
             <button onClick={() => onOpen(ceo.id)} className="org-rise group relative flex flex-col items-center">
               <span className="pointer-events-none absolute -inset-3 rounded-full bg-[radial-gradient(closest-side,rgba(199,154,58,0.25),transparent)]" />
               <span className="relative rounded-[30%] p-[3px] bg-gradient-to-b from-gold/70 to-gold/20 shadow-[0_10px_30px_-8px_rgba(199,154,58,0.5)] transition-transform duration-200 group-hover:-translate-y-1">
-                <AgentAvatar agent={ceo} size={84} live={isLive(ceo)} float={isLive(ceo)} ring={false} />
+                <AgentAvatar agent={ceo} size={84} live={isLive(ceo)} float={isLive(ceo)} ring={false} raiseHand={raises(ceo)} />
               </span>
               <div className="mt-2 text-center">
                 <div className="text-[15px] font-[900] text-white">{ceo.fullName}</div>
@@ -87,7 +88,7 @@ export function OrgChart({ reg, statusOf, hourlyRate, onOpen }: any) {
                       <button onClick={() => onOpen(a.id)}
                         className="org-rise group w-[116px] rounded-2xl border border-white/10 bg-white/[0.06] p-2.5 text-center backdrop-blur-sm transition-all duration-200 hover:-translate-y-1 hover:border-white/25 hover:bg-white/[0.1]"
                         style={{ animationDelay: `${i * 45}ms` }}>
-                        <AgentAvatar agent={a} size={52} live={isLive(a)} float={isLive(a)} className="mx-auto" />
+                        <AgentAvatar agent={a} size={52} live={isLive(a)} float={isLive(a)} raiseHand={raises(a)} className="mx-auto" />
                         <div className="mt-1.5 truncate text-[12px] font-[800] text-white">{a.fullName}</div>
                         <div className="truncate text-[9px] font-[700] uppercase tracking-wide text-white/55">{a.role?.title}</div>
                       </button>
@@ -134,7 +135,7 @@ export function OrgChart({ reg, statusOf, hourlyRate, onOpen }: any) {
                       <button key={a.id} onClick={() => onOpen(a.id)}
                         className="group flex w-full items-center gap-3 rounded-xl border border-border bg-bdrbg/40 p-2 text-left transition-all duration-200 hover:-translate-y-0.5 hover:border-navy/25 hover:bg-card hover:shadow-card">
                         <span className="relative rounded-[28%] p-[2px]" style={{ background: `linear-gradient(135deg, ${d.accent}, transparent)` }}>
-                          <AgentAvatar agent={a} size={46} live={isLive(a)} float={isLive(a)} />
+                          <AgentAvatar agent={a} size={46} live={isLive(a)} float={isLive(a)} raiseHand={raises(a)} />
                         </span>
                         <div className="min-w-0 flex-1">
                           <div className="flex items-center gap-1.5">
@@ -154,7 +155,7 @@ export function OrgChart({ reg, statusOf, hourlyRate, onOpen }: any) {
                     {p.crew.map((a: any) => (
                       <button key={a.id} onClick={() => onOpen(a.id)} title={`${a.fullName} · ${a.role?.title}`}
                         className="group flex items-center gap-2 rounded-xl border border-border bg-card p-1.5 text-left transition-all duration-200 hover:-translate-y-0.5 hover:border-navy/25 hover:shadow-card">
-                        <AgentAvatar agent={a} size={34} live={isLive(a)} />
+                        <AgentAvatar agent={a} size={34} live={isLive(a)} raiseHand={raises(a)} />
                         <div className="min-w-0 flex-1">
                           <div className="truncate text-[11.5px] font-[800] text-dark-text">{a.firstName}</div>
                           <div className="truncate text-[9px] font-[600] uppercase tracking-wide text-gray">{a.role?.title}</div>

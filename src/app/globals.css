@@ -413,6 +413,18 @@ button, a, [role="button"] {
   100% { box-shadow: 0 0 0 0 rgba(20,184,166,0); }
 }
 .av-presence { animation: av-presence 2.6s ease-out infinite; }
+/* Waving hand — agents greet on hover, and "raise their hand" when they await
+   your approval (human-in-the-loop). Rotates around the wrist. */
+@keyframes av-wave {
+  0%, 100% { transform: rotate(-12deg); }
+  50%      { transform: rotate(20deg); }
+}
+.av-hand { transform-box: fill-box; transform-origin: 52% 92%; opacity: 0; transition: opacity .18s ease; }
+.av-hand.is-raised { opacity: 1; animation: av-wave 1.25s ease-in-out infinite; }
+.group:hover .av-hand { opacity: 1; animation: av-wave 0.8s ease-in-out infinite; }
+/* A friendly head-tilt greeting on hover. */
+.group:hover .av-greet { transform: rotate(-3deg); }
+.av-greet { transition: transform .25s ease; transform-box: fill-box; transform-origin: 50% 90%; }
 /* Connector-line draw for the org chart — lines trace in on mount. */
 @keyframes org-line-draw {
   from { stroke-dashoffset: var(--line-len, 400); }
@@ -427,7 +439,7 @@ button, a, [role="button"] {
 .org-rise { animation: org-rise 0.5s cubic-bezier(0.22,1,0.36,1) both; }
 
 @media (prefers-reduced-motion: reduce) {
-  .av-eyes, .av-float, .av-presence, .org-line, .org-rise,
+  .av-eyes, .av-float, .av-presence, .av-hand, .org-line, .org-rise,
   .animate-bob, .animate-ring, .animate-rise, .animate-coach-pulse,
   .animate-glow, .animate-glow-gold, .animate-nudge-x, .animate-attention,
   .animate-breathe, .animate-pop, .animate-shimmer,
