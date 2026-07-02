@@ -28,6 +28,24 @@ const MODULE_ICONS: Record<number, React.ComponentType<{ size?: number; classNam
   11: ProductsIcon, 12: OrgChartIcon, 13: TargetIcon,
 }
 
+// The payoff for finishing each module, in the rep's own terms — shown so a
+// module reads as "what I'll be able to do" instead of just a topic label.
+const WHAT_YOULL_DO: Record<number, string> = {
+  1: "You'll set up your pipeline in under 30 minutes.",
+  2: "You'll know which leads your AI team should prioritize.",
+  3: "You'll have a system every active lead moves through.",
+  4: "You'll know exactly who to loop in at every stage of a deal.",
+  5: "You'll get every order form signed right the first time.",
+  6: "You'll get partners live and self-sufficient in PartnerHub.",
+  7: "You'll know exactly what you're paid and when.",
+  8: "You'll run every call and text through one connected system.",
+  9: "You'll never miss a step on an order form again.",
+  10: "You'll understand how a partner's systems plug into ours.",
+  11: "You'll know which product fits which client, every time.",
+  12: "You'll know exactly who to call when you're stuck.",
+  13: "You'll win the room against Array, IDIQ, and the rest.",
+}
+
 export default function TrainPage() {
   const supabase = createClient()
   const [userId, setUserId] = useState<string>()
@@ -74,6 +92,7 @@ export default function TrainPage() {
   }
 
   const completedModules = modules.filter(m => m.completed_lessons === m.lessons_count && m.quiz_passed).length
+  const started = modules.some(m => m.completed_lessons > 0 || m.quiz_passed)
 
   // Search across all lessons + module titles, respecting gating for reps.
   const moduleMeta: Record<string, { order: number; title: string; unlocked: boolean }> = {}
@@ -98,7 +117,8 @@ export default function TrainPage() {
     <div className="space-y-4 stagger-rise">
       <div>
         <h1 className="text-h1 text-dark-text">Learning Center</h1>
-        <p className="text-sm text-gray">{completedModules} of {modules.length} modules complete</p>
+        <p className="text-sm text-gray">{started ? `${completedModules} of ${modules.length} modules complete` : `Start your White Belt · ${modules.length} modules · Earn your first certificate`}</p>
+        {started && <ProgressBar value={percentage(completedModules, modules.length)} max={100} color="rgb(var(--teal))" className="mt-2 h-1.5" />}
       </div>
 
       {/* Progress snapshot — belt/XP/streak at a glance, with the full belt
@@ -174,13 +194,6 @@ export default function TrainPage() {
         </div>
       ) : (
       <>
-      <Card className="bg-gradient-primary !p-4">
-        <div className="text-white/70 text-xs font-medium mb-1">OVERALL PROGRESS</div>
-        <div className="flex items-end justify-between mb-3">
-          <div className="text-2xl font-bold text-white">{completedModules}/{modules.length}</div>
-        </div>
-        <ProgressBar value={percentage(completedModules, modules.length)} max={100} color="rgb(var(--teal))" className="h-2" />
-      </Card>
 
       <div className="space-y-3" data-tour="train-list">
         {modules.map((mod, idx) => {
@@ -213,9 +226,12 @@ export default function TrainPage() {
                     <div className="text-xs text-gray flex items-center gap-1"><LockIcon size={12} />Pass Module {prev?.order_index} quiz to unlock</div>
                   ) : (
                     <>
+                      {!fullyDone && WHAT_YOULL_DO[mod.order_index] && (
+                        <p className="mb-1.5 text-[12px] leading-snug text-mid-text">{WHAT_YOULL_DO[mod.order_index]}</p>
+                      )}
                       <div className="flex items-center justify-between mb-2">
                         <span className="text-xs text-gray">{mod.completed_lessons}/{mod.lessons_count} lessons{mod.quiz_passed ? ' · Quiz passed' : ''}</span>
-                        <span className="text-xs text-gray flex items-center gap-0.5"><XpIcon className="w-3 h-3 text-gold" />+{mod.xp_quiz} XP</span>
+                        <span className="flex items-center gap-1 rounded-full bg-gold/15 px-2 py-0.5 text-[11px] font-[800] text-[#A06C00]"><XpIcon className="w-3 h-3" />+{mod.xp_quiz} XP</span>
                       </div>
                       {mod.lessons_count > 0 && (
                         <ProgressBar value={pct} max={100} color={fullyDone ? 'rgb(var(--teal))' : 'rgb(var(--navy))'} className="h-1.5" />
