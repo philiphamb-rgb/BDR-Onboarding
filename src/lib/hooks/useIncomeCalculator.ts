@@ -50,10 +50,22 @@ export function useIncomeCalculator() {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const teamRef = useRef<string | null>(null)   // always-latest team_id (no stale closure on first edit)
-  // Set right before the initial DB load writes into `inputs`, so the
-  // debounced save effect below doesn't immediately re-save the exact data
-  // it was just loaded from — only real user edits should trigger a write.
-  const skipNextSaveRef = useRef(false)
+  // Guards the debounced save effect below against firing before the initial
+  // load has actually finished. `setUserId` commits in its OWN render (it
+  // runs before the `await Promise.all(...)` beneath it), so there's a window
+  // where `userId` is already truthy but `inputs` still holds the hardcoded
+  // defaults and any real saved plan hasn't loaded yet — without this guard,
+  // a slow connection can let the debounce timer fire first and upsert
+  // placeholder defaults on top of (silently clobbering) the rep's real plan.
+  const initialLoadDoneRef = useRef(false)
+  // The exact `inputs` object set from a loaded plan row — compared by
+  // REFERENCE below so the save effect can skip re-uploading the identical
+  // data it was just loaded from without a fragile "consume a boolean flag
+  // on the next run" scheme (which can't tell "the run right after load" apart
+  // from "the next real edit" when React batches renders differently than
+  // expected). A real edit always produces a new `{...prev, ...patch}` object,
+  // so this comparison naturally stops matching from the first real edit on.
+  const loadedInputsRef = useRef<PlanInputs | null>(null)
   const today = localDateKey()
 
   useEffect(() => {
@@ -72,11 +84,13 @@ export function useIncomeCalculator() {
       if (pb?.checks) setPlaybookState(pb.checks)
       if (planRow) {
         setPlanId(planRow.id); setHasPlan(true)
-        skipNextSaveRef.current = true
-        setInputs(rowToInputs(planRow))
+        const loaded = rowToInputs(planRow)
+        loadedInputsRef.current = loaded
+        setInputs(loaded)
         const { data: ci } = await supabase.from('income_checkins').select('week_number, contacts, closes, target_contacts').eq('plan_id', planRow.id)
         if (active && ci) setCheckIns(ci.sort((a: any, b: any) => a.week_number - b.week_number).map((r: any) => ({ c: r.contacts, x: r.closes, t: r.target_contacts })))
       }
+      initialLoadDoneRef.current = true
       setLoading(false)
     })
     return () => { active = false }
@@ -98,8 +112,8 @@ export function useIncomeCalculator() {
   // previously a failed save just silently reverted the "Saving…" indicator
   // to blank with no explanation.
   useEffect(() => {
-    if (!userId) return
-    if (skipNextSaveRef.current) { skipNextSaveRef.current = false; return }
+    if (!userId || !initialLoadDoneRef.current) return
+    if (inputs === loadedInputsRef.current) return
     const timer = setTimeout(async () => {
       setSaving(true)
       const payload = {
