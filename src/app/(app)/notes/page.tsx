@@ -11,7 +11,6 @@ import { OPTIMIZED_DAY, BLOCK_STYLE, parseHM, fmtClock, DEFAULT_SHIFT, localToda
 import { smartTaskDefaults, suggestNoteMeta, looksActionable, cleanTaskTitle, NOTE_CATEGORIES, CATEGORY_COLOR } from '@/lib/noteTriage'
 import { fmtEst } from '@/lib/triageEngine'
 import { AiTip } from '@/components/AiTip'
-import { PlanTabs } from '@/components/PlanTabs'
 
 const uid = () => (typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(36).slice(2)}`)
 const emptyBlocks = () => [{ id: uid(), text: '' }]
@@ -205,7 +204,6 @@ export default function NotesPage() {
 
   return (
     <div className="space-y-3">
-      <PlanTabs />
       <div className="flex h-[calc(100vh-16rem)] gap-3 desktop:h-[calc(100vh-13rem)]">
       {/* List / history — hidden on mobile when a note is open */}
       <div className={cn('flex w-full flex-col desktop:w-[320px] desktop:shrink-0', active && 'hidden desktop:flex')}>

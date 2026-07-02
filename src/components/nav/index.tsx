@@ -25,29 +25,44 @@ interface NavItem {
   match?: string[]   // extra hrefs that should mark this item active
 }
 
-// One flat, usage-ordered list — no "Sell/Grow" audience grouping. Every
-// destination is its own top-level tab. Today absorbs the old "Plan" workspace
-// (Capture/Organize/Schedule); those three sections still share the in-page
-// PlanTabs switcher on their own pages AND are individually reachable here as
-// Notes / Tasks.ai / Schedule. Analytics and Leaderboard are no longer standalone
-// tabs — both live as sections on Home. Commissions and Content are standalone
-// (pulled out of Agentic CRM's sub-nav). Coach is not a tab — it's the header
-// button (desktop) + draggable FAB (mobile). Wins is not a tab — wins surface as
-// throttled milestone notifications.
-const PRIMARY_NAV: NavItem[] = [
+// Grouped into three labeled clusters instead of one flat list, so the
+// sidebar reads like a real product IA at a glance instead of ten equally-
+// weighted rows: an unlabeled daily-workflow cluster (the tools you touch
+// every shift), SELL (everything that drives and gets paid for revenue), and
+// LEVEL UP (everything that grows your skill and knowledge). Today absorbs
+// the old "Plan" workspace (Capture/Organize/Schedule); those three tools are
+// each individually reachable here as Notes / Tasks / Schedule — no
+// redundant in-page switcher duplicating this list. Analytics and
+// Leaderboard are no longer standalone tabs — both live as sections on Home.
+// Coach is not a tab — it's the header button (desktop) + draggable FAB
+// (mobile). Wins is not a tab — wins surface as throttled milestone
+// notifications.
+const DAILY_NAV: NavItem[] = [
   { href: '/home',        label: 'Home',            icon: HomeIcon },
   { href: '/today',       label: 'Today',           icon: TodayIcon },
   { href: '/notes',       label: 'Notes',           icon: NoteIcon },
-  { href: '/tasks',       label: 'Tasks.ai',        icon: ChecklistIcon },
+  { href: '/tasks',       label: 'Tasks',           icon: ChecklistIcon },
   { href: '/schedule',    label: 'Schedule',        icon: ClockIcon },
+]
+const SELL_NAV: NavItem[] = [
   // Agentic CRM owns the partner pipeline, so that deep route lights up this
   // tab too. Mobile shows just "CRM". F1-car icon — "engineered speed."
   { href: '/grow',        label: 'Agentic CRM',     shortLabel: 'CRM', icon: RaceCarIcon, match: ['/grow', '/partners'] },
-  { href: '/commissions', label: 'Commissions',     icon: CoinIcon },
   { href: '/grow/content', label: 'Content',        icon: EditIcon },
+  { href: '/commissions', label: 'Commissions',     icon: CoinIcon },
+]
+const LEVEL_UP_NAV: NavItem[] = [
   { href: '/train',       label: 'Learning Center', shortLabel: 'Learn', icon: BrainIcon, match: ['/train', '/progress'] },
   { href: '/resources',   label: 'Resources',       icon: BookIcon },
 ]
+const PRIMARY_GROUPS: { label: string | null; items: NavItem[] }[] = [
+  { label: null,        items: DAILY_NAV },
+  { label: 'Sell',      items: SELL_NAV },
+  { label: 'Level Up',  items: LEVEL_UP_NAV },
+]
+// Flattened for consumers that just need "every primary destination" —
+// global search, the mobile "More" sheet, permission scans.
+const PRIMARY_NAV: NavItem[] = PRIMARY_GROUPS.flatMap(g => g.items)
 
 // Agentic CRM's views used to render as clickable tabs at the top of every
 // /grow page (GrowthTabs). They now live here instead, as a collapsible
@@ -83,7 +98,7 @@ const BOTTOM_NAV: NavItem[] = [
   { href: '/home',        label: 'Home',    icon: HomeIcon },
   { href: '/today',       label: 'Today',   icon: TodayIcon },
   { href: '/grow',        label: 'CRM',     shortLabel: 'CRM', icon: RaceCarIcon, match: ['/grow', '/partners'] },
-  { href: '/tasks',       label: 'Tasks.ai', shortLabel: 'Tasks', icon: ChecklistIcon },
+  { href: '/tasks',       label: 'Tasks',    icon: ChecklistIcon },
   { href: '/schedule',    label: 'Schedule', icon: ClockIcon },
 ]
 
@@ -313,7 +328,7 @@ export function BottomNav({ user }: { user?: User | null; unreadCount?: number }
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// SIDEBAR (desktop) — one flat list of tabs (no audience sections)
+// SIDEBAR (desktop) — grouped into labeled sections (daily tools, Sell, Level Up)
 // ═══════════════════════════════════════════════════════════════════════════════
 
 export function Sidebar({ user }: { user?: User | null; unreadCount?: number }) {
@@ -323,7 +338,9 @@ export function Sidebar({ user }: { user?: User | null; unreadCount?: number }) 
   const { canView } = usePermissions()
   const allowed = (item: NavItem) => { const f = featureForHref(item.href); return !f || canView(f) }
 
-  const primary = PRIMARY_NAV.filter(allowed)
+  // Drop a group entirely if permissions filter every one of its items out,
+  // so a role never sees an empty section header with nothing beneath it.
+  const groups = PRIMARY_GROUPS.map(g => ({ ...g, items: g.items.filter(allowed) })).filter(g => g.items.length > 0)
   const managerItems = isManager ? MANAGER_ITEMS.filter(allowed) : []
   const growthItem = PRIMARY_NAV.find(i => i.href === '/grow')!
   const growthSub = GROWTH_SUBNAV.filter(v => !v.lock || canView(v.feature!))
@@ -376,12 +393,19 @@ export function Sidebar({ user }: { user?: User | null; unreadCount?: number }) 
       </div>
 
       <div className={cn('flex-1 overflow-y-auto py-3', collapsed ? 'px-2' : 'px-3')}>
-        <div className="space-y-0.5">
-          {primary.map(item => item.href === '/grow'
-            ? <GrowthNavGroup key={item.href} item={item} subItems={growthSub} pathname={pathname} collapsed={collapsed} open={showGrow} onToggle={toggleGrow} />
-            : <SidebarItem key={item.href} item={item} pathname={pathname} collapsed={collapsed} />
-          )}
-        </div>
+        {groups.map((group, gi) => (
+          <div key={group.label ?? 'daily'} className={cn(gi > 0 && 'mt-4 border-t border-border pt-3')}>
+            {group.label && !collapsed && (
+              <div className="mb-1 px-4 text-[10px] font-[800] uppercase tracking-[0.1em] text-gray">{group.label}</div>
+            )}
+            <div className="space-y-0.5">
+              {group.items.map(item => item.href === '/grow'
+                ? <GrowthNavGroup key={item.href} item={item} subItems={growthSub} pathname={pathname} collapsed={collapsed} open={showGrow} onToggle={toggleGrow} />
+                : <SidebarItem key={item.href} item={item} pathname={pathname} collapsed={collapsed} />
+              )}
+            </div>
+          </div>
+        ))}
 
         {/* Manager tools — role-gated. Collapsed: icon-only, no accordion.
             Expanded: collapsible section, collapsed by default. */}

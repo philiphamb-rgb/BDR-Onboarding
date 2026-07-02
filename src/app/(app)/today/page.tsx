@@ -20,7 +20,6 @@ import { autoPlan, fmtEst } from '@/lib/triageEngine'
 import { stageMeta } from '@/lib/partnerChecklist'
 import { localToday } from '@/lib/schedule'
 import { fetchDaySlots } from '@/lib/daySlots'
-import { PlanTabs } from '@/components/PlanTabs'
 
 export default function TodayPage() {
   const supabase = createClient()
@@ -209,9 +208,6 @@ export default function TodayPage() {
         <h1 className="text-h1 text-dark-text">Today</h1>
         <p className="text-sm text-gray">{formatDateShort(new Date())}</p>
       </div>
-
-      {/* Capture / Tasks.ai / Schedule — the old "Plan" workspace, one tap away */}
-      <PlanTabs />
 
       <AiTip id="today-plan" title="Start the day with an AI game plan" prompt="Give me my game plan for today: where I stand, my biggest opportunity, and the top 3 things to do." tryLabel="Get today's game plan">
         Ask the coach to triage your day from your goal, pipeline, and tasks — then tap <span className="font-[700]">Auto-plan my day</span> to schedule it all into your time blocks.

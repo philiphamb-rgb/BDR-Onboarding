@@ -11,7 +11,6 @@ import { OPTIMIZED_DAY, localToday } from '@/lib/schedule'
 import { urgency, urgencyLabel } from '@/lib/triageEngine'
 import { smartTaskDefaults } from '@/lib/noteTriage'
 import { AiTip } from '@/components/AiTip'
-import { PlanTabs } from '@/components/PlanTabs'
 
 export default function TasksPage() {
   const supabase = createClient()
@@ -138,7 +137,6 @@ export default function TasksPage() {
 
   return (
     <div className="space-y-4 pb-4">
-      <PlanTabs />
       <PageHeader title="Tasks" subtitle="Capture in Notes, organize here, then schedule into Time Blocks." />
 
       <AiTip id="tasks-ai" title="AI does the busywork" prompt="Look at all my open tasks and prioritize them for me — what's most important and what should I time-block today?" tryLabel="Prioritize with AI">

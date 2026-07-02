@@ -25,7 +25,7 @@ const NAV = [
   { label: 'Home', href: '/home', icon: HomeIcon, keys: 'h' },
   { label: 'Today', href: '/today', icon: TodayIcon, keys: 't' },
   { label: 'Notes', href: '/notes', icon: NoteIcon, keys: 'n' },
-  { label: 'Tasks.ai', href: '/tasks', icon: ChecklistIcon },
+  { label: 'Tasks', href: '/tasks', icon: ChecklistIcon },
   { label: 'Schedule', href: '/schedule', icon: ClockIcon, keys: 's' },
   { label: 'Agentic CRM', href: '/grow', icon: RaceCarIcon, keys: 'c' },
   { label: 'Commissions', href: '/commissions', icon: CoinIcon },

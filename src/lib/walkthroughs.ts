@@ -38,8 +38,6 @@ const V21: Walkthrough = {
       body: 'Below your top action is a ranked plan built from your goal, pipeline, and tasks — ordered by what drives the most revenue. Tap “Auto-plan my day” to schedule it.' },
     { route: '/today', selector: '[data-tour="today-plan-card"]', emoji: '', title: 'Run your day',
       body: 'Today is your execution view: a checklist of what’s time-blocked with a progress bar, your habits, and one-tap logging for calls, demos, and deals.' },
-    { route: '/notes', selector: '[data-tour="plan-tabs"]', emoji: '', title: 'One Plan workspace',
-      body: 'Notes, Tasks, and Time Blocks are now one place. These tabs follow the natural flow: Capture an idea → Organize it into tasks → Schedule it on your calendar.' },
     { route: '/notes', selector: '[data-tour="notes-new"]', emoji: '', title: 'Capture that becomes action',
       body: 'Brain-dump anything here. Hit Organize and AI tags it and pulls out every to-do with a time estimate — then turn any line into a task or drag it onto a time block.' },
     { route: '/schedule', selector: '[data-tour="autoplan-controls"]', emoji: '', title: 'Auto-plan your day',
