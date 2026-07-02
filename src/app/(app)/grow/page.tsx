@@ -15,9 +15,10 @@ import { Card, Skeleton } from '@/components/ui'
 import { CountUp } from '@/components/CountUp'
 import { GrowthTabs } from '@/components/GrowthTabs'
 import { GrowthChrome } from '@/components/growth/GrowthChrome'
-import { FlameIcon, HandshakeIcon, IntegrationIcon, EditIcon, ArrowRightIcon, ChartRisingIcon, LightningIcon } from '@/components/icons'
+import { FlameIcon, HandshakeIcon, ArrowRightIcon, LightningIcon } from '@/components/icons'
 import { useGrowthOS } from '@/lib/hooks/useGrowthOS'
 import { useModuleKV } from '@/lib/hooks/useModuleKV'
+import { AUTOMATION_META } from '@/lib/modules/growth-os/automationMeta'
 import { askCoach } from '@/lib/coachBus'
 import { cn } from '@/lib/utils'
 
@@ -44,6 +45,8 @@ export default function GrowthOverviewPage() {
   const router = useRouter()
   const { loading, roster, liveCount, leads, goals } = useGrowthOS()
   const { loading: welcomeLoading, value: welcome } = useModuleKV('growth_welcome', { seen: false })
+  const autosForRoster = (roster || []).filter(a => AUTOMATION_META[a.id])
+  const autosLive = autosForRoster.filter(a => a.status === 'live').length
 
   // First-ever visit to Agentic CRM → the full-screen "Meet your AI team"
   // orientation, once per user. Replayable any time from the info icon below.
@@ -82,62 +85,8 @@ export default function GrowthOverviewPage() {
             </Card>
           )}
 
-          {/* Live pipeline snapshot */}
-          <Link href="/partners" className="block active:scale-[0.99] transition-transform">
-            <Card className="!p-4 hover:border-teal/40">
-              <div className="mb-3 flex items-center justify-between">
-                <div className="flex items-center gap-2"><HandshakeIcon size={16} className="text-navy-ink" /><span className="text-[13px] font-[800] text-dark-text">Pipeline right now</span></div>
-                <span className="flex items-center gap-1 text-[12px] font-[700] text-navy-ink">Open Partners <ArrowRightIcon size={13} /></span>
-              </div>
-              <div className="grid grid-cols-3 gap-2">
-                {[
-                  { k: 'Hot', v: leads.hot, tone: 'text-error', bg: 'bg-error/8' },
-                  { k: 'Warm', v: leads.warm, tone: 'text-[#A06C00]', bg: 'bg-gold/12' },
-                  { k: 'Cold', v: leads.cold, tone: 'text-navy-ink', bg: 'bg-navy/6' },
-                ].map(s => (
-                  <div key={s.k} className={cn('rounded-xl p-2.5 text-center', s.bg)}>
-                    <div className="mb-0.5 flex items-center justify-center gap-1"><FlameIcon size={14} className={s.tone} /><span className="text-[10px] font-[800] uppercase tracking-wide text-gray">{s.k}</span></div>
-                    <div className={cn('text-[22px] font-[900] tabular-nums', s.tone)}><CountUp value={s.v} /></div>
-                  </div>
-                ))}
-              </div>
-              <div className="mt-2 text-center text-[11px] text-gray">{leads.total} agency partners tracked · {leads.won} won</div>
-            </Card>
-          </Link>
-
-          {/* AI Team pulse */}
-          <Link href="/grow/team" className="block active:scale-[0.99] transition-transform">
-            <Card className="!p-4 hover:border-teal/40">
-              <div className="flex items-center gap-3">
-                <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-teal/10 text-teal"><IntegrationIcon size={22} /></span>
-                <div className="min-w-0 flex-1">
-                  <div className="text-[14px] font-[800] text-dark-text">AI Team</div>
-                  <div className="text-[12px] text-gray"><span className="font-[800] text-teal">{liveCount}</span> of {roster.length} agents live & working your funnel</div>
-                </div>
-                <ArrowRightIcon size={16} className="shrink-0 text-gray" />
-              </div>
-            </Card>
-          </Link>
-
-          {/* Quick entries */}
-          <div className="grid grid-cols-2 gap-3">
-            <Link href="/grow/content" className="block active:scale-[0.98] transition-transform">
-              <Card className="h-full !p-4 hover:border-teal/40">
-                <EditIcon size={20} className="text-navy-ink" />
-                <div className="mt-2 text-[13.5px] font-[800] text-dark-text">Content Engine</div>
-                <p className="mt-0.5 text-[11.5px] leading-snug text-gray">Your ranked "what to post next"</p>
-              </Card>
-            </Link>
-            <Link href="/grow/leadgen" className="block active:scale-[0.98] transition-transform">
-              <Card className="h-full !p-4 hover:border-teal/40">
-                <ChartRisingIcon size={20} className="text-navy-ink" />
-                <div className="mt-2 text-[13.5px] font-[800] text-dark-text">Lead Gen</div>
-                <p className="mt-0.5 text-[11.5px] leading-snug text-gray">Score, route & convert leads</p>
-              </Card>
-            </Link>
-          </div>
-
-          {/* One coach */}
+          {/* One coach — the single most powerful action here, right below
+              the Triage Strip (in GrowthChrome above), ahead of everything else. */}
           <button onClick={() => askCoach("Look at my Agentic CRM: my income, leads-per-week and close-rate goals, my pipeline by temperature, and what my AI Team is doing. What are the 3 highest-leverage moves to grow my number this week?")}
             className="relative flex w-full items-center gap-3 overflow-hidden rounded-2xl bg-navy p-4 text-left text-white shadow-card transition-transform active:scale-[0.99]">
             <span className="pointer-events-none absolute inset-y-0 left-0 w-1/4 animate-shimmer bg-white/15 blur-md" aria-hidden="true" />
@@ -148,6 +97,55 @@ export default function GrowthOverviewPage() {
             </div>
             <ArrowRightIcon size={16} className="relative shrink-0 animate-nudge-x text-white/80" />
           </button>
+
+          {/* Live pipeline snapshot — never a bare zero. Hot=0 leads with a
+              contextual next move instead of a "0" tile that explains nothing. */}
+          <Link href="/partners" className="block active:scale-[0.99] transition-transform">
+            <Card className="!p-4 hover:border-teal/40">
+              <div className="mb-3 flex items-center justify-between">
+                <div className="flex items-center gap-2"><HandshakeIcon size={16} className="text-navy-ink" /><span className="text-[13px] font-[800] text-dark-text">Pipeline right now — {leads.total} partner{leads.total === 1 ? '' : 's'} tracked</span></div>
+                <span className="flex items-center gap-1 text-[12px] font-[700] text-navy-ink shrink-0">Open <ArrowRightIcon size={13} /></span>
+              </div>
+              {leads.hot === 0 ? (
+                <div className="rounded-xl bg-bdrbg p-3 text-center">
+                  <p className="text-[13px] font-[700] text-dark-text">
+                    No hot leads right now
+                    {leads.warm > 0 ? ` — ${leads.warm} warm lead${leads.warm > 1 ? 's' : ''} ready to advance` : leads.cold > 0 ? ` — ${leads.cold} cold lead${leads.cold > 1 ? 's' : ''} in the pipeline` : ''}
+                  </p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-3 gap-2">
+                  {[
+                    { k: 'Hot', v: leads.hot, tone: 'text-error', bg: 'bg-error/8' },
+                    { k: 'Warm', v: leads.warm, tone: 'text-[#A06C00]', bg: 'bg-gold/12' },
+                    { k: 'Cold', v: leads.cold, tone: 'text-navy-ink', bg: 'bg-navy/6' },
+                  ].map(s => (
+                    <div key={s.k} className={cn('rounded-xl p-2.5 text-center', s.bg)}>
+                      <div className="mb-0.5 flex items-center justify-center gap-1"><FlameIcon size={14} className={s.tone} /><span className="text-[10px] font-[800] uppercase tracking-wide text-gray">{s.k}</span></div>
+                      <div className={cn('text-[22px] font-[900] tabular-nums', s.tone)}><CountUp value={s.v} /></div>
+                    </div>
+                  ))}
+                </div>
+              )}
+              {leads.won > 0 && <div className="mt-2 text-center text-[11px] text-gray">{leads.won} won</div>}
+            </Card>
+          </Link>
+
+          {/* Your system at a glance — one scannable line replacing three
+              separate cards (AI Team pulse, Content Engine, Lead Gen) that
+              each only ever said "here's the number, tap to see more." */}
+          <Card className="!p-3">
+            <div className="mb-2 text-[11px] font-[800] uppercase tracking-wide text-gray">Your system at a glance</div>
+            <div className="flex flex-wrap items-center gap-x-1.5 gap-y-1.5 text-[12.5px]">
+              <Link href="/grow/team" className="font-[700] text-navy-ink hover:underline">Agents: {liveCount}/{roster.length} live</Link>
+              <span className="text-gray">·</span>
+              <Link href="/grow/automations" className="font-[700] text-navy-ink hover:underline">Automations: {autosLive}/{autosForRoster.length} active</Link>
+              <span className="text-gray">·</span>
+              <Link href="/grow/content" className="font-[700] text-navy-ink hover:underline">Content: 1 item ready</Link>
+              <span className="text-gray">·</span>
+              <Link href="/grow/leadgen" className="font-[700] text-navy-ink hover:underline">Pipeline: {leads.total} tracked</Link>
+            </div>
+          </Card>
         </>
       )}
     </div>

@@ -95,7 +95,7 @@ export function GrowthChrome() {
         <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-hero text-white"><RaceCarIcon size={18} /></span>
         <div className="min-w-0 flex-1">
           <h1 className="text-h2 leading-tight text-dark-text">Agentic CRM</h1>
-          <p className="text-[12px] text-gray">AI team working for you 24/7</p>
+          <p className="text-[12px] text-gray">Your AI-powered growth system — working while you sleep.</p>
         </div>
         <Link href="/grow/welcome" aria-label="Meet your AI team — replay the intro" title="Meet your AI team"
           className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-gray hover:bg-bdrbg hover:text-navy-ink">
