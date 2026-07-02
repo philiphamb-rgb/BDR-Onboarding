@@ -9,6 +9,7 @@ export interface ChecklistTemplateItem {
   desc: string
   stage: string // pipeline stage this task belongs to
   link?: string // system key (see src/lib/links.ts) for a one-tap launch button
+  estMin?: number // ~minutes to complete — shown as the "next action" time estimate
 }
 
 export interface ChecklistState {
@@ -37,12 +38,12 @@ export function stageIndex(key: string) {
 // supports. Ties directly to the training: Module 5 (order form), Module 6
 // (PartnerHub), Module 3 (pipeline).
 export const CHECKLIST_TEMPLATE: ChecklistTemplateItem[] = [
-  { key: 'confirm_business', label: 'Confirm Business Details', desc: 'Legal name, DBA if any, EIN, signer, contact, and tool used.', stage: 'new_lead', link: 'hubspot' },
-  { key: 'welcome_email', label: 'Send PartnerHub Welcome Email', desc: 'Make sure they receive the email and can log in.', stage: 'interested', link: 'partnerhub' },
-  { key: 'stripe_setup', label: 'Complete Stripe Setup', desc: 'Verify business info, EIN, and bank account.', stage: 'interested', link: 'stripe' },
-  { key: 'send_order_form', label: 'Send Order Form', desc: 'Use the correct entity, signer, terms, and email.', stage: 'proposal_sent', link: 'onit' },
-  { key: 'send_partner_link', label: 'Send Partner Link', desc: 'Tell them where to place it and not to change it.', stage: 'contract_signed', link: 'partnerhub' },
-  { key: 'confirm_first_use', label: 'Confirm First PartnerHub Use', desc: 'Follow up until the partner has used the PH link successfully.', stage: 'opportunity_won', link: 'partnerhub' },
+  { key: 'confirm_business', label: 'Confirm Business Details', desc: 'Legal name, DBA if any, EIN, signer, contact, and tool used.', stage: 'new_lead', link: 'hubspot', estMin: 10 },
+  { key: 'welcome_email', label: 'Send PartnerHub Welcome Email', desc: 'Make sure they receive the email and can log in.', stage: 'interested', link: 'partnerhub', estMin: 5 },
+  { key: 'stripe_setup', label: 'Complete Stripe Setup', desc: 'Verify business info, EIN, and bank account.', stage: 'interested', link: 'stripe', estMin: 15 },
+  { key: 'send_order_form', label: 'Send Order Form', desc: 'Use the correct entity, signer, terms, and email.', stage: 'proposal_sent', link: 'onit', estMin: 10 },
+  { key: 'send_partner_link', label: 'Send Partner Link', desc: 'Tell them where to place it and not to change it.', stage: 'contract_signed', link: 'partnerhub', estMin: 5 },
+  { key: 'confirm_first_use', label: 'Confirm First PartnerHub Use', desc: 'Follow up until the partner has used the PH link successfully.', stage: 'opportunity_won', link: 'partnerhub', estMin: 10 },
 ]
 
 // A fresh checklist (all tasks unchecked) for a new partner.
@@ -65,4 +66,12 @@ export function completion(stored: ChecklistState[] | null | undefined) {
   const total = CHECKLIST_TEMPLATE.length
   const done = mergeChecklist(stored).filter(i => i.done).length
   return { done, total, pct: total ? Math.round((done / total) * 100) : 0 }
+}
+
+// The next thing to actually do for this partner — the first incomplete
+// checklist item, in template order. Used as the one-line "what to do next"
+// suggestion on the pipeline list, so it's always a real, actionable task
+// (never a generic placeholder) and always carries a real time estimate.
+export function nextTask(stored: ChecklistState[] | null | undefined): ChecklistTemplateItem | null {
+  return mergeChecklist(stored).find(i => !i.done) ?? null
 }

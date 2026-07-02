@@ -8,8 +8,10 @@ import { createClient } from '@/lib/supabase/client'
 import { Card, Button, Modal, EmptyState, SkeletonList, ProgressBar, Badge, toast } from '@/components/ui'
 import { PageHeader } from '@/components/manager'
 import { GrowthTabs } from '@/components/GrowthTabs'
-import { HandshakeIcon, PlusIcon, ArrowRightIcon, ChecklistIcon, CheckIcon, SearchIcon, CloseIcon, CalendarIcon, ChevronDownIcon, MenuIcon } from '@/components/icons'
-import { CHECKLIST_TEMPLATE, PIPELINE_STAGES, freshChecklist, completion, stageMeta } from '@/lib/partnerChecklist'
+import { HandshakeIcon, PlusIcon, ArrowRightIcon, ChecklistIcon, CheckIcon, SearchIcon, CloseIcon, CalendarIcon, ChevronDownIcon, MenuIcon, LightningIcon } from '@/components/icons'
+import { CHECKLIST_TEMPLATE, PIPELINE_STAGES, freshChecklist, completion, stageMeta, stageIndex, nextTask } from '@/lib/partnerChecklist'
+import { useGrowthOS } from '@/lib/hooks/useGrowthOS'
+import { fmtAgo } from '@/lib/modules/growth-os/leadgen'
 import { cn } from '@/lib/utils'
 import { Tour } from '@/components/tour'
 import { PARTNERS_TOUR } from '@/lib/tours'
@@ -20,10 +22,17 @@ const SORTS = [
 ]
 const todayStr = () => new Date().toISOString().split('T')[0]
 const fmtFollow = (d: string) => new Date(d + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+// Same score bands as Lead Gen's routing legend (SCORE_ROUTING), so a score
+// means the same thing everywhere it appears.
+const scoreTone = (v: number) => v >= 90 ? { text: 'text-success', bg: 'bg-success/10' }
+  : v >= 75 ? { text: 'text-teal', bg: 'bg-teal/10' }
+  : v >= 50 ? { text: 'text-[#A06C00]', bg: 'bg-gold/12' }
+  : { text: 'text-gray', bg: 'bg-bdrbg' }
 
 export default function PartnersPage() {
   const supabase = createClient()
   const router = useRouter()
+  const { leadList } = useGrowthOS()   // same derived 0-100 score used on Lead Gen
   const [userId, setUserId] = useState<string>()
   const [teamId, setTeamId] = useState<string>()
   const [partners, setPartners] = useState([])
@@ -83,7 +92,7 @@ export default function PartnersPage() {
   }
 
   const active = partners.length
-  const fullyDone = partners.filter(p => completion(p.checklist).pct === 100).length
+  const scoreById = useMemo(() => new Map((leadList || []).map(l => [l.id, l.score])), [leadList])
 
   const stageRank = (k: string) => { const i = PIPELINE_STAGES.findIndex(s => s.key === k); return i < 0 ? 99 : i }
   const filtered = useMemo(() => {
@@ -159,6 +168,10 @@ export default function PartnersPage() {
             const s = stageMeta(p.stage)
             const needsAction = p.stage === 'proposal_sent' || p.stage === 'contract_signed'
             const overdue = p.next_followup_date && p.next_followup_date <= todayStr()
+            const score = scoreById.get(p.id)
+            const agoMin = Math.max(0, Math.round((Date.now() - new Date(p.updated_at).getTime()) / 60000))
+            const idx = stageIndex(p.stage)
+            const next = nextTask(p.checklist)
             return (
               <Link key={p.id} href={`/partners/${p.id}`} className="block">
                 <Card hover className={cn(needsAction && 'border-gold/50')}>
@@ -170,22 +183,43 @@ export default function PartnersPage() {
                       </div>
                       {p.company && <div className="truncate text-[12px] text-gray">{p.company}</div>}
                     </div>
-                    <span className="shrink-0 rounded-full px-2.5 py-1 text-[11px] font-[700]" style={{ backgroundColor: `${s.color}1A`, color: s.color }}>
-                      {s.label}
-                    </span>
+                    <div className="flex shrink-0 items-center gap-1.5">
+                      {score != null && (
+                        <span className={cn('rounded-full px-2 py-1 text-[11px] font-[800] tabular-nums', scoreTone(score).bg, scoreTone(score).text)} title={`Lead score ${score}/100`}>{score}</span>
+                      )}
+                      <span className="rounded-full px-2.5 py-1 text-[11px] font-[700]" style={{ backgroundColor: `${s.color}1A`, color: s.color }}>
+                        {s.label}
+                      </span>
+                    </div>
                   </div>
-                  <div className="mt-3 flex items-center gap-3">
-                    <ProgressBar value={c.pct} max={100} color={c.pct === 100 ? '#16A34A' : 'rgb(var(--teal))'} className="h-1.5 flex-1" />
+
+                  {/* Stage progress — where this partner sits in New Lead -> Interested -> Proposal Sent -> Contract Signed -> Won */}
+                  <div className="mt-3 flex items-center gap-1">
+                    {PIPELINE_STAGES.map((st, i) => (
+                      <span key={st.key} title={st.label} className="h-1.5 flex-1 rounded-full bg-border"
+                        style={i <= idx ? { backgroundColor: st.color } : undefined} />
+                    ))}
+                  </div>
+
+                  <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-gray">
+                    <span>{fmtAgo(agoMin)}</span>
                     {p.next_followup_date && (
-                      <span className={cn('flex shrink-0 items-center gap-1 text-[11px] font-[700]', overdue ? 'text-error' : 'text-gray')}>
+                      <span className={cn('flex items-center gap-1 font-[700]', overdue ? 'text-error' : 'text-gray')}>
                         <CalendarIcon size={12} /> {fmtFollow(p.next_followup_date)}
                       </span>
                     )}
-                    <span className="flex items-center gap-1 text-[12px] font-[700] text-mid-text tabular-nums">
-                      {c.pct === 100 ? <CheckIcon size={13} className="text-success" /> : null}{c.done}/{c.total}
+                    <span className="flex items-center gap-1 font-[700] text-mid-text tabular-nums">
+                      {c.pct === 100 ? <CheckIcon size={13} className="text-success" /> : null}Onboarding: {c.done}/{c.total} steps done
                     </span>
-                    <ArrowRightIcon size={15} className="text-gray shrink-0" />
                   </div>
+
+                  {/* AI suggestion — always the real next incomplete checklist step, never a placeholder */}
+                  {next && (
+                    <div className="mt-2 flex items-center gap-1.5 rounded-lg bg-teal/[0.06] px-2.5 py-1.5 text-[11.5px] text-teal">
+                      <LightningIcon size={11} className="shrink-0" />
+                      <span className="min-w-0 flex-1 truncate"><span className="font-[700]">AI suggests:</span> {next.label} · ~{next.estMin ?? 10}m</span>
+                    </div>
+                  )}
                 </Card>
               </Link>
             )
