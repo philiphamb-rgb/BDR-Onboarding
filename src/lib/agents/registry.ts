@@ -20,7 +20,8 @@ type SupabaseLike = {
 
 interface RoleRow {
   id: string; tier: number; department: string; title: string
-  mission: string | null; kpi: string | null; roi_logic: string | null
+  mission: string | null; job_description: string | null; comms_style: string | null
+  kpi: string | null; roi_logic: string | null
   inputs: string[] | null; outputs: string[] | null; tools: string[] | null
   reports_to: string[] | null; handoff_to: string[] | null
   reviewed_by: string[] | null; escalation_path: string[] | null
@@ -28,6 +29,8 @@ interface RoleRow {
 interface AgentRow {
   id: string; role_id: string; first_name: string; last_name: string
   personality: string | null; morning_greeting: string | null
+  brand_voice_override: string | null
+  roi_min_per_run: number | null; roi_runs_per_mo: number | null; roi_note: string | null
   hitl_tier: string; model_tier: string; default_status: string
   system_prompt: string | null; editable_settings: Record<string, unknown> | null
 }
@@ -39,6 +42,8 @@ function mapRole(r: RoleRow): AgentRole {
     department: (r.department as AgentRole['department']),
     title: r.title,
     mission: r.mission,
+    jobDescription: r.job_description,
+    commsStyle: r.comms_style,
     kpi: r.kpi,
     roiLogic: r.roi_logic,
     inputs: r.inputs ?? [],
@@ -59,6 +64,10 @@ function mapAgent(a: AgentRow): Agent {
     lastName: a.last_name,
     personality: a.personality,
     morningGreeting: a.morning_greeting,
+    brandVoiceOverride: a.brand_voice_override,
+    roiMinPerRun: a.roi_min_per_run,
+    roiRunsPerMo: a.roi_runs_per_mo,
+    roiNote: a.roi_note,
     hitlTier: (a.hitl_tier as Agent['hitlTier']),
     modelTier: (a.model_tier as Agent['modelTier']),
     defaultStatus: (a.default_status as AgentStatus),

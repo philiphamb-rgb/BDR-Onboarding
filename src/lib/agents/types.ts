@@ -17,6 +17,8 @@ export interface AgentRole {
   department: Department
   title: string
   mission: string | null
+  jobDescription: string | null
+  commsStyle: string | null
   kpi: string | null
   roiLogic: string | null
   inputs: string[]
@@ -36,11 +38,32 @@ export interface Agent {
   lastName: string
   personality: string | null
   morningGreeting: string | null
+  brandVoiceOverride: string | null
+  roiMinPerRun: number | null
+  roiRunsPerMo: number | null
+  roiNote: string | null
   hitlTier: HitlTier
   modelTier: ModelTier
   defaultStatus: AgentStatus
   systemPrompt: string | null
   editableSettings: Record<string, unknown>
+}
+
+// Calculated ROI for an agent: minutes/run × runs/month → hours → dollars at the
+// team hourly rate. One transparent formula, shown in the UI so the number is
+// never a black box.
+export interface AgentRoi {
+  minPerRun: number
+  runsPerMo: number
+  hoursPerMo: number
+  dollarsPerMo: number
+  hourlyRate: number
+}
+export function computeAgentRoi(a: { roiMinPerRun: number | null; roiRunsPerMo: number | null }, hourlyRate = 50): AgentRoi {
+  const minPerRun = a.roiMinPerRun ?? 0
+  const runsPerMo = a.roiRunsPerMo ?? 0
+  const hoursPerMo = Math.round(((minPerRun * runsPerMo) / 60) * 10) / 10
+  return { minPerRun, runsPerMo, hoursPerMo, dollarsPerMo: Math.round(hoursPerMo * hourlyRate), hourlyRate }
 }
 
 // The two halves joined — what the app actually consumes.
