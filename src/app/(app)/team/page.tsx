@@ -20,6 +20,8 @@ import { usePermissions } from '@/components/usePermissions'
 import { loadRegistry } from '@/lib/agents/registry'
 import { MODEL_FOR_TIER, HITL_LABEL, TIER_LABEL, computeAgentRoi } from '@/lib/agents/types'
 import { InfoIcon, IntegrationIcon, ChevronDownIcon, ArrowRightIcon, CoachIcon, EditIcon, CoinIcon, CopyIcon, CheckIcon } from '@/components/icons'
+import { AgentAvatar } from '@/components/team/AgentAvatar'
+import { OrgChart } from '@/components/team/OrgChart'
 import { cn } from '@/lib/utils'
 
 const DEPT_LABEL: Record<string, string> = {
@@ -42,6 +44,7 @@ export default function AgentOfficePage() {
   const [userId, setUserId] = useState<string | null>(null)
   const [openId, setOpenId] = useState<string | null>(null)
   const [editBrand, setEditBrand] = useState(false)
+  const [view, setView] = useState<'org' | 'grid'>('org')
 
   const load = async () => {
     const registry = await loadRegistry(supabase)
@@ -132,13 +135,24 @@ export default function AgentOfficePage() {
         </Card>
       )}
 
-      <div className="flex items-start gap-2 rounded-xl bg-navy/[0.04] p-3">
-        <InfoIcon size={14} className="mt-0.5 shrink-0 text-navy-ink" />
-        <p className="text-[11.5px] leading-relaxed text-mid-text"><span className="font-[700] text-dark-text">This is your company.</span> Tap anyone to see every detail they run with{isManager ? ' — and edit it' : ''}, or <Link href="/team/rooms" className="font-[700] text-teal">meet with your team</Link>.</p>
+      <div className="flex flex-wrap items-center gap-2">
+        <div className="flex items-start gap-2 rounded-xl bg-navy/[0.04] p-3 flex-1 min-w-[220px]">
+          <InfoIcon size={14} className="mt-0.5 shrink-0 text-navy-ink" />
+          <p className="text-[11.5px] leading-relaxed text-mid-text"><span className="font-[700] text-dark-text">This is your company.</span> Tap anyone to see every detail they run with{isManager ? ' — and edit it' : ''}, or <Link href="/team/rooms" className="font-[700] text-teal">meet with your team</Link>.</p>
+        </div>
+        {/* View toggle — the living org chart, or a flat department grid */}
+        <div className="flex shrink-0 rounded-lg border border-border bg-card p-0.5">
+          {[['org', 'Org chart'], ['grid', 'Grid']].map(([k, label]) => (
+            <button key={k} onClick={() => setView(k as any)}
+              className={cn('rounded-md px-3 py-1.5 text-[12px] font-[800] transition-colors', view === k ? 'bg-navy text-white' : 'text-gray hover:text-navy-ink')}>{label}</button>
+          ))}
+        </div>
       </div>
 
       {loading ? (
         <div className="space-y-3">{[1, 2, 3].map(i => <Skeleton key={i} className="h-24 rounded-2xl" />)}</div>
+      ) : view === 'org' ? (
+        <OrgChart reg={reg} statusOf={statusOf} hourlyRate={hourlyRate} onOpen={setOpenId} />
       ) : (
         <div className="space-y-5">
           {byDept.map(g => (
@@ -150,10 +164,7 @@ export default function AgentOfficePage() {
                   return (
                     <Card key={a.id} hover className="!p-3 cursor-pointer" onClick={() => setOpenId(a.id)}>
                       <div className="flex items-start gap-2.5">
-                        <div className="relative shrink-0">
-                          <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-navy/8 text-[12px] font-[800] text-navy-ink">{a.firstName[0]}{a.lastName[0]}</span>
-                          <span className={cn('absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full ring-2 ring-card', STATUS_TONE[st], st === 'live' && 'animate-breathe')} />
-                        </div>
+                        <AgentAvatar agent={a} size={40} live={st === 'live'} float={st === 'live'} className="shrink-0" />
                         <div className="min-w-0 flex-1">
                           <div className="truncate text-[13px] font-[800] text-dark-text">{a.fullName}</div>
                           <div className="truncate text-[10.5px] font-[700] uppercase tracking-wide text-gray">{a.role?.title}</div>
@@ -197,7 +208,7 @@ function AgentDrawer({ agent, reg, status, brand, hourlyRate, isManager, onClose
     <div className="fixed inset-0 z-[1055] flex items-end justify-center bg-dark-text/50 sm:items-center" onClick={onClose}>
       <div className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-t-2xl bg-card p-4 shadow-modal sm:rounded-2xl" onClick={e => e.stopPropagation()}>
         <div className="mb-3 flex items-start gap-3">
-          <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-navy/8 text-[15px] font-[900] text-navy-ink">{agent.firstName[0]}{agent.lastName[0]}</span>
+          <AgentAvatar agent={agent} size={56} live={status === 'live'} float={status === 'live'} className="shrink-0" />
           <div className="min-w-0 flex-1">
             <div className="text-[16px] font-[900] text-dark-text">{agent.fullName}</div>
             <div className="text-[11px] font-[700] uppercase tracking-wide text-gray">{role.title}</div>
@@ -223,8 +234,15 @@ function AgentDrawer({ agent, reg, status, brand, hourlyRate, isManager, onClose
               {agent.roiNote && <div className="mt-1 text-[10.5px] italic text-gray">{agent.roiNote}</div>}
             </div>
 
+            {/* Job description — the full role brief */}
+            {role.jobDescription && (
+              <div className="mb-3 rounded-xl border border-border bg-bdrbg/40 p-3">
+                <div className="mb-1.5 flex items-center gap-1.5 text-[10px] font-[900] uppercase tracking-wide text-navy-ink"><InfoIcon size={12} /> Job description</div>
+                <p className="whitespace-pre-line text-[12.5px] leading-relaxed text-mid-text">{role.jobDescription}</p>
+              </div>
+            )}
+
             <div className="space-y-2.5 text-[12px] leading-relaxed text-mid-text">
-              {role.jobDescription && <p><span className="font-[800] text-dark-text">Job: </span>{role.jobDescription}</p>}
               {role.kpi && <p><span className="font-[800] text-dark-text">Measured by: </span>{role.kpi}</p>}
               {agent.personality && <p><span className="font-[800] text-dark-text">Personality: </span>{agent.personality}</p>}
               {agent.morningGreeting && <p className="rounded-lg bg-bdrbg p-2.5 italic">“{agent.morningGreeting}”</p>}
