@@ -6,7 +6,7 @@ every UI milestone passed `npm run build` and was committed + merged to the
 designated branch. This is the honest record of what's **live** and what's
 **remaining depth** (deliberately deferred, noted for the next pass).
 
-## Migrations applied (8, all additive/reversible)
+## Migrations applied (12, all additive/reversible)
 
 | File | Adds |
 |---|---|
@@ -62,6 +62,42 @@ designated branch. This is the honest record of what's **live** and what's
   prompt/workflow changes into the review queue (tables ready: prompt_versions/
   workflow_versions with rollback); experimentation runner on `content_experiments`;
   proactive "upgrade radar."
+
+## Phase 7 — Full transparency, grounding & autonomy ✅ shipped
+
+The "every detail shown + editable, real ROI, and the team actually knows your
+business" pass.
+
+- **Agent detail + ROI + brand (migration `..._agent_detail_roi_brand`):** added
+  `job_description` + `comms_style` to roles; `brand_voice_override`, `roi_min_per_run`,
+  `roi_runs_per_mo`, `roi_note` to agents; new `brand_settings` table (voice,
+  audience, promise, dos/donts, `hourly_rate`). Seeded from mission/ROI logic and
+  16 automation-backed agents given researched figures. **43 agents ≈ 303 h/mo ≈
+  $15,167/mo.**
+- **Agent Office (`/team`):** company ROI rollup; editable Brand Voice; per-agent
+  drawer showing ROI + "how it's calculated" math, job description, KPI, personality,
+  inter-departmental comms (reports-to / passes-to / reviewed-by / escalates-to +
+  comms style), HITL/tier/model, brand voice, and system prompt. `AgentEditForm`
+  (manager-gated) edits every one of those fields, split across `agents`/`agent_roles`.
+- **Grounding:** `buildBusinessContext()` + `brandBlock()` weave live pipeline,
+  goals, top-fit accounts, and trusted learnings + brand voice into every agent
+  system prompt (meeting rooms). Coach context extended with the same OS surfaces
+  (accounts, layered goals, meetings, trusted-learnings playbook).
+- **Autonomy (crons, guarded by `CRON_SECRET` + service role, 501 until set):**
+  `/api/cron/morning-brief` (Chief of Staff briefs each active operator) and
+  `/api/cron/nightly-audit` (QA Lead audits each team → managers). Both persist to
+  new `agent_briefs` table + log `agent_runs`. Added to `vercel.json`. Plus
+  on-demand `/api/team/brief` so an operator can summon their brief instantly
+  (no service-role needed); surfaced on `/today` with a "Brief me" card + "Act on
+  this" handoff to the coach.
+- **Meeting → execution:** room wrap-up auto-creates real tasks from `next_actions`
+  (tagged/categorized); room UI + toast reflect the tasks added.
+- **ROI parity:** automations now show the same transparent "how it's calculated"
+  formula line as agents.
+
+**Remaining depth (unchanged from below):** embeddings/RAG population, nightly
+decay recompute, closed-loop self-improvement, compliance approved-language vault,
+6-question onboarding. All schema-ready; deferred for a focused pass.
 
 ## Cross-cutting notes / follow-ups
 
