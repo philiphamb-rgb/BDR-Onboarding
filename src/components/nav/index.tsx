@@ -11,6 +11,7 @@ import {
   BookIcon, HandshakeIcon, ClockIcon, MoreIcon, CoinIcon, EditIcon,
   ChecklistIcon, ShieldIcon, SearchIcon, CloseIcon, ChevronDownIcon, MenuIcon,
   RaceCarIcon, BrainIcon, NoteIcon, TargetIcon, LightningIcon, IntegrationIcon,
+  DatabaseIcon,
 } from '@/components/icons'
 import type { User } from '@/types/database'
 import { usePermissions } from '@/components/usePermissions'
@@ -71,6 +72,7 @@ const PRIMARY_NAV: NavItem[] = PRIMARY_GROUPS.flatMap(g => g.items)
 // mobile (no sidebar there to hold this).
 const GROWTH_SUBNAV: (NavItem & { feature?: string; lock?: boolean })[] = [
   { href: '/grow',             label: 'Overview',    icon: DashboardIcon },
+  { href: '/crm',              label: 'Workspace',   icon: DatabaseIcon },
   { href: '/partners',         label: 'Pipeline',    icon: HandshakeIcon },
   { href: '/grow/leadgen',     label: 'Lead Gen',    icon: TargetIcon },
   { href: '/grow/automations', label: 'Automations', icon: LightningIcon },
@@ -118,6 +120,7 @@ const PAGE_INDEX: { label: string; href: string }[] = [
   { label: 'AI Team', href: '/grow/team' }, { label: 'Build Phases', href: '/grow/build' },
   // Inside Agentic CRM's sub-nav but still directly searchable.
   { label: 'Partners', href: '/partners' }, { label: 'Pipeline', href: '/partners' }, { label: 'Lead Gen', href: '/grow/leadgen' },
+  { label: 'CRM Workspace', href: '/crm' }, { label: 'Accounts', href: '/crm' }, { label: 'Leads', href: '/crm' }, { label: 'Opportunities', href: '/crm' },
   { label: 'Settings', href: '/settings' }, { label: 'Notifications', href: '/notifications' },
 ]
 
