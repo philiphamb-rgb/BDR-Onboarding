@@ -38,7 +38,7 @@ function Countdown({ minutes }: any) {
   const [secs, setSecs] = useState(minutes * 60)
   useEffect(() => { const t = setInterval(() => setSecs(s => s > 0 ? s - 1 : 0), 1000); return () => clearInterval(t) }, [])
   const m = Math.floor(secs / 60), s = secs % 60, urgent = secs < 600
-  return <span title="Optimal posting window — closes when your audience's peak engagement time passes." className={cn('inline-flex items-center gap-1.5 text-[12px] font-[600]', urgent ? 'text-error' : 'text-gray')}><ClockIcon size={12} /> best posting window closes in <span className="tabular-nums">{String(m).padStart(2, '0')}:{String(s).padStart(2, '0')}</span></span>
+  return <span title="Optimal posting window — closes when your audience's peak engagement time passes." className={cn('inline-flex items-center gap-1.5 text-[12px] font-[600]', urgent ? 'text-error' : 'text-gray')}><ClockIcon size={12} /> best time to post — closes in <span className="tabular-nums">{String(m).padStart(2, '0')}:{String(s).padStart(2, '0')}</span></span>
 }
 
 function NextMoveCard() {

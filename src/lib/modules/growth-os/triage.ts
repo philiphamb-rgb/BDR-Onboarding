@@ -39,7 +39,7 @@ export function computeTriage(c: Ctx): TriageItem[] {
   } else if (setupAgents.length > 0) {
     items.push({ tier: 'now', icon: 'LightningIcon', tone: 'teal',
       title: `Turn on "${setupAgents[0].name}"`,
-      reason: incomeGoal ? `Tied to your ${money(incomeGoal)}/mo income goal — activating this agent gives you back selling time you're spending on manual work.` : `This agent is built and waiting — activating it does work for you automatically.`,
+      reason: incomeGoal ? `Tied to your ${money(incomeGoal)}/mo income goal — activating this agent gives you back selling time you're spending on manual work.` : `Ready to go — turning it on does the work for you automatically.`,
       prompt: `Walk me through activating the "${setupAgents[0].name}" in my Apex, step by step, and what to test before I trust it.` })
   } else {
     items.push({ tier: 'now', icon: 'TargetIcon', tone: 'gold',
@@ -57,7 +57,7 @@ export function computeTriage(c: Ctx): TriageItem[] {
   } else if (buildIncomplete) {
     items.push({ tier: 'next', icon: 'ChecklistIcon', tone: 'navy',
       title: `Continue Phase ${buildIncomplete.n}: ${buildIncomplete.name}`,
-      reason: 'This unlocks the next layer of your growth system and compounds everything after it.',
+      reason: 'Doing this builds momentum for everything after it.',
       prompt: `Help me complete the next task in Phase ${buildIncomplete.n} (${buildIncomplete.name}) of my Apex build.` })
   } else {
     items.push({ tier: 'next', icon: 'IntegrationIcon', tone: 'teal',
@@ -75,7 +75,7 @@ export function computeTriage(c: Ctx): TriageItem[] {
   } else if (buildIncomplete) {
     items.push({ tier: 'after', icon: 'ChecklistIcon', tone: 'navy',
       title: `Plan ahead: Phase ${buildIncomplete.n}`,
-      reason: 'Stay one step ahead of your own build instead of reacting to it.',
+      reason: 'Plan before you react.',
       prompt: `Give me a clear overview of what's involved in Phase ${buildIncomplete.n} of my Apex build.` })
   } else {
     items.push({ tier: 'after', icon: 'LightningIcon', tone: 'navy',
