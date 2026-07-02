@@ -7,6 +7,7 @@
 export interface PhaseTask { id: string; t: string; hrs: number; tool: string; done?: boolean }
 export interface Phase {
   n: string; name: string; tone: string; estDays: number
+  outcome: string          // one-sentence "why this phase matters" for the header
   whatYouGet: string
   tasks: PhaseTask[]
   del: string[]
@@ -15,6 +16,7 @@ export interface Phase {
 // tone = a tailwind text/gradient hint token used for the accent.
 export const PHASES: Phase[] = [
   { n: '01', name: 'Vision Lock', tone: 'gold', estDays: 1,
+    outcome: 'You\'ll know exactly who you\'re selling to and why they buy.',
     whatYouGet: 'A one-page brief that says exactly which agencies you\'re talking to, what you\'re promising them, and what you want them to do first.',
     tasks: [
       { id: '1a', t: 'Confirm ConsumerDirect + Co-Brand PLUS+ positioning', hrs: 1, tool: 'Manual / Decision' },
@@ -26,6 +28,7 @@ export const PHASES: Phase[] = [
     ], del: ['Positioning statement', 'Partner one-liner', 'Offer ladder', 'CTA map'] },
 
   { n: '02', name: 'Narrative Lock', tone: 'purple', estDays: 2,
+    outcome: 'You\'ll have messaging that makes agents want to sign up.',
     whatYouGet: 'Every word a partner will read or hear, written and approved before you design a single pixel.',
     tasks: [
       { id: '2a', t: 'Draft the partner pitch deck copy', hrs: 3, tool: 'AI Coach' },
@@ -37,6 +40,7 @@ export const PHASES: Phase[] = [
     ], del: ['Master copy doc', 'Deck copy doc', 'Messaging bank'] },
 
   { n: '03', name: 'Visual System', tone: 'teal', estDays: 1.5,
+    outcome: 'Your brand looks polished and professional.',
     whatYouGet: 'A locked-in look so every asset after this matches automatically — no more guessing what "on brand" means.',
     tasks: [
       { id: '3a', t: 'Create art direction + moodboard brief', hrs: 1, tool: 'AI Coach' },
@@ -47,6 +51,7 @@ export const PHASES: Phase[] = [
     ], del: ['Moodboard brief', 'Image prompt library', 'Visual style guide'] },
 
   { n: '04', name: 'Stack & ROI', tone: 'purple', estDays: 1,
+    outcome: 'You know your numbers and can prove the value.',
     whatYouGet: 'A clear monthly budget and the exact math showing this system pays for itself.',
     tasks: [
       { id: '4a', t: 'Compare Claude-first vs multi-tool stack costs', hrs: 2, tool: 'AI Coach' },
@@ -57,6 +62,7 @@ export const PHASES: Phase[] = [
     ], del: ['Tech stack spec', 'Cost reference sheet', 'ROI model'] },
 
   { n: '05', name: 'Automation Build', tone: 'teal', estDays: 3.5,
+    outcome: 'Your AI team runs while you sleep.',
     whatYouGet: 'Every agent on your AI Team actually wired up and running in your real tools — a working system, not just a plan.',
     tasks: [
       { id: '5a', t: 'Map all agent triggers and handoffs (LEO schema)', hrs: 3, tool: 'AI Coach' },
@@ -68,6 +74,7 @@ export const PHASES: Phase[] = [
     ], del: ['System flow map', 'CRM schema', 'Agent recipe list', 'QA checklist'] },
 
   { n: '06', name: 'Asset Generation', tone: 'teal', estDays: 1,
+    outcome: 'You have everything you need to pitch.',
     whatYouGet: 'Every image, diagram, and visual your deck and landing pages need, ready to drop in.',
     tasks: [
       { id: '6a', t: 'Create hero images + backgrounds', hrs: 2, tool: 'AI Coach' },
@@ -78,6 +85,7 @@ export const PHASES: Phase[] = [
     ], del: ['Image library', 'Background library', 'Diagram assets'] },
 
   { n: '07', name: 'Deck Build', tone: 'gold', estDays: 1,
+    outcome: 'You have a deck that closes.',
     whatYouGet: 'A finished, presentation-ready partner deck you could show a VP tomorrow.',
     tasks: [
       { id: '7a', t: 'Build slides from the approved copy doc', hrs: 3, tool: 'AI Coach' },
@@ -88,6 +96,7 @@ export const PHASES: Phase[] = [
     ], del: ['Final deck', 'Editable source deck', 'Summary version'] },
 
   { n: '08', name: 'Launch & Live', tone: 'navy', estDays: 2,
+    outcome: 'You\'re fully operational and growing.',
     whatYouGet: 'The system is live, taking real partner leads, and you\'re watching it work instead of building it.',
     tasks: [
       { id: '8a', t: 'Build and test all landing pages', hrs: 3, tool: 'HubSpot' },

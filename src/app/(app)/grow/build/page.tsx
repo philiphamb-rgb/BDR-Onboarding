@@ -62,42 +62,50 @@ export default function GrowthBuildPage() {
     return { done: [...s] }
   })
 
+  // The phase to lead with: first one that isn't 100% done, or the last phase
+  // if everything is complete (nothing left to push toward).
+  const nextPhase = PHASES.find(ph => ph.tasks.some(x => !done.has(x.id))) || PHASES[PHASES.length - 1]
+  const nextPhaseDone = nextPhase.tasks.filter(x => done.has(x.id)).length === nextPhase.tasks.length
+
   return (
     <div className="space-y-4 stagger-rise">
-      <GrowthSlimHeader title="Build" subtitle={loading ? undefined : `${bp.pct}% built`} />
+      <GrowthSlimHeader title="Build" subtitle="Your roadmap to a fully running growth system" />
       <GrowthTabs />
 
       {loading ? (
         <div className="space-y-3">{[1, 2, 3].map(i => <Skeleton key={i} className="h-24 rounded-2xl" />)}</div>
       ) : (
         <>
-          {/* Roadmap totals */}
+          {/* Hero — lead with the next move, not the shortfall */}
           <Card className="bg-gradient-hero !p-4 text-white">
-            <div className="mb-2 flex items-end justify-between">
-              <span className="text-[12px] font-[700] text-white/75">BUILD PROGRESS</span>
-              <span className="text-[12px] font-[800] tabular-nums">{bp.complete}/{bp.total} tasks</span>
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div className="min-w-0 flex-1">
+                <div className="text-[11px] font-[700] uppercase tracking-wide text-white/70">{nextPhaseDone ? 'All phases complete' : `Phase ${nextPhase.n} ready to start`}</div>
+                <div className="mt-1 text-[16px] font-[900] leading-tight">{nextPhaseDone ? 'You\'ve built the whole system.' : nextPhase.outcome}</div>
+              </div>
+              {!nextPhaseDone && (
+                <button onClick={() => setOpen(nextPhase.n)} className="shrink-0 rounded-lg bg-white px-3.5 py-2 text-[12.5px] font-[800] text-navy-ink">Start Phase {nextPhase.n} →</button>
+              )}
             </div>
-            <div className="text-[26px] font-[900] leading-none">{bp.pct}%</div>
-            <ProgressBar value={bp.pct} max={100} color="#5EEAD4" className="mt-2 h-2 !bg-white/20" />
-            <div className="mt-3 grid grid-cols-3 gap-2 text-center">
-              <div><div className="text-[16px] font-[900] tabular-nums">{TOTAL_HOURS}h</div><div className="text-[10px] text-white/70">total build time</div></div>
-              <div><div className="text-[16px] font-[900] tabular-nums">{bp.remainDays}d</div><div className="text-[10px] text-white/70">left at 6 focused hrs/day</div></div>
-              <div><div className="text-[16px] font-[900] tabular-nums">{PHASES.length}</div><div className="text-[10px] text-white/70">phases</div></div>
+            <div className="mt-3 flex items-center gap-2">
+              <ProgressBar value={bp.pct} max={100} color="#5EEAD4" className="h-1.5 flex-1 !bg-white/20" />
+              <span className="shrink-0 text-[11px] font-[700] tabular-nums text-white/75">{bp.complete}/{bp.total} tasks · {bp.pct}%</span>
             </div>
+            <div className="mt-2.5 text-[10.5px] leading-relaxed text-white/60">~{TOTAL_HOURS} hours total. At 1–2 hours/day, fully built in 5–6 weeks. Blitz it in 12 days.</div>
           </Card>
 
-          {/* Mini-map */}
+          {/* Mini-map — labeled so it's not just eight unlabeled numbers */}
           <Card className="!p-4">
             <div className="mb-2 text-[10px] font-[800] uppercase tracking-wide text-gray">Build map</div>
-            <div className="flex gap-1.5">
+            <div className="flex gap-2 overflow-x-auto pb-1 sm:gap-1.5 sm:overflow-visible">
               {PHASES.map(ph => {
                 const t = ph.tasks.filter(x => done.has(x.id)).length
                 const pct = Math.round((t / ph.tasks.length) * 100)
                 const tone = PHASE_TONE[ph.tone]
                 return (
-                  <button key={ph.n} onClick={() => setOpen(open === ph.n ? null : ph.n)} title={`Phase ${ph.n}: ${ph.name} (${pct}%)`} className="flex-1">
-                    <div className={cn('h-1.5 rounded-full transition-all', pct === 100 ? tone.bg.replace('/12', '').replace('/10', '').replace('/8', '') + ' ' + tone.text : pct > 0 ? tone.bg : 'bg-border')} style={pct === 100 ? { background: 'currentColor' } : undefined} />
-                    <div className={cn('mt-1 text-center text-[9px] font-[700]', pct > 0 ? tone.text : 'text-gray')}>{ph.n}</div>
+                  <button key={ph.n} onClick={() => setOpen(open === ph.n ? null : ph.n)} title={`Phase ${ph.n}: ${ph.name} (${pct}%)`} className="shrink-0 sm:flex-1 sm:shrink">
+                    <div className={cn('h-1.5 min-w-[64px] rounded-full transition-all sm:min-w-0', pct === 100 ? tone.bg.replace('/12', '').replace('/10', '').replace('/8', '') + ' ' + tone.text : pct > 0 ? tone.bg : 'bg-border')} style={pct === 100 ? { background: 'currentColor' } : undefined} />
+                    <div className={cn('mt-1 whitespace-nowrap text-center text-[9px] font-[700]', pct > 0 ? tone.text : 'text-gray')}>Phase {parseInt(ph.n, 10)}</div>
                   </button>
                 )
               })}
@@ -120,7 +128,8 @@ export default function GrowthBuildPage() {
                     </span>
                     <div className="min-w-0 flex-1">
                       <div className="text-[13.5px] font-[800] text-dark-text">Phase {ph.n} — {ph.name}</div>
-                      <div className="text-[11px] text-gray">{phaseHrs}h estimated · {ph.estDays}d</div>
+                      <p className="mt-0.5 text-[11.5px] leading-snug text-mid-text">{ph.outcome}</p>
+                      <div className="mt-0.5 text-[10.5px] text-gray">{phaseHrs}h estimated · {ph.estDays}d</div>
                     </div>
                     <div className="flex shrink-0 items-center gap-2">
                       <div className="h-1.5 w-14 overflow-hidden rounded-full bg-border"><div className={cn('h-full rounded-full', tone.text)} style={{ width: `${pct}%`, background: 'currentColor' }} /></div>
