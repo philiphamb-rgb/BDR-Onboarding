@@ -1,25 +1,25 @@
 // @ts-nocheck
 'use client'
 
-// The shared Apex chrome that sits atop every Growth surface: the section
-// title, an at-a-glance system-health + KPI chip row, and the Triage Strip
-// ("Right Now / Next / After That") prioritized against the BDR's real goals.
-// One definition so all six tabs share the exact same header, like the app's
-// other workspace shells. Everything is computed from real data; the AI Coach
-// only ever runs when the user taps an item.
+// GrowthChrome is the FULL header — title, a 3-item status row, and the
+// Triage Strip ("Right Now / Next / After That") — and now renders on the
+// Overview tab (/grow) ONLY. Every other Agentic CRM sub-page (Automations,
+// Lead Gen, AI Team, Build) uses GrowthSlimHeader below instead: a one-line
+// title + subtitle, no repeated KPI row, no repeated Triage Strip. Repeating
+// the full chrome on every tab was pure scroll waste before reaching that
+// tab's actual content. Everything here is computed from real data; the AI
+// Coach only ever runs when the user taps an item.
 
 import { useState } from 'react'
 import Link from 'next/link'
 import { Card } from '@/components/ui'
 import {
-  RaceCarIcon, TargetIcon, LightningIcon, FlameIcon, ChecklistIcon, IntegrationIcon,
-  ChartRisingIcon, StarIcon, CoinIcon, EditIcon, CheckIcon, CloseIcon, InfoIcon,
+  RaceCarIcon, TargetIcon, LightningIcon, FlameIcon, IntegrationIcon, ChartRisingIcon, ChecklistIcon,
+  StarIcon, EditIcon, CheckIcon, CloseIcon, InfoIcon, ArrowRightIcon,
 } from '@/components/icons'
-import { FeedbackButton } from '@/components/growth/FeedbackButton'
 import { useGrowthOS } from '@/lib/hooks/useGrowthOS'
 import { useModuleKV } from '@/lib/hooks/useModuleKV'
-import { monthlyCost } from '@/lib/modules/growth-os/roster'
-import { PHASES, buildProgress } from '@/lib/modules/growth-os/phases'
+import { PHASES } from '@/lib/modules/growth-os/phases'
 import { computeTriage } from '@/lib/modules/growth-os/triage'
 import { askCoach } from '@/lib/coachBus'
 import { cn } from '@/lib/utils'
@@ -67,18 +67,14 @@ function GoalsEditor({ goals, onSave, onClose }: any) {
   )
 }
 
-export function GrowthChrome({ compact = false }: { compact?: boolean }) {
+export function GrowthChrome() {
   const { loading, roster, liveCount, leads, leadList, goals, saveGoals } = useGrowthOS()
   const { value: buildKV } = useModuleKV('growth_build', { done: [] })
   const [editing, setEditing] = useState(false)
 
-  const bp = buildProgress(buildKV.done || [])
-  const cost = monthlyCost(roster || [])
   const hotStale = (leadList || []).filter(l => l.temperature === 'hot' && l.rawStage !== 'opportunity_won' && l.agoMin > 60).length
   const setupAgents = (roster || []).filter(a => a.status === 'setup')
   const buildIncomplete = PHASES.find(p => p.tasks.some(t => !(buildKV.done || []).includes(t.id))) || null
-  const health = hotStale > 0 ? 'error' : setupAgents.length > 0 ? 'gold' : 'teal'
-  const healthLabel = hotStale > 0 ? `${hotStale} hot lead${hotStale > 1 ? 's' : ''} need attention` : setupAgents.length > 0 ? `${setupAgents.length} agent${setupAgents.length > 1 ? 's' : ''} to set up` : 'Everything is covered'
 
   const triage = computeTriage({ goals, leads, setupAgents, hotStale, buildIncomplete })
 
@@ -94,42 +90,43 @@ export function GrowthChrome({ compact = false }: { compact?: boolean }) {
 
   return (
     <div className="space-y-3">
-      {/* Title + health */}
+      {/* Title + setup status */}
       <div className="flex items-center gap-2">
         <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-hero text-white"><RaceCarIcon size={18} /></span>
         <div className="min-w-0 flex-1">
           <h1 className="text-h2 leading-tight text-dark-text">Agentic CRM</h1>
-          <p className="text-[12px] text-gray">Your AI agent workforce</p>
+          <p className="text-[12px] text-gray">AI team working for you 24/7</p>
         </div>
         <Link href="/grow/welcome" aria-label="Meet your AI team — replay the intro" title="Meet your AI team"
           className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-gray hover:bg-bdrbg hover:text-navy-ink">
           <InfoIcon size={15} />
         </Link>
-        <span className={cn('flex shrink-0 items-center gap-1.5 rounded-full px-2.5 py-1.5 text-[11px] font-[700]', TONE[health].bg, TONE[health].chipText)}>
-          <span className={cn('h-1.5 w-1.5 rounded-full', TONE[health].dot)} />{healthLabel}
-        </span>
+        {!loading && (setupAgents.length > 0 ? (
+          <Link href="/grow/team" className="flex shrink-0 items-center gap-1 rounded-full bg-gold/12 px-2.5 py-1.5 text-[11px] font-[700] text-[#A06C00] hover:bg-gold/20">
+            Finish setup ({setupAgents.length} left) <ArrowRightIcon size={11} />
+          </Link>
+        ) : (
+          <span className="flex shrink-0 items-center gap-1.5 rounded-full bg-success/10 px-2.5 py-1.5 text-[11px] font-[700] text-success">
+            <CheckIcon size={11} /> All agents live
+          </span>
+        ))}
       </div>
 
-      {/* KPI chips */}
-      {!compact && (
-        <div className="flex flex-wrap items-center gap-2">
-          {chip(IntegrationIcon, `${liveCount}/${roster?.length || 18} agents live`, 'teal')}
-          {chip(CoinIcon, `~$${cost}/mo`, 'gold')}
-          {chip(FlameIcon, `${leads.hot} hot leads`, 'error')}
-          {chip(ChecklistIcon, `${bp.pct}% built`, 'navy')}
-          <button onClick={() => setEditing(true)} className="flex shrink-0 items-center gap-1.5 rounded-full border border-border px-2.5 py-1 text-[11px] font-[700] text-gray hover:text-navy-ink">
-            <TargetIcon size={12} />
-            {goals.monthly_income_goal ? `$${Number(goals.monthly_income_goal).toLocaleString()}/mo` : 'Set goals'}
-            {goals.leads_per_week_goal ? ` · ${goals.leads_per_week_goal}/wk` : ''}
-            {goals.close_rate_goal ? ` · ${Number(goals.close_rate_goal)}% close` : ''}
-            <EditIcon size={11} />
-          </button>
-          <FeedbackButton />
-        </div>
-      )}
+      {/* Status row — 3 items max: agents live, hot leads (only if any), goals */}
+      <div className="flex flex-wrap items-center gap-2">
+        {chip(IntegrationIcon, `${liveCount} agent${liveCount === 1 ? '' : 's'} live`, 'teal')}
+        {hotStale > 0 && chip(FlameIcon, `${hotStale} hot lead${hotStale > 1 ? 's' : ''}`, 'error')}
+        <button onClick={() => setEditing(true)} className="ml-auto flex shrink-0 items-center gap-1.5 rounded-full border border-border px-2.5 py-1 text-[11px] font-[700] text-gray hover:text-navy-ink">
+          <TargetIcon size={12} />
+          {goals.monthly_income_goal ? `$${Number(goals.monthly_income_goal).toLocaleString()}/mo` : 'Set goals'}
+          {goals.leads_per_week_goal ? ` · ${goals.leads_per_week_goal}/wk` : ''}
+          {goals.close_rate_goal ? ` · ${Number(goals.close_rate_goal)}% close` : ''}
+          <EditIcon size={11} />
+        </button>
+      </div>
 
-      {/* Triage strip */}
-      {!compact && !loading && (
+      {/* Triage strip — Overview only */}
+      {!loading && (
         <div>
           <div className="mb-2 flex items-center gap-1.5 px-0.5">
             <StarIcon size={13} className="text-navy-ink" />
@@ -158,6 +155,21 @@ export function GrowthChrome({ compact = false }: { compact?: boolean }) {
       )}
 
       {editing && <GoalsEditor goals={goals} onSave={saveGoals} onClose={() => setEditing(false)} />}
+    </div>
+  )
+}
+
+// The header for every Agentic CRM sub-page that ISN'T Overview — one line,
+// no repeated KPI row, no repeated Triage Strip. GrowthChrome above already
+// owns "where do I stand"; a sub-page just needs to say what it is.
+export function GrowthSlimHeader({ title, subtitle }: { title: string; subtitle?: string }) {
+  return (
+    <div className="flex items-center gap-2">
+      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-gradient-hero text-white"><RaceCarIcon size={15} /></span>
+      <div className="min-w-0 flex-1">
+        <h1 className="text-h2 leading-tight text-dark-text">{title}</h1>
+        {subtitle && <p className="truncate text-[12px] text-gray">{subtitle}</p>}
+      </div>
     </div>
   )
 }

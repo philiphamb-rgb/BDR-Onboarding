@@ -14,7 +14,7 @@ import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { Card, Skeleton, Badge } from '@/components/ui'
 import { GrowthTabs } from '@/components/GrowthTabs'
-import { GrowthChrome } from '@/components/growth/GrowthChrome'
+import { GrowthSlimHeader } from '@/components/growth/GrowthChrome'
 import { NoteButton } from '@/components/growth/NoteButton'
 import { IntegrationIcon, InfoIcon, CopyIcon, CheckIcon, ChevronDownIcon, ArrowRightIcon, TargetIcon, LightningIcon, BookIcon, CoinIcon, UserIcon } from '@/components/icons'
 import { useGrowthOS } from '@/lib/hooks/useGrowthOS'
@@ -179,7 +179,7 @@ export default function GrowthTeamPage() {
 
   return (
     <div className="space-y-4 stagger-rise">
-      <GrowthChrome />
+      <GrowthSlimHeader title="AI Team" subtitle={loading ? undefined : `${liveCount} of ${roster?.length || 18} agents live`} />
       <GrowthTabs />
 
       {loading ? (

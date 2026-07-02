@@ -14,7 +14,7 @@ import Link from 'next/link'
 import { Card, Skeleton, Badge } from '@/components/ui'
 import { CountUp } from '@/components/CountUp'
 import { GrowthTabs } from '@/components/GrowthTabs'
-import { GrowthChrome } from '@/components/growth/GrowthChrome'
+import { GrowthSlimHeader } from '@/components/growth/GrowthChrome'
 import { LeadDrawer } from '@/components/growth/LeadDrawer'
 import { LeadsBoard } from '@/components/growth/LeadsBoard'
 import { ReportsPanel } from '@/components/growth/ReportsPanel'
@@ -53,7 +53,7 @@ export default function GrowthLeadGenPage() {
 
   return (
     <div className="space-y-4 stagger-rise">
-      <GrowthChrome />
+      <GrowthSlimHeader title="Lead Gen" subtitle={loading ? undefined : `${leadList?.length ?? 0} lead${(leadList?.length ?? 0) === 1 ? '' : 's'} tracked · ${leads.hot} hot right now`} />
       <GrowthTabs />
 
       {loading ? (

@@ -12,7 +12,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Card, Skeleton, ProgressBar } from '@/components/ui'
 import { GrowthTabs } from '@/components/GrowthTabs'
-import { GrowthChrome } from '@/components/growth/GrowthChrome'
+import { GrowthSlimHeader } from '@/components/growth/GrowthChrome'
 import { CheckIcon, ChevronDownIcon, ClockIcon, ChecklistIcon, LightningIcon, ArrowRightIcon, IntegrationIcon, LockIcon } from '@/components/icons'
 import { useModuleKV } from '@/lib/hooks/useModuleKV'
 import { usePermissions } from '@/components/usePermissions'
@@ -35,7 +35,7 @@ export default function GrowthBuildPage() {
   if (!ready) {
     return (
       <div className="space-y-4 stagger-rise">
-        <GrowthChrome />
+        <GrowthSlimHeader title="Build" />
         <GrowthTabs />
         <div className="space-y-3">{[1, 2, 3].map(i => <Skeleton key={i} className="h-24 rounded-2xl" />)}</div>
       </div>
@@ -44,7 +44,7 @@ export default function GrowthBuildPage() {
   if (!canView('growth_build')) {
     return (
       <div className="space-y-4 stagger-rise">
-        <GrowthChrome />
+        <GrowthSlimHeader title="Build" />
         <GrowthTabs />
         <Card className="!py-12 text-center">
           <span className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-bdrbg text-gray"><LockIcon size={22} /></span>
@@ -64,7 +64,7 @@ export default function GrowthBuildPage() {
 
   return (
     <div className="space-y-4 stagger-rise">
-      <GrowthChrome />
+      <GrowthSlimHeader title="Build" subtitle={loading ? undefined : `${bp.pct}% built`} />
       <GrowthTabs />
 
       {loading ? (

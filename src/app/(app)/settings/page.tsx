@@ -5,7 +5,8 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Card, Button, Avatar, Toggle } from '@/components/ui'
-import { BellIcon, LogoutIcon, ShieldIcon, DownloadIcon, ChevronRightIcon, UserIcon, CalendarIcon, SlackIcon, RefreshIcon, LightningIcon } from '@/components/icons'
+import { BellIcon, LogoutIcon, ShieldIcon, DownloadIcon, ChevronRightIcon, UserIcon, CalendarIcon, SlackIcon, RefreshIcon, LightningIcon, StarIcon } from '@/components/icons'
+import { FeedbackButton } from '@/components/growth/FeedbackButton'
 import { usePushNotifications } from '@/lib/push'
 import { startWalkthrough, APP_VERSION } from '@/lib/walkthroughs'
 import { resetTours } from '@/components/tour'
@@ -202,6 +203,18 @@ export default function SettingsPage() {
           <ChevronRightIcon className="text-gray w-4 h-4" />
         </Card>
       </button>
+
+      {/* Feedback — relocated off the Agentic CRM header, where it competed
+          with real status chips on every page. FeedbackButton owns its own
+          modal; this row just gives it a proper home + description. */}
+      <Card className="flex items-center gap-3">
+        <div className="w-9 h-9 bg-bdrbg rounded-xl flex items-center justify-center flex-shrink-0"><StarIcon className="text-gold w-5 h-5" /></div>
+        <div className="flex-1">
+          <div className="text-sm font-medium text-dark-text">Feedback</div>
+          <div className="text-xs text-gray">Help shape what we build next</div>
+        </div>
+        <FeedbackButton />
+      </Card>
 
       {[
         { icon: <LightningIcon className="text-teal w-5 h-5" />, label: "What's new", sub: `Take the guided tour · v${APP_VERSION}`, onPress: () => startWalkthrough() },

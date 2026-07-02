@@ -8,7 +8,6 @@ import { createClient } from '@/lib/supabase/client'
 import { Card, Button, Modal, EmptyState, SkeletonList, ProgressBar, Badge, toast } from '@/components/ui'
 import { PageHeader } from '@/components/manager'
 import { GrowthTabs } from '@/components/GrowthTabs'
-import { GrowthChrome } from '@/components/growth/GrowthChrome'
 import { HandshakeIcon, PlusIcon, ArrowRightIcon, ChecklistIcon, CheckIcon, SearchIcon, CloseIcon, CalendarIcon, ChevronDownIcon, MenuIcon } from '@/components/icons'
 import { CHECKLIST_TEMPLATE, PIPELINE_STAGES, freshChecklist, completion, stageMeta } from '@/lib/partnerChecklist'
 import { cn } from '@/lib/utils'
@@ -102,11 +101,10 @@ export default function PartnersPage() {
 
   return (
     <div className="space-y-4 pb-4">
-      <GrowthChrome compact />
       <GrowthTabs />
       <PageHeader
-        title="Partner Onboarding"
-        subtitle={loading ? undefined : active ? `${active} partner${active === 1 ? '' : 's'} · ${fullyDone} fully onboarded` : 'Track each partner from new lead to live'}
+        title="Partner Pipeline"
+        subtitle={loading ? undefined : active ? `${active} partner${active === 1 ? '' : 's'} you're actively working` : "Partners you're actively working"}
         action={
           <div className="flex gap-2">
             <Button size="sm" variant="ghost" onClick={() => setShowTemplate(true)} icon={<ChecklistIcon size={16} />}>Template</Button>

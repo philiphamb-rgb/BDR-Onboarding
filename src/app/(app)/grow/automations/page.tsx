@@ -14,7 +14,7 @@ export const dynamic = 'force-dynamic'
 import { useState } from 'react'
 import { Card, Skeleton, Toggle, Badge } from '@/components/ui'
 import { GrowthTabs } from '@/components/GrowthTabs'
-import { GrowthChrome } from '@/components/growth/GrowthChrome'
+import { GrowthSlimHeader } from '@/components/growth/GrowthChrome'
 import { LightningIcon, ClockIcon, ChartRisingIcon, ChevronDownIcon, PlusIcon, ArrowRightIcon, TargetIcon, IntegrationIcon, SettingsIcon, InfoIcon, LinkIcon } from '@/components/icons'
 import { useGrowthOS } from '@/lib/hooks/useGrowthOS'
 import { useModuleKV } from '@/lib/hooks/useModuleKV'
@@ -62,7 +62,7 @@ export default function GrowthAutomationsPage() {
 
   return (
     <div className="space-y-4 stagger-rise">
-      <GrowthChrome />
+      <GrowthSlimHeader title="Automations" subtitle={`${live.length}/${autos.length} running for you`} />
       <GrowthTabs />
 
       {loading ? (
