@@ -11,7 +11,7 @@ import {
   BookIcon, HandshakeIcon, ClockIcon, MoreIcon, CoinIcon, EditIcon,
   ChecklistIcon, ShieldIcon, SearchIcon, CloseIcon, ChevronDownIcon, MenuIcon,
   RaceCarIcon, BrainIcon, NoteIcon, TargetIcon, LightningIcon, IntegrationIcon,
-  DatabaseIcon,
+  DatabaseIcon, DocumentIcon,
 } from '@/components/icons'
 import type { User } from '@/types/database'
 import { usePermissions } from '@/components/usePermissions'
@@ -51,6 +51,7 @@ const SELL_NAV: NavItem[] = [
   // tab too. Mobile shows just "CRM". F1-car icon — "engineered speed."
   { href: '/grow',        label: 'Agentic CRM',     shortLabel: 'CRM', icon: RaceCarIcon, match: ['/grow', '/partners'] },
   { href: '/grow/content', label: 'Content',        icon: EditIcon },
+  { href: '/studio',      label: 'Studio',          icon: DocumentIcon },
   { href: '/commissions', label: 'Commissions',     icon: CoinIcon },
 ]
 const LEVEL_UP_NAV: NavItem[] = [
@@ -122,6 +123,7 @@ const PAGE_INDEX: { label: string; href: string }[] = [
   // Inside Agentic CRM's sub-nav but still directly searchable.
   { label: 'Partners', href: '/partners' }, { label: 'Pipeline', href: '/partners' }, { label: 'Lead Gen', href: '/grow/leadgen' },
   { label: 'CRM Workspace', href: '/crm' }, { label: 'Accounts', href: '/crm' }, { label: 'Leads', href: '/crm' }, { label: 'Opportunities', href: '/crm' },
+  { label: 'Goals', href: '/goals' }, { label: 'Content Studio', href: '/studio' }, { label: 'Idea Bank', href: '/studio' },
   { label: 'Settings', href: '/settings' }, { label: 'Notifications', href: '/notifications' },
 ]
 
