@@ -78,7 +78,7 @@ const GROWTH_SUBNAV: (NavItem & { feature?: string; lock?: boolean })[] = [
   { href: '/partners',         label: 'Pipeline',    icon: HandshakeIcon },
   { href: '/grow/leadgen',     label: 'Lead Gen',    icon: TargetIcon },
   { href: '/grow/automations', label: 'Automations', icon: LightningIcon },
-  { href: '/grow/team',        label: 'AI Team',     icon: IntegrationIcon },
+  { href: '/team',             label: 'AI Team',     icon: IntegrationIcon, match: ['/team', '/grow/team'] },
   // Build is hard-locked to Admin/Manager — hidden entirely from standard users.
   { href: '/grow/build',       label: 'Build',       icon: ChecklistIcon, feature: 'growth_build', lock: true },
 ]
@@ -124,6 +124,7 @@ const PAGE_INDEX: { label: string; href: string }[] = [
   { label: 'Partners', href: '/partners' }, { label: 'Pipeline', href: '/partners' }, { label: 'Lead Gen', href: '/grow/leadgen' },
   { label: 'CRM Workspace', href: '/crm' }, { label: 'Accounts', href: '/crm' }, { label: 'Leads', href: '/crm' }, { label: 'Opportunities', href: '/crm' },
   { label: 'Goals', href: '/goals' }, { label: 'Content Studio', href: '/studio' }, { label: 'Idea Bank', href: '/studio' },
+  { label: 'Agent Office', href: '/team' }, { label: 'AI Team', href: '/team' }, { label: 'Meet your team', href: '/team/rooms' }, { label: 'Boardroom', href: '/team/rooms' },
   { label: 'Settings', href: '/settings' }, { label: 'Notifications', href: '/notifications' },
 ]
 
