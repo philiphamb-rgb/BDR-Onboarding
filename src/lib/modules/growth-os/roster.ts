@@ -844,6 +844,19 @@ export const STATUS_META: Record<AutomationStatus, { label: string; tone: string
   paused:{ label: 'Paused',     tone: 'text-gray bg-bdrbg',         dot: 'bg-gray' },
 }
 
+// What each status means and what to do about it — surfaced when a rep taps
+// a status badge, so the badge is an answer, not just a label.
+export const STATUS_MEANING: Record<AutomationStatus, string> = {
+  live: 'Running automatically. No action needed.',
+  setup: "Not yet configured — nothing runs until it's set up.",
+  paused: 'Temporarily off. Turn it back on anytime with one tap.',
+}
+export const STATUS_NEXT: Record<AutomationStatus, string> = {
+  live: 'Open it to review what it\'s doing or adjust its settings.',
+  setup: 'Finish setup to start it running.',
+  paused: 'Turn it back on when you\'re ready.',
+}
+
 // The team's effective roster = catalog metadata + the team's live status.
 // A team with no DB rows yet falls back to each agent's default status.
 export function mergeRoster(rows: { id: string; status: AutomationStatus; updated_at?: string; updated_by?: string | null }[] = []) {

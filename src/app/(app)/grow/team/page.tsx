@@ -40,7 +40,7 @@ function StatusControl({ agent, isManager, onSet }: any) {
   if (!isManager) {
     const m = STATUS_META[agent.status]
     return (
-      <span className={cn('inline-flex shrink-0 items-center gap-1.5 rounded-full px-2 py-0.5 text-[10px] font-[800]', m.tone)}>
+      <span title={`${m.label} — ${STATUS_HINT[agent.status]}`} className={cn('inline-flex shrink-0 items-center gap-1.5 rounded-full px-2 py-0.5 text-[10px] font-[800]', m.tone)}>
         <span className={cn('h-1.5 w-1.5 rounded-full', m.dot, agent.status === 'live' && 'animate-breathe')} />{m.label}
       </span>
     )

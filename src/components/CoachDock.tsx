@@ -54,6 +54,10 @@ export function CoachDock() {
   const [fabPos, setFabPos] = useState<{ x: number; y: number } | null>(null)
   const fabRef = useRef<HTMLButtonElement>(null)
   const dragRef = useRef<{ sx: number; sy: number; ox: number; oy: number; w: number; h: number; moved: boolean; dragging: boolean }>({ sx: 0, sy: 0, ox: 0, oy: 0, w: 0, h: 0, moved: false, dragging: false })
+  // Clearance above the bottom nav bar (60px tall) plus safe-area padding —
+  // matches the default un-dragged offset, so a drag can never park the FAB
+  // on top of (and block taps on) the bottom nav.
+  const NAV_CLEARANCE = 84
 
   useEffect(() => {
     try { const raw = localStorage.getItem('coach-fab-pos'); if (raw) setFabPos(JSON.parse(raw)) } catch {}
@@ -63,10 +67,27 @@ export function CoachDock() {
     const onResize = () => setFabPos(p => {
       if (!p) return p
       const el = fabRef.current; const w = el?.offsetWidth ?? 56; const h = el?.offsetHeight ?? 56
-      return { x: Math.min(p.x, window.innerWidth - w - 8), y: Math.min(p.y, window.innerHeight - h - 8) }
+      return { x: Math.min(p.x, window.innerWidth - w - 8), y: Math.min(p.y, window.innerHeight - h - NAV_CLEARANCE) }
     })
     window.addEventListener('resize', onResize)
     return () => window.removeEventListener('resize', onResize)
+  }, [])
+
+  // Hide the FAB while scrolling down (it can shadow content on a long page);
+  // bring it back the moment the rep scrolls back up.
+  const [scrollHidden, setScrollHidden] = useState(false)
+  const lastScrollY = useRef(0)
+  useEffect(() => {
+    lastScrollY.current = window.scrollY
+    const onScroll = () => {
+      const y = window.scrollY
+      if (Math.abs(y - lastScrollY.current) > 8) {
+        setScrollHidden(y > lastScrollY.current && y > 120)
+        lastScrollY.current = y
+      }
+    }
+    window.addEventListener('scroll', onScroll, { passive: true })
+    return () => window.removeEventListener('scroll', onScroll)
   }, [])
 
   const onFabDown = (e: React.PointerEvent) => {
@@ -81,7 +102,7 @@ export function CoachDock() {
     if (!d.moved && Math.abs(dx) + Math.abs(dy) > 6) d.moved = true
     if (!d.moved) return
     const x = Math.min(Math.max(8, d.ox + dx), window.innerWidth - d.w - 8)
-    const y = Math.min(Math.max(8, d.oy + dy), window.innerHeight - d.h - 8)
+    const y = Math.min(Math.max(8, d.oy + dy), window.innerHeight - d.h - NAV_CLEARANCE)
     setFabPos({ x, y })
   }
   const onFabUp = () => {
@@ -253,10 +274,12 @@ export function CoachDock() {
           onPointerUp={onFabUp}
           onClick={() => { if (!dragRef.current.moved) setOpen(true) }}
           aria-label="Ask your AI Coach — drag to reposition"
+          aria-hidden={scrollHidden}
           style={fabPos ? { left: fabPos.x, top: fabPos.y, right: 'auto', bottom: 'auto', touchAction: 'none' } : { touchAction: 'none' }}
           className={cn(
-            'group fixed z-[390] flex items-center gap-2 rounded-full bg-gradient-hero px-4 py-3 text-white shadow-modal transition-transform active:scale-95 desktop:hidden',
+            'group fixed z-[390] flex items-center gap-2 rounded-full bg-gradient-hero px-4 py-3 text-white shadow-modal transition-all active:scale-95 desktop:hidden',
             !fabPos && 'right-4 bottom-[calc(84px+env(safe-area-inset-bottom))]',
+            scrollHidden ? 'pointer-events-none translate-y-16 opacity-0' : 'translate-y-0 opacity-100',
           )}
         >
           <span className="absolute inset-0 rounded-full bg-teal/40 animate-coach-pulse" aria-hidden="true" />

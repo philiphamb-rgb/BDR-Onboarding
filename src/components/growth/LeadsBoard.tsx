@@ -9,6 +9,7 @@
 // backed by the team-scoped manager update policy on partner_onboarding.
 
 import { useEffect, useMemo, useRef, useState } from 'react'
+import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import { Card, toast } from '@/components/ui'
 import { NoteButton } from '@/components/growth/NoteButton'
@@ -18,7 +19,7 @@ import { SCORE_ROUTING, fmtAgo, leadSuggestion } from '@/lib/modules/growth-os/l
 import { askCoach } from '@/lib/coachBus'
 import {
   TargetIcon, LightningIcon, IntegrationIcon, ArrowRightIcon, SearchIcon, CloseIcon,
-  CheckIcon, FilterIcon, StarIcon, TrashIcon, UserIcon, LockIcon, ChevronDownIcon,
+  CheckIcon, FilterIcon, StarIcon, TrashIcon, UserIcon, LockIcon, ChevronDownIcon, PlusIcon,
 } from '@/components/icons'
 import { cn } from '@/lib/utils'
 
@@ -197,7 +198,15 @@ export function LeadsBoard({ leadList, onOpenLead, reload }: { leadList: any[]; 
 
         {/* Rows */}
         {rows.length === 0 ? (
-          <Card className="!py-8 text-center"><TargetIcon size={20} className="mx-auto mb-2 text-gray" /><p className="text-[13px] text-gray">{(leadList || []).length ? 'No leads match your filters.' : 'No partner leads yet — they appear here from Partners.'}</p></Card>
+          (leadList || []).length ? (
+            <Card className="!py-8 text-center"><TargetIcon size={20} className="mx-auto mb-2 text-gray" /><p className="text-[13px] text-gray">No leads match your filters.</p></Card>
+          ) : (
+            <Card className="!py-8 text-center">
+              <TargetIcon size={20} className="mx-auto mb-2 text-gray" />
+              <p className="text-[13px] text-gray">No partner leads yet — they appear here the moment a new partner comes in.</p>
+              <Link href="/partners" className="mt-3 inline-flex items-center gap-1.5 rounded-lg bg-teal px-3.5 py-2 text-[12.5px] font-[800] text-white"><PlusIcon size={13} /> Add your first partner</Link>
+            </Card>
+          )
         ) : rows.slice(0, 60).map(lead => {
           const st = STAGE_META[lead.stage] || STAGE_META.cold
           const sug = leadSuggestion(lead)

@@ -19,7 +19,7 @@ import { LightningIcon, ClockIcon, ChartRisingIcon, ChevronDownIcon, PlusIcon, A
 import { useGrowthOS } from '@/lib/hooks/useGrowthOS'
 import { useModuleKV } from '@/lib/hooks/useModuleKV'
 import { AUTOMATION_META } from '@/lib/modules/growth-os/automationMeta'
-import { STATUS_META } from '@/lib/modules/growth-os/roster'
+import { STATUS_META, STATUS_MEANING, STATUS_NEXT } from '@/lib/modules/growth-os/roster'
 import { cn } from '@/lib/utils'
 
 const CAT_LABEL: any = { funnel: 'Funnel', content: 'Content', retention: 'Retention', ops: 'Ops' }
@@ -51,6 +51,7 @@ export default function GrowthAutomationsPage() {
   const [query, setQuery] = useState('')
   const [openId, setOpenId] = useState<string | null>(null)
   const [pauseConfirmId, setPauseConfirmId] = useState<string | null>(null)
+  const [statusInfoId, setStatusInfoId] = useState<string | null>(null)
 
   // Only agents with an operational meta appear as automations (the gate + tour
   // are shown on the AI Team tab, not here).
@@ -125,7 +126,7 @@ export default function GrowthAutomationsPage() {
                           <div className="min-w-0 flex-1">
                             <div className="flex flex-wrap items-center gap-2">
                               <span className="text-[13.5px] font-[800] text-dark-text">{m.action}</span>
-                              <span className={cn('rounded-full px-2 py-0.5 text-[10px] font-[800]', sm.tone)}>{sm.label}</span>
+                              <button onClick={e => { e.stopPropagation(); setStatusInfoId(statusInfoId === a.id ? null : a.id) }} className={cn('rounded-full px-2 py-0.5 text-[10px] font-[800]', sm.tone)}>{sm.label}</button>
                             </div>
                             <p className="mt-1 text-[12px] leading-relaxed text-mid-text">{m.cardDescription}</p>
                             <div className="mt-1.5 text-[11px] font-[600] text-teal">Saves ~{m.moHoursSaved}h/mo · ~${m.dollarValue}/mo in time value</div>
@@ -144,6 +145,17 @@ export default function GrowthAutomationsPage() {
                             <ChevronDownIcon size={14} className={cn('text-gray transition-transform', isOpen && 'rotate-180')} onClick={() => setOpenId(isOpen ? null : a.id)} />
                           </div>
                         </div>
+
+                        {statusInfoId === a.id && (
+                          <div className="flex items-start gap-2 border-t border-border bg-bdrbg px-3.5 py-2.5" onClick={e => e.stopPropagation()}>
+                            <span className={cn('mt-0.5 h-2 w-2 shrink-0 rounded-full', sm.dot)} />
+                            <div className="min-w-0 flex-1 text-[11.5px] leading-relaxed">
+                              <span className="font-[800] text-dark-text">{sm.label}: </span>
+                              <span className="text-mid-text">{STATUS_MEANING[a.status]} {STATUS_NEXT[a.status]}</span>
+                            </div>
+                            <button onClick={() => setStatusInfoId(null)} className="shrink-0 text-[11px] font-[700] text-gray">Close</button>
+                          </div>
+                        )}
 
                         {confirmingPause && (
                           <div className="flex items-center gap-2 border-t border-border bg-error/[0.06] px-3.5 py-2.5" onClick={e => e.stopPropagation()}>
