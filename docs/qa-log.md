@@ -313,3 +313,70 @@ component's render body — not hook violations.
       sidebar exists there to hold the sub-nav).
 - [ ] Manager/Admin: "Build" sub-item is visible; standard rep: it's absent
       from both the sidebar group and the (still-mobile-only) top tabs.
+
+## Time Blocks — date-navigable Day/3-Day/Week (Tomorrow + date picker)
+
+- **Ask:** Schedule only ever showed "today" — no way to plan ahead or pick a
+  date/week to view.
+- **Fix:** Added a `viewDate` state (the day being viewed/edited) alongside
+  the real `today`, plus a `‹ Today Tomorrow ›` quick-nav row and a native
+  date picker. Prev/Next step by 1 day in Day view, by 3/7 days in 3-Day/Week
+  view (so repeated clicks page through weeks/months). All block/task
+  read-writes (`loadBlocks`, `loadTasks`, `saveBlock`, `createCustomBlock`,
+  `deleteBlock`, `assignTask`, `autoPlanDay`, `resetDay`, `createTask`) were
+  reparametrized from the hardcoded `today` to `viewDate`.
+- **Kept real-time-only:** block start/dur are minute-of-day only (no date
+  component), so comparing them to the real clock only makes sense for today.
+  The NOW line, auto-scroll-to-now, the "blocks ended, still incomplete"
+  nudge, and the end-of-block roll-forward/defer-to-tomorrow triage flow are
+  all gated to `isToday` — on any other day, completing a block just
+  completes it (no roll/defer prompt, since "later today" has no meaning on
+  a day that isn't today).
+- **Hardening from an adversarial code review pass (2 independent agents)**
+  after the initial implementation surfaced real issues, all fixed:
+  - Stale-closure race: every error-recovery reload (`saveBlock`,
+    `patchTask`, `toggleTaskDone`, `rollOverTasks`, `deferToTomorrow`) now
+    reloads via a `viewDateRef` (always-latest) instead of the closure's
+    `viewDate` — otherwise a failed write on one day, resolving after the
+    rep had already navigated to another day, could silently overwrite the
+    newly-displayed day's data with the wrong day's reload.
+  - Midnight rollover: `viewDate` is React state and doesn't advance on its
+    own at midnight, while `today` is recomputed every render. Added an
+    effect that advances `viewDate` at midnight ONLY if the rep was still
+    following "today" (hadn't manually navigated elsewhere) — otherwise a
+    rep working past midnight would silently lose "today" status (no NOW
+    line, no ended-block nudge) with no indication why.
+  - DST-unsafe date math: every date-shift (`Tomorrow`, Prev/Next, the
+    3-Day/Week anchor, the lazy range-task fetch) used raw
+    `+ n * 86400000` millisecond arithmetic, which can land on the wrong
+    calendar date across a DST transition (a "day" can be 23 or 25 real
+    hours). Replaced with a `shiftDate()` helper using local date-FIELD
+    arithmetic (`setDate`), which is DST-safe.
+  - Auto-scroll-to-now effect now also depends on `rangeStart`/`rangeEnd`
+    (not just `loading`/`viewDate`), so it re-fires once a newly-selected
+    day's real blocks finish loading, instead of scrolling to a stale
+    position computed from the previous day's layout.
+  - "Coach my day" now tells the AI coach which day it's planning for when
+    viewing a day other than today (was hardcoded to say "today's tasks"
+    regardless of `viewDate`).
+- **Known limitation (documented in code, not fixed — disproportionate
+  scope for a read-only glance view):** the 3-Day/Week overview only loads
+  real per-day block overrides for the anchor day; if you page Week view
+  back to a week that still contains today (but today isn't the anchor),
+  today's cell shows the plain shift template instead of its real state.
+  Task-planned counts are unaffected (fetched for every visible day).
+
+**Manual QA checklist — Time Blocks date navigation:**
+- [ ] Click "Tomorrow": Day view loads (empty) blocks for tomorrow, header
+      says "Planning [date]", NOW line and ended-block nudge are both gone.
+- [ ] Add/edit/delete a custom block on tomorrow, reload the page, confirm
+      it's still there — and today's blocks are untouched.
+- [ ] Click "Today": returns to today's exact original state (NOW line back,
+      live triage panel back).
+- [ ] Use the date picker to jump 2 weeks out, confirm Day view loads that
+      date's (empty) blocks correctly.
+- [ ] Switch to Week view, click Next (week) repeatedly, confirm each page
+      shows the correct 7-day span and clicking a day jumps into Day view
+      for that exact date.
+- [ ] With the tab open, page forward to tomorrow, then click "Today" — the
+      quick-add task field should plan into today, not tomorrow.

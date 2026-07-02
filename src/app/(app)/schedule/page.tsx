@@ -20,7 +20,6 @@ import { monthPaceFraction } from '@/lib/winsEngine'
 import { stageMeta } from '@/lib/partnerChecklist'
 import { askCoach } from '@/lib/coachBus'
 import { AiTip } from '@/components/AiTip'
-import { PlanTabs } from '@/components/PlanTabs'
 import { Tour } from '@/components/tour'
 import { RHYTHM_TOUR } from '@/lib/tours'
 
@@ -32,6 +31,16 @@ const TYPE_OPTIONS: { value: string; label: string }[] = [
   { value: 'focus', label: 'Sell' }, { value: 'plan', label: 'Plan' },
   { value: 'admin', label: 'Admin' }, { value: 'break', label: 'Break' }, { value: 'lunch', label: 'Lunch' },
 ]
+const fmtViewDate = (iso: string) => new Date(iso + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })
+// Shifts an ISO "YYYY-MM-DD" date by N calendar days using local date-FIELD
+// arithmetic (setDate), not raw millisecond math — a day can be 23 or 25 real
+// hours across a DST transition, so `+ n * 86400000` can land one calendar
+// day off from the intended date.
+const shiftDate = (iso: string, days: number): string => {
+  const d = new Date(iso + 'T00:00:00')
+  d.setDate(d.getDate() + days)
+  return localToday(d)
+}
 
 // Greedy column layout for overlapping blocks (Google-Calendar style): each
 // cluster of overlapping blocks splits into side-by-side columns. Keyed by block key.
@@ -61,19 +70,25 @@ function layoutColumns(items: { key: string; start: number; dur: number }[]) {
   return out
 }
 
-// Read-only week-ahead glance — today's real (overridden) blocks, and the plain
-// shift template for the other visible days (no per-day overrides exist for
-// future days yet, since only Day view can edit). Tap any day to jump back into
-// the full interactive Day view.
-function MultiDayOverview({ days, today, base, templateBlocks, rangeTasks, onPickDay }: {
-  days: number; today: string; base: number
+// Read-only glance ahead (or back) from whichever day is anchored — the
+// anchor day's real (overridden) blocks, and the plain shift template for
+// the other visible days (no per-day overrides are loaded for them; only
+// Day view edits a day, which is what loads its real overrides). Tap any
+// day to jump into the full interactive Day view for that date.
+// KNOWN LIMITATION: if the anchor isn't today (e.g. paging Week view back to
+// a week that still contains today), today's own cell shows the plain
+// template too — its real per-day overrides aren't fetched unless it's the
+// anchor. Its task-planned count (from rangeTasks) is still accurate either
+// way, since that's fetched for every visible day, not just the anchor.
+function MultiDayOverview({ days, anchor, todayIso, base, templateBlocks, rangeTasks, onPickDay }: {
+  days: number; anchor: string; todayIso: string; base: number
   templateBlocks: { key: string; label: string; type: string; start: number; dur: number; done: boolean }[]
   rangeTasks: Record<string, any[]> | null
-  onPickDay: () => void
+  onPickDay: (iso: string) => void
 }) {
-  const dateFor = (i: number) => localToday(new Date(Date.now() + i * 86400000))
-  const dayLabel = (i: number, iso: string) => {
-    if (i === 0) return 'Today'
+  const dateFor = (i: number) => shiftDate(anchor, i)
+  const dayLabel = (iso: string) => {
+    if (iso === todayIso) return 'Today'
     const d = new Date(iso + 'T00:00:00')
     return d.toLocaleDateString('en-US', { weekday: 'short', day: 'numeric' })
   }
@@ -81,15 +96,16 @@ function MultiDayOverview({ days, today, base, templateBlocks, rangeTasks, onPic
     <div className="grid gap-2" style={{ gridTemplateColumns: `repeat(${days}, minmax(0, 1fr))` }}>
       {Array.from({ length: days }, (_, i) => {
         const iso = dateFor(i)
-        const isToday = i === 0
-        const blocks = isToday ? templateBlocks : templateBlocks.map(b => ({ ...b, done: false }))
+        const isAnchor = i === 0          // the day templateBlocks' real overrides belong to
+        const isRealToday = iso === todayIso
+        const blocks = isAnchor ? templateBlocks : templateBlocks.map(b => ({ ...b, done: false }))
         const dayTasks = rangeTasks?.[iso] ?? []
         const doneN = dayTasks.filter(t => t.done).length
         return (
-          <button key={iso} onClick={onPickDay}
+          <button key={iso} onClick={() => onPickDay(iso)}
             className={cn('flex min-w-0 flex-col rounded-xl border p-2 text-left transition-colors hover:border-teal/40',
-              isToday ? 'border-teal/40 bg-teal/[0.04]' : 'border-border bg-card')}>
-            <div className={cn('mb-1.5 truncate text-[11px] font-[800] uppercase tracking-wide', isToday ? 'text-teal' : 'text-gray')}>{dayLabel(i, iso)}</div>
+              isRealToday ? 'border-teal/40 bg-teal/[0.04]' : 'border-border bg-card')}>
+            <div className={cn('mb-1.5 truncate text-[11px] font-[800] uppercase tracking-wide', isRealToday ? 'text-teal' : 'text-gray')}>{dayLabel(iso)}</div>
             <div className="space-y-1">
               {blocks.map(b => (
                 <div key={b.key} className={cn('flex items-center gap-1.5 rounded-md px-1.5 py-1 text-[10.5px]', b.done ? 'opacity-50' : '')} style={{ backgroundColor: `${(BLOCK_STYLE[b.type] ?? BLOCK_STYLE.focus).color}14` }}>
@@ -137,8 +153,37 @@ export default function SchedulePage() {
   const [now, setNow] = useState(() => { const d = new Date(); return d.getHours() * 60 + d.getMinutes() })
   const scrollRef = useRef<HTMLDivElement>(null)
   const today = localToday()
+  // The day being viewed/edited — defaults to today, but Day view is fully
+  // date-navigable (Prev/Today/Tomorrow/Next + a date picker) so a rep can plan
+  // ahead. All "live" behavior (the NOW line, auto-scroll-to-now, the ended-
+  // blocks nudge, the end-of-block triage flow) stays scoped to `isToday` —
+  // block times are minute-of-day only, so comparing them against the real
+  // clock on a different calendar day would be meaningless.
+  const [viewDate, setViewDate] = useState<string>(() => localToday())
+  const isToday = viewDate === today
+  const tomorrowIso = shiftDate(today, 1)
+  const isTomorrow = viewDate === tomorrowIso
+  const viewDayLabel = isToday ? 'Today' : isTomorrow ? 'Tomorrow' : fmtViewDate(viewDate)
+  // Always-latest viewDate, for async error-recovery reloads — a closure
+  // captured when a write started can go stale if the rep navigates to a
+  // different day before that write resolves/fails; the reload must target
+  // whatever day is ACTUALLY on screen when it runs, not the day it was for.
+  const viewDateRef = useRef(viewDate)
+  useEffect(() => { viewDateRef.current = viewDate }, [viewDate])
+  // Midnight rollover: `today` is recomputed every render, but `viewDate` is
+  // state and won't advance on its own. If the rep was following "today" (had
+  // not manually navigated elsewhere), keep following it across midnight;
+  // if they'd navigated to a specific day, leave that choice alone.
+  const prevTodayRef = useRef(today)
+  useEffect(() => {
+    if (prevTodayRef.current !== today) {
+      setViewDate(v => (v === prevTodayRef.current ? today : v))
+      prevTodayRef.current = today
+    }
+  }, [today])
   // Calendar view mode — Day is the full interactive editor (unchanged, default);
-  // 3-Day/Week are a read-only glance ahead, loaded lazily on first switch.
+  // 3-Day/Week are a read-only glance ahead, anchored at viewDate, loaded lazily
+  // on first switch (and whenever viewDate or viewMode changes).
   const [viewMode, setViewMode] = useState<'day' | '3day' | 'week'>('day')
   const [rangeTasks, setRangeTasks] = useState<Record<string, any[]> | null>(null)
   const rangeLoadedFor = useRef<string | null>(null)
@@ -154,8 +199,6 @@ export default function SchedulePage() {
         if (s.shift && SHIFT_OPTIONS.some(o => o.start === s.shift)) setShift(s.shift)
         setLoading(false)
       })
-      loadBlocks(user.id)
-      loadTasks(user.id)
       supabase.from('goals').select('monthly_deal_goal').eq('user_id', user.id).maybeSingle().then(({ data }) => setGoal(data?.monthly_deal_goal ?? null))
       supabase.from('user_progress').select('deals_this_month').eq('user_id', user.id).single().then(({ data }) => setDealsThisMonth(data?.deals_this_month ?? 0))
       supabase.from('partner_onboarding').select('id, partner_name, stage, temperature, updated_at').eq('user_id', user.id)
@@ -163,8 +206,16 @@ export default function SchedulePage() {
     })
   }, [])
 
-  const loadBlocks = async (uid: string) => {
-    const { data } = await supabase.from('schedule_blocks').select('block_key, label, type, note, start_min, dur_min, done').eq('user_id', uid).eq('day', today)
+  // Loads (and reloads on every date change) the blocks + tasks for whichever
+  // day is being viewed.
+  useEffect(() => {
+    if (!userId) return
+    loadBlocks(userId, viewDate)
+    loadTasks(userId, viewDate)
+  }, [userId, viewDate]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  const loadBlocks = async (uid: string, day: string) => {
+    const { data } = await supabase.from('schedule_blocks').select('block_key, label, type, note, start_min, dur_min, done').eq('user_id', uid).eq('day', day)
     const ov: Record<string, any> = {}
     const customs: any[] = []
     for (const r of data ?? []) {
@@ -173,11 +224,13 @@ export default function SchedulePage() {
     }
     setOver(ov); setCustomBlocks(customs)
   }
-  const loadTasks = async (uid: string) => {
+  const loadTasks = async (uid: string, day: string) => {
+    // Every open task (for the Unplanned queue) plus any completed task
+    // scheduled on the viewed day (so its done-checkbox still shows in a block).
     const { data } = await supabase.from('tasks')
       .select('id, title, done, priority, due_date, estimated_minutes, created_at, scheduled_day, scheduled_block, snoozed_until, deferral_count, last_deferred_at')
       .eq('user_id', uid).is('parent_id', null)
-      .or(`done.eq.false,scheduled_day.eq.${today}`)
+      .or(`done.eq.false,scheduled_day.eq.${day}`)
     setTasks(data ?? [])
   }
 
@@ -233,7 +286,7 @@ export default function SchedulePage() {
 
   // ── Triage derivations ──────────────────────────────────────────────────────
   const nowDate = new Date()
-  const plannedToday = tasks.filter(t => t.scheduled_day === today && t.scheduled_block != null)
+  const plannedToday = tasks.filter(t => t.scheduled_day === viewDate && t.scheduled_block != null)
   const scheduledToday = plannedToday.filter(t => isActive(t, nowDate))
   const blockTasks: Record<string, any[]> = {}
   for (const t of plannedToday) { (blockTasks[String(t.scheduled_block)] ??= []).push(t) }
@@ -241,15 +294,16 @@ export default function SchedulePage() {
   const planDone = plannedToday.filter(t => t.done).length
   const planProgress = planTotal ? Math.round((planDone / planTotal) * 100) : 0
   const unscheduled = tasks
-    .filter(t => isActive(t, nowDate) && t.scheduled_day !== today)
+    .filter(t => isActive(t, nowDate) && t.scheduled_day !== viewDate)
     .sort((a, b) => urgency(b, nowDate) - urgency(a, nowDate))
   const triageCfg = { ...DEFAULT_TRIAGE, agingDays: (settings as any)?.triage?.agingDays ?? DEFAULT_TRIAGE.agingDays }
   const staleTasks = tasks.filter(t => isStale(t, nowDate, triageCfg))
-  // Slots = work blocks, ordered so blocks that haven't ended yet fill first
-  // (auto-plan won't dump tasks into a block that already passed today).
+  // Slots = work blocks, ordered so blocks that haven't ended yet fill first —
+  // only meaningful when viewing today; a future/past day's blocks are all
+  // "upcoming" since block times are minute-of-day only.
   const slots = blocks.filter(x => ['plan', 'focus', 'admin'].includes(x.type))
     .sort((a, b) => {
-      const ap = (a.start + a.dur) <= now ? 1 : 0, bp = (b.start + b.dur) <= now ? 1 : 0
+      const ap = (isToday && (a.start + a.dur) <= now) ? 1 : 0, bp = (isToday && (b.start + b.dur) <= now) ? 1 : 0
       return ap - bp || a.start - b.start
     })
     .map(x => ({ key: x.key, type: x.type, capacity: x.dur }))
@@ -260,9 +314,10 @@ export default function SchedulePage() {
   const stuck = partners.filter(p => p.stage === 'proposal_sent' || p.stage === 'contract_signed').length
 
   // Work blocks whose time has passed but that aren't checked done yet — the Hub
-  // proactively suggests marking these complete.
+  // proactively suggests marking these complete. Only meaningful for today —
+  // block times are minute-of-day only, with no date component.
   const isWorkBlock = (t: string) => ['plan', 'focus', 'admin'].includes(t)
-  const needsCheck = (blk: any) => !blk.done && isWorkBlock(blk.type) && (blk.start + blk.dur) <= now
+  const needsCheck = (blk: any) => isToday && !blk.done && isWorkBlock(blk.type) && (blk.start + blk.dur) <= now
   const learning = asLearning((settings as any)?.triageLearning)   // adaptive deferral memory (derived)
   const endedUndone = blocks.filter(needsCheck).sort((a, b) => a.start - b.start)
   const endedLeftoverTasks = endedUndone.flatMap(b => (blockTasks[b.key] ?? []).filter((t: any) => !t.done))
@@ -301,9 +356,9 @@ export default function SchedulePage() {
 
   useEffect(() => {
     if (loading || !scrollRef.current) return
-    const target = (now >= rangeStart && now <= rangeEnd) ? now : rangeStart
+    const target = (isToday && now >= rangeStart && now <= rangeEnd) ? now : rangeStart
     scrollRef.current.scrollTop = Math.max(0, (target - rangeStart) * PX_PER_MIN - 120)
-  }, [loading]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [loading, viewDate, rangeStart, rangeEnd]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── Block persistence (template + custom, keyed by block.key) ────────────────
   const saveBlock = async (blk: any, patch: any) => {
@@ -325,12 +380,12 @@ export default function SchedulePage() {
     }
     if (!userId) return
     const { error } = await supabase.from('schedule_blocks').upsert({
-      user_id: userId, day: today, block_key: blk.key,
+      user_id: userId, day: viewDate, block_key: blk.key,
       label: merged.label, type: merged.type,
       start_min: merged.start_min, dur_min: merged.dur_min,
       note: merged.note || null, done: merged.done, updated_at: new Date().toISOString(),
     }, { onConflict: 'user_id,day,block_key' })
-    if (error) { toast.error('That change didn’t save — try again.'); loadBlocks(userId) }
+    if (error) { toast.error('That change didn’t save — try again.'); loadBlocks(userId, viewDateRef.current) }
   }
   const toggleDone = (blk: any) => saveBlock(blk, { done: !blk.done })
 
@@ -342,7 +397,7 @@ export default function SchedulePage() {
     setCustomBlocks(prev => [...prev, blk])
     setSelected(key)
     const { error } = await supabase.from('schedule_blocks').upsert({
-      user_id: userId, day: today, block_key: key, label: 'New block', type: 'focus',
+      user_id: userId, day: viewDate, block_key: key, label: 'New block', type: 'focus',
       start_min: start, dur_min: 30, note: null, done: false, updated_at: new Date().toISOString(),
     }, { onConflict: 'user_id,day,block_key' })
     if (error) { setCustomBlocks(prev => prev.filter(c => c.key !== key)); setSelected(null); toast.error('Couldn’t add that block — try again.') }
@@ -350,17 +405,17 @@ export default function SchedulePage() {
   const deleteBlock = async (blk: any) => {
     if (!blk.custom) { // template → reset to default
       setOver(prev => { const n = { ...prev }; delete n[blk.key]; return n })
-      if (userId) await supabase.from('schedule_blocks').delete().eq('user_id', userId).eq('day', today).eq('block_key', blk.key)
+      if (userId) await supabase.from('schedule_blocks').delete().eq('user_id', userId).eq('day', viewDate).eq('block_key', blk.key)
       setSelected(null)
       return
     }
     setCustomBlocks(prev => prev.filter(c => c.key !== blk.key))
     setSelected(null)
     // Return any tasks assigned to this block to the unplanned queue.
-    const orphans = tasks.filter(t => t.scheduled_day === today && String(t.scheduled_block) === blk.key)
+    const orphans = tasks.filter(t => t.scheduled_day === viewDate && String(t.scheduled_block) === blk.key)
     setTasks(prev => prev.map(t => orphans.some(o => o.id === t.id) ? { ...t, scheduled_day: null, scheduled_block: null } : t))
     if (userId) {
-      await supabase.from('schedule_blocks').delete().eq('user_id', userId).eq('day', today).eq('block_key', blk.key)
+      await supabase.from('schedule_blocks').delete().eq('user_id', userId).eq('day', viewDate).eq('block_key', blk.key)
       await Promise.all(orphans.map(o => supabase.from('tasks').update({ scheduled_day: null, scheduled_block: null }).eq('id', o.id)))
     }
     toast.success('Block removed')
@@ -370,14 +425,14 @@ export default function SchedulePage() {
   const patchTask = async (id: string, patch: any) => {
     setTasks(prev => prev.map(t => t.id === id ? { ...t, ...patch } : t))
     const { error } = await supabase.from('tasks').update({ ...patch, updated_at: new Date().toISOString() }).eq('id', id)
-    if (error) { toast.error('That change didn’t save — try again.'); if (userId) loadTasks(userId) }
+    if (error) { toast.error('That change didn’t save — try again.'); if (userId) loadTasks(userId, viewDateRef.current) }
   }
   const toggleTaskDone = async (id: string, done: boolean) => {
     setTasks(prev => prev.map(t => t.id === id ? { ...t, done } : t))
     const { error } = await supabase.from('tasks').update({ done, updated_at: new Date().toISOString() }).eq('id', id)
-    if (error) { toast.error('That change didn’t save — try again.'); if (userId) loadTasks(userId) }
+    if (error) { toast.error('That change didn’t save — try again.'); if (userId) loadTasks(userId, viewDateRef.current) }
   }
-  const assignTask = (id: string, key: string) => patchTask(id, { scheduled_day: today, scheduled_block: key })
+  const assignTask = (id: string, key: string) => patchTask(id, { scheduled_day: viewDate, scheduled_block: key })
   const unassignTask = (id: string) => patchTask(id, { scheduled_day: null, scheduled_block: null })
   const setEstimate = (id: string, min: number) => patchTask(id, { estimated_minutes: Math.max(5, min) })
   const snoozeTask = (id: string, days: number) => {
@@ -406,15 +461,15 @@ export default function SchedulePage() {
     setTriageBusy(true)
     try {
       const assign = autoPlan(tasks, slots, nowDate, { reflow, learn: learnedBonus(learning) })
-      const updates = tasks.filter(t => assign[t.id] != null && (t.scheduled_day !== today || String(t.scheduled_block) !== String(assign[t.id])))
-      const cleared = reflow ? tasks.filter(t => assign[t.id] == null && t.scheduled_day === today) : []
+      const updates = tasks.filter(t => assign[t.id] != null && (t.scheduled_day !== viewDate || String(t.scheduled_block) !== String(assign[t.id])))
+      const cleared = reflow ? tasks.filter(t => assign[t.id] == null && t.scheduled_day === viewDate) : []
       setTasks(prev => prev.map(t => {
-        if (assign[t.id] != null) return { ...t, scheduled_day: today, scheduled_block: String(assign[t.id]) }
-        if (reflow && t.scheduled_day === today) return { ...t, scheduled_day: null, scheduled_block: null }
+        if (assign[t.id] != null) return { ...t, scheduled_day: viewDate, scheduled_block: String(assign[t.id]) }
+        if (reflow && t.scheduled_day === viewDate) return { ...t, scheduled_day: null, scheduled_block: null }
         return t
       }))
       await Promise.all([
-        ...updates.map(t => supabase.from('tasks').update({ scheduled_day: today, scheduled_block: String(assign[t.id]), updated_at: new Date().toISOString() }).eq('id', t.id)),
+        ...updates.map(t => supabase.from('tasks').update({ scheduled_day: viewDate, scheduled_block: String(assign[t.id]), updated_at: new Date().toISOString() }).eq('id', t.id)),
         ...cleared.map(t => supabase.from('tasks').update({ scheduled_day: null, scheduled_block: null, updated_at: new Date().toISOString() }).eq('id', t.id)),
       ])
       const n = Object.keys(assign).length
@@ -455,7 +510,7 @@ export default function SchedulePage() {
       const targetKey = pickRolloverBlock(t, placement, used, now, String(t.scheduled_block))
       const newDef = Math.min(MAX_DEFERRALS, (t.deferral_count || 0) + 1)   // counter is capped
       const patch: any = { deferral_count: newDef, last_deferred_at: new Date().toISOString(), priority: t.priority || newDef >= AUTO_PRIORITY_DEFERRALS }
-      if (targetKey) { used[targetKey] = (used[targetKey] || 0) + (t.estimated_minutes || 30); patch.scheduled_day = today; patch.scheduled_block = targetKey; later++ }
+      if (targetKey) { used[targetKey] = (used[targetKey] || 0) + (t.estimated_minutes || 30); patch.scheduled_day = viewDate; patch.scheduled_block = targetKey; later++ }
       else { patch.scheduled_day = tomorrow; patch.scheduled_block = null; deferred++ }
       return { id: t.id, patch }
     })
@@ -463,7 +518,7 @@ export default function SchedulePage() {
     learnBySource(items)
     toast.success(later && deferred ? `Rolled ${later} later · ${deferred} to tomorrow` : later ? `Rolled ${later} into later block${later > 1 ? 's' : ''}` : `Deferred ${deferred} to tomorrow`)
     try { await Promise.all(updates.map(u => supabase.from('tasks').update({ ...u.patch, updated_at: new Date().toISOString() }).eq('id', u.id))) }
-    catch { toast.error('Could not save — refreshing'); if (userId) loadTasks(userId) }
+    catch { toast.error('Could not save — refreshing'); if (userId) loadTasks(userId, viewDateRef.current) }
   }
   const deferToTomorrow = async (items: any[]) => {
     if (!items.length) return
@@ -476,12 +531,15 @@ export default function SchedulePage() {
     learnBySource(items)
     toast.success(`Deferred ${items.length} to tomorrow`)
     try { await Promise.all(updates.map(u => supabase.from('tasks').update({ ...u.patch, updated_at: new Date().toISOString() }).eq('id', u.id))) }
-    catch { toast.error('Could not save — refreshing'); if (userId) loadTasks(userId) }
+    catch { toast.error('Could not save — refreshing'); if (userId) loadTasks(userId, viewDateRef.current) }
   }
   // Marking a block done: if it still holds incomplete tasks, intercept with the
-  // triage micro-dialogue instead of silently completing the block.
+  // triage micro-dialogue instead of silently completing the block. The
+  // roll-forward/defer flow is about restructuring the REST OF TODAY, so it
+  // only applies when viewing today — elsewhere, completing just completes.
   const requestBlockDone = (blk: any) => {
     if (blk.done) { toggleDone(blk); return }
+    if (!isToday) { toggleDone(blk); return }
     const incomplete = (blockTasks[blk.key] ?? []).filter((t: any) => !t.done)
     if (incomplete.length) { setTriageBlk({ blk, tasks: incomplete }); return }
     toggleDone(blk)
@@ -523,8 +581,8 @@ export default function SchedulePage() {
       .select('id, title, done, priority, due_date, estimated_minutes, created_at, scheduled_day, scheduled_block, snoozed_until, deferral_count, last_deferred_at').single()
     if (!data) return
     setTasks(prev => [data, ...prev])
-    if (opts.blockKey) { await patchTask(data.id, { scheduled_day: today, scheduled_block: opts.blockKey }); toast.success('Added to block') }
-    else if (opts.plan) { const slot = bestSlot(title, estimate); if (slot) await patchTask(data.id, { scheduled_day: today, scheduled_block: slot.key }); toast.success('Added & planned into your day') }
+    if (opts.blockKey) { await patchTask(data.id, { scheduled_day: viewDate, scheduled_block: opts.blockKey }); toast.success('Added to block') }
+    else if (opts.plan) { const slot = bestSlot(title, estimate); if (slot) await patchTask(data.id, { scheduled_day: viewDate, scheduled_block: slot.key }); toast.success('Added & planned into your day') }
     else toast.success('Task added')
   }
   const dismissSuggestion = (id: string) => setDismissed(prev => new Set(prev).add(id))
@@ -536,11 +594,11 @@ export default function SchedulePage() {
   }
   const resetDay = async () => {
     // Tasks parked in custom blocks must return to the queue (those blocks vanish).
-    const orphans = tasks.filter(t => t.scheduled_day === today && typeof t.scheduled_block === 'string' && t.scheduled_block.startsWith('c:'))
+    const orphans = tasks.filter(t => t.scheduled_day === viewDate && typeof t.scheduled_block === 'string' && t.scheduled_block.startsWith('c:'))
     setOver({}); setCustomBlocks([]); setSelected(null)
     if (orphans.length) setTasks(prev => prev.map(t => orphans.some(o => o.id === t.id) ? { ...t, scheduled_day: null, scheduled_block: null } : t))
     if (userId) {
-      await supabase.from('schedule_blocks').delete().eq('user_id', userId).eq('day', today)
+      await supabase.from('schedule_blocks').delete().eq('user_id', userId).eq('day', viewDate)
       await Promise.all(orphans.map(o => supabase.from('tasks').update({ scheduled_day: null, scheduled_block: null }).eq('id', o.id)))
     }
     toast.success('Reset to the optimized day')
@@ -615,10 +673,10 @@ export default function SchedulePage() {
   useEffect(() => {
     if (viewMode === 'day' || !userId) return
     const span = viewMode === '3day' ? 3 : 7
-    const cacheKey = `${viewMode}:${today}`
+    const cacheKey = `${viewMode}:${viewDate}`
     if (rangeLoadedFor.current === cacheKey) return
     rangeLoadedFor.current = cacheKey
-    const dates = Array.from({ length: span }, (_, i) => localToday(new Date(Date.now() + i * 86400000)))
+    const dates = Array.from({ length: span }, (_, i) => shiftDate(viewDate, i))
     supabase.from('tasks').select('id, title, done, scheduled_day, scheduled_block')
       .eq('user_id', userId).in('scheduled_day', dates).is('parent_id', null)
       .then(({ data }) => {
@@ -626,7 +684,7 @@ export default function SchedulePage() {
         for (const t of data ?? []) (byDay[t.scheduled_day] ??= []).push(t)
         setRangeTasks(byDay)
       })
-  }, [viewMode, userId, today])
+  }, [viewMode, userId, viewDate])
 
   if (loading) return <div className="space-y-4"><SkeletonCard /></div>
 
@@ -635,12 +693,15 @@ export default function SchedulePage() {
 
   return (
     <div className="space-y-3 pb-4">
-      <PlanTabs />
       {/* Compact header + toolbar */}
       <div className="flex flex-wrap items-center gap-2">
         <div className="mr-auto">
           <h1 className="text-h2 text-dark-text leading-tight">Time Blocks</h1>
-          <p className="text-[12px] text-gray">{viewMode === 'day' ? 'Drag to move · drag the edge to resize · tap a block · tap empty space to add' : 'A look ahead — full editing lives in Day view'}</p>
+          <p className="text-[12px] text-gray">
+            {viewMode === 'day'
+              ? (isToday ? 'Drag to move · drag the edge to resize · tap a block · tap empty space to add' : `Planning ${fmtViewDate(viewDate)} — drag to move · tap a block · tap empty space to add`)
+              : `A look ahead from ${fmtViewDate(viewDate)} — full editing lives in Day view`}
+          </p>
         </div>
         <div className="flex overflow-hidden rounded-lg border border-border shrink-0" role="tablist" aria-label="Calendar view">
           {([['day', 'Day'], ['3day', '3-Day'], ['week', 'Week']] as const).map(([v, l]) => (
@@ -664,6 +725,25 @@ export default function SchedulePage() {
         )}
       </div>
 
+      {/* Date navigator — jump ahead to plan tomorrow, or any day/week/month */}
+      <div className="flex flex-wrap items-center gap-2">
+        <div className="flex items-center overflow-hidden rounded-lg border border-border shrink-0">
+          <button onClick={() => setViewDate(d => shiftDate(d, -(viewMode === 'day' ? 1 : viewMode === '3day' ? 3 : 7)))}
+            aria-label={viewMode === 'day' ? 'Previous day' : viewMode === '3day' ? 'Previous 3 days' : 'Previous week'}
+            className="px-2.5 py-2 text-[13px] font-[800] text-gray hover:bg-bdrbg hover:text-navy-ink">‹</button>
+          <button onClick={() => setViewDate(today)}
+            className={cn('border-l border-r border-border px-3 py-2 text-[12px] font-[800]', isToday ? 'bg-navy text-white' : 'bg-card text-gray hover:text-navy-ink')}>Today</button>
+          <button onClick={() => setViewDate(tomorrowIso)}
+            className={cn('border-r border-border px-3 py-2 text-[12px] font-[800]', isTomorrow ? 'bg-navy text-white' : 'bg-card text-gray hover:text-navy-ink')}>Tomorrow</button>
+          <button onClick={() => setViewDate(d => shiftDate(d, viewMode === 'day' ? 1 : viewMode === '3day' ? 3 : 7))}
+            aria-label={viewMode === 'day' ? 'Next day' : viewMode === '3day' ? 'Next 3 days' : 'Next week'}
+            className="px-2.5 py-2 text-[13px] font-[800] text-gray hover:bg-bdrbg hover:text-navy-ink">›</button>
+        </div>
+        <input type="date" value={viewDate} onChange={e => e.target.value && setViewDate(e.target.value)} aria-label="Jump to a date"
+          className="rounded-lg border border-border bg-card px-3 py-2 text-[13px] font-[700] text-dark-text shadow-card focus:outline-none focus:ring-2 focus:ring-navy" />
+        {!isToday && !isTomorrow && <span className="text-[12px] font-[700] text-mid-text">{viewDayLabel}</span>}
+      </div>
+
       <div className="flex items-center gap-2 text-[12px]">
         <span className="inline-flex items-center gap-1.5 rounded-full bg-teal/10 px-2.5 py-1 font-[700] text-teal"><PhoneIcon size={13} />{fmtDuration(SELLING_MINUTES)} selling</span>
         <span className="inline-flex items-center gap-1.5 rounded-full bg-bdrbg px-2.5 py-1 font-[700] text-mid-text tabular-nums">{doneCount}/{OPTIMIZED_DAY.length} done</span>
@@ -676,11 +756,12 @@ export default function SchedulePage() {
       {viewMode !== 'day' ? (
         <MultiDayOverview
           days={viewMode === '3day' ? 3 : 7}
-          today={today}
+          anchor={viewDate}
+          todayIso={today}
           base={base}
           templateBlocks={templateBlocks}
           rangeTasks={rangeTasks}
-          onPickDay={() => setViewMode('day')}
+          onPickDay={(iso: string) => { setViewDate(iso); setViewMode('day') }}
         />
       ) : (
       <>
@@ -688,7 +769,7 @@ export default function SchedulePage() {
       <div className="rounded-2xl bg-gradient-hero p-4 text-white shadow-card">
         <div className="mb-2 flex items-center gap-2">
           <LightningIcon size={16} className="text-white" />
-          <span className="text-[14px] font-[800]">Today’s triage</span>
+          <span className="text-[14px] font-[800]">{isToday || isTomorrow ? `${viewDayLabel}’s triage` : `Triage for ${viewDayLabel}`}</span>
           <span className={cn('ml-auto rounded-full px-2 py-0.5 text-[11px] font-[700] tabular-nums', overbookedMin > 0 ? 'bg-error/30 text-white' : 'text-white/70')}>
             {overbookedMin > 0 ? `Overbooked ${overbookedMin}m` : `${plannedMin}m planned · ${Math.max(0, capacityMin - plannedMin)}m free`}
           </span>
@@ -712,7 +793,7 @@ export default function SchedulePage() {
         </div>
         {planTotal > 0 && (
           <div className="mt-3">
-            <div className="mb-1 flex items-center justify-between text-[11px] text-white/80"><span>Today’s plan</span><span className="tabular-nums">{planDone}/{planTotal} done</span></div>
+            <div className="mb-1 flex items-center justify-between text-[11px] text-white/80"><span>{isToday || isTomorrow ? `${viewDayLabel}’s plan` : `Plan for ${viewDayLabel}`}</span><span className="tabular-nums">{planDone}/{planTotal} done</span></div>
             <div className="h-1.5 w-full overflow-hidden rounded-full bg-white/20"><div className="h-full rounded-full bg-card transition-all duration-700 ease-out" style={{ width: `${planProgress}%` }} /></div>
           </div>
         )}
@@ -727,7 +808,9 @@ export default function SchedulePage() {
               <RefreshIcon size={14} /> Re-plan
             </button>
           )}
-          <button onClick={() => askCoach('Look at my goal, pipeline, and today’s tasks. Triage my day for me: what are the top 3 things to focus on and in what order?')}
+          <button onClick={() => askCoach(isToday
+              ? 'Look at my goal, pipeline, and today’s tasks. Triage my day for me: what are the top 3 things to focus on and in what order?'
+              : `Look at my goal, pipeline, and my tasks for ${fmtViewDate(viewDate)}. Help me plan that day: what are the top 3 things to focus on and in what order?`)}
             className="flex items-center gap-1.5 rounded-lg bg-white/15 px-3 py-2 text-[13px] font-[700] text-white hover:bg-white/25">
             <TargetIcon size={14} /> Coach my day
           </button>
@@ -739,7 +822,7 @@ export default function SchedulePage() {
         <div className="rounded-2xl border border-teal/40 bg-teal/[0.05] p-3">
           <div className="mb-2 flex items-center gap-2">
             <LightningIcon size={15} className="text-teal" />
-            <span className="text-[13px] font-[800] text-dark-text">Suggested for today</span>
+            <span className="text-[13px] font-[800] text-dark-text">Suggested for {viewDayLabel.toLowerCase() === 'today' || viewDayLabel.toLowerCase() === 'tomorrow' ? viewDayLabel.toLowerCase() : viewDayLabel}</span>
             <span className="text-[11px] text-gray">· from your pipeline & goal</span>
             {suggestions.length > 1 && (
               <button onClick={() => suggestions.forEach(s => createTask(s.title, s.estimate, { priority: s.priority, plan: true }))}
@@ -808,7 +891,7 @@ export default function SchedulePage() {
             <div key={`half-${h}`} className="pointer-events-none absolute right-0 h-px bg-border/30" style={{ top: y(h + 30), left: GUTTER }} />
           ))}
 
-          {now >= rangeStart && now <= rangeEnd && (
+          {isToday && now >= rangeStart && now <= rangeEnd && (
             <div className="pointer-events-none absolute left-0 right-0 z-20 flex items-center" style={{ top: y(now) }}>
               <span className="ml-[46px] h-2.5 w-2.5 -translate-y-px rounded-full bg-error shadow" />
               <span className="h-[2px] flex-1 bg-error/80" />
@@ -827,7 +910,7 @@ export default function SchedulePage() {
               const height = Math.max(16, dur * PX_PER_MIN)
               const tiny = height < 30
               const compact = height < 52
-              const isCurrent = now >= start && now < start + dur
+              const isCurrent = isToday && now >= start && now < start + dur
               const suggestDone = needsCheck(blk)
               const dragging = preview?.key === key
               const bTasks = blockTasks[key] ?? []
