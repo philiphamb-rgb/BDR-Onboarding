@@ -88,13 +88,19 @@ summary text, payload jsonb, occurred_at, created_at
 `tasks` (**EXISTING**, 22 cols), `wins` (**EXISTING**), `notes` (**EXISTING**),
 `schedule_blocks` (**EXISTING**) stay as-is and emit into `activities`.
 
-### `goals` — **EVOLVE**
-Today: 7 cols (monthly focus). Add horizon support:
+### `goals` — **EXISTING, untouched** + `goal_items` — **NEW**
+Discovery during Phase 1.1: `goals` is a per-user **singleton** (PK = `user_id`,
+no `id` column) holding the primary monthly deal goal the `GoalCockpit` reads.
+Overloading it for multi-horizon goals would break that. So `goals` stays as-is,
+and a dedicated `goal_items` table (id-keyed, many-per-user) holds the richer
+5-horizon coach goals:
 ```
-horizon text default 'monthly'   -- annual|quarterly|monthly|weekly|daily
-parent_goal_id uuid null
-category text                    -- revenue|content|outreach|partner|habit
-target numeric, metric text
+goal_items(id, user_id, team_id,
+  horizon text default 'monthly',   -- annual|quarterly|monthly|weekly|daily
+  parent_goal_id uuid null references goal_items(id),
+  category text,                    -- revenue|content|outreach|partner|habit
+  title text, target numeric, metric text,
+  progress numeric, status text, due_date date, created_at, updated_at)
 ```
 
 ### Reused as-is (**EXISTING**)
