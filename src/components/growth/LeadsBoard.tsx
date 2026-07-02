@@ -229,7 +229,7 @@ export function LeadsBoard({ leadList, onOpenLead, reload }: { leadList: any[]; 
                 </button>
                 <NoteButton compact entityType="lead" entityId={lead.id} label={lead.name} context={`Partner lead · ${lead.stage} · score ${lead.score}`} />
                 <button onClick={e => { e.stopPropagation(); askCoach(`Write a personalized follow-up strategy for this ConsumerDirect Co-Brand PLUS+ agency lead: ${lead.name}, score ${lead.score}, currently ${lead.stage}. Give the next 3 specific touchpoints with copy.`) }}
-                  className="hidden shrink-0 items-center gap-1 rounded-lg bg-teal/10 px-2.5 py-1.5 text-[11px] font-[700] text-teal sm:flex"><IntegrationIcon size={11} /> Follow-up</button>
+                  className="flex shrink-0 items-center gap-1 rounded-lg bg-teal/10 px-2.5 py-1.5 text-[11px] font-[700] text-teal"><IntegrationIcon size={11} /> Follow-up</button>
               </div>
               <div className="mt-2 flex items-center gap-1.5 pl-[30px]">
                 <LightningIcon size={11} className={sug.urgent ? 'text-error' : 'text-gray'} />

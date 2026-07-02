@@ -24,6 +24,7 @@ const AGENT_MODEL = process.env.AGENT_MODEL || 'claude-sonnet-4-6'
 const MAX_RESPONDERS = 4
 
 export async function POST(req: Request) {
+  if (!process.env.ANTHROPIC_API_KEY) return NextResponse.json({ error: "Your AI team can't respond yet — add ANTHROPIC_API_KEY in your deployment settings to bring them online." }, { status: 503 })
   const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
   const { roomId, content } = await req.json()
   if (!roomId) return NextResponse.json({ error: 'roomId required' }, { status: 400 })

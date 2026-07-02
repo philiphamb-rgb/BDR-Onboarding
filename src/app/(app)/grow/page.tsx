@@ -18,6 +18,9 @@ import { GrowthChrome } from '@/components/growth/GrowthChrome'
 import { FlameIcon, HandshakeIcon, ArrowRightIcon, LightningIcon } from '@/components/icons'
 import { useGrowthOS } from '@/lib/hooks/useGrowthOS'
 import { useModuleKV } from '@/lib/hooks/useModuleKV'
+import { useState } from 'react'
+import { createUntypedClient } from '@/lib/supabase/untyped'
+import { loadRegistry } from '@/lib/agents/registry'
 import { AUTOMATION_META } from '@/lib/modules/growth-os/automationMeta'
 import { askCoach } from '@/lib/coachBus'
 import { cn } from '@/lib/utils'
@@ -47,6 +50,10 @@ export default function GrowthOverviewPage() {
   const { loading: welcomeLoading, value: welcome } = useModuleKV('growth_welcome', { seen: false })
   const autosForRoster = (roster || []).filter(a => AUTOMATION_META[a.id])
   const autosLive = autosForRoster.filter(a => a.status === 'live').length
+  // Total teammates from the real DB registry (the Agent Office source of truth),
+  // so this number matches /team instead of the 18-item automation catalog.
+  const [teamTotal, setTeamTotal] = useState<number | null>(null)
+  useEffect(() => { (async () => { try { const reg = await loadRegistry(createUntypedClient()); setTeamTotal(reg.agents.length) } catch {} })() }, [])
 
   // First-ever visit to Agentic CRM → the full-screen "Meet your AI team"
   // orientation, once per user. Replayable any time from the info icon below.
@@ -137,7 +144,7 @@ export default function GrowthOverviewPage() {
           <Card className="!p-3">
             <div className="mb-2 text-[11px] font-[800] uppercase tracking-wide text-gray">Your system at a glance</div>
             <div className="flex flex-wrap items-center gap-x-1.5 gap-y-1.5 text-[12.5px]">
-              <Link href="/grow/team" className="font-[700] text-navy-ink hover:underline">Agents: {liveCount}/{roster.length} live</Link>
+              <Link href="/team" className="font-[700] text-navy-ink hover:underline">Teammates: {liveCount}/{teamTotal ?? roster.length} live</Link>
               <span className="text-gray">·</span>
               <Link href="/grow/automations" className="font-[700] text-navy-ink hover:underline">Automations: {autosLive}/{autosForRoster.length} active</Link>
               <span className="text-gray">·</span>

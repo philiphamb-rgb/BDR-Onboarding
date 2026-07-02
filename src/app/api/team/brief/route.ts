@@ -14,6 +14,7 @@ import { loadRegistry } from '@/lib/agents/registry'
 import { generateMorningBrief } from '@/lib/agents/brief'
 
 export async function POST() {
+  if (!process.env.ANTHROPIC_API_KEY) return NextResponse.json({ error: "Your Chief of Staff can't write a brief yet — add ANTHROPIC_API_KEY in your deployment settings." }, { status: 503 })
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'unauthorized' }, { status: 401 })

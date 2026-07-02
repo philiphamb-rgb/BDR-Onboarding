@@ -15,6 +15,7 @@ import { NextResponse } from 'next/server'
 const AGENT_MODEL = process.env.AGENT_MODEL || 'claude-sonnet-4-6'
 
 export async function POST(req: Request) {
+  if (!process.env.ANTHROPIC_API_KEY) return NextResponse.json({ error: "AI isn't turned on yet — add ANTHROPIC_API_KEY in your deployment settings to enable fit scoring." }, { status: 503 })
   const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
   const { accountId } = await req.json()
   if (!accountId) return NextResponse.json({ error: 'accountId required' }, { status: 400 })
