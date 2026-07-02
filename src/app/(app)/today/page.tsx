@@ -59,8 +59,23 @@ export default function TodayPage() {
   const [doneTaskId, setDoneTaskId] = useState<string | null>(null)
   const [brief, setBrief] = useState<any>(null)         // Chief of Staff's morning brief
   const [briefOpen, setBriefOpen] = useState(true)
+  const [briefBusy, setBriefBusy] = useState(false)
   const { habits, loading: habitsLoading, refresh: refreshHabits } = useHabits(userId)
   const { progress, refresh: refreshProgress } = useProgress(userId)
+
+  const generateBrief = async () => {
+    if (briefBusy) return
+    setBriefBusy(true)
+    try {
+      const res = await fetch('/api/team/brief', { method: 'POST' })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data?.error || 'failed')
+      if (data.brief) { setBrief(data.brief); setBriefOpen(true) }
+      else toast.error("Couldn't generate a brief yet — add some pipeline or goals first.")
+    } catch (e: any) {
+      toast.error(`Couldn't generate your brief. ${e.message || ''}`)
+    } finally { setBriefBusy(false) }
+  }
 
   // Wins are now throttled milestone notifications, not a tab — logged as the
   // user's streak / deals / goal cross thresholds.
@@ -258,12 +273,35 @@ export default function TodayPage() {
           {briefOpen && (
             <div className="border-t border-navy-ink/10 px-4 py-3">
               <BriefBody text={brief.body} />
-              <button onClick={() => askCoach("Turn today's brief into a plan and schedule it into my time blocks.")}
-                className="mt-3 inline-flex items-center gap-1.5 rounded-lg bg-navy-ink px-3 py-1.5 text-[12px] font-[700] text-white transition-opacity hover:opacity-90">
-                <LightningIcon size={13} /> Act on this
-              </button>
+              <div className="mt-3 flex items-center gap-2">
+                <button onClick={() => askCoach("Turn today's brief into a plan and schedule it into my time blocks.")}
+                  className="inline-flex items-center gap-1.5 rounded-lg bg-navy-ink px-3 py-1.5 text-[12px] font-[700] text-white transition-opacity hover:opacity-90">
+                  <LightningIcon size={13} /> Act on this
+                </button>
+                {brief.for_date !== today && (
+                  <button onClick={generateBrief} disabled={briefBusy} className="text-[12px] font-[700] text-navy-ink disabled:opacity-50">
+                    {briefBusy ? 'Refreshing…' : 'Refresh for today'}
+                  </button>
+                )}
+              </div>
             </div>
           )}
+        </Card>
+      )}
+
+      {/* No brief yet — let the operator summon the Chief of Staff on demand
+          (works immediately; the cron also fills this every morning once set). */}
+      {loaded && !brief && (
+        <Card className="border-navy-ink/20 bg-navy-ink/[0.03] flex items-center gap-3">
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-navy-ink text-white"><CoachIcon size={17} /></div>
+          <div className="min-w-0 flex-1">
+            <div className="text-sm font-[800] text-dark-text">Get your morning brief</div>
+            <div className="text-[12px] text-gray">Your Chief of Staff reads your pipeline, goals & learnings and calls the day&apos;s top moves.</div>
+          </div>
+          <button onClick={generateBrief} disabled={briefBusy}
+            className="shrink-0 rounded-lg bg-navy-ink px-3 py-2 text-[12px] font-[800] text-white transition-opacity hover:opacity-90 disabled:opacity-60">
+            {briefBusy ? 'Thinking…' : 'Brief me'}
+          </button>
         </Card>
       )}
 
