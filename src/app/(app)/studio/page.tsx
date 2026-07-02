@@ -40,7 +40,10 @@ export default function StudioPage() {
           <h1 className="text-h1 text-dark-text">Content Studio</h1>
           <p className="mt-0.5 text-[13px] text-gray">Capture an idea, write the script, ship it. Two a day keeps the funnel full.</p>
         </div>
-        <Link href="/grow/content" className="hidden shrink-0 items-center gap-1 rounded-pill border border-border bg-card px-3 py-2 text-[12px] font-[700] text-navy-ink shadow-card hover:border-navy/40 desktop:flex"><LightningIcon size={15} /> Next Move</Link>
+        <div className="flex shrink-0 gap-2">
+          <Link href="/studio/repurpose" className="flex items-center gap-1 rounded-pill border border-border bg-card px-3 py-2 text-[12px] font-[700] text-teal shadow-card hover:border-teal/40"><LightningIcon size={15} /> Repurpose</Link>
+          <Link href="/grow/content" className="hidden items-center gap-1 rounded-pill border border-border bg-card px-3 py-2 text-[12px] font-[700] text-navy-ink shadow-card hover:border-navy/40 desktop:flex">Next Move</Link>
+        </div>
       </div>
 
       <div className="flex flex-wrap items-center gap-1.5">
