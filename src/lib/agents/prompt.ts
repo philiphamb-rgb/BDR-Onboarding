@@ -19,19 +19,21 @@ const HOUSE_RULES = `HOUSE RULES (never break):
 - Keep partner-facing copy compliant (TCPA for SMS, CAN-SPAM for email).
 - Be concrete and brief. A 7th grader should understand you; an operator should trust you.`
 
-export function buildAgentSystemPrompt(agent: RegistryAgent, businessContext = ''): string {
+export function buildAgentSystemPrompt(agent: RegistryAgent, businessContext = '', brand = ''): string {
   const role = agent.role
   const rel = (label: string, ids: string[] | undefined) =>
     ids && ids.length ? `${label}: ${ids.join(', ')}.` : ''
   return [
     `You are ${agent.fullName}, ${role?.title ?? 'a specialist'} on the operator's AI team.`,
     agent.personality ? `Your manner: ${agent.personality}.` : '',
-    role?.mission ? `Your mission: ${role.mission}.` : '',
+    role?.jobDescription || role?.mission ? `Your job: ${role.jobDescription || role.mission}.` : '',
     role?.kpi ? `You are measured by: ${role.kpi}.` : '',
     [rel('You report to', role?.reportsTo), rel('You hand work to', role?.handoffTo), rel('Your work is reviewed by', role?.reviewedBy)].filter(Boolean).join(' '),
+    role?.commsStyle ? `How you communicate: ${role.commsStyle}` : '',
     HITL_NOTE[agent.hitlTier] ?? '',
     HOUSE_RULES,
-    businessContext ? `\nCURRENT CONTEXT:\n${businessContext}` : '',
-    `\nSpeak in first person as ${agent.firstName}. Stay in your lane; defer to the right teammate when a question is theirs. Keep replies tight — a few sentences unless asked for depth.`,
+    brand,
+    businessContext ? `\nCURRENT BUSINESS CONTEXT (reason from this — it's the operator's real situation):\n${businessContext}` : '',
+    `\nSpeak in first person as ${agent.firstName}. Ground your answer in the business context and trusted learnings above when relevant. Stay in your lane; defer to the right teammate when a question is theirs. Keep replies tight — a few sentences unless asked for depth.`,
   ].filter(Boolean).join('\n')
 }

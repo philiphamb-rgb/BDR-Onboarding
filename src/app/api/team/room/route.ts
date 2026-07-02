@@ -18,6 +18,7 @@ import Anthropic from '@anthropic-ai/sdk'
 import { NextResponse } from 'next/server'
 import { loadRegistry } from '@/lib/agents/registry'
 import { buildAgentSystemPrompt } from '@/lib/agents/prompt'
+import { buildBusinessContext, brandBlock } from '@/lib/agents/context'
 
 const AGENT_MODEL = process.env.AGENT_MODEL || 'claude-sonnet-4-6'
 const MAX_RESPONDERS = 4
@@ -69,9 +70,13 @@ export async function POST(req: Request) {
   const roster = responders.map((r: any) => r.fullName).join(', ')
   const newMsgs: any[] = []
 
+  // Ground the whole room in the operator's real situation + brand once.
+  const { context: bizContext, brand } = await buildBusinessContext(supabase, user.id, room.team_id)
+
   for (const agent of responders) {
     const started = Date.now()
-    const system = buildAgentSystemPrompt(agent, `This is a ${room.mode.replace(/_/g, ' ')}${room.topic ? ` about "${room.topic}"` : ''}. Participants: ${roster}.`)
+    const roomLine = `This is a ${room.mode.replace(/_/g, ' ')}${room.topic ? ` about "${room.topic}"` : ''}. Participants: ${roster}.`
+    const system = buildAgentSystemPrompt(agent, `${roomLine}\n${bizContext}`, brandBlock(brand, agent.brandVoiceOverride))
     const soFar = newMsgs.length ? `\n${newMsgs.map(m => `${m.author_name}: ${m.content}`).join('\n')}` : ''
     const userTurn = `Conversation so far:\n${transcript}${soFar}\n\nNow respond as ${agent.firstName}. If this isn't your area, say so briefly and name who should take it.`
     let text = ''
