@@ -11,7 +11,7 @@ import {
   BookIcon, HandshakeIcon, ClockIcon, MoreIcon, CoinIcon, EditIcon,
   ChecklistIcon, ShieldIcon, SearchIcon, CloseIcon, ChevronDownIcon, MenuIcon,
   RaceCarIcon, BrainIcon, NoteIcon, TargetIcon, LightningIcon, IntegrationIcon,
-  DatabaseIcon, DocumentIcon,
+  DatabaseIcon, DocumentIcon, PipelineIcon,
 } from '@/components/icons'
 import type { User } from '@/types/database'
 import { usePermissions } from '@/components/usePermissions'
@@ -77,6 +77,7 @@ const GROWTH_SUBNAV: (NavItem & { feature?: string; lock?: boolean })[] = [
   { href: '/crm',              label: 'Workspace',   icon: DatabaseIcon },
   { href: '/partners',         label: 'Pipeline',    icon: HandshakeIcon },
   { href: '/grow/leadgen',     label: 'Lead Gen',    icon: TargetIcon },
+  { href: '/funnel',           label: 'Funnel Lab',  icon: PipelineIcon },
   { href: '/grow/automations', label: 'Automations', icon: LightningIcon },
   { href: '/team',             label: 'AI Team',     icon: IntegrationIcon, match: ['/team', '/grow/team'] },
   // Build is hard-locked to Admin/Manager — hidden entirely from standard users.
@@ -125,6 +126,7 @@ const PAGE_INDEX: { label: string; href: string }[] = [
   { label: 'CRM Workspace', href: '/crm' }, { label: 'Accounts', href: '/crm' }, { label: 'Leads', href: '/crm' }, { label: 'Opportunities', href: '/crm' },
   { label: 'Goals', href: '/goals' }, { label: 'Content Studio', href: '/studio' }, { label: 'Idea Bank', href: '/studio' },
   { label: 'Agent Office', href: '/team' }, { label: 'AI Team', href: '/team' }, { label: 'Meet your team', href: '/team/rooms' }, { label: 'Boardroom', href: '/team/rooms' },
+  { label: 'Funnel Lab', href: '/funnel' }, { label: 'SmartCredit Fit', href: '/funnel' }, { label: 'Repurpose', href: '/studio/repurpose' },
   { label: 'Settings', href: '/settings' }, { label: 'Notifications', href: '/notifications' },
 ]
 
