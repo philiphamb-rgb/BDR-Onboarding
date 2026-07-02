@@ -70,8 +70,10 @@ export async function POST(req: Request) {
   const roster = responders.map((r: any) => r.fullName).join(', ')
   const newMsgs: any[] = []
 
-  // Ground the whole room in the operator's real situation + brand once.
-  const { context: bizContext, brand } = await buildBusinessContext(supabase, user.id, room.team_id)
+  // Ground the whole room in the operator's real situation + brand once. The
+  // operator's message (or the room topic) drives relevance-ranked memory recall.
+  const retrievalQuery = `${room.topic || ''} ${content || ''}`.trim()
+  const { context: bizContext, brand } = await buildBusinessContext(supabase, user.id, room.team_id, retrievalQuery)
 
   for (const agent of responders) {
     const started = Date.now()

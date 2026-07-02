@@ -95,9 +95,34 @@ business" pass.
 - **ROI parity:** automations now show the same transparent "how it's calculated"
   formula line as agents.
 
-**Remaining depth (unchanged from below):** embeddings/RAG population, nightly
-decay recompute, closed-loop self-improvement, compliance approved-language vault,
-6-question onboarding. All schema-ready; deferred for a focused pass.
+## Phase 8 — Detailed transparency, alive UX & the Tier-3 loop ✅ shipped
+
+- **Detailed job descriptions:** all 43 agents rewritten from one-liners to full
+  role briefs (own / how they work / what good looks like), shown prominently in
+  the drawer.
+- **Living Agent Office:** procedural animated headshots (distinct per agent —
+  skin tone, hair, glasses, facial hair; blink + breathe + live-presence ring;
+  CSP-safe inline SVG, contrast-aware so no face is a silhouette) and an org-chart
+  view (C-suite leadership band + department pods as left-spine trees), with a
+  Grid toggle. Verified in a real browser (Playwright).
+- **Compliance approved-language vault** (`approved_language` + `/admin/compliance`):
+  manager-curated, pre-cleared phrasings injected into every partner-facing agent
+  prompt so regulated claims are safe by construction.
+- **Nightly memory decay** (`recompute_memory_decay()` + `/api/cron/memory-decay`):
+  unreinforced learnings lose trust and age out; lifecycle derived from trust
+  (idempotent). Locked to service-role.
+- **Self-improvement loop** (`/api/cron/self-improve`, Mondays): clusters the
+  week's agent-run errors into prompt-addendum proposals in the manager review
+  queue — nothing applied without human approval (HITL).
+- **RAG-lite retrieval:** memory recall re-ranks by keyword-overlap × trust against
+  the operator's live message/topic (no embedding provider configured — vector
+  search swaps in later by replacing `scoreRelevance`).
+- **6-question brand onboarding** (`BrandOnboarding`): first-run wizard seeding
+  `brand_settings` (voice/audience/promise/do/don't) + monthly deal goal — the
+  exact fields agents are grounded in.
+
+**Remaining depth:** true vector embeddings (needs an embeddings provider/key,
+decision C5); experimentation runner on `content_experiments`. Schema-ready.
 
 ## Cross-cutting notes / follow-ups
 

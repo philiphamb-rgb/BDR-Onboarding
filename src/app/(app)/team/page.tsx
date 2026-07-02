@@ -22,6 +22,7 @@ import { MODEL_FOR_TIER, HITL_LABEL, TIER_LABEL, computeAgentRoi } from '@/lib/a
 import { InfoIcon, IntegrationIcon, ChevronDownIcon, ArrowRightIcon, CoachIcon, EditIcon, CoinIcon, CopyIcon, CheckIcon } from '@/components/icons'
 import { AgentAvatar } from '@/components/team/AgentAvatar'
 import { OrgChart } from '@/components/team/OrgChart'
+import { BrandOnboarding } from '@/components/team/BrandOnboarding'
 import { cn } from '@/lib/utils'
 
 const DEPT_LABEL: Record<string, string> = {
@@ -183,6 +184,9 @@ export default function AgentOfficePage() {
 
       {open && <AgentDrawer agent={open} reg={reg} status={statusOf(open)} brand={brand} hourlyRate={hourlyRate} isManager={isManager} onClose={() => setOpenId(null)} onOpen={setOpenId} onSave={saveAgent} />}
       {editBrand && <BrandModal brand={brand} onClose={() => setEditBrand(false)} onSave={saveBrand} />}
+      {!loading && isManager && teamId && (
+        <BrandOnboarding supabase={supabase} teamId={teamId} userId={userId} brandExists={!!(brand?.voice || brand?.promise)} onDone={load} />
+      )}
     </div>
   )
 }
