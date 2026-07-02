@@ -19,20 +19,21 @@ import { LeadDrawer } from '@/components/growth/LeadDrawer'
 import { LeadsBoard } from '@/components/growth/LeadsBoard'
 import { ReportsPanel } from '@/components/growth/ReportsPanel'
 import { ContactsBoard } from '@/components/growth/ContactsBoard'
-import { FlameIcon, LightningIcon, IntegrationIcon, ArrowRightIcon, PlusIcon, ChartRisingIcon, InfoIcon, CoinIcon } from '@/components/icons'
+import { FlameIcon, LightningIcon, IntegrationIcon, ArrowRightIcon, PlusIcon, ChartRisingIcon, InfoIcon, CoinIcon, BrainIcon } from '@/components/icons'
 import { useGrowthOS } from '@/lib/hooks/useGrowthOS'
-import { GEN_PROMPTS, DEMO_CAMPAIGNS, fmtAgo } from '@/lib/modules/growth-os/leadgen'
+import { GEN_PROMPTS, DEMO_CAMPAIGNS, SCORE_ROUTING, fmtAgo } from '@/lib/modules/growth-os/leadgen'
 import { askCoach } from '@/lib/coachBus'
 import { cn } from '@/lib/utils'
 
 // Not a component — a plain helper that derives the insight cards from real
 // state. Named lowercase so it never looks like it should hold hooks.
-function computeInsights({ leadList, roster }: any) {
+// Lead-specific insights only — the "funnel agents not live" nudge is
+// systemic (about the CRM as a whole, not any one lead) and gets its own
+// slim banner instead of competing for hero-card space with real leads.
+function computeInsights({ leadList }: any) {
   const out: any[] = []
   const staleHot = leadList.filter(l => l.temperature === 'hot' && l.stage !== 'converted' && l.agoMin > 60)
   if (staleHot.length) out.push({ icon: FlameIcon, tone: 'error', title: `${staleHot.length} hot lead${staleHot.length > 1 ? 's have' : ' has'}n't been contacted in over an hour`, body: 'Leads contacted within 5 minutes are 21x more likely to qualify than after 30. Every extra hour compounds the loss.', cta: 'Draft outreach now', prompt: `Write urgent, ready-to-send outreach for these hot Co-Brand PLUS+ agency leads that have gone quiet: ${staleHot.slice(0, 5).map(l => `${l.name} (score ${l.score}, ${fmtAgo(l.agoMin)})`).join(', ')}. One SMS and one email each.` })
-  const off = roster.filter(a => a.status !== 'live' && a.category === 'funnel')
-  if (off.length) out.push({ icon: LightningIcon, tone: 'teal', title: `${off.length} funnel agent${off.length > 1 ? 's are' : ' is'} not live`, body: 'Turning these on hands the day-to-day lead work to your AI Team instead of doing it by hand.', cta: 'Review automations', prompt: `I have these Apex funnel agents turned off: ${off.map(a => a.name).join(', ')}. Which should I activate first based on impact vs setup effort, and walk me through it.` })
   const cold = leadList.filter(l => l.temperature === 'cold').length
   if (cold > leadList.length / 2 && leadList.length > 3) out.push({ icon: ChartRisingIcon, tone: 'gold', title: 'Your pipeline is running cold-heavy', body: `${cold} of ${leadList.length} leads are cold. You need more warm top-of-funnel to keep close rate up.`, cta: 'Get a plan', prompt: 'My partner pipeline is mostly cold leads. Give me 3 specific ways to warm it up and generate hotter agency prospects this week.' })
   return out.slice(0, 4)
@@ -43,7 +44,8 @@ export default function GrowthLeadGenPage() {
   const [view, setView] = useState('leads')
   const [openLead, setOpenLead] = useState<any>(null)   // CRM record drawer
   const weightedPipeline = (leadList || []).reduce((s, l) => s + (l.weighted || 0), 0)
-  const insights = loading ? [] : computeInsights({ leadList: leadList || [], roster: roster || [] })
+  const insights = loading ? [] : computeInsights({ leadList: leadList || [] })
+  const offFunnel = loading ? [] : (roster || []).filter(a => a.status !== 'live' && a.category === 'funnel')
   const stages = [{ k: 'cold', l: 'Cold', c: 'text-navy-ink' }, { k: 'warm', l: 'Warm', c: 'text-[#A06C00]' }, { k: 'hot', l: 'Hot', c: 'text-error' }, { k: 'converted', l: 'Won', c: 'text-success' }]
   const counts = { cold: leads.cold, warm: leads.warm, hot: leads.hot, converted: leads.won }
 
@@ -53,13 +55,33 @@ export default function GrowthLeadGenPage() {
 
   return (
     <div className="space-y-4 stagger-rise">
-      <GrowthSlimHeader title="Lead Gen" subtitle={loading ? undefined : `${leadList?.length ?? 0} lead${(leadList?.length ?? 0) === 1 ? '' : 's'} tracked · ${leads.hot} hot right now`} />
+      <GrowthSlimHeader title="Lead Gen" subtitle="Score, route, and convert every partner lead" />
       <GrowthTabs />
 
       {loading ? (
         <div className="space-y-3">{[1, 2, 3].map(i => <Skeleton key={i} className="h-20 rounded-2xl" />)}</div>
       ) : (
         <>
+          {/* Hero — one-line pipeline read + the one primary action on this page */}
+          <div className="flex items-center gap-3 rounded-2xl border border-border bg-card p-3.5 shadow-card">
+            <div className="min-w-0 flex-1 text-[13px] font-[700] text-dark-text">
+              {leadList?.length ?? 0} lead{(leadList?.length ?? 0) === 1 ? '' : 's'} tracked
+              {leads.warm > 0 && <span className="font-[600] text-[#A06C00]"> · {leads.warm} warm ready to advance</span>}
+              {leads.hot > 0 && <span className="font-[600] text-error"> · {leads.hot} hot right now</span>}
+            </div>
+            <Link href="/partners" className="flex shrink-0 items-center gap-1.5 rounded-lg bg-teal px-3.5 py-2 text-[12.5px] font-[800] text-white"><PlusIcon size={13} /> Add lead</Link>
+          </div>
+
+          {/* Off-funnel nudge — systemic, so it gets its own slim banner instead
+              of crowding the lead-specific insight cards below. */}
+          {offFunnel.length > 0 && (
+            <Link href="/grow/automations" className="flex items-center gap-2.5 rounded-xl bg-gold/10 p-2.5">
+              <InfoIcon size={13} className="shrink-0 text-[#A06C00]" />
+              <span className="min-w-0 flex-1 text-[11.5px] font-[600] text-[#A06C00]">{offFunnel.length} funnel agent{offFunnel.length > 1 ? 's are' : ' is'} off — leads may sit longer than they should</span>
+              <ArrowRightIcon size={12} className="shrink-0 text-[#A06C00]" />
+            </Link>
+          )}
+
           {/* AI insights */}
           {insights.length > 0 && (
             <div>
@@ -153,10 +175,19 @@ export default function GrowthLeadGenPage() {
 
           {view === 'generate' && (
             <div>
-              <p className="mb-3 text-[13px] leading-relaxed text-gray">Select any asset to generate it instantly with your AI Coach. Each prompt is pre-configured for ConsumerDirect Co-Brand PLUS+ and stays compliant.</p>
-              <div className="flex flex-wrap gap-2">
+              <p className="mb-3 text-[13px] leading-relaxed text-gray">Generate with AI — pick an asset and your Coach writes it instantly, pre-configured for ConsumerDirect Co-Brand PLUS+ and compliance-safe.</p>
+              <div className="grid gap-2 sm:grid-cols-2">
                 {GEN_PROMPTS.map(a => (
-                  <button key={a.l} onClick={() => askCoach(a.p)} className="flex items-center gap-2 rounded-xl border border-border bg-card px-4 py-3 text-[13px] font-[700] text-dark-text shadow-card hover:border-teal/40"><IntegrationIcon size={14} className="text-teal" />{a.l}<ArrowRightIcon size={12} className="text-gray" /></button>
+                  <Card key={a.l} className="!p-3.5">
+                    <div className="flex gap-2.5">
+                      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-teal/8"><BrainIcon size={15} className="text-teal" /></span>
+                      <div className="min-w-0 flex-1">
+                        <div className="text-[12.5px] font-[800] leading-tight text-dark-text">{a.l}</div>
+                        <p className="mt-1 text-[11.5px] leading-relaxed text-gray">{a.d}</p>
+                        <button onClick={() => askCoach(a.p)} className="mt-2 flex items-center gap-1.5 rounded-lg border border-teal/30 px-2.5 py-1.5 text-[11px] font-[800] text-teal">Generate <ArrowRightIcon size={11} /></button>
+                      </div>
+                    </div>
+                  </Card>
                 ))}
               </div>
             </div>

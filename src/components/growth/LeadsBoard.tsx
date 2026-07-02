@@ -14,7 +14,7 @@ import { Card, toast } from '@/components/ui'
 import { NoteButton } from '@/components/growth/NoteButton'
 import { usePermissions } from '@/components/usePermissions'
 import { useModuleKV } from '@/lib/hooks/useModuleKV'
-import { GEN_PROMPTS, SCORE_ROUTING, fmtAgo, leadSuggestion } from '@/lib/modules/growth-os/leadgen'
+import { SCORE_ROUTING, fmtAgo, leadSuggestion } from '@/lib/modules/growth-os/leadgen'
 import { askCoach } from '@/lib/coachBus'
 import {
   TargetIcon, LightningIcon, IntegrationIcon, ArrowRightIcon, SearchIcon, CloseIcon,
@@ -31,6 +31,35 @@ const PIPELINE = [
 const TEMPS = [{ k: 'cold', l: 'Cold' }, { k: 'warm', l: 'Warm' }, { k: 'hot', l: 'Hot' }]
 const SORTS = [{ k: 'score', l: 'Score' }, { k: 'recent', l: 'Recent' }, { k: 'name', l: 'Name' }]
 const uid = () => (typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(36).slice(2)}`)
+
+// A score means nothing on its own — this is what tells a rep what to DO
+// with one. Shown above the lead list, collapsed by default on mobile
+// (where there's no side rail to hold it) and always expanded on desktop.
+function ScoreLegend({ collapsible = false }: { collapsible?: boolean }) {
+  const [open, setOpen] = useState(!collapsible)
+  return (
+    <Card className="!p-4">
+      {collapsible ? (
+        <button onClick={() => setOpen(o => !o)} aria-expanded={open} className="flex w-full items-center justify-between">
+          <span className="text-[10px] font-[800] uppercase tracking-wide text-gray">Score routing — what a score means</span>
+          <ChevronDownIcon size={13} className={cn('shrink-0 text-gray transition-transform', open && 'rotate-180')} />
+        </button>
+      ) : (
+        <div className="mb-2.5 text-[10px] font-[800] uppercase tracking-wide text-gray">Score routing — what a score means</div>
+      )}
+      {open && (
+        <div className={collapsible ? 'mt-2' : undefined}>
+          {SCORE_ROUTING.map(([r, a, c, stat]) => (
+            <div key={r} className="border-b border-border py-2 last:border-0">
+              <div className="flex items-center justify-between"><span className="text-[12px] tabular-nums text-mid-text">{r}</span><span className={cn('text-[11px] font-[700]', c)}>{a}</span></div>
+              <div className="mt-0.5 text-[10px] text-gray">{stat}</div>
+            </div>
+          ))}
+        </div>
+      )}
+    </Card>
+  )
+}
 
 export function LeadsBoard({ leadList, onOpenLead, reload }: { leadList: any[]; onOpenLead: (l: any) => void; reload: () => void }) {
   const supabase = createClient()
@@ -108,6 +137,10 @@ export function LeadsBoard({ leadList, onOpenLead, reload }: { leadList: any[]; 
   return (
     <div className="grid gap-4 lg:grid-cols-[1.8fr_1fr]">
       <div className="space-y-2">
+        {/* Score legend — collapsed reference on mobile, above the list (no
+            side rail exists there); the desktop rail below has its own copy. */}
+        <div className="lg:hidden"><ScoreLegend collapsible /></div>
+
         {/* Search + filter toggle */}
         <div className="flex gap-2">
           <div className="relative flex-1">
@@ -199,23 +232,12 @@ export function LeadsBoard({ leadList, onOpenLead, reload }: { leadList: any[]; 
         {rows.length > 60 && <p className="px-1 text-[11px] text-gray">Showing the top 60 — narrow with filters to see more.</p>}
       </div>
 
-      {/* Right rail */}
-      <div className="space-y-3">
-        <Card className="!p-4">
-          <div className="mb-2.5 text-[10px] font-[800] uppercase tracking-wide text-gray">Score routing</div>
-          {SCORE_ROUTING.map(([r, a, c, stat]) => (
-            <div key={r} className="border-b border-border py-2 last:border-0">
-              <div className="flex items-center justify-between"><span className="text-[12px] tabular-nums text-mid-text">{r}</span><span className={cn('text-[11px] font-[700]', c)}>{a}</span></div>
-              <div className="mt-0.5 text-[10px] text-gray">{stat}</div>
-            </div>
-          ))}
-        </Card>
-        <Card className="!p-4">
-          <div className="mb-2.5 text-[10px] font-[800] uppercase tracking-wide text-gray">Quick generate</div>
-          {GEN_PROMPTS.slice(0, 4).map(a => (
-            <button key={a.l} onClick={() => askCoach(a.p)} className="mb-1.5 flex w-full items-center justify-between rounded-lg border border-border bg-bdrbg px-3 py-2 text-[12px] font-[600] text-mid-text hover:border-teal/40"><span>{a.l}</span><ArrowRightIcon size={12} className="text-gray" /></button>
-          ))}
-        </Card>
+      {/* Right rail — desktop only; mobile shows the collapsed version above
+          the list instead, where there's no side rail to hold it. "Quick
+          generate" lived here too, duplicating the dedicated Generate tab a
+          few taps away, so it's gone from here. */}
+      <div className="hidden space-y-3 lg:block">
+        <ScoreLegend />
       </div>
 
       {/* Bulk action bar (sticky) */}

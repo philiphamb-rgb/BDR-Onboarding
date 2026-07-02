@@ -5,15 +5,15 @@
 // re-themed to the ConsumerDirect Co-Brand PLUS+ partner motion.
 
 // Pre-configured AI asset generators — each hands a complete brief to the coach.
-export const GEN_PROMPTS: { l: string; p: string }[] = [
-  { l: 'Email Sequence', p: 'Write a 5-email nurture sequence for ConsumerDirect Co-Brand PLUS+ aimed at warm credit-repair AGENCY prospects (score 50–79). Include subject lines and opening lines. Focus on the recurring rev-share, the co-branded client experience, and booking a partnership call. Compliance-safe: no guaranteed credit outcomes.' },
-  { l: 'Landing Page Copy', p: 'Write a high-converting partner landing page for ConsumerDirect Co-Brand PLUS+. Include headline, subheadline, 3 benefit bullets for a credit-repair agency owner, social proof framing, and CTA button text. No guaranteed-outcome claims.' },
-  { l: 'Partner VSL Script', p: 'Write a 5-minute VSL script pitching ConsumerDirect Co-Brand PLUS+ to credit-repair agencies. Structure: Problem-Agitate-Solution-Proof-CTA. Focus on adding a recurring revenue line and a better client credit experience. Conversational, compliant.' },
-  { l: 'SMS Follow-Ups', p: 'Write 3 SMS follow-ups for hot Co-Brand PLUS+ agency prospects not yet booked. Each under 160 characters. Create urgency without hype. Include a [BOOKING_LINK] placeholder and TCPA opt-out on the first message.' },
-  { l: 'Partner One-Pager', p: 'Create a one-pager concept for recruiting credit-repair agencies to ConsumerDirect Co-Brand PLUS+. Include title, subtitle, 5 key points (rev share, co-brand, onboarding support, compliance, client tools), and an application CTA.' },
-  { l: 'Scoring Model', p: 'Design the full 3-part partner lead scoring model for Co-Brand PLUS+: Intent (0–40), Fit (0–35), Readiness (0–25). For each: 3 qualifying questions for an agency, scoring criteria, and the composite calculation.' },
-  { l: 'Pitch Deck Copy', p: 'Write copy for an 11-slide Co-Brand PLUS+ partner pitch deck: Cover, Problem, Market, Product, Funnel, AI Routing, Offer, Partner Economics, Tech Stack, KPIs/ROI, CTA. Specific and compelling, compliant.' },
-  { l: 'Affiliate Pitch', p: 'Write a high-converting recruitment pitch for the ConsumerDirect Co-Brand PLUS+ partner program. Include headline, earnings structure (recurring rev share), co-brand mechanics, requirements, and application CTA.' },
+export const GEN_PROMPTS: { l: string; d: string; p: string }[] = [
+  { l: 'Email Sequence', d: '5 emails to nurture warm agency prospects toward a call', p: 'Write a 5-email nurture sequence for ConsumerDirect Co-Brand PLUS+ aimed at warm credit-repair AGENCY prospects (score 50–79). Include subject lines and opening lines. Focus on the recurring rev-share, the co-branded client experience, and booking a partnership call. Compliance-safe: no guaranteed credit outcomes.' },
+  { l: 'Landing Page Copy', d: 'Headline, benefits, and CTA for a partner recruitment page', p: 'Write a high-converting partner landing page for ConsumerDirect Co-Brand PLUS+. Include headline, subheadline, 3 benefit bullets for a credit-repair agency owner, social proof framing, and CTA button text. No guaranteed-outcome claims.' },
+  { l: 'Partner VSL Script', d: 'A 5-minute video script that pitches the partnership', p: 'Write a 5-minute VSL script pitching ConsumerDirect Co-Brand PLUS+ to credit-repair agencies. Structure: Problem-Agitate-Solution-Proof-CTA. Focus on adding a recurring revenue line and a better client credit experience. Conversational, compliant.' },
+  { l: 'SMS Follow-Ups', d: '3 short texts to re-engage hot leads who haven\'t booked', p: 'Write 3 SMS follow-ups for hot Co-Brand PLUS+ agency prospects not yet booked. Each under 160 characters. Create urgency without hype. Include a [BOOKING_LINK] placeholder and TCPA opt-out on the first message.' },
+  { l: 'Partner One-Pager', d: 'A shareable PDF concept covering the whole offer', p: 'Create a one-pager concept for recruiting credit-repair agencies to ConsumerDirect Co-Brand PLUS+. Include title, subtitle, 5 key points (rev share, co-brand, onboarding support, compliance, client tools), and an application CTA.' },
+  { l: 'Scoring Model', d: 'The full rubric behind every lead\'s score', p: 'Design the full 3-part partner lead scoring model for Co-Brand PLUS+: Intent (0–40), Fit (0–35), Readiness (0–25). For each: 3 qualifying questions for an agency, scoring criteria, and the composite calculation.' },
+  { l: 'Pitch Deck Copy', d: 'Slide-by-slide copy for an 11-slide partner deck', p: 'Write copy for an 11-slide Co-Brand PLUS+ partner pitch deck: Cover, Problem, Market, Product, Funnel, AI Routing, Offer, Partner Economics, Tech Stack, KPIs/ROI, CTA. Specific and compelling, compliant.' },
+  { l: 'Affiliate Pitch', d: 'A recruitment pitch built around the earnings structure', p: 'Write a high-converting recruitment pitch for the ConsumerDirect Co-Brand PLUS+ partner program. Include headline, earnings structure (recurring rev share), co-brand mechanics, requirements, and application CTA.' },
 ]
 
 // Score → recommended action, with the benchmark that justifies it.
@@ -35,11 +35,22 @@ export const DEMO_CAMPAIGNS: { id: number; name: string; type: string; status: s
 export const fmtAgo = (min: number) => min < 60 ? `${min}m ago` : min < 1440 ? `${Math.round(min / 60)}h ago` : `${Math.round(min / 1440)}d ago`
 
 // AI-suggested next action per lead, grounded in speed-to-lead research.
+// Every branch reads stage + freshness together, so two warm leads at
+// different points in the pipeline (or different ages) never collapse into
+// the same generic sentence — each one says something a rep can actually act on.
+const STAGE_NUDGE: Record<string, string> = {
+  new_lead: 'reach out to introduce Co-Brand PLUS+ and gauge fit',
+  interested: 'send the next relevant asset to keep them engaged',
+  proposal_sent: 'follow up on the proposal before it goes cold',
+  contract_signed: 'confirm their PartnerHub setup and first login',
+}
 export function leadSuggestion(lead: { stage: string; temperature: string; agoMin: number }) {
   if (lead.temperature === 'hot' && lead.stage !== 'converted' && lead.agoMin > 60) return { urgent: true, text: 'Call now — qualification odds drop fast after the first hour' }
   if (lead.temperature === 'hot' && lead.stage !== 'converted') return { urgent: false, text: 'Inside the high-conversion window — keep it that way' }
-  if (lead.temperature === 'warm' && lead.agoMin > 720) return { urgent: true, text: 'Stalled 12h+ — nudge with a value-first message' }
-  if (lead.temperature === 'warm') return { urgent: false, text: 'On track in the nurture drip — no action needed yet' }
+  if (lead.temperature === 'warm' && lead.agoMin > 720) return { urgent: true, text: `Stalled 12h+ — ${STAGE_NUDGE[lead.stage] || 'nudge with a value-first message'}` }
+  if (lead.temperature === 'warm' && lead.agoMin < 60) return { urgent: false, text: `Just went warm — ${STAGE_NUDGE[lead.stage] || 'first-hour follow-up converts best'}` }
+  if (lead.temperature === 'warm') return { urgent: false, text: `In the nurture drip — next AI touchpoint in ${fmtAgo(720 - lead.agoMin).replace(' ago', '')}` }
   if (lead.stage === 'converted') return { urgent: false, text: 'Signed — eligible for a referral ask' }
+  if (lead.stage === 'new_lead') return { urgent: false, text: 'Cold and unworked — a first touch could still land it' }
   return { urgent: false, text: 'Low urgency — the education sequence is handling this' }
 }
