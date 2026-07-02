@@ -191,6 +191,25 @@ export default function AgentOfficePage() {
   )
 }
 
+// Renders a structured job description (markdown-ish: ## section headings,
+// - bullets, **bold**) into a clean, scannable role spec.
+function JobSpec({ text }: { text: string }) {
+  const inline = (s: string) => s.split(/(\*\*[^*]+\*\*)/g).map((part, i) =>
+    part.startsWith('**') && part.endsWith('**')
+      ? <strong key={i} className="font-[800] text-dark-text">{part.slice(2, -2)}</strong>
+      : <span key={i}>{part}</span>)
+  const lines = (text || '').split('\n').map(l => l.trim()).filter(Boolean)
+  return (
+    <div className="space-y-1.5 text-[12.5px] leading-relaxed text-mid-text">
+      {lines.map((l, i) => {
+        if (/^#{1,3}\s+/.test(l)) return <div key={i} className="pt-1.5 text-[10px] font-[900] uppercase tracking-wide text-teal">{inline(l.replace(/^#{1,3}\s+/, ''))}</div>
+        if (/^[-*]\s+/.test(l)) return <div key={i} className="flex gap-2"><span className="mt-[7px] h-1 w-1 shrink-0 rounded-full bg-navy-ink/50" /><span>{inline(l.replace(/^[-*]\s+/, ''))}</span></div>
+        return <div key={i}>{inline(l)}</div>
+      })}
+    </div>
+  )
+}
+
 // ── Full agent detail + inline edit ─────────────────────────────────────────
 function AgentDrawer({ agent, reg, status, brand, hourlyRate, isManager, onClose, onOpen, onSave }: any) {
   const role = agent.role || {}
@@ -238,11 +257,11 @@ function AgentDrawer({ agent, reg, status, brand, hourlyRate, isManager, onClose
               {agent.roiNote && <div className="mt-1 text-[10.5px] italic text-gray">{agent.roiNote}</div>}
             </div>
 
-            {/* Job description — the full role brief */}
+            {/* Job description — the full role spec */}
             {role.jobDescription && (
-              <div className="mb-3 rounded-xl border border-border bg-bdrbg/40 p-3">
-                <div className="mb-1.5 flex items-center gap-1.5 text-[10px] font-[900] uppercase tracking-wide text-navy-ink"><InfoIcon size={12} /> Job description</div>
-                <p className="whitespace-pre-line text-[12.5px] leading-relaxed text-mid-text">{role.jobDescription}</p>
+              <div className="mb-3 rounded-xl border border-border bg-bdrbg/40 p-3.5">
+                <div className="mb-2 flex items-center gap-1.5 text-[10px] font-[900] uppercase tracking-wide text-navy-ink"><InfoIcon size={12} /> Job description</div>
+                <JobSpec text={role.jobDescription} />
               </div>
             )}
 
