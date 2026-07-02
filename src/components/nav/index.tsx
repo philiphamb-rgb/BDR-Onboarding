@@ -10,7 +10,7 @@ import {
   BellIcon, BellDotIcon, SettingsIcon, TeamIcon, BarChartIcon,
   BookIcon, HandshakeIcon, ClockIcon, MoreIcon, CoinIcon, EditIcon,
   ChecklistIcon, ShieldIcon, SearchIcon, CloseIcon, ChevronDownIcon, MenuIcon,
-  RaceCarIcon, BrainIcon, NoteIcon,
+  RaceCarIcon, BrainIcon, NoteIcon, TargetIcon, LightningIcon, IntegrationIcon,
 } from '@/components/icons'
 import type { User } from '@/types/database'
 import { usePermissions } from '@/components/usePermissions'
@@ -47,6 +47,21 @@ const PRIMARY_NAV: NavItem[] = [
   { href: '/grow/content', label: 'Content',        icon: EditIcon },
   { href: '/train',       label: 'Learning Center', shortLabel: 'Learn', icon: BrainIcon, match: ['/train', '/progress'] },
   { href: '/resources',   label: 'Resources',       icon: BookIcon },
+]
+
+// Agentic CRM's views used to render as clickable tabs at the top of every
+// /grow page (GrowthTabs). They now live here instead, as a collapsible
+// group under the "Agentic CRM" sidebar item — one contained app area
+// rather than separate top-level pages. GrowthTabs itself still renders on
+// mobile (no sidebar there to hold this).
+const GROWTH_SUBNAV: (NavItem & { feature?: string; lock?: boolean })[] = [
+  { href: '/grow',             label: 'Overview',    icon: DashboardIcon },
+  { href: '/partners',         label: 'Pipeline',    icon: HandshakeIcon },
+  { href: '/grow/leadgen',     label: 'Lead Gen',    icon: TargetIcon },
+  { href: '/grow/automations', label: 'Automations', icon: LightningIcon },
+  { href: '/grow/team',        label: 'AI Team',     icon: IntegrationIcon },
+  // Build is hard-locked to Admin/Manager — hidden entirely from standard users.
+  { href: '/grow/build',       label: 'Build',       icon: ChecklistIcon, feature: 'growth_build', lock: true },
 ]
 
 const MANAGER_ITEMS: NavItem[] = [
@@ -310,6 +325,8 @@ export function Sidebar({ user }: { user?: User | null; unreadCount?: number }) 
 
   const primary = PRIMARY_NAV.filter(allowed)
   const managerItems = isManager ? MANAGER_ITEMS.filter(allowed) : []
+  const growthItem = PRIMARY_NAV.find(i => i.href === '/grow')!
+  const growthSub = GROWTH_SUBNAV.filter(v => !v.lock || canView(v.feature!))
 
   // Manager section defaults COLLAPSED; the choice persists across navigation.
   // It auto-opens while you're actually on a /manager route so the active page
@@ -319,6 +336,14 @@ export function Sidebar({ user }: { user?: User | null; unreadCount?: number }) 
   const onManagerRoute = pathname.startsWith('/manager')
   const showMgr = mgrOpen || onManagerRoute
   const toggleMgr = () => { setMgrOpen(o => { const n = !o; try { localStorage.setItem('mgrNavOpen', n ? '1' : '0') } catch {}; return n }) }
+
+  // Agentic CRM defaults COLLAPSED too, same persistence + auto-open pattern —
+  // clicking "Agentic CRM" toggles the group; a sub-item link is what navigates.
+  const [growOpen, setGrowOpen] = useState(false)
+  useEffect(() => { try { setGrowOpen(localStorage.getItem('growNavOpen') === '1') } catch {} }, [])
+  const onGrowthRoute = matchNav(pathname, growthItem)
+  const showGrow = growOpen || onGrowthRoute
+  const toggleGrow = () => { setGrowOpen(o => { const n = !o; try { localStorage.setItem('growNavOpen', n ? '1' : '0') } catch {}; return n }) }
 
   // Collapsed (icon-only rail) ↔ expanded, toggled by the hamburger. The width
   // itself is driven by the --sb-w CSS var on <html> (so the main content margin
@@ -352,7 +377,10 @@ export function Sidebar({ user }: { user?: User | null; unreadCount?: number }) 
 
       <div className={cn('flex-1 overflow-y-auto py-3', collapsed ? 'px-2' : 'px-3')}>
         <div className="space-y-0.5">
-          {primary.map(item => <SidebarItem key={item.href} item={item} pathname={pathname} collapsed={collapsed} />)}
+          {primary.map(item => item.href === '/grow'
+            ? <GrowthNavGroup key={item.href} item={item} subItems={growthSub} pathname={pathname} collapsed={collapsed} open={showGrow} onToggle={toggleGrow} />
+            : <SidebarItem key={item.href} item={item} pathname={pathname} collapsed={collapsed} />
+          )}
         </div>
 
         {/* Manager tools — role-gated. Collapsed: icon-only, no accordion.
@@ -402,5 +430,46 @@ function SidebarItem({ item, pathname, collapsed = false }: { item: NavItem; pat
       <Icon size={18} />
       {!collapsed && <span className="flex-1 truncate">{item.label}</span>}
     </Link>
+  )
+}
+
+// Agentic CRM's sidebar entry — collapsed by default, expands in place to
+// reveal its views (Overview, Pipeline, Lead Gen, Automations, AI Team,
+// Build) instead of navigating straight to Overview. A sub-item link is
+// what actually navigates; this button only toggles the group open/closed,
+// same interaction as the Manager section below it.
+function GrowthNavGroup({ item, subItems, pathname, collapsed, open, onToggle }: { item: NavItem; subItems: NavItem[]; pathname: string; collapsed: boolean; open: boolean; onToggle: () => void }) {
+  if (collapsed) return <SidebarItem item={item} pathname={pathname} collapsed />
+  const Icon = item.icon
+  const isActive = matchNav(pathname, item)
+  return (
+    <div>
+      <button onClick={onToggle} aria-expanded={open}
+        className={cn('relative flex w-full items-center gap-3 rounded-lg min-h-[42px] pl-4 pr-3 py-2.5 text-left text-[14px] font-[600] transition-all duration-[150ms]',
+          isActive ? 'bg-navy/10 text-navy-ink font-[700]' : 'text-mid-text hover:bg-bdrbg hover:text-navy-ink')}>
+        <div className={cn('absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 rounded-full bg-navy transition-opacity duration-200', isActive ? 'opacity-100 animate-tab-bob' : 'opacity-0')} />
+        <Icon size={18} />
+        <span className="flex-1 truncate">{item.label}</span>
+        {isActive && !open && <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-navy" />}
+        <ChevronDownIcon size={14} className={cn('shrink-0 text-gray transition-transform', open && 'rotate-180')} />
+      </button>
+      {open && (
+        <div className="ml-4 mt-0.5 space-y-0.5 border-l border-border pl-2.5">
+          {subItems.map(sub => {
+            const subActive = sub.href === '/grow' ? pathname === '/grow' : (pathname === sub.href || pathname.startsWith(sub.href + '/'))
+            const SubIcon = sub.icon
+            return (
+              <Link key={sub.href} href={sub.href}
+                className={cn('flex items-center gap-2.5 rounded-lg py-2 pl-2.5 pr-3 text-[13px] font-[600] transition-colors',
+                  subActive ? 'bg-navy/10 text-navy-ink font-[700]' : 'text-mid-text hover:bg-bdrbg hover:text-navy-ink')}
+                aria-current={subActive ? 'page' : undefined}>
+                <SubIcon size={15} />
+                <span className="flex-1 truncate">{sub.label}</span>
+              </Link>
+            )
+          })}
+        </div>
+      )}
+    </div>
   )
 }

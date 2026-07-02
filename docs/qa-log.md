@@ -258,3 +258,58 @@ component's render body — not hook violations.
       are hidden while searching; clear the search — they reappear.
 - [ ] Non-manager / view-only mode: no drag handle, no rename input
       (plain heading), no add/delete controls anywhere in the Library.
+
+## Agentic CRM — sub-tabs moved into a left-sidebar expandable group
+
+- **Problem:** Agentic CRM's six views (Overview, Pipeline, Lead Gen,
+  Automations, AI Team, Build) rendered as clickable tabs at the top of every
+  `/grow` page (`GrowthTabs`) — a second, competing navigation surface on top
+  of the sidebar.
+- **Fix (desktop):** `Sidebar` (`src/components/nav/index.tsx`) now renders
+  "Agentic CRM" as a collapsible group (`GrowthNavGroup`), mirroring the
+  existing "Manager" section pattern exactly: collapsed by default, persisted
+  via `localStorage` (`growNavOpen`), auto-expands while already on a CRM
+  route (`/grow*` or `/partners*`) so the active page is never hidden behind
+  a collapsed group. Clicking "Agentic CRM" only toggles the group (same
+  interaction as "Manager"); a sub-item link is what actually navigates.
+  Sub-items: Overview → `/grow`, Pipeline → `/partners`, Lead Gen →
+  `/grow/leadgen`, Automations → `/grow/automations`, AI Team → `/grow/team`,
+  Build → `/grow/build` (still hard-locked to Admin/Manager via the same
+  `growth_build` feature check `GrowthTabs` used).
+- **`GrowthTabs` (top tabs):** hidden on desktop (`desktop:hidden`) now that
+  the sidebar owns this navigation there — left rendering as-is on mobile,
+  where there's no left sidebar to expand into. No page files changed; one
+  class added to the shared component covers all six `/grow`+`/partners`
+  usages.
+- **Scope:** Agentic CRM only, per explicit instruction — Learning Center and
+  other multi-tab sections are unchanged and keep their existing top-tab
+  pattern until separately confirmed.
+- **Not touched:** routing/URLs. `/partners` (Pipeline) stays at its existing
+  top-level route rather than moving under `/grow` — it already renders
+  inside the shared `(app)` layout (sidebar + header persist) exactly like
+  every `/grow` page, so the "one contained app area" feel the spec asks for
+  is already satisfied structurally; relocating the route would be a much
+  larger, riskier migration (breaking existing `/partners` links from
+  Manager pages, bottom nav, etc.) than what was actually requested.
+
+**Manual QA checklist — Agentic CRM sidebar group:**
+- [ ] Fresh session, sidebar expanded: "Agentic CRM" shows collapsed (no
+      sub-items visible) until clicked.
+- [ ] Click "Agentic CRM": group expands in place, showing all sub-items a
+      rep can see (Build hidden for non-managers); click again: collapses.
+- [ ] Click a sub-item (e.g. "Lead Gen"): navigates to `/grow/leadgen`, the
+      sidebar sub-nav stays open with Lead Gen highlighted, no top tabs
+      appear on the page itself.
+- [ ] Navigate directly to `/partners` (e.g. via a saved link or the global
+      search): the "Agentic CRM" group auto-expands with Pipeline
+      highlighted, even though the group was never manually clicked open.
+- [ ] Reload the page while on a CRM route: group stays expanded (auto-open
+      on route match doesn't depend on the persisted toggle).
+- [ ] Collapse the whole sidebar (icon rail): Agentic CRM shows as a single
+      icon linking to `/grow`, no accordion chevron, matching how the
+      Manager section behaves collapsed.
+- [ ] Mobile viewport: bottom nav still reaches Agentic CRM via "CRM"; once
+      on a `/grow` page, the top `GrowthTabs` switcher still renders (no
+      sidebar exists there to hold the sub-nav).
+- [ ] Manager/Admin: "Build" sub-item is visible; standard rep: it's absent
+      from both the sidebar group and the (still-mobile-only) top tabs.

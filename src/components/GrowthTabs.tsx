@@ -1,11 +1,12 @@
 'use client'
 
 // The Apex switcher — one destination, five views: Overview (where you stand),
-// Pipeline, Lead Gen, Automations, AI Team, and Build. Mirrors PlanTabs so the
-// whole app shares one workspace-switcher pattern; scrolls horizontally on
-// narrow screens. Analytics, Content, and Commissions are standalone top-level
-// tabs now (not nested here) — Agentic CRM stays focused on the pipeline + the
-// AI agent workforce that feeds it.
+// Pipeline, Lead Gen, Automations, AI Team, and Build. On desktop these views
+// now live in the left sidebar's expandable "Agentic CRM" group instead (see
+// components/nav — GrowthNavGroup), so this only renders on mobile, where
+// there's no sidebar to hold them. Analytics, Content, and Commissions are
+// standalone top-level tabs now (not nested here) — Agentic CRM stays focused
+// on the pipeline + the AI agent workforce that feeds it.
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { cn } from '@/lib/utils'
@@ -29,7 +30,7 @@ export function GrowthTabs() {
   // is gated, and hidden until perms resolve so it never flashes to a rep.
   const views = GROWTH_VIEWS.filter(v => !v.lock || (ready && canView(v.feature)))
   return (
-    <div className="no-print flex gap-1 overflow-x-auto rounded-xl bg-bdrbg p-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" role="tablist" aria-label="Agentic CRM">
+    <div className="no-print flex gap-1 overflow-x-auto rounded-xl bg-bdrbg p-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden desktop:hidden" role="tablist" aria-label="Agentic CRM">
       {views.map(v => {
         const active = v.href === '/grow' ? pathname === '/grow' : (pathname === v.href || pathname.startsWith(v.href + '/'))
         const Icon = v.icon
