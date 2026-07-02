@@ -1,8 +1,8 @@
 // @ts-nocheck
 // Turns a room's conversation into a structured meeting output: summary,
 // decisions, open questions, owners, next actions, deadlines. Persists to
-// meeting_outputs and marks the room summarized. Next actions surface in the
-// room UI and can be pushed to tasks by the operator.
+// meeting_outputs and marks the room summarized. Next actions are also turned
+// into real tasks automatically, so a decision in the room becomes execution.
 
 export const dynamic = 'force-dynamic'
 export const maxDuration = 45
@@ -57,5 +57,20 @@ Be concrete and brief. next_actions must be specific and doable. Empty arrays ar
   const { data: saved } = await supabase.from('meeting_outputs').insert(output).select('*').maybeSingle()
   await supabase.from('meeting_rooms').update({ status: 'summarized', updated_at: new Date().toISOString() }).eq('id', roomId)
 
-  return NextResponse.json({ output: saved || output })
+  // Autonomy: turn the meeting's next actions into real tasks the operator can
+  // work and time-block — so a decision in the room becomes execution, not a note
+  // that dies in a summary. Tagged 'meeting' + categorized so they're traceable.
+  let tasksCreated = 0
+  if (output.next_actions.length) {
+    const tag = `Meeting${room.topic ? `: ${room.topic}` : ''}`.slice(0, 80)
+    const rows = output.next_actions.slice(0, 12).map((title: string, i: number) => ({
+      user_id: user.id, title: title.slice(0, 200),
+      notes: `From AI meeting${room.topic ? ` "${room.topic}"` : ''} on ${new Date().toISOString().split('T')[0]}.`,
+      category: 'meeting', tags: [tag], order_index: i,
+    }))
+    const { data: made } = await supabase.from('tasks').insert(rows).select('id')
+    tasksCreated = made?.length ?? 0
+  }
+
+  return NextResponse.json({ output: saved || output, tasksCreated })
 }

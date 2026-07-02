@@ -21,6 +21,30 @@ import { stageMeta } from '@/lib/partnerChecklist'
 import { localToday } from '@/lib/schedule'
 import { fetchDaySlots } from '@/lib/daySlots'
 
+// Tiny inline formatter for agent brief bodies — bold + bullets + numbered/head
+// lines, no dependency. Briefs are short markdown from a trusted agent prompt.
+function BriefBody({ text }: { text: string }) {
+  const inline = (s: string) =>
+    s.split(/(\*\*[^*]+\*\*)/g).map((part, i) =>
+      part.startsWith('**') && part.endsWith('**')
+        ? <strong key={i} className="font-[800] text-dark-text">{part.slice(2, -2)}</strong>
+        : <span key={i}>{part}</span>)
+  const lines = (text || '').split('\n').filter(l => l.trim())
+  return (
+    <div className="space-y-1.5 text-[13px] leading-relaxed text-dark-text/90">
+      {lines.map((l, i) => {
+        const t = l.trim()
+        const head = /^#{1,3}\s+/.test(t)
+        const bullet = /^([-*]|\d+\.)\s+/.test(t)
+        const body = t.replace(/^#{1,3}\s+/, '').replace(/^([-*]|\d+\.)\s+/, '')
+        if (head) return <div key={i} className="pt-1 text-[11px] font-[800] uppercase tracking-wide text-navy-ink">{inline(body)}</div>
+        if (bullet) return <div key={i} className="flex gap-2"><span className="mt-1.5 h-1 w-1 shrink-0 rounded-full bg-teal" /><span>{inline(body)}</span></div>
+        return <div key={i}>{inline(body)}</div>
+      })}
+    </div>
+  )
+}
+
 export default function TodayPage() {
   const supabase = createClient()
   const [userId, setUserId] = useState<string>()
@@ -33,6 +57,8 @@ export default function TodayPage() {
   const [dayBlocks, setDayBlocks] = useState<any[]>([])
   const [triageBusy, setTriageBusy] = useState(false)
   const [doneTaskId, setDoneTaskId] = useState<string | null>(null)
+  const [brief, setBrief] = useState<any>(null)         // Chief of Staff's morning brief
+  const [briefOpen, setBriefOpen] = useState(true)
   const { habits, loading: habitsLoading, refresh: refreshHabits } = useHabits(userId)
   const { progress, refresh: refreshProgress } = useProgress(userId)
 
@@ -55,6 +81,10 @@ export default function TodayPage() {
         supabase.from('partner_onboarding').select('id, partner_name, stage, temperature, updated_at, next_followup_date').eq('user_id', user.id).then(({ data }) => setPartners(data ?? [])),
         supabase.from('goals').select('monthly_deal_goal').eq('user_id', user.id).maybeSingle().then(({ data }) => setGoal(data?.monthly_deal_goal ?? null)),
         supabase.from('user_progress').select('deals_this_month').eq('user_id', user.id).single().then(({ data }) => setDealsThisMonth(data?.deals_this_month ?? 0)),
+        // The Chief of Staff's most recent morning brief (autonomy, made visible).
+        supabase.from('agent_briefs').select('id, title, body, for_date, is_read')
+          .eq('user_id', user.id).eq('kind', 'morning').order('for_date', { ascending: false }).limit(1)
+          .then(({ data }) => setBrief(data?.[0] ?? null)),
       ])
       setLoaded(true)
     })()
@@ -212,6 +242,30 @@ export default function TodayPage() {
       <AiTip id="today-plan" title="Start the day with an AI game plan" prompt="Give me my game plan for today: where I stand, my biggest opportunity, and the top 3 things to do." tryLabel="Get today's game plan">
         Ask the coach to triage your day from your goal, pipeline, and tasks — then tap <span className="font-[700]">Auto-plan my day</span> to schedule it all into your time blocks.
       </AiTip>
+
+      {/* ── Morning brief — the Chief of Staff's autonomous overnight read on
+          the day, grounded in real pipeline/goals/memory. Autonomy made visible. ── */}
+      {brief && (
+        <Card className="border-navy-ink/20 bg-navy-ink/[0.03] !p-0 overflow-hidden">
+          <button onClick={() => setBriefOpen(o => !o)} className="flex w-full items-center gap-2.5 px-4 py-3 text-left">
+            <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-navy-ink text-white"><CoachIcon size={15} /></div>
+            <div className="min-w-0 flex-1">
+              <div className="text-[10px] font-[800] uppercase tracking-wide text-navy-ink">Chief of Staff · {brief.for_date === today ? 'this morning' : formatDateShort(new Date(brief.for_date))}</div>
+              <div className="truncate text-sm font-[700] text-dark-text">{brief.title || 'Your morning brief'}</div>
+            </div>
+            <ArrowRightIcon className={cn('h-4 w-4 shrink-0 text-gray transition-transform', briefOpen && 'rotate-90')} />
+          </button>
+          {briefOpen && (
+            <div className="border-t border-navy-ink/10 px-4 py-3">
+              <BriefBody text={brief.body} />
+              <button onClick={() => askCoach("Turn today's brief into a plan and schedule it into my time blocks.")}
+                className="mt-3 inline-flex items-center gap-1.5 rounded-lg bg-navy-ink px-3 py-1.5 text-[12px] font-[700] text-white transition-opacity hover:opacity-90">
+                <LightningIcon size={13} /> Act on this
+              </button>
+            </div>
+          )}
+        </Card>
+      )}
 
       {/* ── Day cockpit — goal pace + today at a glance ── */}
       <Card className="overflow-hidden !p-0">

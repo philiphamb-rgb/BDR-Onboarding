@@ -42,6 +42,27 @@ async function buildUserContext(supabase, uid: string) {
     : { data: [] }
   const liveAutos = (autos ?? []).filter((a: any) => a.status === 'live')
   const todayStr = new Date().toISOString().split('T')[0]
+
+  // Agentic CRM OS surfaces (post-dates the generated types → read loosely).
+  // The coach should know the operator's live accounts, layered goals, recent
+  // meetings, and the earned playbook (trusted learnings) — one brain, not silos.
+  const [{ data: osAccounts }, { data: osGoalItems }, { data: osMeetings }, { data: osMemories }] = await Promise.all([
+    supabase.from('accounts').select('name, smartcredit_fit_score, lifecycle_stage')
+      .order('smartcredit_fit_score', { ascending: false, nullsFirst: false }).limit(6),
+    supabase.from('goal_items').select('horizon, title, target, metric, progress, status')
+      .eq('status', 'active').limit(8),
+    supabase.from('meetings').select('title, summary, meeting_date')
+      .eq('user_id', uid).order('meeting_date', { ascending: false }).limit(3),
+    supabase.from('semantic_memories').select('title, content, trust_score')
+      .eq('lifecycle_state', 'active').order('trust_score', { ascending: false }).limit(5),
+  ])
+  const osBits: string[] = []
+  if ((osGoalItems ?? []).length) osBits.push(`Layered goals: ${osGoalItems.map((g: any) => `${g.horizon} — ${g.title}${g.target ? ` (${g.progress}/${g.target}${g.metric ? ' ' + g.metric : ''})` : ''}`).join('; ')}.`)
+  if ((osAccounts ?? []).length) osBits.push(`Top-fit accounts: ${osAccounts.map((a: any) => `${a.name}${a.smartcredit_fit_score != null ? ` (fit ${a.smartcredit_fit_score})` : ''}`).join(', ')}.`)
+  if ((osMeetings ?? []).length) osBits.push(`Recent meetings: ${osMeetings.map((m: any) => `${m.title}${m.summary ? ` — ${String(m.summary).slice(0, 90)}` : ''}`).join(' · ')}.`)
+  if ((osMemories ?? []).length) osBits.push(`Trusted learnings (approved playbook — reason from these):\n${osMemories.map((m: any) => `- ${m.title}: ${m.content} [trust ${m.trust_score}]`).join('\n')}`)
+  const osBlock = osBits.length ? `\nAGENTIC CRM OS:\n${osBits.join('\n')}` : ''
+
   const [{ data: openTasks }, { data: recentNotes }, { data: incomePlanRow }] = await Promise.all([
     supabase.from('tasks').select('title, done, priority, due_date, estimated_minutes, scheduled_day, scheduled_block')
       .eq('user_id', uid).eq('done', false).is('parent_id', null).limit(40),
@@ -119,7 +140,7 @@ ${partners?.length ? `\nPARTNERS IN ONBOARDING (reference by name when relevant)
   return `\nTASKS — they manage tasks in this app; reference real titles and help them prioritize/time-block:\n- Planned into today's blocks: ${planned.length} · Unplanned: ${unplanned.length}` +
     (planned.length ? `\nTODAY'S PLAN:\n${planned.slice(0, 8).map(line).join('\n')}` : '') +
     (unplanned.length ? `\nTOP UNPLANNED:\n${unplanned.slice(0, 8).map(line).join('\n')}` : '')
-})()}${recentNotes?.length ? `\nRECENT NOTES (Plan tab):\n${recentNotes.map(n => `- ${n.title || 'Untitled'}${n.category ? ` [${n.category}]` : ''}`).join('\n')}` : ''}${incomeBlock}${growthBlock}`
+})()}${recentNotes?.length ? `\nRECENT NOTES (Plan tab):\n${recentNotes.map(n => `- ${n.title || 'Untitled'}${n.category ? ` [${n.category}]` : ''}`).join('\n')}` : ''}${incomeBlock}${growthBlock}${osBlock}`
 
   return { firstName, belt, days, block }
 }

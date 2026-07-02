@@ -65,7 +65,7 @@ export default function RoomPage() {
       const data = await res.json()
       if (!res.ok) throw new Error(data?.error || 'failed')
       setOutput(data.output)
-      toast.success('Meeting wrapped up')
+      toast.success(data.tasksCreated ? `Meeting wrapped up — ${data.tasksCreated} task${data.tasksCreated > 1 ? 's' : ''} added to Tasks` : 'Meeting wrapped up')
     } catch (e: any) {
       toast.error(`Couldn't summarize. ${e.message || ''}`)
     } finally { setWrapping(false) }
@@ -116,7 +116,7 @@ export default function RoomPage() {
             <div className="mb-2"><div className="text-[10px] font-[800] uppercase tracking-wide text-gray">Decisions</div>{output.decisions.map((d: string, i: number) => <div key={i} className="flex gap-1.5 text-[12px] text-mid-text"><CheckIcon size={12} className="mt-1 shrink-0 text-success" />{d}</div>)}</div>
           )}
           {Array.isArray(output.next_actions) && output.next_actions.length > 0 && (
-            <div><div className="text-[10px] font-[800] uppercase tracking-wide text-gray">Next actions</div>{output.next_actions.map((d: string, i: number) => <div key={i} className="flex gap-1.5 text-[12px] text-mid-text"><ArrowRightIcon size={12} className="mt-1 shrink-0 text-teal" />{d}</div>)}</div>
+            <div><div className="text-[10px] font-[800] uppercase tracking-wide text-gray">Next actions <span className="text-teal">· added to Tasks</span></div>{output.next_actions.map((d: string, i: number) => <div key={i} className="flex gap-1.5 text-[12px] text-mid-text"><ArrowRightIcon size={12} className="mt-1 shrink-0 text-teal" />{d}</div>)}</div>
           )}
         </Card>
       )}

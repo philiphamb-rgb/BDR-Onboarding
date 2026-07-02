@@ -7,6 +7,8 @@
     "NEXT_PUBLIC_SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpiZ2ltb2FzZHFxcHJ5bWJ5a3FiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIzNTM2NjIsImV4cCI6MjA5NzkyOTY2Mn0.s0A0qj0NbYUkUattSNxJMbwnuC2tdTLa2FVXGtIXNqs"
   },
   "crons": [
-    { "path": "/api/cron/feedback-synthesis", "schedule": "0 7 * * *" }
+    { "path": "/api/cron/feedback-synthesis", "schedule": "0 7 * * *" },
+    { "path": "/api/cron/morning-brief", "schedule": "0 11 * * *" },
+    { "path": "/api/cron/nightly-audit", "schedule": "0 3 * * *" }
   ]
 }

@@ -179,7 +179,11 @@ export default function GrowthAutomationsPage() {
                               <div className="mt-2 flex flex-wrap gap-x-4 gap-y-0.5 border-t border-teal/15 pt-2 text-[10.5px] text-mid-text">
                                 <span>{m.minPerRun} min saved/run</span><span>·</span><span>~{m.runsPerMo} runs/mo</span>
                               </div>
-                              <div className="mt-1.5 text-[10px] italic text-gray">Source: {m.source}</div>
+                              <div className="mt-1.5 text-[10px] leading-relaxed text-gray">
+                                <span className="font-[700] text-mid-text">How it&apos;s calculated: </span>
+                                {m.minPerRun} min × {m.runsPerMo} runs ÷ 60 = <span className="font-[700]">{m.moHoursSaved}h/mo</span> × $50/hr = <span className="font-[700]">${m.dollarValue.toLocaleString()}/mo</span>
+                              </div>
+                              <div className="mt-1 text-[10px] italic text-gray">Source: {m.source}</div>
                             </div>
 
                             <div className="mb-3">
