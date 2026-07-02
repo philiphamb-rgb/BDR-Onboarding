@@ -82,6 +82,8 @@ const GROWTH_SUBNAV: (NavItem & { feature?: string; lock?: boolean })[] = [
   { href: '/team',             label: 'AI Team',     icon: IntegrationIcon, match: ['/team', '/grow/team'] },
   // Build is hard-locked to Admin/Manager — hidden entirely from standard users.
   { href: '/grow/build',       label: 'Build',       icon: ChecklistIcon, feature: 'growth_build', lock: true },
+  // Memory Lab is the operator's governance seat — Admin/Manager only.
+  { href: '/admin/memory',     label: 'Memory Lab',  icon: BrainIcon,     feature: 'growth_build', lock: true },
 ]
 
 const MANAGER_ITEMS: NavItem[] = [
@@ -127,6 +129,7 @@ const PAGE_INDEX: { label: string; href: string }[] = [
   { label: 'Goals', href: '/goals' }, { label: 'Content Studio', href: '/studio' }, { label: 'Idea Bank', href: '/studio' },
   { label: 'Agent Office', href: '/team' }, { label: 'AI Team', href: '/team' }, { label: 'Meet your team', href: '/team/rooms' }, { label: 'Boardroom', href: '/team/rooms' },
   { label: 'Funnel Lab', href: '/funnel' }, { label: 'SmartCredit Fit', href: '/funnel' }, { label: 'Repurpose', href: '/studio/repurpose' },
+  { label: 'Memory Lab', href: '/admin/memory' }, { label: 'Memory', href: '/admin/memory' },
   { label: 'Settings', href: '/settings' }, { label: 'Notifications', href: '/notifications' },
 ]
 
