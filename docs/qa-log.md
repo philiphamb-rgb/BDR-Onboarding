@@ -141,3 +141,54 @@ WARNs remain).
   (create task/note, set goal, log activity, set partner follow-up).
 - **PWA install nudge** — beforeinstallprompt banner + iOS add-to-home hint,
   hidden when standalone, dismissal persists.
+
+## Schedule tab crash — root cause + hardening
+
+**Root cause:** a `useEffect` (added when the Day/3-Day/Week toggle shipped)
+was placed *after* `if (loading) return <Skeleton />`, while every other hook
+in the component sits before it. That's a Rules-of-Hooks violation: the
+effect is skipped on the loading render but called on the loaded render, so
+the hook order changes between renders and React throws — caught by the
+nearest error boundary and shown as "Something went wrong." This fired on
+essentially every load, not an edge case.
+
+**Fix:** moved the effect above the early return, with all other hooks.
+Swept every other `if (loading) return` / `if (!user) return` gate across
+every page under `(app)/` for the same pattern (hook-after-early-return,
+or a hook called conditionally) — confirmed none of the other ~19 instances
+have hooks after their gate; the two that looked suspicious on a first pass
+(`partners/page.tsx`, `leaderboard/page.tsx`) turned out to be early returns
+inside ordinary async handlers / module-level helper functions, not the
+component's render body — not hook violations.
+
+**Hardening:**
+- Added a scoped `error.tsx` (via a shared `TabErrorFallback` component) to
+  every top-level route under `(app)/` — 21 routes total, including
+  Schedule. Next.js scopes `error.tsx` to its own route segment, so a crash
+  in one tab now shows a contained "this screen hit a snag / try again"
+  card while the sidebar/header and every other tab keep working, instead
+  of the root boundary blanking the whole app shell.
+- Re-verified Schedule's null-safety: every array read that could be
+  null/undefined from Supabase already falls back via `?? []`; every
+  `reduce` is seeded; `slots.reduce`'s `capacity` is always a derived
+  number, never fetched raw.
+- No test framework exists in this repo (no Jest/Vitest/Playwright config).
+  Adding one for a single regression check was out of proportion to the
+  fix, so per the "at minimum a manual QA checklist" floor, that checklist
+  lives here instead:
+
+**Manual QA checklist — Schedule tab:**
+- [ ] Empty schedule (brand-new user, no overrides/customs/tasks): loads
+      without error, shows the default optimized-day template.
+- [ ] One event: add a custom block, confirm it renders, drag/resize it,
+      mark it done, delete it — no console errors.
+- [ ] Event spanning midnight / timezone boundary: set a custom block's
+      start near the end of the visible range (e.g. 11:45 PM–12:15 AM
+      equivalent via a very late shift + long block) and confirm `fmtClock`
+      renders sane times and the block doesn't disappear or throw.
+- [ ] Rapid tab-switching: click Day → 3-Day → Week → Day repeatedly, and
+      switch away to another nav tab and back mid-load — no crash, no
+      duplicate/stale data, the lazy range-task fetch doesn't refire needlessly
+      (only once per view+day, per `rangeLoadedFor`).
+- [ ] Loading state: throttle network and confirm the skeleton shows, then
+      resolves cleanly (this is the exact transition that used to crash).
