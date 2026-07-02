@@ -606,13 +606,12 @@ export default function SchedulePage() {
     setDragTaskId(null); setDropKey(null)
   }
 
-  if (loading) return <div className="space-y-4"><SkeletonCard /></div>
-
-  const sel = selected != null ? blockByKey(selected) : null
-  const selStyle = sel ? (BLOCK_STYLE[sel.type] ?? BLOCK_STYLE.focus) : null
-
   // Lazily load the wider date range's tasks the first time 3-Day/Week is opened
   // (Day view never needs it, so most sessions skip this fetch entirely).
+  // MUST stay above the `if (loading) return` below — a hook can never be
+  // called conditionally or after an early return, or React throws a
+  // "change in the order of Hooks" error the moment `loading` flips to
+  // false (which is every single load). That was the Schedule tab crash.
   useEffect(() => {
     if (viewMode === 'day' || !userId) return
     const span = viewMode === '3day' ? 3 : 7
@@ -628,6 +627,11 @@ export default function SchedulePage() {
         setRangeTasks(byDay)
       })
   }, [viewMode, userId, today])
+
+  if (loading) return <div className="space-y-4"><SkeletonCard /></div>
+
+  const sel = selected != null ? blockByKey(selected) : null
+  const selStyle = sel ? (BLOCK_STYLE[sel.type] ?? BLOCK_STYLE.focus) : null
 
   return (
     <div className="space-y-3 pb-4">
