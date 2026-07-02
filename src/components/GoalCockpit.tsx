@@ -42,11 +42,18 @@ export function GoalCockpit({
             <GoalRing pct={g.pct} />
             <div className="min-w-0 flex-1">
               <div className="text-[20px] font-[800] leading-none"><CountUp value={g.done} />/{g.goal} <span className="text-[12px] font-[700] text-white/70">deals</span></div>
-              <div className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] text-white/80">
-                <span className={cn('rounded-full px-2 py-0.5 font-[800]', g.status === 'behind' ? 'bg-error/30' : (g.status === 'hit' || g.status === 'ahead') ? 'bg-success/30' : 'bg-white/15')}>{statusLabel(g)}</span>
-                <span>Projected {g.projection}</span>
-                {g.remaining > 0 && <span>· {g.perDayNeeded.toFixed(1)}/day to goal</span>}
-              </div>
+              {/* A same-day projection of 0 reads as a contradiction next to any
+                  "on track"-style status this early — there's no run-rate yet to
+                  project from. Lead with pace instead of a misleading number. */}
+              {g.done === 0 && g.projection === 0 && g.status !== 'behind' ? (
+                <div className="mt-1.5 text-[11px] text-white/80">Day {g.day} of {g.daysInMonth} — stay consistent. You need {g.perDayNeeded.toFixed(1)}/day to hit {g.goal}.</div>
+              ) : (
+                <div className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] text-white/80">
+                  <span className={cn('rounded-full px-2 py-0.5 font-[800]', g.status === 'behind' ? 'bg-error/30' : (g.status === 'hit' || g.status === 'ahead') ? 'bg-success/30' : 'bg-white/15')}>{statusLabel(g)}</span>
+                  <span>Projected {g.projection}</span>
+                  {g.remaining > 0 && <span>· {g.perDayNeeded.toFixed(1)}/day to goal</span>}
+                </div>
+              )}
             </div>
           </div>
         ) : (

@@ -66,6 +66,7 @@ export default function HomePage() {
   const [savingShift, setSavingShift] = useState(false)
   const [doneTaskId, setDoneTaskId] = useState<string | null>(null)
   const [beltInfoOpen, setBeltInfoOpen] = useState(false)
+  const [editingShift, setEditingShift] = useState(false)
   const { progress, loading, refresh: refreshProgress } = useProgress(userId)
   const { habits, refresh: refreshHabits } = useHabits(userId)
 
@@ -271,7 +272,7 @@ export default function HomePage() {
       </AiTip>
 
       {/* Shift first — the very first thing each day, until it's set (or defaulted) */}
-      {needsShift && (
+      {(needsShift || editingShift) ? (
         <Card className="border-teal/40 !p-4">
           <div className="mb-1 flex items-center gap-2">
             <ClockIcon size={16} className="text-teal" />
@@ -280,7 +281,7 @@ export default function HomePage() {
           <p className="mb-3 text-[12px] text-gray">This sets up your time-blocked day and your &quot;Right now&quot; coaching. Takes one tap.</p>
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
             {SHIFT_OPTIONS.map(o => (
-              <button key={o.start} onClick={() => confirmShift(o.start)} disabled={savingShift}
+              <button key={o.start} onClick={() => { confirmShift(o.start); setEditingShift(false) }} disabled={savingShift}
                 className={cn('flex items-center justify-center gap-1.5 rounded-lg border px-3 py-2.5 text-[13px] font-[700] transition-all',
                   shift === o.start ? 'border-navy bg-navy text-white' : 'border-border bg-bdrbg text-mid-text hover:border-navy/40')}>
                 {shift === o.start && <CheckIcon size={14} />}{fmtShift(o)}
@@ -292,6 +293,12 @@ export default function HomePage() {
             Use this shift every day (you can still adjust it anytime)
           </label>
         </Card>
+      ) : shift && (
+        <div className="flex items-center gap-2 rounded-xl border border-border bg-bdrbg px-3 py-2 text-[12.5px]">
+          <ClockIcon size={13} className="shrink-0 text-gray" />
+          <span className="text-mid-text">Today: <span className="font-[700] text-dark-text">{fmtShift(SHIFT_OPTIONS.find(o => o.start === shift) ?? SHIFT_OPTIONS[0])}</span></span>
+          <button onClick={() => setEditingShift(true)} className="ml-auto shrink-0 font-[700] text-teal">Change</button>
+        </div>
       )}
 
       {/* ── Goal cockpit — where you are, what's needed, and why ── */}
@@ -349,13 +356,15 @@ export default function HomePage() {
         )}
         <div className="mt-2.5 grid grid-cols-2 gap-2">
           <button onClick={autoPlanHome} disabled={triageBusy}
-            className="relative flex items-center justify-center gap-1.5 overflow-hidden rounded-lg bg-gradient-hero py-2.5 text-[13px] font-[800] text-white transition-transform active:scale-[0.99] disabled:opacity-60">
+            className="relative flex flex-col items-center justify-center gap-0.5 overflow-hidden rounded-lg bg-gradient-hero py-2.5 text-[13px] font-[800] text-white transition-transform active:scale-[0.99] disabled:opacity-60">
             <span className="pointer-events-none absolute inset-y-0 left-0 w-1/4 animate-shimmer bg-white/25 blur-md" aria-hidden="true" />
-            <LightningIcon size={14} className="relative text-white" /><span className="relative">{triageBusy ? 'Planning…' : 'Auto-plan my day'}</span>
+            <span className="relative flex items-center gap-1.5"><LightningIcon size={14} className="text-white" />{triageBusy ? 'Planning…' : 'Auto-plan my day'}</span>
+            <span className="relative text-[10px] font-[600] text-white/70">AI fills your time blocks from your tasks</span>
           </button>
           <button onClick={() => askCoach('Triage my day from my goal, pipeline, and tasks. What are the top 3 things to do right now, in order, and why?')}
-            className="flex items-center justify-center gap-1.5 rounded-lg border border-navy/30 bg-navy/5 py-2.5 text-[13px] font-[800] text-navy-ink hover:bg-navy/10">
-            <CoachIcon size={14} /> Coach my day
+            className="flex flex-col items-center justify-center gap-0.5 rounded-lg border border-navy/30 bg-navy/5 py-2.5 text-[13px] font-[800] text-navy-ink hover:bg-navy/10">
+            <span className="flex items-center gap-1.5"><CoachIcon size={14} /> Coach my day</span>
+            <span className="text-[10px] font-[600] text-gray">AI tells you what to focus on and why</span>
           </button>
         </div>
       </Card>

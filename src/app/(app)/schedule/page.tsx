@@ -335,8 +335,10 @@ export default function SchedulePage() {
     for (const p of stalled.slice(0, 4)) {
       if (hasTitle(p.partner_name)) continue
       const d = daysSince(p.updated_at)
-      out.push({ id: `lead:${p.id}`, kind: 'lead', title: `Follow up with ${p.partner_name}`, priority: (d ?? 0) >= 3,
-        reason: `${stageMeta(p.stage).label}${d != null ? ` · ${d}d no movement` : ''} — a nudge could close it.`, estimate: 15 })
+      const reason = d === 0
+        ? `Just moved to ${stageMeta(p.stage).label} · First follow-up recommended today.`
+        : `${stageMeta(p.stage).label}${d != null ? ` · ${d}d since last touch` : ''} — a nudge could close it.`
+      out.push({ id: `lead:${p.id}`, kind: 'lead', title: `Follow up with ${p.partner_name}`, priority: (d ?? 0) >= 3, reason, estimate: 15 })
     }
     if (goal && goal > 0) {
       const expected = goal * monthPaceFraction(nowDate)

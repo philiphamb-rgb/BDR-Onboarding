@@ -112,7 +112,10 @@ export function buildActions(input: {
   for (const p of stalled.slice(0, 5)) {
     if (hasTitle(p.partner_name)) continue
     const days = daysSince(p.updated_at)
-    out.push({ id: `lead:${p.id}`, kind: 'lead', title: `Follow up with ${p.partner_name}`, why: `${stageLabel(p.stage)} · ${days}d no movement — a nudge could close it`, href: `/partners/${p.id}`, cta: 'Work it', est: 15, score: 150 + Math.min(90, days * 8) })
+    const why = days === 0
+      ? `Just moved to ${stageLabel(p.stage)} · First follow-up recommended today`
+      : `${stageLabel(p.stage)} · ${days}d since last touch — a nudge could close it`
+    out.push({ id: `lead:${p.id}`, kind: 'lead', title: `Follow up with ${p.partner_name}`, why, href: `/partners/${p.id}`, cta: 'Work it', est: 15, score: 150 + Math.min(90, days * 8) })
   }
 
   // Behind goal → prospecting (high priority; one entry).
