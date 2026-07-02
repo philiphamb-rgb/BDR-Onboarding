@@ -57,11 +57,15 @@ export function useTeamResources() {
       .from('team_resource_items')
       .insert({ team_id: teamRef.current, kind, category, data, sort_order: maxOrder + 1 })
       .select('id, kind, category, data, sort_order').single()
-    if (error || !row) { toast.error('Could not add that item.'); return }
+    if (error || !row) { toast.error('Could not add that item.'); return null }
     setItems(prev => [...(prev ?? []), row])
+    return row
   }, [items, supabase])
 
-  const update = useCallback(async (id: string, patch: { data?: any; category?: string | null }) => {
+  // patch may also carry sort_order (used by reorderSections below) — not in
+  // the declared type since callers rarely need it, but the file is
+  // @ts-nocheck so passing it through still works fine at runtime.
+  const update = useCallback(async (id: string, patch: { data?: any; category?: string | null; sort_order?: number }) => {
     const prev = items
     setItems(p => (p ?? []).map(i => i.id === id ? { ...i, ...patch } : i))
     const { error } = await supabase
@@ -78,5 +82,19 @@ export function useTeamResources() {
     if (error) { setItems(prev); toast.error('Could not delete that item.') }
   }, [items, supabase])
 
-  return { items, loading: items === null, seeded, teamId, busy, byKind, seed, add, update, remove, reload: load }
+  // Persists a full drag-and-drop reorder in one shot — orderedIds is the new
+  // top-to-bottom id sequence for a group (e.g. all `section` rows).
+  const reorderSections = useCallback(async (orderedIds: string[]) => {
+    const prev = items
+    setItems(p => (p ?? []).map(i => {
+      const idx = orderedIds.indexOf(i.id)
+      return idx === -1 ? i : { ...i, sort_order: idx }
+    }))
+    const results = await Promise.all(orderedIds.map((id, idx) =>
+      supabase.from('team_resource_items').update({ sort_order: idx, updated_at: new Date().toISOString() }).eq('id', id)
+    ))
+    if (results.some(r => r.error)) { setItems(prev); toast.error('Could not save the new order.') }
+  }, [items, supabase])
+
+  return { items, loading: items === null, seeded, teamId, busy, byKind, seed, add, update, remove, reorderSections, reload: load }
 }

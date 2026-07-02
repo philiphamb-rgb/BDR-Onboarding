@@ -192,3 +192,69 @@ component's render body — not hook violations.
       (only once per view+day, per `rangeLoadedFor`).
 - [ ] Loading state: throttle network and confirm the skeleton shows, then
       resolves cleanly (this is the exact transition that used to crash).
+
+## Resources — editable links + section CRUD/reorder
+
+- **Editable link field (library items):** the `library` kind (docs like
+  "IT Setup Guide", "API Integration Guide") never had a `link` field in its
+  data shape, add/edit form, or render — despite the "Ready (has a
+  link/format)" status label implying one was always intended. Added `link`
+  to `BLANK.library`/`seedRows()`, a required-when-not-"Coming soon" Link
+  field in the editor with `isValidResourceUrl()` validation (same check now
+  also applied to the existing tool URL field, which had none before), and
+  library rows now render as a clickable link with an external-link icon
+  when a valid link is present.
+- **Sections as first-class rows:** sections used to exist only implicitly —
+  derived client-side from the `category` string on library item rows, with
+  no way to create an empty one, rename one in place, or persist an order.
+  Added `kind: 'section'` (`category: null`, `data: { name }`, its own
+  `sort_order`) to the same `team_resource_items` table — no new table
+  needed since `sort_order` already existed on every row. Required widening
+  the `kind` CHECK constraint (`tool|person|library|roadmap` →
+  `+section`), applied live via migration
+  `20240209000000_team_resource_items_section_kind.sql`.
+- **Backward compatibility:** teams seeded before this feature only have
+  implicit categories (no `section` row). `libraryGroups` now merges real
+  section rows (ordered by `sort_order`) with any category that still only
+  exists implicitly on an item, so nothing an item references ever
+  disappears. Renaming or drag-reordering an implicit group materializes it
+  into a real row on the spot.
+- **Rename cascade:** the item→section link is a matched category string,
+  not a foreign key, so renaming a section cascades an `update()` onto every
+  item filed under the old name before (or while) updating/creating the
+  section row itself.
+- **Drag-and-drop:** native HTML5 drag/drop on each section card (disabled
+  while a search filter is active, since reordering filtered-out positions
+  isn't meaningful); on drop, any implicit section caught up in the move is
+  materialized first so its position can persist, then the full order is
+  written via a new `reorderSections()` hook method (parallel `update`s,
+  one per row, with optimistic UI + rollback on failure).
+- **Empty sections:** "Add section" creates a `New Section` row instantly —
+  no items required — editable inline immediately. A section can only be
+  deleted from the UI while it's empty (`sec.items.length === 0`), so
+  deleting never orphans or destroys item data; a populated section can
+  still be renamed/reordered/have items added, just not deleted outright
+  (non-destructive: deleting an explicit section row just drops it back to
+  "implicit," items keep their category and stay visible).
+
+**Manual QA checklist — Resources sections:**
+- [ ] New team (not yet seeded): "Customize resources" seeds explicit
+      section rows matching every Library category, no implicit sections
+      appear.
+- [ ] Add section: click "Add section," confirm a "New Section" card
+      appears immediately with zero items, rename it in place (blur or
+      Enter commits), confirm the name persists after a page reload.
+- [ ] Add item into a brand-new empty section, confirm it nests under that
+      section and the "No items in this section yet" hint disappears.
+- [ ] Rename a section that already has items — confirm every item stays
+      nested under the new name after reload (cascade works, not just the
+      section row).
+- [ ] Drag-and-drop reorder two or more sections, reload the page, confirm
+      the new order persisted and each section's items are still nested
+      under the right header.
+- [ ] Delete button only appears on a section with zero items; deleting it
+      removes the section header but doesn't touch any other section.
+- [ ] Search filter: type a query that matches nothing — empty sections
+      are hidden while searching; clear the search — they reappear.
+- [ ] Non-manager / view-only mode: no drag handle, no rename input
+      (plain heading), no add/delete controls anywhere in the Library.

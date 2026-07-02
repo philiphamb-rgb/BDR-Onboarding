@@ -6,7 +6,7 @@ import Link from 'next/link'
 import { Card, CardTitle, Badge, Modal, Button } from '@/components/ui'
 import {
   SearchIcon, ExternalLinkIcon, UserIcon, DocumentIcon, BookIcon, ShieldIcon,
-  HandshakeIcon, ProductsIcon, LightningIcon, PlusIcon, EditIcon, TrashIcon, CloseIcon,
+  HandshakeIcon, ProductsIcon, LightningIcon, PlusIcon, EditIcon, TrashIcon, CloseIcon, GripIcon,
 } from '@/components/icons'
 import { cn } from '@/lib/utils'
 import { Tour } from '@/components/tour'
@@ -26,10 +26,11 @@ const catIcon = (c: string) => CATEGORY_ICON[c] || BookIcon
 
 export default function ResourcesPage() {
   const { isManager } = usePermissions()
-  const { items, loading, seeded, byKind, seed, add, update, remove, busy } = useTeamResources()
+  const { items, loading, seeded, byKind, seed, add, update, remove, reorderSections, busy } = useTeamResources()
   const [search, setSearch] = useState('')
   const [editing, setEditing] = useState(false)
   const [editor, setEditor] = useState<any>(null)   // { kind, id?, data, category? }
+  const [dragIdx, setDragIdx] = useState<number | null>(null)
   const s = search.trim().toLowerCase()
   const canEdit = isManager && seeded && editing
 
@@ -40,29 +41,70 @@ export default function ResourcesPage() {
   const libraryRows = useMemo(() => seeded
     ? byKind('library').map(r => ({ id: r.id, category: r.category || 'General', ...r.data }))
     : DEFAULT_LIBRARY.map(d => ({ ...d })), [items, seeded])
+  // Sections are real rows once seeded (kind: 'section', data.name), ordered by
+  // sort_order so they can be renamed/dragged independently of their items.
+  const sectionRows = useMemo(() => seeded ? byKind('section').slice().sort((a, b) => a.sort_order - b.sort_order) : [], [items, seeded])
 
-  // Group library rows by category, preserving first-seen order.
+  // Group library rows by category. Seeded teams show every explicit section
+  // row (in its own sort order) first, then any category that only exists
+  // implicitly on an item — from data seeded before sections existed — so
+  // nothing an item references ever silently disappears. Renaming/reordering
+  // an implicit group materializes it into a real section row (see below).
   const libraryGroups = useMemo(() => {
+    const bySection: Record<string, any[]> = {}
     const order: string[] = []
-    const map: Record<string, any[]> = {}
     for (const it of libraryRows) {
-      if (!map[it.category]) { map[it.category] = []; order.push(it.category) }
-      map[it.category].push(it)
+      if (!bySection[it.category]) { bySection[it.category] = []; order.push(it.category) }
+      bySection[it.category].push(it)
     }
-    return order.map(category => ({ category, items: map[category] }))
-  }, [libraryRows])
+    if (!seeded) return order.map(category => ({ category, sectionId: null, items: bySection[category] }))
+    const explicitNames = new Set(sectionRows.map(sr => sr.data?.name))
+    const explicit = sectionRows.map(sr => ({ category: sr.data?.name || '(untitled section)', sectionId: sr.id, items: bySection[sr.data?.name || ''] ?? [] }))
+    const implicit = order.filter(name => !explicitNames.has(name)).map(name => ({ category: name, sectionId: null, items: bySection[name] }))
+    return [...explicit, ...implicit]
+  }, [libraryRows, sectionRows, seeded])
 
   const matchTools = tools.filter(t => !s || t.name?.toLowerCase().includes(s) || t.purpose?.toLowerCase().includes(s))
   const matchPeople = people.filter(p => !s || p.name?.toLowerCase().includes(s) || p.role?.toLowerCase().includes(s) || p.detail?.toLowerCase().includes(s))
   const matchLibrary = libraryGroups
     .map(sec => ({ ...sec, items: sec.items.filter(it => !s || it.title?.toLowerCase().includes(s) || sec.category.toLowerCase().includes(s)) }))
-    .filter(sec => sec.items.length > 0)
+    .filter(sec => !s || sec.items.length > 0 || sec.category.toLowerCase().includes(s))
   const noResults = !!s && matchTools.length === 0 && matchPeople.length === 0 && matchLibrary.length === 0
 
   const saveEditor = async (data: any, category?: string | null) => {
     if (editor.id) await update(editor.id, category !== undefined ? { data, category } : { data })
     else await add(editor.kind, data, category ?? null)
     setEditor(null)
+  }
+
+  const addSection = async () => { await add('section', { name: 'New Section' }, null) }
+
+  // Cascades the section's display name onto every item filed under it (the
+  // item→section link is a matched category string, not a foreign key) and
+  // creates the section row if this group was still only implicit.
+  const renameSection = async (sec: any, name: string) => {
+    const trimmed = name.trim()
+    if (!trimmed || trimmed === sec.category) return
+    await Promise.all(sec.items.map((it: any) => update(it.id, { category: trimmed })))
+    if (sec.sectionId) await update(sec.sectionId, { data: { name: trimmed } })
+    else await add('section', { name: trimmed }, null)
+  }
+
+  // Drag-and-drop reorder of sections. Any implicit group caught up in the
+  // drop is materialized into a real row first so its position can persist.
+  const dropSection = async (targetIdx: number) => {
+    if (dragIdx === null || dragIdx === targetIdx) { setDragIdx(null); return }
+    const arr = [...matchLibrary]
+    const [moved] = arr.splice(dragIdx, 1)
+    arr.splice(targetIdx, 0, moved)
+    setDragIdx(null)
+    const ids: string[] = []
+    for (const sec of arr) {
+      if (sec.sectionId) { ids.push(sec.sectionId); continue }
+      const row = await add('section', { name: sec.category }, null)
+      if (row) ids.push(row.id)
+    }
+    if (ids.length) await reorderSections(ids)
   }
 
   return (
@@ -219,16 +261,34 @@ export default function ResourcesPage() {
       {/* Resources Library */}
       {(matchLibrary.length > 0 || canEdit) && (
         <section>
-          <SectionHead title="Resources Library" canEdit={canEdit} onAdd={() => setEditor({ kind: 'library', data: { ...BLANK.library }, category: '' })} addLabel="Add section" />
+          <SectionHead title="Resources Library" canEdit={canEdit} onAdd={addSection} addLabel="Add section" />
           <div className="space-y-4">
-            {matchLibrary.map(sec => {
+            {matchLibrary.map((sec, i) => {
               const SecIcon = catIcon(sec.category)
+              const draggable = canEdit && !s
               return (
-                <Card key={sec.category}>
-                  <div className="flex items-center justify-between mb-2">
-                    <div className="flex items-center gap-2"><SecIcon size={18} className="text-navy-ink" /><CardTitle>{sec.category}</CardTitle></div>
-                    {canEdit && <AddBtn label="Add item" onClick={() => setEditor({ kind: 'library', data: { ...BLANK.library }, category: sec.category })} />}
+                <Card key={sec.sectionId ?? sec.category}
+                  draggable={draggable}
+                  onDragStart={() => setDragIdx(i)}
+                  onDragOver={e => draggable && e.preventDefault()}
+                  onDrop={() => draggable && dropSection(i)}
+                  className={draggable && dragIdx === i ? 'opacity-60' : undefined}>
+                  <div className="flex items-center justify-between mb-2 gap-2">
+                    <div className="flex min-w-0 flex-1 items-center gap-2">
+                      {draggable && <span className="shrink-0 cursor-grab text-gray" title="Drag to reorder"><GripIcon size={15} /></span>}
+                      <SecIcon size={18} className="text-navy-ink shrink-0" />
+                      <SectionTitle key={sec.sectionId ?? sec.category} sec={sec} canEdit={canEdit} onRename={(name: string) => renameSection(sec, name)} />
+                    </div>
+                    <div className="flex shrink-0 items-center gap-1.5">
+                      {canEdit && <AddBtn label="Add item" onClick={() => setEditor({ kind: 'library', data: { ...BLANK.library }, category: sec.category })} />}
+                      {canEdit && sec.sectionId && sec.items.length === 0 && (
+                        <IconBtn label="Delete section" danger onClick={() => remove(sec.sectionId)}><TrashIcon size={13} /></IconBtn>
+                      )}
+                    </div>
                   </div>
+                  {sec.items.length === 0 && (
+                    <p className="text-[12px] text-gray py-1.5">No items in this section yet.</p>
+                  )}
                   <div className="divide-y divide-border">
                     {sec.items.map(it => {
                       const hasLink = isValidResourceUrl(it.link)
@@ -304,6 +364,22 @@ function RowTools({ onEdit, onDelete }: any) {
       <IconBtn label="Edit" onClick={onEdit}><EditIcon size={13} /></IconBtn>
       <IconBtn label="Delete" danger onClick={onDelete}><TrashIcon size={13} /></IconBtn>
     </div>
+  )
+}
+// Library section title — a plain heading when read-only, an inline-editable
+// field in edit mode. Committing on blur (not per-keystroke) keeps the
+// category-cascade rename to one write instead of one per character typed.
+function SectionTitle({ sec, canEdit, onRename }: any) {
+  const [val, setVal] = useState(sec.category)
+  if (!canEdit) return <CardTitle className="truncate">{sec.category}</CardTitle>
+  return (
+    <input
+      value={val}
+      onChange={e => setVal(e.target.value)}
+      onBlur={() => { const v = val.trim(); if (v && v !== sec.category) onRename(v); else setVal(sec.category) }}
+      onKeyDown={e => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur() }}
+      className="min-w-0 flex-1 truncate border-b border-dashed border-transparent bg-transparent text-[18px] font-[700] leading-tight text-dark-text outline-none hover:border-border focus:border-navy"
+    />
   )
 }
 

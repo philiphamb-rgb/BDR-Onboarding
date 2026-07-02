@@ -113,6 +113,12 @@ export function seedRows() {
   const rows: { kind: string; category: string | null; data: any; sort_order: number }[] = []
   DEFAULT_TOOLS.forEach((d, i) => rows.push({ kind: 'tool', category: null, data: d, sort_order: i }))
   DEFAULT_PEOPLE.forEach((d, i) => rows.push({ kind: 'person', category: null, data: d, sort_order: i }))
+  // Sections are first-class rows (kind: 'section', data.name) so they can be
+  // renamed and drag-reordered independently of the items inside them — one
+  // per unique Library category, in first-seen order.
+  const sectionNames: string[] = []
+  for (const d of DEFAULT_LIBRARY) if (!sectionNames.includes(d.category)) sectionNames.push(d.category)
+  sectionNames.forEach((name, i) => rows.push({ kind: 'section', category: null, data: { name }, sort_order: i }))
   DEFAULT_LIBRARY.forEach((d, i) => rows.push({ kind: 'library', category: d.category, data: { title: d.title, status: d.status, meta: d.meta, link: '' }, sort_order: i }))
   DEFAULT_ROADMAP.forEach((d, i) => rows.push({ kind: 'roadmap', category: null, data: d, sort_order: i }))
   return rows
