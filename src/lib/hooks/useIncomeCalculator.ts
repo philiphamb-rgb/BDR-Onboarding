@@ -9,6 +9,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
+import { toast } from '@/components/ui'
 import {
   computePlan, computeInsight, trackerSummary,
   type Plan, type PlanInputs, type CheckIn, type Path, type BufferKey, type Insight,
@@ -48,8 +49,11 @@ export function useIncomeCalculator() {
   const [hasPlan, setHasPlan] = useState(false)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
-  const saveTimer = useRef<any>(null)
   const teamRef = useRef<string | null>(null)   // always-latest team_id (no stale closure on first edit)
+  // Set right before the initial DB load writes into `inputs`, so the
+  // debounced save effect below doesn't immediately re-save the exact data
+  // it was just loaded from — only real user edits should trigger a write.
+  const skipNextSaveRef = useRef(false)
   const today = localDateKey()
 
   useEffect(() => {
@@ -67,7 +71,9 @@ export function useIncomeCalculator() {
       setTeamId(u?.team_id ?? null); teamRef.current = u?.team_id ?? null
       if (pb?.checks) setPlaybookState(pb.checks)
       if (planRow) {
-        setPlanId(planRow.id); setHasPlan(true); setInputs(rowToInputs(planRow))
+        setPlanId(planRow.id); setHasPlan(true)
+        skipNextSaveRef.current = true
+        setInputs(rowToInputs(planRow))
         const { data: ci } = await supabase.from('income_checkins').select('week_number, contacts, closes, target_contacts').eq('plan_id', planRow.id)
         if (active && ci) setCheckIns(ci.sort((a: any, b: any) => a.week_number - b.week_number).map((r: any) => ({ c: r.contacts, x: r.closes, t: r.target_contacts })))
       }
@@ -81,34 +87,46 @@ export function useIncomeCalculator() {
   const stats = useMemo(() => trackerSummary(plan, checkIns), [plan, checkIns])
 
   const updateInputs = useCallback((patch: Partial<PlanInputs>) => {
-    setInputs(prev => {
-      const next = { ...prev, ...patch }
-      if (saveTimer.current) clearTimeout(saveTimer.current)
-      saveTimer.current = setTimeout(async () => {
-        if (!userId) return
-        setSaving(true)
-        const payload = {
-          user_id: userId, target: next.target, base: next.base, path: next.path, buffer: next.buffer,
-          b2c_rate: next.b2cRate, b2c_churn: next.b2cChurn, bw_warm_leads: next.bwWarmLeads, bw_warm_rate: next.bwWarmRate, b2c_self_rate: next.b2cSelfRate,
-          bb_comm: next.bbComm, bb_warm_leads: next.bbWarmLeads, bb_warm_rate: next.bbWarmRate, bb_self_rate: next.bbSelfRate,
-        }
-        const { data, error } = await supabase.from('income_plans').upsert(payload, { onConflict: 'user_id' }).select('id').single()
-        if (error || !data) { setSaving(false); return }   // don't clobber the goal if the plan didn't save
-        setPlanId(data.id); setHasPlan(true)
-        // Keep the shared Goal Cockpit in sync: the income plan IS the goal.
-        const monthly = impliedMonthlyDeals(computePlan(next))
-        await supabase.from('goals').upsert({ user_id: userId, team_id: teamRef.current, monthly_deal_goal: monthly, updated_at: new Date().toISOString() }, { onConflict: 'user_id' })
-        setSaving(false)
-      }, 600)
-      return next
-    })
-  }, [userId, supabase])
+    setInputs(prev => ({ ...prev, ...patch }))
+  }, [])
+
+  // Debounced save — a plain effect watching `inputs`, not a side effect
+  // nested inside setInputs' updater (which React may invoke more than once
+  // per commit, e.g. under Strict Mode, and must stay pure). Every genuine
+  // edit resets the 600ms timer via the standard effect-cleanup debounce
+  // pattern. Any failure now surfaces to the rep instead of vanishing —
+  // previously a failed save just silently reverted the "Saving…" indicator
+  // to blank with no explanation.
+  useEffect(() => {
+    if (!userId) return
+    if (skipNextSaveRef.current) { skipNextSaveRef.current = false; return }
+    const timer = setTimeout(async () => {
+      setSaving(true)
+      const payload = {
+        user_id: userId, target: inputs.target, base: inputs.base, path: inputs.path, buffer: inputs.buffer,
+        b2c_rate: inputs.b2cRate, b2c_churn: inputs.b2cChurn, bw_warm_leads: inputs.bwWarmLeads, bw_warm_rate: inputs.bwWarmRate, b2c_self_rate: inputs.b2cSelfRate,
+        bb_comm: inputs.bbComm, bb_warm_leads: inputs.bbWarmLeads, bb_warm_rate: inputs.bbWarmRate, bb_self_rate: inputs.bbSelfRate,
+      }
+      const { data, error } = await supabase.from('income_plans').upsert(payload, { onConflict: 'user_id' }).select('id').single()
+      if (error || !data) { setSaving(false); toast.error('Your plan didn’t save — try again.'); return }   // don't clobber the goal if the plan didn't save
+      setPlanId(data.id); setHasPlan(true)
+      // Keep the shared Goal Cockpit in sync: the income plan IS the goal.
+      const monthly = impliedMonthlyDeals(computePlan(inputs))
+      const { error: goalError } = await supabase.from('goals').upsert({ user_id: userId, team_id: teamRef.current, monthly_deal_goal: monthly, updated_at: new Date().toISOString() }, { onConflict: 'user_id' })
+      if (goalError) toast.error('Plan saved, but couldn’t sync your goal — reopen this page to retry.')
+      setSaving(false)
+    }, 600)
+    return () => clearTimeout(timer)
+  }, [inputs, userId, supabase])
 
   const setPlaybook = useCallback((checks: boolean[]) => {
+    const prev = playbook
     setPlaybookState(checks)
     if (!userId) return
-    supabase.from('income_playbook_checks').upsert({ user_id: userId, check_date: today, checks, updated_at: new Date().toISOString() }, { onConflict: 'user_id,check_date' }).then(() => {})
-  }, [userId, today, supabase])
+    supabase.from('income_playbook_checks')
+      .upsert({ user_id: userId, check_date: today, checks, updated_at: new Date().toISOString() }, { onConflict: 'user_id,check_date' })
+      .then(({ error }) => { if (error) { setPlaybookState(prev); toast.error('That didn’t save — try again.') } })
+  }, [userId, today, supabase, playbook])
 
   const logWeek = useCallback(async (contacts: number, closes: number) => {
     if (!userId || !planId) return { error: 'no-plan' }
@@ -116,6 +134,7 @@ export function useIncomeCalculator() {
     const targetContacts = plan.totalWk || plan.coldWk
     const { error } = await supabase.from('income_checkins').insert({ user_id: userId, plan_id: planId, week_number: weekNumber, contacts, closes, target_contacts: targetContacts })
     if (!error) setCheckIns(prev => [...prev, { c: contacts, x: closes, t: targetContacts }])
+    else toast.error('That week didn’t save — try again.')
     return { error }
   }, [userId, planId, checkIns.length, plan.totalWk, plan.coldWk, supabase])
 

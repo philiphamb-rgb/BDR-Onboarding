@@ -30,7 +30,7 @@ function Num({ label, suffix, value, onChange, step = 1 }: any) {
       <span className="mb-1 block text-[11px] font-[700] text-gray">{label}</span>
       <div className="flex items-center rounded-lg border border-border bg-card focus-within:ring-2 focus-within:ring-navy/30">
         <input type="number" inputMode="decimal" value={value} step={step}
-          onChange={e => onChange(e.target.value === '' ? 0 : parseFloat(e.target.value))}
+          onChange={e => { const v = parseFloat(e.target.value); onChange(Number.isFinite(v) ? v : 0) }}
           className="w-full rounded-lg bg-transparent px-3 py-2 text-[14px] font-[700] text-dark-text outline-none" />
         {suffix && <span className="pr-3 text-[12px] text-gray">{suffix}</span>}
       </div>
@@ -65,8 +65,12 @@ export default function CommissionsPage() {
   const handleLog = async () => {
     if (logging) return
     setLogging(true)
-    await logWeek(Math.max(0, parseInt(wkC || '0', 10)), Math.max(0, parseInt(wkX || '0', 10)))
-    setWkC(''); setWkX(''); setLogging(false)
+    // Only clear the fields on success — logWeek already toasts the error, and
+    // clearing here too would look like it saved while silently discarding
+    // the numbers the rep just typed.
+    const { error } = await logWeek(Math.max(0, parseInt(wkC || '0', 10)), Math.max(0, parseInt(wkX || '0', 10)))
+    if (!error) { setWkC(''); setWkX('') }
+    setLogging(false)
   }
 
   const playbookItems = isB2C
@@ -211,11 +215,11 @@ export default function CommissionsPage() {
           <div className="grid grid-cols-3 gap-2 text-center">
             <div className="rounded-xl border border-border bg-bdrbg p-3">
               <div className="text-[16px] font-[800] text-teal tabular-nums">{fmt(pipe.weighted)}</div>
-              <div className="mt-0.5 text-[10.5px] text-gray">Weighted /mo</div>
+              <div className="mt-0.5 text-[10.5px] text-gray">Weighted pipeline</div>
             </div>
             <div className="rounded-xl border border-border bg-bdrbg p-3">
               <div className="text-[16px] font-[800] text-dark-text tabular-nums">{fmt(pipe.gross)}</div>
-              <div className="mt-0.5 text-[10.5px] text-gray">Gross /mo</div>
+              <div className="mt-0.5 text-[10.5px] text-gray">Gross pipeline</div>
             </div>
             <div className="rounded-xl border border-border bg-bdrbg p-3">
               <div className="text-[16px] font-[800] text-dark-text tabular-nums">{pipe.openCount}</div>
@@ -352,8 +356,11 @@ export default function CommissionsPage() {
             className="flex-1 rounded-lg border border-border bg-card px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-navy/30" />
           <input type="number" inputMode="numeric" placeholder="Closes" value={wkX} onChange={e => setWkX(e.target.value)}
             className="w-24 rounded-lg border border-border bg-card px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-navy/30" />
-          <Button size="sm" onClick={handleLog} loading={logging} disabled={!hasPlan}>Log week</Button>
+          <Button size="sm" onClick={handleLog} loading={logging} disabled={!hasPlan} title={hasPlan ? undefined : 'Change any plan input above first — that\'s what creates your saved plan.'}>Log week</Button>
         </div>
+        {!hasPlan && (
+          <p className="mt-2 text-[11px] text-gray">Change any input in "Your plan" above (even just re-selecting the same cushion) to save your plan — then you can log weeks against it.</p>
+        )}
         {stats.actualCloseRate !== null && (
           <p className="mt-2 text-[11.5px] text-gray">Actual close rate: <strong className="text-mid-text">{(stats.actualCloseRate * 100).toFixed(1)}%</strong> · ~<strong className="text-mid-text">{fmt(stats.valueFromCloses)}</strong> from {stats.totalCloses} logged close{stats.totalCloses === 1 ? '' : 's'}</p>
         )}

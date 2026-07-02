@@ -29,7 +29,7 @@ Stack: Next.js 14 App Router · Supabase (Postgres + RLS) · Vercel · Tailwind 
 ## Priority 3 — Money & pipeline
 | Route | Purpose | Render | Data | QA |
 |---|---|---|---|---|
-| `/commissions` | Income & commission planner (+ pipeline momentum) | R | D | ? |
+| `/commissions` | Income & commission planner (+ pipeline momentum) | R | D | ✓ (NaN-input, lost-input-on-fail-save, silent-save-failure fixed) |
 | `/calculator` | Income calculator | R | D | ? |
 | `/partners` | Partner pipeline | R | D | ? |
 | `/partners/[id]` | Partner record | R | D | ? |

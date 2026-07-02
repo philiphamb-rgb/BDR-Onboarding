@@ -314,6 +314,71 @@ component's render body — not hook violations.
 - [ ] Manager/Admin: "Build" sub-item is visible; standard rep: it's absent
       from both the sidebar group and the (still-mobile-only) top tabs.
 
+## Commissions — income planner input/save hardening (Priority 3 sweep)
+
+Adversarial pass on `/commissions` and its backing `useIncomeCalculator` hook
+(first module swept in Priority 3 — Money & pipeline). Same "silent failure /
+bad-input" bug classes already fixed elsewhere in the app (Home `completeTask`,
+Apex `setStatus`, Today XP-guard), found here too:
+
+- **[Med] Free-typed number inputs went `NaN` on any non-numeric intermediate
+  state** (e.g. a bare `-` while typing a negative, or clearing then typing a
+  letter on mobile numeric keyboards) — `parseFloat(e.target.value)` only
+  special-cased the empty string, so anything else invalid propagated `NaN`
+  straight into `PlanInputs` and poisoned every downstream money calc (target,
+  base, rates) until the field was fixed. FIXED — `Number.isFinite` gate now
+  falls back to `0` for any non-finite parse, not just `''`.
+- **[Med] "Log week" cleared the contacts/closes fields even when the insert
+  failed**, so a rep who hit a transient save error watched their just-typed
+  numbers vanish with only a toast (from `logWeek`) as evidence anything went
+  wrong — easy to miss, and the numbers are gone. FIXED — fields now only
+  clear on a confirmed successful insert.
+- **[Low] Disabled "Log week" button (no plan saved yet) gave no reason why**
+  — a rep who hadn't touched any plan input yet would find the button dead
+  with no explanation. FIXED — added a tooltip + inline hint pointing at
+  "Your plan" above.
+- **[Med] Debounced autosave lived inside `setInputs`'s functional updater**,
+  a side-effecting `setTimeout` nested in what must be a pure state-updater
+  function — works today but is a correctness footgun (React may invoke
+  updaters more than once per commit, e.g. Strict Mode) and made the save
+  path hard to reason about. FIXED — refactored to a plain `useEffect`
+  watching `inputs`, using the standard effect-cleanup debounce pattern. A
+  `skipNextSaveRef` suppresses the one save-effect firing that the *initial
+  DB load* itself would otherwise trigger (loading a saved plan calls
+  `setInputs`, which is now also "an edit" as far as the effect can tell) —
+  without it, every page load would immediately re-write the row it just
+  read.
+- **[Med] Failed autosave (plan upsert, goal-sync upsert) and failed
+  playbook-checklist save were silently swallowed** — the "Saving…" indicator
+  just went blank with no error, so a rep with a flaky connection could lose
+  edits with zero indication. FIXED — both now `toast.error` on failure;
+  playbook check-save also rolls the optimistic UI back to its prior state
+  (matching the Home/Apex optimistic-write pattern) instead of leaving the
+  UI showing a check that was never actually persisted.
+
+Verified how: traced every finding to source before fixing; `npm run build`
+✓ compiled successfully (56/56 pages) after the edits. Income-engine math
+itself was hand-checked in an earlier pass and found sound — this cycle only
+touched input parsing and the save/error path, not `computePlan`/`computeInsight`.
+
+**Manual QA checklist — Commissions:**
+- [ ] On a fresh plan, type `-` alone into any numeric field (e.g. Target):
+      field doesn't crash the page or show `NaN` anywhere downstream (KPIs,
+      chart, daily numbers).
+- [ ] Fill in Contacts/Closes under "Log week" and submit with network
+      offline (devtools throttling): error toast appears, fields keep their
+      typed values (don't clear).
+- [ ] Re-enable network, submit again: succeeds, fields clear, the new week
+      appears in the tracker and close-rate stats update.
+- [ ] Brand-new user with no saved plan: "Log week" is disabled, hovering it
+      (or the hint text beneath) explains why; changing any plan input (even
+      re-picking the same cushion) saves a plan and the button enables.
+- [ ] Edit a plan input, then quickly navigate away and back within ~600ms:
+      the edit still saved (no dropped debounce), and reloading doesn't
+      re-trigger an unnecessary extra save on load.
+- [ ] Toggle a playbook checklist item with network offline: item reverts to
+      unchecked with an error toast rather than staying checked unsaved.
+
 ## Time Blocks — date-navigable Day/3-Day/Week (Tomorrow + date picker)
 
 - **Ask:** Schedule only ever showed "today" — no way to plan ahead or pick a
