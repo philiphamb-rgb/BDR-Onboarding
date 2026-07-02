@@ -11,6 +11,7 @@ export const dynamic = 'force-dynamic'
 // steps). Managers can flip an agent live/setup/paused inline.
 
 import { useEffect, useState } from 'react'
+import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import { Card, Skeleton, Badge } from '@/components/ui'
 import { GrowthTabs } from '@/components/GrowthTabs'
@@ -20,9 +21,11 @@ import { IntegrationIcon, InfoIcon, CopyIcon, CheckIcon, ChevronDownIcon, ArrowR
 import { useGrowthOS } from '@/lib/hooks/useGrowthOS'
 import { STATUS_META, MASTER_SETUP_PROMPT, monthlyCost, ROSTER_BY_ID } from '@/lib/modules/growth-os/roster'
 import { ORG, PRINCIPAL, DIVISIONS, directReports } from '@/lib/modules/growth-os/orgChart'
+import { AUTOMATION_META } from '@/lib/modules/growth-os/automationMeta'
 import { cn } from '@/lib/utils'
 
 const STATUSES = ['live', 'setup', 'paused'] as const
+const STATUS_HINT: Record<string, string> = { live: 'Running automatically', setup: 'Needs configuration', paused: 'Temporarily off' }
 const shortName = (n: string) => (n || '').replace(/ Agent$/, '')
 
 function useCopied() {
@@ -48,7 +51,7 @@ function StatusControl({ agent, isManager, onSet }: any) {
         const active = agent.status === s
         const m = STATUS_META[s]
         return (
-          <button key={s} onClick={(e) => { e.stopPropagation(); !active && onSet(agent, s) }} style={{ minHeight: 24 }}
+          <button key={s} title={`${s === 'setup' ? 'Setup' : s.charAt(0).toUpperCase() + s.slice(1)} = ${STATUS_HINT[s]}`} onClick={(e) => { e.stopPropagation(); !active && onSet(agent, s) }} style={{ minHeight: 24 }}
             className={cn('rounded-md px-1.5 py-0.5 text-[10px] font-[800] capitalize transition-colors', active ? cn('bg-card shadow-sm', m.tone.split(' ')[0]) : 'text-gray hover:text-dark-text')}>
             {s === 'setup' ? 'Setup' : s}
           </button>
@@ -61,7 +64,7 @@ function StatusControl({ agent, isManager, onSet }: any) {
 // One agent, as an org-chart node. Collapsed: identity + status + one-liner +
 // who it hands work to. Expanded: the full spec (role, what it looks for, ROI,
 // trigger, system prompt, tools, build steps).
-function AgentNode({ agent, orgTitle, isManager, onSet, isOpen, onToggle, overrides = [], accent = 'navy' }: any) {
+function AgentNode({ agent, orgTitle, orgPlain, isManager, onSet, isOpen, onToggle, overrides = [], accent = 'navy' }: any) {
   const { copied, copy } = useCopied()
   const tuning = [...overrides].sort((a, b) => a.version - b.version)
   const effPrompt = tuning.length
@@ -79,17 +82,16 @@ function AgentNode({ agent, orgTitle, isManager, onSet, isOpen, onToggle, overri
               <span className="truncate text-[13px] font-[800] text-dark-text">{shortName(agent.name)}</span>
               {tuning.length > 0 && <span className="shrink-0 rounded bg-teal/10 px-1 text-[9px] font-[800] text-teal" title="Extended by approved team feedback">v{tuning[tuning.length - 1].version}</span>}
             </div>
-            {orgTitle && <div className="text-[10.5px] font-[700] uppercase tracking-wide text-gray">{orgTitle}</div>}
+            {orgTitle && <div className="text-[10.5px] font-[700] uppercase tracking-wide text-gray">{orgTitle}{orgPlain && <span className="font-[600] normal-case tracking-normal text-gray"> · {orgPlain}</span>}</div>}
           </div>
           <div onClick={e => e.stopPropagation()} className="shrink-0"><StatusControl agent={agent} isManager={isManager} onSet={onSet} /></div>
           <ChevronDownIcon size={14} className={cn('mt-0.5 shrink-0 text-gray transition-transform', isOpen && 'rotate-180')} />
         </div>
         <p className="mt-1.5 line-clamp-2 text-[11.5px] leading-relaxed text-mid-text">{agent.tagline}</p>
         {handoffs.length > 0 && (
-          <div className="mt-2 flex flex-wrap items-center gap-1">
-            <ArrowRightIcon size={10} className="text-teal" />
-            <span className="text-[9.5px] font-[700] uppercase tracking-wide text-gray">Hands to</span>
-            {handoffs.map((n: string) => <span key={n} className="rounded bg-teal/10 px-1.5 py-0.5 text-[10px] font-[700] text-teal">{n}</span>)}
+          <div className="mt-2 flex flex-wrap items-center gap-1 text-[10.5px] text-gray">
+            <ArrowRightIcon size={10} className="text-gray" />
+            <span>Passes to: {handoffs.join(', ')}</span>
           </div>
         )}
       </div>
@@ -97,6 +99,13 @@ function AgentNode({ agent, orgTitle, isManager, onSet, isOpen, onToggle, overri
       {isOpen && (
         <div className="border-t border-border px-3 pb-4 pt-3" onClick={e => e.stopPropagation()}>
           <div className="mb-1.5 flex items-center gap-1.5"><NoteButton compact entityType="agent" entityId={agent.id} label={agent.name} context={agent.tagline} /></div>
+          {handoffs.length > 0 && (
+            <div className="mb-3 flex flex-wrap items-center gap-1.5 rounded-xl bg-teal/[0.06] p-2.5 text-[11.5px] font-[700]">
+              <span className="rounded-lg bg-card px-2 py-1 text-dark-text shadow-card">{shortName(agent.name)}</span>
+              <span className="text-teal">passes to →</span>
+              {handoffs.map((n: string) => <span key={n} className="rounded-lg bg-card px-2 py-1 text-dark-text shadow-card">{n}</span>)}
+            </div>
+          )}
           {/* What it does + what it looks for */}
           {agent.details?.length > 0 && (
             <div className="mb-3">
@@ -173,9 +182,12 @@ export default function GrowthTeamPage() {
   const nodeProps = (id: string) => {
     const agent = byId[id]
     if (!agent) return null
-    return { agent, orgTitle: ORG[id]?.title, isManager, onSet: setStatus, isOpen: openId === id, onToggle: () => setOpenId(openId === id ? null : id), overrides: ovByAgent[id] || [] }
+    return { agent, orgTitle: ORG[id]?.title, orgPlain: ORG[id]?.plain, isManager, onSet: setStatus, isOpen: openId === id, onToggle: () => setOpenId(openId === id ? null : id), overrides: ovByAgent[id] || [] }
   }
   const Node = ({ id }: { id: string }) => { const p = nodeProps(id); return p ? <AgentNode {...p} /> : null }
+
+  const configuredCount = (roster || []).filter(a => a.status !== 'setup').length
+  const roiReplaced = (roster || []).filter(a => a.status === 'live' && AUTOMATION_META[a.id]).reduce((s, a) => s + (AUTOMATION_META[a.id]?.dollarValue || 0), 0)
 
   return (
     <div className="space-y-4 stagger-rise">
@@ -186,13 +198,22 @@ export default function GrowthTeamPage() {
         <div className="space-y-3">{[1, 2, 3].map(i => <Skeleton key={i} className="h-24 rounded-2xl" />)}</div>
       ) : (
         <>
+          {/* Agents vs automations — the one thing that needs to click before
+              anything else on this page makes sense. */}
+          <div className="flex items-start gap-2 rounded-xl bg-navy/[0.04] p-3">
+            <InfoIcon size={14} className="mt-0.5 shrink-0 text-navy-ink" />
+            <p className="text-[11.5px] leading-relaxed text-mid-text"><span className="font-[700] text-dark-text">This tab</span> = who thinks and decides. The <Link href="/grow/automations" className="font-[700] text-teal">Automations</Link> tab = how it executes.</p>
+          </div>
+
           {/* Master setup prompt — build the whole team in the right order */}
           <Card className="!border-none bg-navy !p-5 text-white">
             <div className="flex flex-wrap items-start gap-3">
               <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white/12"><IntegrationIcon size={20} /></span>
               <div className="min-w-0 flex-1">
-                <div className="text-[15px] font-[800]">Build the whole team</div>
-                <p className="mt-1 text-[12.5px] leading-relaxed text-white/75">Copy this into a new Claude conversation and it will walk you through configuring all 18 agents in the right order — asking what you have access to, guiding each step, testing before moving on.</p>
+                <div className="text-[15px] font-[800]">Set up your full AI team</div>
+                <div className="mt-0.5 text-[11.5px] font-[700] text-white/60">{configuredCount} of {roster?.length || 18} set up</div>
+                <p className="mt-1.5 text-[12.5px] leading-relaxed text-white/75">Copy this into a new Claude conversation and it will walk you through configuring every agent in the right order — asking what you have access to, guiding each step, testing before moving on.</p>
+                <p className="mt-1 text-[11px] text-white/50">Opens in Claude · ~20 min to configure all agents</p>
               </div>
               <button onClick={() => copy(MASTER_SETUP_PROMPT)} className={cn('flex shrink-0 items-center gap-2 rounded-lg px-4 py-2.5 text-[13px] font-[700]', copied ? 'bg-success text-white' : 'bg-card text-navy-ink')}>
                 {copied ? <><CheckIcon size={14} /> Copied</> : <><CopyIcon size={14} /> Copy Setup Prompt</>}
@@ -207,7 +228,7 @@ export default function GrowthTeamPage() {
                 <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-teal/10 text-teal"><IntegrationIcon size={20} /></span>
                 <div className="min-w-0">
                   <div className="text-[14px] font-[800] text-dark-text">{liveCount} of {roster?.length || 18} live</div>
-                  <div className="text-[11.5px] text-gray">{isManager ? 'Tap a status to run the team' : 'Managed by your team lead'}</div>
+                  <div className="text-[11.5px] text-gray">{isManager ? 'Tap any agent to turn it on or see what it does.' : 'Managed by your team lead'}</div>
                 </div>
               </div>
             </Card>
@@ -216,15 +237,15 @@ export default function GrowthTeamPage() {
                 <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-gold/12 text-[#A06C00]"><CoinIcon size={20} /></span>
                 <div className="min-w-0">
                   <div className="text-[14px] font-[800] text-dark-text">~${cost}<span className="text-[12px] font-[600] text-gray">/mo</span></div>
-                  <div className="text-[11.5px] text-gray">Est. run cost, live agents</div>
+                  <div className="text-[11.5px] text-gray">{roiReplaced > 0 ? `Replaces ~$${roiReplaced.toLocaleString()}/mo in manual work` : 'Est. run cost, live agents'}</div>
                 </div>
               </div>
             </Card>
           </div>
 
           <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 rounded-xl bg-teal/[0.06] px-3 py-2.5 text-[11px] text-mid-text">
-            <span className="flex items-center gap-1.5"><span className="h-3 w-px bg-border" /> reporting line</span>
-            <span className="flex items-center gap-1.5"><span className="rounded bg-teal/10 px-1.5 py-0.5 text-[10px] font-[700] text-teal">Hands to</span> passes work to</span>
+            <span className="flex items-center gap-1.5"><span className="h-3 w-px bg-border" /> reports to</span>
+            <span className="flex items-center gap-1.5"><ArrowRightIcon size={10} className="text-gray" /> passes work to</span>
             <span className="text-gray">Tap any agent to open its full spec + system prompt.</span>
           </div>
 
@@ -272,11 +293,6 @@ export default function GrowthTeamPage() {
                 </div>
               )
             })}
-          </div>
-
-          <div className="flex items-start gap-2 rounded-xl bg-navy/[0.04] p-3">
-            <InfoIcon size={14} className="mt-0.5 shrink-0 text-navy-ink" />
-            <p className="text-[11.5px] leading-relaxed text-mid-text"><span className="font-[700] text-dark-text">Agents vs automations:</span> this tab is the team — who does the thinking and how they coordinate. The <span className="font-[700]">Automations</span> tab is the operational layer: the exact trigger-to-action workflows these agents run, with the tool connections and settings you switch on.</p>
           </div>
         </>
       )}
