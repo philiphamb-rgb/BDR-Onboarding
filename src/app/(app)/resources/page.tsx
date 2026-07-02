@@ -15,7 +15,7 @@ import { usePermissions } from '@/components/usePermissions'
 import { useTeamResources } from '@/lib/hooks/useTeamResources'
 import {
   DEFAULT_TOOLS, DEFAULT_PEOPLE, DEFAULT_LIBRARY, DEFAULT_ROADMAP, BLANK,
-  resourceIcon, tintClass, ICON_KEYS, RESOURCE_TINTS, LIBRARY_STATUS,
+  resourceIcon, tintClass, ICON_KEYS, RESOURCE_TINTS, LIBRARY_STATUS, isValidResourceUrl,
 } from '@/lib/resourcesDefaults'
 
 const CATEGORY_ICON: Record<string, any> = {
@@ -230,23 +230,32 @@ export default function ResourcesPage() {
                     {canEdit && <AddBtn label="Add item" onClick={() => setEditor({ kind: 'library', data: { ...BLANK.library }, category: sec.category })} />}
                   </div>
                   <div className="divide-y divide-border">
-                    {sec.items.map(it => (
-                      <div key={it.id ?? it.title} className="flex items-center justify-between gap-3 py-2.5">
-                        <div className="flex items-center gap-2.5 min-w-0">
-                          <DocumentIcon size={16} className="text-gray shrink-0" />
-                          <span className="text-sm text-dark-text truncate">{it.title}</span>
+                    {sec.items.map(it => {
+                      const hasLink = isValidResourceUrl(it.link)
+                      const titleEl = (
+                        <span className="flex items-center gap-1.5 min-w-0">
+                          <span className={cn('truncate text-sm', hasLink ? 'font-[700] text-navy-ink' : 'text-dark-text')}>{it.title}</span>
+                          {hasLink && <ExternalLinkIcon size={12} className="shrink-0 text-gray" />}
+                        </span>
+                      )
+                      return (
+                        <div key={it.id ?? it.title} className="flex items-center justify-between gap-3 py-2.5">
+                          <div className="flex items-center gap-2.5 min-w-0">
+                            <DocumentIcon size={16} className="text-gray shrink-0" />
+                            {hasLink ? <a href={it.link} target="_blank" rel="noopener noreferrer" className="min-w-0 hover:underline">{titleEl}</a> : titleEl}
+                          </div>
+                          <div className="flex items-center gap-2 shrink-0">
+                            {it.status === 'soon' ? <Badge variant="gray">Coming soon</Badge> : (it.meta ? <span className="text-[11px] text-gray whitespace-nowrap">{it.meta}</span> : null)}
+                            {canEdit && (
+                              <span className="flex items-center gap-1">
+                                <IconBtn label="Edit" onClick={() => setEditor({ kind: 'library', id: it.id, data: { title: it.title, status: it.status, meta: it.meta, link: it.link || '' }, category: it.category })}><EditIcon size={13} /></IconBtn>
+                                <IconBtn label="Delete" danger onClick={() => remove(it.id)}><TrashIcon size={13} /></IconBtn>
+                              </span>
+                            )}
+                          </div>
                         </div>
-                        <div className="flex items-center gap-2 shrink-0">
-                          {it.status === 'soon' ? <Badge variant="gray">Coming soon</Badge> : (it.meta ? <span className="text-[11px] text-gray whitespace-nowrap">{it.meta}</span> : null)}
-                          {canEdit && (
-                            <span className="flex items-center gap-1">
-                              <IconBtn label="Edit" onClick={() => setEditor({ kind: 'library', id: it.id, data: { title: it.title, status: it.status, meta: it.meta }, category: it.category })}><EditIcon size={13} /></IconBtn>
-                              <IconBtn label="Delete" danger onClick={() => remove(it.id)}><TrashIcon size={13} /></IconBtn>
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                    ))}
+                      )
+                    })}
                   </div>
                 </Card>
               )
@@ -308,9 +317,14 @@ function ItemEditor({ editor, onClose, onSave }: any) {
   const [category, setCategory] = useState<string>(editor.category ?? '')
   const set = (k: string, v: any) => setD((p: any) => ({ ...p, [k]: v }))
   const title = (editor.id ? 'Edit ' : 'Add ') + ({ tool: 'tool', person: 'person', library: 'document', roadmap: 'roadmap phase' }[kind])
-  const valid = kind === 'tool' ? d.name?.trim() && d.url?.trim()
+  // A library item marked "Coming soon" is allowed to have no link yet (that's
+  // the whole point of that status); once it's "Ready" a working link is required —
+  // same as a tool's URL, which is always required. Both are validated as real URLs.
+  const urlOk = kind === 'tool' ? isValidResourceUrl(d.url) : kind === 'library' && d.status !== 'soon' ? isValidResourceUrl(d.link) : true
+  const urlTouched = kind === 'tool' ? !!d.url?.trim() : kind === 'library' ? !!d.link?.trim() : true
+  const valid = kind === 'tool' ? d.name?.trim() && urlOk
     : kind === 'person' ? d.name?.trim()
-    : kind === 'library' ? d.title?.trim() && category.trim()
+    : kind === 'library' ? d.title?.trim() && category.trim() && urlOk
     : d.phase?.trim()
 
   return (
@@ -319,7 +333,10 @@ function ItemEditor({ editor, onClose, onSave }: any) {
         {kind === 'tool' && <>
           <Field label="Name" value={d.name} onChange={v => set('name', v)} />
           <Field label="What it's for" value={d.purpose} onChange={v => set('purpose', v)} />
-          <Field label="URL" value={d.url} onChange={v => set('url', v)} placeholder="https://…" />
+          <div>
+            <Field label="URL" value={d.url} onChange={v => set('url', v)} placeholder="https://…" />
+            {urlTouched && !urlOk && <p className="mt-1 text-[11px] font-[600] text-error">Enter a full URL, starting with http:// or https://</p>}
+          </div>
           <Field label="Help / contact" value={d.contact} onChange={v => set('contact', v)} />
           <div>
             <span className={LBL}>Icon</span>
@@ -355,7 +372,13 @@ function ItemEditor({ editor, onClose, onSave }: any) {
               {LIBRARY_STATUS.map(o => <option key={o.key} value={o.key}>{o.label}</option>)}
             </select>
           </div>
-          {d.status !== 'soon' && <Field label="Format / label" value={d.meta} onChange={v => set('meta', v)} placeholder="PDF, Guide, link…" />}
+          {d.status !== 'soon' && <>
+            <div>
+              <Field label="Link (URL)" value={d.link} onChange={v => set('link', v)} placeholder="https://…" />
+              {urlTouched && !urlOk && <p className="mt-1 text-[11px] font-[600] text-error">Enter a full URL, starting with http:// or https://</p>}
+            </div>
+            <Field label="Format / label" value={d.meta} onChange={v => set('meta', v)} placeholder="PDF, Guide, link…" />
+          </>}
         </>}
 
         {kind === 'roadmap' && <>

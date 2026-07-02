@@ -34,6 +34,19 @@ export const LIBRARY_STATUS = [
   { key: 'soon',  label: 'Coming soon' },
 ]
 
+// A resource link must be a real http(s) URL — used to validate both a tool's
+// url and a library item's link before save, so a bad string can never persist.
+export function isValidResourceUrl(value: string): boolean {
+  const v = (value || '').trim()
+  if (!v) return false
+  try {
+    const u = new URL(v)
+    return u.protocol === 'http:' || u.protocol === 'https:'
+  } catch {
+    return false
+  }
+}
+
 // ── Starter content (seeded on demand) ───────────────────────────────────────
 export const DEFAULT_TOOLS = [
   { name: 'HubSpot', purpose: 'CRM & pipeline management', url: 'https://hubspot.com', contact: 'Anthony Medina', icon: 'hubspot', tint: 'gold' },
@@ -86,11 +99,12 @@ export const DEFAULT_ROADMAP = [
   { phase: 'Ownership', time: 'Weeks 3–4', focus: 'Independent Contribution' },
 ]
 
-// Blank templates for the "add" action per kind.
+// Blank templates for the "add" action per kind. `link` on library items is
+// the field that was previously missing entirely — see isValidResourceUrl.
 export const BLANK: Record<string, any> = {
   tool: { name: '', purpose: '', url: '', contact: '', icon: 'link', tint: 'navy' },
   person: { name: '', role: '', detail: '', slack: '' },
-  library: { title: '', status: 'ready', meta: '' },
+  library: { title: '', status: 'ready', meta: '', link: '' },
   roadmap: { phase: '', time: '', focus: '' },
 }
 
@@ -99,7 +113,7 @@ export function seedRows() {
   const rows: { kind: string; category: string | null; data: any; sort_order: number }[] = []
   DEFAULT_TOOLS.forEach((d, i) => rows.push({ kind: 'tool', category: null, data: d, sort_order: i }))
   DEFAULT_PEOPLE.forEach((d, i) => rows.push({ kind: 'person', category: null, data: d, sort_order: i }))
-  DEFAULT_LIBRARY.forEach((d, i) => rows.push({ kind: 'library', category: d.category, data: { title: d.title, status: d.status, meta: d.meta }, sort_order: i }))
+  DEFAULT_LIBRARY.forEach((d, i) => rows.push({ kind: 'library', category: d.category, data: { title: d.title, status: d.status, meta: d.meta, link: '' }, sort_order: i }))
   DEFAULT_ROADMAP.forEach((d, i) => rows.push({ kind: 'roadmap', category: null, data: d, sort_order: i }))
   return rows
 }
