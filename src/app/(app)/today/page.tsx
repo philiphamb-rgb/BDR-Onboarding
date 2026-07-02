@@ -16,7 +16,7 @@ import { triggerXpPop, triggerConfetti } from '@/components/gamification'
 import { FirstRunOverlay } from '@/components/FirstRunOverlay'
 import { useWinsNotify } from '@/lib/hooks/useWinsNotify'
 import { goalStats, buildActions } from '@/lib/priorityEngine'
-import { autoPlan, fmtEst } from '@/lib/triageEngine'
+import { autoPlan } from '@/lib/triageEngine'
 import { stageMeta } from '@/lib/partnerChecklist'
 import { localToday } from '@/lib/schedule'
 import { fetchDaySlots } from '@/lib/daySlots'
@@ -219,9 +219,9 @@ export default function TodayPage() {
         {/* Today at a glance — plan, habits, streak */}
         <div className="grid grid-cols-3 gap-px border-t border-border bg-border">
           {[
-            { label: 'Plan', value: `${plannedDone}/${planned.length}`, sub: planned.length ? 'time-blocked' : 'nothing yet', done: planned.length > 0 && plannedDone >= planned.length },
-            { label: 'Habits', value: `${completedCount}/${totalCount}`, sub: allDone ? 'all done' : 'routines', done: allDone },
-            { label: 'Streak', value: String(progress?.current_streak ?? 0), sub: 'days', done: (progress?.current_streak ?? 0) > 0 },
+            { label: 'Plan', value: `${plannedDone}/${planned.length}`, sub: 'tasks time-blocked today', done: planned.length > 0 && plannedDone >= planned.length },
+            { label: 'Habits', value: `${completedCount}/${totalCount}`, sub: 'daily routines completed', done: allDone },
+            { label: 'Streak', value: String(progress?.current_streak ?? 0), sub: 'days with at least 1 deal activity', done: (progress?.current_streak ?? 0) > 0 },
           ].map(s => (
             <div key={s.label} className={cn('flex flex-col items-center justify-center bg-card py-2.5', s.done && 'bg-teal/5')}>
               <div className={cn('text-[16px] font-[800] tabular-nums', s.done ? 'text-teal' : 'text-dark-text')}>{s.value}</div>
@@ -232,38 +232,29 @@ export default function TodayPage() {
         </div>
       </Card>
 
-      {/* ── Do this now — the single most important action, alive ── */}
-      {focus ? (
-        <Link href={focus.href} className="relative block overflow-hidden rounded-2xl border-2 border-teal bg-card p-4 shadow-card animate-glow transition-transform active:scale-[0.99]">
-          <div className="flex items-center gap-3">
-            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-gradient-hero text-white animate-bob"><LightningIcon size={22} /></div>
-            <div className="min-w-0 flex-1">
-              <div className="text-label text-teal">Do this now</div>
-              <div className="truncate text-[16px] font-[800] text-dark-text">{focus.title}</div>
-              <div className="truncate text-[12px] text-gray">{focus.why}{focus.est ? ` · ~${fmtEst(focus.est)}` : ''}</div>
-            </div>
-            <span className="flex shrink-0 items-center gap-1 rounded-full bg-teal px-3 py-1.5 text-[12px] font-[800] text-white">{focus.cta} <ArrowRightIcon size={14} className="animate-nudge-x" /></span>
-          </div>
-        </Link>
-      ) : (
-        <div className="rounded-2xl border-2 border-success/40 bg-success/[0.06] p-4">
-          <div className="flex items-center gap-3">
-            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-success/15 text-success"><CheckIcon size={22} /></div>
-            <div className="min-w-0">
-              <div className="text-[15px] font-[800] text-dark-text">You&apos;re all caught up</div>
-              <div className="text-[12px] text-gray">No urgent actions — prospect, learn, or log a win below.</div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* ── Today's plan — tasks scheduled into your time blocks ── */}
+      {/* ── Today's plan — tasks scheduled into your time blocks. The single
+          top-priority action lives IN this list as a checkable row (Home
+          already owns the standalone "Do this now" hero — no duplicate here) ── */}
       <Card data-tour="today-plan-card">
         <div className="mb-3 flex items-center justify-between">
           <h2 className="text-h3 text-dark-text">Today&apos;s plan</h2>
           <Link href="/schedule" className="flex items-center gap-1 text-sm font-medium text-navy-ink">Time Blocks <ArrowRightIcon className="h-4 w-4" /></Link>
         </div>
-        {planned.length === 0 ? (
+
+        {/* Top priority — a lead/goal action doesn't have a task checkbox, so it
+            gets a slim linked row instead of competing for hero space. */}
+        {focus && focus.kind !== 'task' && (
+          <Link href={focus.href} className="mb-2.5 flex items-center gap-2.5 rounded-xl border border-teal/40 bg-teal/[0.06] p-3 transition-colors hover:bg-teal/10">
+            <LightningIcon size={16} className="shrink-0 text-teal" />
+            <div className="min-w-0 flex-1">
+              <div className="text-[10px] font-[800] uppercase tracking-wide text-teal">Top priority</div>
+              <div className="truncate text-[13px] font-[700] text-dark-text">{focus.title}</div>
+            </div>
+            <span className="shrink-0 text-[11px] font-[700] text-teal">{focus.cta} →</span>
+          </Link>
+        )}
+
+        {planned.length === 0 && !(focus?.kind === 'task') ? (
           <div className="rounded-xl border border-dashed border-border bg-bdrbg p-3">
             <p className="text-sm text-gray">Nothing time-blocked yet{unplanned.length > 0 ? ` — you have ${unplanned.length} task${unplanned.length > 1 ? 's' : ''} ready to schedule.` : '.'}</p>
           </div>
@@ -275,13 +266,33 @@ export default function TodayPage() {
             </div>
             <ProgressBar value={plannedDone} max={planned.length} className="mb-3" />
             <div className="space-y-2">
+              {/* Priority task pinned first, if it's not already the top of the planned list */}
+              {focus?.kind === 'task' && !planned.slice(0, 6).some(t => t.id === focus.taskId) && tasks.find(t => t.id === focus.taskId) && (() => {
+                const t = tasks.find(x => x.id === focus.taskId)
+                return (
+                  <div key={t.id} className={cn('flex items-center gap-3 rounded-xl border-2 bg-teal/[0.06] p-3 transition-all duration-300', t.done ? 'border-teal/40 opacity-70' : 'border-teal')}>
+                    <button onClick={() => togglePlanTask(t.id, !t.done)} aria-label={t.done ? 'Mark incomplete' : 'Complete task'}
+                      className={cn('flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 transition-colors', t.done ? 'border-teal bg-teal' : 'border-teal/60 hover:bg-teal/10')}>
+                      <CheckIcon className={cn('h-3 w-3', t.done ? 'text-white' : 'text-transparent', doneTaskId === t.id && 'animate-pop')} />
+                    </button>
+                    <div className="min-w-0 flex-1">
+                      <div className="text-[9.5px] font-[800] uppercase tracking-wide text-teal">Priority</div>
+                      <span className={cn('truncate text-sm font-medium', t.done ? 'text-gray line-through' : 'text-dark-text')}>{t.title}</span>
+                    </div>
+                    <span className="shrink-0 text-xs text-gray tabular-nums">{(t.estimated_minutes || 30) >= 60 ? `${(t.estimated_minutes || 30) / 60}h` : `${t.estimated_minutes || 30}m`}</span>
+                  </div>
+                )
+              })()}
               {planned.slice(0, 6).map(t => (
-                <div key={t.id} className={cn('flex items-center gap-3 rounded-xl border bg-bdrbg p-3 transition-all duration-300', t.done ? 'border-teal/40 opacity-70' : 'border-border')}>
+                <div key={t.id} className={cn('flex items-center gap-3 rounded-xl border bg-bdrbg p-3 transition-all duration-300', t.done ? 'border-teal/40 opacity-70' : focus?.taskId === t.id ? 'border-2 border-teal bg-teal/[0.06]' : 'border-border')}>
                   <button onClick={() => togglePlanTask(t.id, !t.done)} aria-label={t.done ? 'Mark incomplete' : 'Complete task'}
                     className={cn('flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 transition-colors', t.done ? 'border-teal bg-teal' : 'border-border hover:border-teal hover:bg-teal/10')}>
                     <CheckIcon className={cn('h-3 w-3', t.done ? 'text-white' : 'text-transparent', doneTaskId === t.id && 'animate-pop')} />
                   </button>
-                  <span className={cn('flex-1 truncate text-sm font-medium', t.done ? 'text-gray line-through' : 'text-dark-text')}>{t.title}</span>
+                  <div className="min-w-0 flex-1">
+                    {focus?.taskId === t.id && <div className="text-[9.5px] font-[800] uppercase tracking-wide text-teal">Priority</div>}
+                    <span className={cn('block truncate text-sm font-medium', t.done ? 'text-gray line-through' : 'text-dark-text')}>{t.title}</span>
+                  </div>
                   <span className="shrink-0 text-xs text-gray tabular-nums">{(t.estimated_minutes || 30) >= 60 ? `${(t.estimated_minutes || 30) / 60}h` : `${t.estimated_minutes || 30}m`}</span>
                 </div>
               ))}
@@ -291,13 +302,15 @@ export default function TodayPage() {
         {/* Auto-triage controls — shared brain with Home */}
         <div className="mt-3 grid grid-cols-2 gap-2">
           <button onClick={autoPlanToday} disabled={triageBusy}
-            className="relative flex items-center justify-center gap-1.5 overflow-hidden rounded-lg bg-gradient-hero py-2.5 text-[13px] font-[800] text-white transition-transform active:scale-[0.99] disabled:opacity-60">
+            className="relative flex flex-col items-center justify-center gap-0.5 overflow-hidden rounded-lg bg-gradient-hero py-2.5 text-[13px] font-[800] text-white transition-transform active:scale-[0.99] disabled:opacity-60">
             <span className="pointer-events-none absolute inset-y-0 left-0 w-1/4 animate-shimmer bg-white/25 blur-md" aria-hidden="true" />
-            <LightningIcon size={14} className="relative text-white" /><span className="relative">{triageBusy ? 'Planning…' : 'Auto-plan my day'}</span>
+            <span className="relative flex items-center gap-1.5"><LightningIcon size={14} className="text-white" />{triageBusy ? 'Planning…' : 'Auto-plan my day'}</span>
+            <span className="relative text-[10px] font-[600] text-white/70">AI fills your time blocks from your tasks</span>
           </button>
           <button onClick={() => askCoach('Triage my day from my goal, pipeline, and tasks. What are the top 3 things to do right now, in order, and why?')}
-            className="flex items-center justify-center gap-1.5 rounded-lg border border-navy/30 bg-navy/5 py-2.5 text-[13px] font-[800] text-navy-ink hover:bg-navy/10">
-            <CoachIcon size={14} /> Coach my day
+            className="flex flex-col items-center justify-center gap-0.5 rounded-lg border border-navy/30 bg-navy/5 py-2.5 text-[13px] font-[800] text-navy-ink hover:bg-navy/10">
+            <span className="flex items-center gap-1.5"><CoachIcon size={14} /> Coach my day</span>
+            <span className="text-[10px] font-[600] text-gray">AI tells you what to focus on and why</span>
           </button>
         </div>
       </Card>
