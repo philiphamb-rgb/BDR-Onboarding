@@ -11,7 +11,7 @@ import Link from 'next/link'
 import { Card, Button, ProgressBar, Skeleton } from '@/components/ui'
 import { CountUp } from '@/components/CountUp'
 import { AiTip } from '@/components/AiTip'
-import { CoinIcon, LightningIcon, TargetIcon, PhoneIcon, HandshakeIcon, CheckIcon, ArrowRightIcon, ChartRisingIcon, FlameIcon, GrowIcon } from '@/components/icons'
+import { CoinIcon, LightningIcon, TargetIcon, PhoneIcon, HandshakeIcon, CheckIcon, ArrowRightIcon, ChartRisingIcon, FlameIcon, GrowIcon, ChevronDownIcon } from '@/components/icons'
 import { cn } from '@/lib/utils'
 import { askCoach } from '@/lib/coachBus'
 import { useIncomeCalculator, impliedMonthlyDeals } from '@/lib/hooks/useIncomeCalculator'
@@ -19,9 +19,9 @@ import { usePipelineMomentum } from '@/lib/hooks/usePipelineMomentum'
 import { fmt, fmtK } from '@/lib/income/engine'
 
 const BUFFERS = [
-  { key: 'min', label: 'Minimum', sub: 'exact goal' },
-  { key: 'safe', label: 'Safe', sub: '+15% cushion' },
-  { key: 'stretch', label: 'Stretch', sub: '+30% cushion' },
+  { key: 'min', label: 'Minimum', sub: 'Exact goal — no buffer' },
+  { key: 'safe', label: 'Safe', sub: 'Goal × 1.15 — buffer for slow months' },
+  { key: 'stretch', label: 'Stretch', sub: 'Goal × 1.30 — accounts for churn & ramp' },
 ]
 
 function Num({ label, suffix, value, onChange, step = 1 }: any) {
@@ -82,8 +82,8 @@ export default function CommissionsPage() {
     <div className="space-y-4 stagger-rise pb-4">
       <div className="flex items-start justify-between gap-3">
         <div>
-          <h1 className="text-h1 text-dark-text">Income &amp; Commission Planner</h1>
-          <p className="mt-0.5 text-[13px] text-gray">Turn your income goal into a daily number — and track your way there.</p>
+          <h1 className="text-h1 text-dark-text">Income Planner</h1>
+          <p className="mt-0.5 text-[13px] text-gray">Set your income goal. We&rsquo;ll show you exactly how many {isB2C ? 'deals' : 'partners'} you need.</p>
         </div>
         <Link href="/analytics" className="hidden shrink-0 items-center gap-1 rounded-pill border border-border bg-card px-3 py-2 text-[12px] font-[700] text-navy-ink shadow-card hover:border-navy/40 desktop:flex">
           <ChartRisingIcon size={15} /> Analytics
@@ -105,7 +105,7 @@ export default function CommissionsPage() {
 
         {/* Path */}
         <div className="mb-3 flex gap-1 rounded-xl bg-bdrbg p-1">
-          {[{ k: 'b2c', l: 'Direct (B2C)' }, { k: 'b2b2c', l: 'Partners (B2B2C)' }].map(p => (
+          {[{ k: 'b2c', l: 'Direct Sales' }, { k: 'b2b2c', l: 'Partner Channel' }].map(p => (
             <button key={p.k} onClick={() => updateInputs({ path: p.k as any })}
               className={cn('flex-1 rounded-lg py-2 text-[13px] font-[700] transition-all', plan.path === p.k ? 'bg-card text-navy-ink shadow-sm' : 'text-gray hover:text-navy-ink')}>{p.l}</button>
           ))}
@@ -130,7 +130,9 @@ export default function CommissionsPage() {
           </div>
         </div>
 
-        <button onClick={() => setAdvanced(a => !a)} className="mt-3 text-[12px] font-[700] text-navy-ink">{advanced ? 'Hide' : 'Show'} advanced inputs</button>
+        <button onClick={() => setAdvanced(a => !a)} aria-expanded={advanced} className="mt-3 flex w-full items-center justify-between rounded-lg border border-border bg-bdrbg px-3 py-2 text-[12px] font-[700] text-navy-ink hover:border-navy/30">
+          {advanced ? 'Hide' : 'Show'} advanced inputs <ChevronDownIcon size={14} className={cn('transition-transform', advanced && 'rotate-180')} />
+        </button>
         {advanced && (
           <div className="mt-2 grid grid-cols-2 gap-3 border-t border-border pt-3">
             {isB2C ? (
