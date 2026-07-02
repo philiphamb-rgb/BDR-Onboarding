@@ -32,13 +32,13 @@ function ConfChip({ level }: any) {
   return <span className={cn('inline-flex items-center gap-1 rounded px-2 py-0.5 text-[10px] font-[800] uppercase tracking-wide', proven ? 'bg-success/10 text-success' : 'bg-gold/12 text-[#A06C00]')}><span className={cn('h-1.5 w-1.5 rounded-full', proven ? 'bg-success' : 'bg-gold')} />{level}</span>
 }
 function ChannelChip({ channel }: any) {
-  return <span className={cn('rounded px-1.5 py-0.5 text-[9.5px] font-[800] uppercase', channel === 'face' ? 'bg-teal/10 text-teal' : 'bg-navy/8 text-navy-ink')}>{channel === 'face' ? 'Face' : 'Faceless'}</span>
+  return <span className={cn('rounded px-1.5 py-0.5 text-[9.5px] font-[800] uppercase', channel === 'face' ? 'bg-teal/10 text-teal' : 'bg-navy/8 text-navy-ink')}>{channel === 'face' ? 'Face' : 'No-Camera'}</span>
 }
 function Countdown({ minutes }: any) {
   const [secs, setSecs] = useState(minutes * 60)
   useEffect(() => { const t = setInterval(() => setSecs(s => s > 0 ? s - 1 : 0), 1000); return () => clearInterval(t) }, [])
   const m = Math.floor(secs / 60), s = secs % 60, urgent = secs < 600
-  return <span className={cn('inline-flex items-center gap-1.5 text-[12px] font-[600]', urgent ? 'text-error' : 'text-gray')}><ClockIcon size={12} /> window closes in <span className="tabular-nums">{String(m).padStart(2, '0')}:{String(s).padStart(2, '0')}</span></span>
+  return <span title="Optimal posting window — closes when your audience's peak engagement time passes." className={cn('inline-flex items-center gap-1.5 text-[12px] font-[600]', urgent ? 'text-error' : 'text-gray')}><ClockIcon size={12} /> best posting window closes in <span className="tabular-nums">{String(m).padStart(2, '0')}:{String(s).padStart(2, '0')}</span></span>
 }
 
 function NextMoveCard() {
@@ -74,7 +74,7 @@ function NextMoveCard() {
       {status && <div className={cn('mt-3 text-[12px] font-[600]', status === 'done' ? 'text-success' : 'text-gray')}>{status === 'done' ? 'Marked done — the next move refreshes with tomorrow’s queue.' : 'Skipped — the next move refreshes with tomorrow’s queue.'}</div>}
       {expanded && (
         <div className="mt-4 border-t border-border pt-4">
-          <div className="mb-3 flex gap-2 rounded-lg bg-teal/[0.06] p-3"><InfoIcon size={13} className="mt-0.5 shrink-0 text-teal" /><span className="text-[12px] leading-relaxed text-mid-text"><span className="font-[800] text-dark-text">What "Expected Value" means: </span>a smart guess at how much recurring partner revenue this post will drive, from what similar posts actually did. Higher EV = better bet for your next 30 minutes.</span></div>
+          <div className="mb-3 flex gap-2 rounded-lg bg-teal/[0.06] p-3"><InfoIcon size={13} className="mt-0.5 shrink-0 text-teal" /><span className="text-[12px] leading-relaxed text-mid-text">{NEXT_MOVE.plainSummary}</span></div>
           {NEXT_MOVE.math.map((row, i) => (
             <div key={i} className={cn('flex items-baseline justify-between gap-3 py-2', i < NEXT_MOVE.math.length - 1 && 'border-b border-border')}>
               <div><div className="text-[12.5px] text-dark-text">{row.label}</div><div className="text-[11px] text-gray">{row.note}</div></div>
@@ -163,7 +163,8 @@ function WhatsWorking() {
   const maxEv = Math.max(...HOOKS.map(h => h.avgEv))
   return (
     <div className="space-y-4">
-      <div className="flex justify-end">
+      <div className="flex items-center justify-between gap-2">
+        <span className="text-[11px] italic text-gray">Demo data — connects to your real analytics once a source is linked</span>
         <Button onClick={() => downloadPlaybook(new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }))} icon={<DownloadIcon size={14} />}>Download Creator Playbook</Button>
       </div>
       {/* Format leaderboard */}
@@ -249,7 +250,7 @@ export default function GrowthContentPage() {
 
       <div className="flex items-start gap-2 rounded-xl bg-teal/[0.06] p-3">
         <InfoIcon size={14} className="mt-0.5 shrink-0 text-teal" />
-        <p className="text-[11.5px] leading-relaxed text-mid-text"><span className="font-[700] text-dark-text">How this works: </span>every piece below carries an <span className="font-[700]">EV (Expected Value)</span> — a smart guess at the recurring partner revenue it drives. Higher = better use of your next 30 minutes. It feeds straight into Lead Gen: more saves and DMs here means more agency leads to score and route there. Analytics shown are demo data until a live source connects.</p>
+        <p className="text-[11.5px] leading-relaxed text-mid-text">Every piece below is ranked by expected partner revenue. Higher EV = better use of your next 30 min.</p>
       </div>
 
       <div className="flex w-fit gap-0.5 rounded-lg border border-border bg-bdrbg p-1">
@@ -266,7 +267,7 @@ export default function GrowthContentPage() {
               <div className="mb-2 flex items-center justify-between">
                 <span className="text-[10px] font-[800] uppercase tracking-wide text-gray">Ranked queue</span>
                 <div className="flex gap-1">
-                  {[['all', 'All'], ['face', 'Face'], ['faceless', 'Faceless']].map(([id, l]) => (
+                  {[['all', 'All'], ['face', 'Face'], ['faceless', 'No-Camera']].map(([id, l]) => (
                     <button key={id} onClick={() => setChannel(id)} className={cn('rounded-full border px-2.5 py-0.5 text-[10.5px] font-[700]', channel === id ? 'border-navy bg-navy text-white' : 'border-border text-gray')}>{l}</button>
                   ))}
                 </div>

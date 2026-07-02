@@ -19,6 +19,7 @@ export const NEXT_MOVE = {
     { label: 'Avg. first-year value per partner', note: 'recurring, blended', value: '$219/mo' },
   ],
   evFinal: '8.4 signs × $219',
+  plainSummary: 'This format has driven ~112 agency DMs over the last 30 days. At your typical close rate, that\'s worth ~$1,840 in partner revenue.',
 }
 
 export const STACK = [
