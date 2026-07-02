@@ -41,6 +41,7 @@ interface NavItem {
 const DAILY_NAV: NavItem[] = [
   { href: '/home',        label: 'Home',            icon: HomeIcon },
   { href: '/today',       label: 'Today',           icon: TodayIcon },
+  { href: '/goals',       label: 'Goals',           icon: TargetIcon },
   { href: '/notes',       label: 'Notes',           icon: NoteIcon },
   { href: '/tasks',       label: 'Tasks',           icon: ChecklistIcon },
   { href: '/schedule',    label: 'Schedule',        icon: ClockIcon },
